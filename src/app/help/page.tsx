@@ -90,7 +90,6 @@ type PermState = "granted" | "prompt" | "denied" | "unknown";
 async function checkGeoPermission(): Promise<PermState> {
     if (!("permissions" in navigator)) return "unknown";
     try {
-        // @ts-expect-error: older TS lib may not declare this; modern browsers support it
         const status = await navigator.permissions.query({ name: "geolocation" as PermissionName });
         return (status.state as PermState) ?? "unknown";
     } catch {

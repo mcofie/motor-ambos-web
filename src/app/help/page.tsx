@@ -2,18 +2,18 @@
 "use client";
 
 import * as React from "react";
-import {useMemo, useState} from "react";
-import {z} from "zod";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
+import { useMemo, useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-import {Button} from "@/components/ui/button";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {Separator} from "@/components/ui/separator";
-import {cn} from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
     Car,
     Wrench,
@@ -33,8 +33,7 @@ import {
 
 /* --------------------- Schema --------------------- */
 const HelpSchema = z.object({
-    // object form (supported by that overload)
-    helpType: z.enum(["battery", "tyres", "engine_oil", "towing"], {message: "Select the type of help"}),
+    helpType: z.enum(["battery", "tyres", "engine_oil", "towing"]),
     carMake: z.string().min(2, "Car make is required"),
     carModel: z.string().min(1, "Car model is required"),
     carYear: z
@@ -45,14 +44,12 @@ const HelpSchema = z.object({
     carColor: z.string().min(2, "Car color is required"),
     plateNumber: z.string().min(2, "Plate number is required"),
     fullName: z.string().min(2, "Your name is required"),
-    phone: z
-        .string()
-        .min(7, "Phone is required")
-        .regex(/^[0-9+\-\s()]{7,}$/, "Enter a valid phone"),
+    phone: z.string().min(7, "Phone is required").regex(/^[0-9+\-\s()]{7,}$/, "Enter a valid phone"),
 });
 type HelpForm = z.infer<typeof HelpSchema>;
 type StepKey = "help" | "car" | "contact" | "providers";
 
+/* --------------------- Types --------------------- */
 type GeoFix = {
     lat: number;
     lng: number;
@@ -80,12 +77,41 @@ const HELP_OPTIONS: Array<{
     Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     hint: string;
 }> = [
-    {key: "battery", label: "Battery", Icon: BatteryCharging, hint: "Jumpstart or replace"},
-    {key: "tyres", label: "Tyres", Icon: Disc, hint: "Flat, puncture, swap"},
-    {key: "engine_oil", label: "Engine Oil", Icon: Droplets, hint: "Top-up or change"},
-    {key: "towing", label: "Towing", Icon: Truck, hint: "Short or long haul"},
+    { key: "battery", label: "Battery", Icon: BatteryCharging, hint: "Jumpstart or replace" },
+    { key: "tyres", label: "Tyres", Icon: Disc, hint: "Flat, puncture, swap" },
+    { key: "engine_oil", label: "Engine Oil", Icon: Droplets, hint: "Top-up or change" },
+    { key: "towing", label: "Towing", Icon: Truck, hint: "Short or long haul" },
 ];
 
+/* --------------------- Geolocation helpers & sentinel --------------------- */
+const GEO_ERROR_BLOCKED = "GEO_BLOCKED" as const;
+type PermState = "granted" | "prompt" | "denied" | "unknown";
+
+async function checkGeoPermission(): Promise<PermState> {
+    if (!("permissions" in navigator)) return "unknown";
+    try {
+        // @ts-expect-error: older TS lib may not declare this; modern browsers support it
+        const status = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+        return (status.state as PermState) ?? "unknown";
+    } catch {
+        return "unknown";
+    }
+}
+
+function getLocationOnce(): Promise<GeolocationPosition> {
+    if (!("geolocation" in navigator)) {
+        return Promise.reject(new Error("Geolocation is not supported by your browser."));
+    }
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+    });
+}
+
+/* --------------------- Page --------------------- */
 export default function GetHelpWizardPage() {
     const [step, setStep] = useState<StepKey>("help");
 
@@ -120,7 +146,7 @@ export default function GetHelpWizardPage() {
         handleSubmit,
         trigger,
         getValues,
-        formState: {isSubmitting, errors},
+        formState: { isSubmitting, errors },
     } = form;
 
     /* --------------------- Validation snapshots --------------------- */
@@ -149,33 +175,36 @@ export default function GetHelpWizardPage() {
 
     /* --------------------- Geolocation --------------------- */
     async function requestLocation() {
-        try {
-            setLocBusy(true);
-            setLocError(null);
+        setLocBusy(true);
+        setLocError(null);
 
-            if (!("geolocation" in navigator)) {
-                setLocError("Geolocation is not supported by your browser.");
+        try {
+            const perm = await checkGeoPermission();
+            if (perm === "denied") {
+                setLocError(GEO_ERROR_BLOCKED);
+                setLoc(null);
                 return;
             }
-            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0,
-                });
-            });
 
+            const pos = await getLocationOnce();
             setLoc({
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-                accuracy: position.coords.accuracy,
-                timestamp: position.timestamp,
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                accuracy: pos.coords.accuracy,
+                timestamp: pos.timestamp,
             });
         } catch (e: unknown) {
-            const msg =
-                e && typeof e === "object" && "message" in e
-                    ? String((e as { message?: string }).message)
-                    : "Failed to get your location.";
+            let msg = "Failed to get your location.";
+            const ge = e as GeolocationPositionError | { code?: number; message?: string };
+
+            if (typeof ge?.code === "number") {
+                if (ge.code === 1) msg = "You denied the location request.";
+                else if (ge.code === 2) msg = "Location unavailable. Try moving to improve signal.";
+                else if (ge.code === 3) msg = "Location request timed out. Try again.";
+            } else if (e && typeof e === "object" && "message" in (e as any)) {
+                msg = String((e as any).message);
+            }
+
             setLocError(msg);
             setLoc(null);
         } finally {
@@ -241,10 +270,10 @@ export default function GetHelpWizardPage() {
     }
 
     const steps: Array<{ key: StepKey; label: string }> = [
-        {key: "help", label: "Help"},
-        {key: "car", label: "Car"},
-        {key: "contact", label: "Contact"},
-        {key: "providers", label: "Providers"},
+        { key: "help", label: "Help" },
+        { key: "car", label: "Car" },
+        { key: "contact", label: "Contact" },
+        { key: "providers", label: "Providers" },
     ];
     const activeIndex = Math.max(0, steps.findIndex((s) => s.key === step));
 
@@ -255,7 +284,7 @@ export default function GetHelpWizardPage() {
                 <div className="mx-auto w-full max-w-2xl px-4 py-3">
                     <div className="flex items-center justify-between">
                         <div className="inline-flex items-center gap-2 font-semibold text-base sm:text-lg">
-                            <Wrench className="h-5 w-5"/>
+                            <Wrench className="h-5 w-5" />
                             Motor Ambos
                         </div>
                         <div className="text-[10px] sm:text-xs text-muted-foreground">Roadside Request</div>
@@ -263,7 +292,7 @@ export default function GetHelpWizardPage() {
 
                     {/* Stepper */}
                     <div className="mt-3 flex items-center justify-between sm:justify-start sm:gap-2">
-                        {/* Mobile: dots */}
+                        {/* Mobile dots */}
                         <div className="flex items-center gap-1 sm:hidden">
                             {steps.map((s, i) => {
                                 const isActive = i === activeIndex;
@@ -281,7 +310,7 @@ export default function GetHelpWizardPage() {
                             })}
                         </div>
 
-                        {/* >= sm: labeled stepper */}
+                        {/* >= sm labeled stepper */}
                         <div className="hidden sm:flex sm:items-center sm:gap-2">
                             {steps.map((s, i) => {
                                 const isActive = i === activeIndex;
@@ -306,7 +335,7 @@ export default function GetHelpWizardPage() {
                                         >
                       {s.label}
                     </span>
-                                        {i < steps.length - 1 && <div className="mx-1 h-px w-8 bg-border"/>}
+                                        {i < steps.length - 1 && <div className="mx-1 h-px w-8 bg-border" />}
                                     </div>
                                 );
                             })}
@@ -315,7 +344,7 @@ export default function GetHelpWizardPage() {
                 </div>
             </header>
 
-            {/* Content: add bottom padding so it doesn't sit under fixed bar */}
+            {/* Content: pad for fixed action bar */}
             <section className="mx-auto w-full max-w-2xl px-4 py-6 pb-36 sm:pb-32">
                 <Card className="border-2 rounded-2xl">
                     <CardHeader className="space-y-1">
@@ -329,7 +358,7 @@ export default function GetHelpWizardPage() {
 
                             {step !== "help" && (
                                 <Button type="button" variant="ghost" size="sm" onClick={onBack} className="gap-1">
-                                    <ChevronLeft className="h-4 w-4"/>
+                                    <ChevronLeft className="h-4 w-4" />
                                     <span className="hidden sm:inline">Back</span>
                                 </Button>
                             )}
@@ -352,12 +381,11 @@ export default function GetHelpWizardPage() {
                                                     Icon={opt.Icon}
                                                     hint={opt.hint}
                                                     checked={helpType === opt.key}
-                                                    onChange={(v) => setValue("helpType", v, {shouldValidate: true})}
+                                                    onChange={(v) => setValue("helpType", v, { shouldValidate: true })}
                                                 />
                                             ))}
                                         </div>
-                                        {errors.helpType &&
-                                            <p className="text-xs text-destructive">{errors.helpType.message}</p>}
+                                        {errors.helpType && <p className="text-xs text-destructive">{errors.helpType.message}</p>}
                                     </div>
                                 )}
 
@@ -365,7 +393,7 @@ export default function GetHelpWizardPage() {
                                 {step === "car" && (
                                     <div className="space-y-5">
                                         <div className="flex items-center gap-2">
-                                            <Car className="h-4 w-4 text-muted-foreground"/>
+                                            <Car className="h-4 w-4 text-muted-foreground" />
                                             <Label className="text-base">Car details</Label>
                                         </div>
 
@@ -416,7 +444,7 @@ export default function GetHelpWizardPage() {
                                             </div>
                                         </div>
 
-                                        <Separator/>
+                                        <Separator />
                                     </div>
                                 )}
 
@@ -434,8 +462,7 @@ export default function GetHelpWizardPage() {
                                             </Field>
                                             <Field label="Phone" error={errors.phone?.message}>
                                                 <div className="relative">
-                                                    <Phone
-                                                        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
+                                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                                     <Input
                                                         {...register("phone")}
                                                         inputMode="tel"
@@ -449,14 +476,12 @@ export default function GetHelpWizardPage() {
 
                                         {/* Location capture */}
                                         <div className="rounded-xl border p-3">
-                                            <div
-                                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                                 <div className="space-y-1">
                                                     <Label className="text-sm">Your location</Label>
                                                     {!loc && !locError && (
                                                         <p className="text-xs text-muted-foreground">
-                                                            Share your current location so nearby providers can find you
-                                                            faster.
+                                                            Share your current location so nearby providers can find you faster.
                                                         </p>
                                                     )}
                                                     {loc && (
@@ -465,16 +490,18 @@ export default function GetHelpWizardPage() {
                                                             <span className="font-medium">
                                 {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
                               </span>
-                                                            {typeof loc.accuracy === "number" && <> •
-                                                                ±{Math.round(loc.accuracy)} m</>}
+                                                            {typeof loc.accuracy === "number" && <> • ±{Math.round(loc.accuracy)} m</>}
                                                         </p>
                                                     )}
-                                                    {locError && (
+
+                                                    {locError === GEO_ERROR_BLOCKED ? (
+                                                        <BlockedLocationHelp onRetry={requestLocation} />
+                                                    ) : locError ? (
                                                         <p className="flex items-center gap-1 text-xs text-destructive">
-                                                            <AlertTriangle className="h-3.5 w-3.5"/>
+                                                            <AlertTriangle className="h-3.5 w-3.5" />
                                                             {locError}
                                                         </p>
-                                                    )}
+                                                    ) : null}
                                                 </div>
 
                                                 <Button
@@ -484,7 +511,7 @@ export default function GetHelpWizardPage() {
                                                     disabled={locBusy}
                                                     className="whitespace-nowrap h-10"
                                                 >
-                                                    <Crosshair className="mr-2 h-4 w-4"/>
+                                                    <Crosshair className="mr-2 h-4 w-4" />
                                                     {locBusy ? "Locating..." : loc ? "Refresh location" : "Use my location"}
                                                 </Button>
                                             </div>
@@ -500,7 +527,7 @@ export default function GetHelpWizardPage() {
                         <CardContent className="space-y-4">
                             <div className="rounded-lg border p-3">
                                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                                    <MapPin className="h-4 w-4"/>
+                                    <MapPin className="h-4 w-4" />
                                     <span>
                     Showing results near{" "}
                                         <strong>
@@ -512,7 +539,7 @@ export default function GetHelpWizardPage() {
 
                             {loadingProviders && (
                                 <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Fetching nearby providers…
                                 </div>
                             )}
@@ -526,8 +553,7 @@ export default function GetHelpWizardPage() {
                             {!loadingProviders && (providers?.length ?? 0) > 0 && (
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     {providers!.map((p) => (
-                                        <ProviderCard key={p.id} provider={p}
-                                                      smsBody={buildSmsBody(getValues(), loc!)}/>
+                                        <ProviderCard key={p.id} provider={p} smsBody={buildSmsBody(getValues(), loc!)} />
                                     ))}
                                 </div>
                             )}
@@ -537,19 +563,17 @@ export default function GetHelpWizardPage() {
             </section>
 
             {/* ---------------------------- FIXED ACTION BAR ---------------------------- */}
-            <div
-                className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div className="mx-auto w-full max-w-2xl px-4 py-3 pb-[env(safe-area-inset-bottom)]">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                         {/* Back */}
                         {step !== "help" ? (
-                            <Button type="button" variant="secondary" className="h-11 w-full sm:flex-1"
-                                    onClick={onBack}>
-                                <ChevronLeft className="mr-1.5 h-4 w-4"/>
+                            <Button type="button" variant="secondary" className="h-11 w-full sm:flex-1" onClick={onBack}>
+                                <ChevronLeft className="mr-1.5 h-4 w-4" />
                                 Back
                             </Button>
                         ) : (
-                            <div className="hidden sm:block sm:flex-1"/>
+                            <div className="hidden sm:block sm:flex-1" />
                         )}
 
                         {/* Primary */}
@@ -563,7 +587,7 @@ export default function GetHelpWizardPage() {
                             >
                                 {step === "contact" && (isSubmitting || loadingProviders) ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Finding providers…
                                     </>
                                 ) : (
@@ -571,14 +595,13 @@ export default function GetHelpWizardPage() {
                                         {step === "help" && "Next"}
                                         {step === "car" && "Next"}
                                         {step === "contact" && "Confirm & Request"}
-                                        <ArrowRight className="ml-2 h-4 w-4"/>
+                                        <ArrowRight className="ml-2 h-4 w-4" />
                                     </>
                                 )}
                             </Button>
                         ) : (
                             <div className="flex w-full gap-2">
-                                <Button type="button" variant="secondary" className="h-11 w-full sm:flex-1"
-                                        onClick={() => setStep("contact")}>
+                                <Button type="button" variant="secondary" className="h-11 w-full sm:flex-1" onClick={() => setStep("contact")}>
                                     Edit Contact
                                 </Button>
                                 <Button
@@ -648,14 +671,14 @@ function HelpTile({
                         checked ? "bg-primary text-primary-foreground border-primary" : "bg-muted"
                     )}
                 >
-                    <Icon className="h-5 w-5"/>
+                    <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
                     <div className="font-medium">{label}</div>
                     <div className="text-xs text-muted-foreground">{hint}</div>
                 </div>
                 <RadioGroup className="hidden">
-                    <RadioGroupItem id={`help-${value}`} value={value}/>
+                    <RadioGroupItem id={`help-${value}`} value={value} />
                 </RadioGroup>
             </div>
         </Label>
@@ -682,34 +705,30 @@ function ProviderCard({
                         <span>{provider.distance_km.toFixed(1)} km away</span>
                         {typeof provider.rating === "number" && (
                             <span className="inline-flex items-center gap-1">
-                <Star className="h-3.5 w-3.5"/>
+                <Star className="h-3.5 w-3.5" />
                                 {provider.rating.toFixed(1)} {provider.jobs ? `• ${provider.jobs} jobs` : ""}
               </span>
                         )}
-                        {provider.min_callout_fee != null &&
-                            <span>• min callout: ${provider.min_callout_fee.toFixed(0)}</span>}
+                        {provider.min_callout_fee != null && <span>• min callout: ${provider.min_callout_fee.toFixed(0)}</span>}
                         {provider.coverage_radius_km != null && <span>• radius: {provider.coverage_radius_km} km</span>}
                     </div>
 
                     {provider.services.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                             {provider.services.slice(0, 3).map((s) => (
-                                <span key={s.code} className="rounded-full border px-2 py-0.5 text-[11px]"
-                                      title={s.name}>
+                                <span key={s.code} className="rounded-full border px-2 py-0.5 text-[11px]" title={s.name}>
                   {s.name}
                                     {typeof s.price === "number" ? ` • $${s.price}` : ""}
                 </span>
                             ))}
                             {provider.services.length > 3 && (
-                                <span
-                                    className="text-[11px] text-muted-foreground">+{provider.services.length - 3} more</span>
+                                <span className="text-[11px] text-muted-foreground">+{provider.services.length - 3} more</span>
                             )}
                         </div>
                     )}
                 </div>
 
-                <a href={mapsHref} target="_blank" rel="noreferrer" className="rounded-md border px-2 py-1 text-xs"
-                   title="Open in Maps">
+                <a href={mapsHref} target="_blank" rel="noreferrer" className="rounded-md border px-2 py-1 text-xs" title="Open in Maps">
                     Map
                 </a>
             </div>
@@ -726,8 +745,38 @@ function ProviderCard({
     );
 }
 
-/* --------------------- helpers --------------------- */
+function BlockedLocationHelp({ onRetry }: { onRetry: () => void }) {
+    return (
+        <div className="mt-2 rounded-md border border-amber-300/60 bg-amber-50 p-3 text-amber-900">
+            <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4" />
+                <div className="space-y-1 text-xs">
+                    <div className="font-semibold">Location permission is blocked for this site.</div>
+                    <p>
+                        Enable it in your browser’s <span className="font-medium">Site settings</span>, then return and tap{" "}
+                        <span className="font-medium">Try again</span>.
+                    </p>
+                    <ul className="list-inside list-disc space-y-0.5 text-[11px] opacity-90">
+                        <li>
+                            <span className="font-medium">Chrome:</span> Lock icon → Site settings → <em>Location</em> → Allow
+                        </li>
+                        <li>
+                            <span className="font-medium">Safari (iOS):</span> Settings → Privacy &amp; Security → Location Services →
+                            Safari Websites → While Using
+                        </li>
+                    </ul>
+                    <div className="pt-1">
+                        <Button type="button" size="sm" onClick={onRetry}>
+                            Try again
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
+/* --------------------- helpers --------------------- */
 function buildSmsBody(values: HelpForm, loc: GeoFix) {
     const mapsLink = `https://maps.google.com/?q=${loc.lat},${loc.lng}`;
     const parts = [
@@ -759,15 +808,13 @@ async function refreshSearchAgain(
 }
 
 /* --------------------- mock data (replace with API) --------------------- */
-
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
     const toRad = (v: number) => (v * Math.PI) / 180;
     const R = 6371; // km
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
     const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+        Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
@@ -783,9 +830,9 @@ async function mockFindProviders(help: HelpForm["helpType"], lat: number, lng: n
             min_callout_fee: 30,
             coverage_radius_km: 12,
             services: [
-                {code: "battery", name: "Battery Jumpstart", price: 20, unit: "flat"},
-                {code: "tyres", name: "Tyre Change", price: 15, unit: "flat"},
-                {code: "engine_oil", name: "Oil Top-up", price: 25, unit: "flat"},
+                { code: "battery", name: "Battery Jumpstart", price: 20, unit: "flat" },
+                { code: "tyres", name: "Tyre Change", price: 15, unit: "flat" },
+                { code: "engine_oil", name: "Oil Top-up", price: 25, unit: "flat" },
             ],
             lat: 5.6037,
             lng: -0.187,
@@ -798,7 +845,7 @@ async function mockFindProviders(help: HelpForm["helpType"], lat: number, lng: n
             jobs: 180,
             min_callout_fee: 50,
             coverage_radius_km: 25,
-            services: [{code: "towing", name: "City Tow", price: 70, unit: "trip"}],
+            services: [{ code: "towing", name: "City Tow", price: 70, unit: "trip" }],
             lat: 5.614,
             lng: -0.205,
         },
@@ -810,7 +857,7 @@ async function mockFindProviders(help: HelpForm["helpType"], lat: number, lng: n
             jobs: 95,
             min_callout_fee: 20,
             coverage_radius_km: 10,
-            services: [{code: "tyres", name: "Puncture Fix", price: 10, unit: "flat"}],
+            services: [{ code: "tyres", name: "Puncture Fix", price: 10, unit: "flat" }],
             lat: 5.6,
             lng: -0.18,
         },
@@ -822,7 +869,7 @@ async function mockFindProviders(help: HelpForm["helpType"], lat: number, lng: n
             jobs: 70,
             min_callout_fee: 15,
             coverage_radius_km: 8,
-            services: [{code: "engine_oil", name: "Oil Change", price: 35, unit: "service"}],
+            services: [{ code: "engine_oil", name: "Oil Change", price: 35, unit: "service" }],
             lat: 5.59,
             lng: -0.2,
         },

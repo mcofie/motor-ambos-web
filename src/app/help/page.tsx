@@ -31,6 +31,24 @@ import {
     Loader2,
 } from "lucide-react";
 
+// ---- type-safe error guards ----
+function isRecord(val: unknown): val is Record<string, unknown> {
+    return typeof val === "object" && val !== null;
+}
+
+type GeoErrorLike = { code: number; message?: string };
+function isGeoErrorLike(e: unknown): e is GeoErrorLike {
+    return isRecord(e) && typeof e.code === "number";
+}
+
+function extractErrorMessage(e: unknown): string | null {
+    if (isRecord(e) && "message" in e) {
+        const msg = (e as { message: unknown }).message;
+        return typeof msg === "string" ? msg : null;
+    }
+    return null;
+}
+
 /* --------------------- Schema --------------------- */
 const HelpSchema = z.object({
     helpType: z.enum(["battery", "tyres", "engine_oil", "towing"]),
@@ -194,14 +212,18 @@ export default function GetHelpWizardPage() {
             });
         } catch (e: unknown) {
             let msg = "Failed to get your location.";
-            const ge = e as GeolocationPositionError | { code?: number; message?: string };
 
-            if (typeof ge?.code === "number") {
-                if (ge.code === 1) msg = "You denied the location request.";
-                else if (ge.code === 2) msg = "Location unavailable. Try moving to improve signal.";
-                else if (ge.code === 3) msg = "Location request timed out. Try again.";
-            } else if (e && typeof e === "object" && "message" in (e as any)) {
-                msg = String((e as any).message);
+            if (isGeoErrorLike(e)) {
+                if (e.code === 1) msg = "You denied the location request.";
+                else if (e.code === 2) msg = "Location unavailable. Try moving to improve signal.";
+                else if (e.code === 3) msg = "Location request timed out. Try again.";
+                // fallthrough to message extraction if provided
+                if (e.message && typeof e.message === "string") {
+                    msg = e.message;
+                }
+            } else {
+                const m = extractErrorMessage(e);
+                if (m) msg = m;
             }
 
             setLocError(msg);

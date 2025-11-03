@@ -367,10 +367,10 @@ export default function GetHelpWizardPage() {
 
             {/* Content: pad for fixed action bar */}
             <section className="mx-auto w-full max-w-2xl px-4 py-6 pb-36 sm:pb-32">
-                <Card className="border-2 rounded-2xl">
+                <div className="rounded-2xl">
                     <CardHeader className="space-y-1">
                         <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg sm:text-xl font-extrabold">
+                            <CardTitle className="text-lg sm:text-xl font-extrabold py-2">
                                 {step === "help" && "What do you need help with?"}
                                 {step === "car" && "Your car details"}
                                 {step === "contact" && "How can we reach you?"}
@@ -580,7 +580,7 @@ export default function GetHelpWizardPage() {
                             )}
                         </CardContent>
                     )}
-                </Card>
+                </div>
             </section>
 
             {/* ---------------------------- FIXED ACTION BAR ---------------------------- */}

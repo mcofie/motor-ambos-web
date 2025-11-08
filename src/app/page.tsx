@@ -2,12 +2,39 @@ import Link from "next/link";
 import type {Metadata} from "next";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
+import Image from "next/image";
 import {
-    Car, Wrench, Shield, PhoneCall, MapPin, ArrowRight, Menu,
-    Fuel, Droplet, BatteryCharging, Sparkles, Truck, ToolCase, Navigation2,
-    Smartphone, Crown, QrCode, Users, Star, CreditCard
+    Car,
+    Wrench,
+    Shield,
+    PhoneCall,
+    MapPin,
+    ArrowRight,
+    Menu,
+    Fuel,
+    Droplet,
+    BatteryCharging,
+    Sparkles,
+    Truck,
+    ToolCase,
+    Navigation2,
+    Smartphone,
+    Crown,
+    QrCode,
+    Users,
+    Star,
+    CreditCard,
 } from "lucide-react";
 import {ThemeToggle} from "@/components/ThemeToggle";
+import {Card, CardContent} from "@/components/ui/card";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
+import {AppStoreButtons} from "@/components/AppStoreButtons";
 
 export const metadata: Metadata = {
     title: "Motor Ambos — Roadside & On-Demand Car Care",
@@ -16,6 +43,7 @@ export const metadata: Metadata = {
 };
 
 export default function LandingPage() {
+    const services = ["5.png", "7.png", "11.png", "9.png"];
     return (
         <main className="min-h-screen bg-background text-foreground">
             {/* Skip link */}
@@ -26,54 +54,54 @@ export default function LandingPage() {
                 Skip to content
             </a>
 
-            {/* Header */}
-            <header
-                className="sticky top-0 z-40 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <Link
-                            href="/"
-                            className="flex items-center gap-2 font-semibold text-base sm:text-lg"
-                            aria-label="Motor Ambos home"
-                        >
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 ring-1 ring-primary/25">
-                <Car className="h-4.5 w-4.5 text-primary"/>
-              </span>
-                            Motor Ambos
-                        </Link>
+            {/* Header (theme-aware card w/ blur) */}
+            <header className="my-6 sm:my-8 w-full">
+                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+                    <div
+                        className="rounded-2xl border border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+                        <div className="px-4 sm:px-6 py-4">
+                            <div className="flex items-center justify-between">
+                                <Link
+                                    href="/"
+                                    className="flex items-center gap-2 font-semibold text-base sm:text-lg"
+                                    aria-label="Motor Ambos home"
+                                >
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 ring-1 ring-primary/25">
+                    <Car className="h-4.5 w-4.5 text-primary"/>
+                  </span>
+                                    <span className="hidden xs:inline">Motor Ambos</span>
+                                </Link>
 
-                        {/* Desktop nav */}
-                        <nav className="hidden md:flex items-center gap-1 sm:gap-2">
-                            <TopNavLink href="#how">How it works</TopNavLink>
-                            <TopNavLink href="#services">Services</TopNavLink>
-                            <TopNavLink href="#membership">Membership & App</TopNavLink>
-                            <TopNavLink href="/login">Log in</TopNavLink>
-                            <Button asChild className="shadow-sm hover:shadow">
-                                <Link href="/signup">Sign up</Link>
-                            </Button>
-                            <ThemeToggle/>
-                        </nav>
+                                {/* Desktop nav */}
+                                <nav className="hidden md:flex items-center gap-1 sm:gap-2">
+                                    <TopNavLink href="#membership">Membership & App</TopNavLink>
+                                    <Button asChild className="shadow-sm hover:shadow">
+                                        <Link href="/signup">Join now</Link>
+                                    </Button>
+                                    <ThemeToggle/>
+                                </nav>
 
-                        {/* Mobile */}
-                        <div className="md:hidden flex items-center gap-1">
-                            <ThemeToggle/>
-                            <Button variant="ghost" size="icon" aria-label="Open menu">
-                                <Menu className="h-5 w-5"/>
-                            </Button>
+                                {/* Mobile */}
+                                <div className="md:hidden flex items-center gap-1">
+                                    <ThemeToggle/>
+                                    <Button variant="ghost" size="icon" aria-label="Open menu">
+                                        <Menu className="h-5 w-5"/>
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </header>
 
-            {/* HERO — neon gradient ribbon */}
-            <section className="relative isolate overflow-hidden border-b">
-                {/* === Backgrounds === */}
+            {/* HERO — theme-aware neon ribbon */}
+            <section className="relative isolate overflow-hidden">
                 {/* Neon ribbon sweep */}
                 <div className="pointer-events-none absolute inset-0 -z-10">
                     <div
                         className="absolute inset-x-[-20%] top-[-35%] h-[140%] rotate-[-3deg]
-                 bg-[conic-gradient(at_10%_10%,theme(colors.primary)_0deg,theme(colors.accent/70)_130deg,transparent_240deg)]
-                 opacity-30 blur-3xl"
+            bg-[conic-gradient(at_10%_10%,theme(colors.primary)_0deg,theme(colors.primary/70)_130deg,transparent_240deg)]
+            opacity-25 dark:opacity-40 blur-3xl"
                     />
                 </div>
 
@@ -81,279 +109,202 @@ export default function LandingPage() {
                 <div
                     aria-hidden
                     className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[40rem] w-[40rem]
-               -translate-x-1/2 rounded-full bg-primary/15 blur-3xl dark:bg-primary/25"
+          -translate-x-1/2 rounded-full bg-primary/10 dark:bg-primary/20 blur-3xl"
                 />
 
                 {/* Subtle grid overlay */}
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 -z-10 opacity-[0.12] [mask-image:radial-gradient(60%_60%_at_50%_30%,black,transparent)]
-               bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)]
-               bg-[size:36px_36px]"
+                    className="pointer-events-none absolute inset-0 -z-10 opacity-[0.08] dark:opacity-[0.12]
+          [mask-image:radial-gradient(60%_60%_at_50%_30%,black,transparent)]
+          bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)]
+          bg-[size:36px_36px]"
                 />
 
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-16 md:py-24">
-                    <div className="max-w-3xl">
-                        <Badge variant="secondary" className="mb-4 rounded-full">
-                            Decentralised car-care network
-                        </Badge>
-
-                        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05]">
-        <span className="relative inline-block">
-          <span className="bg-gradient-to-r from-primary via-foreground/90 to-primary bg-clip-text text-transparent">
-            Get help for your car
-          </span>
-            {/* Accent underline */}
-            <span
-                aria-hidden
-                className="absolute -bottom-2 left-0 h-[6px] w-full rounded-full bg-accent/70 blur-[1px]"
-            />
-        </span>{" "}
-                            — fast, transparent, anywhere.
+                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 sm:py-16 md:py-24">
+                    <div className="max-w-3xl text-center mx-auto">
+                        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
+                            Get help for your car <span className="text-primary">fast</span>, transparent, anywhere.
                         </h1>
 
-                        <p className="mt-5 text-base md:text-lg/7 text-muted-foreground">
-                            MotorAmbos connects drivers to nearby, verified mechanics and on-demand providers.
-                            See pricing up front, choose by distance and rating, and connect instantly.
-                            Providers don’t need an app — SMS works out of the box.
+                        <p className="mt-5 text-sm sm:text-base md:text-lg/7 text-muted-foreground max-w-2xl mx-auto">
+                            MotorAmbos connects drivers to nearby, verified mechanics and on-demand providers. See
+                            pricing up front,
+                            choose by distance and rating, and connect instantly. Providers don’t need an app — SMS
+                            works out of the box.
                         </p>
 
-                        {/* Highlights */}
-                        <div
-                            className="mt-7 inline-flex flex-wrap items-center gap-3 rounded-2xl border bg-card/80 px-3 py-2 ring-4 ring-primary/10">
-                            <HeroChip icon={<MapPin className="h-3.5 w-3.5"/>} text="Launching in Accra"/>
-                            <HeroChip icon={<Shield className="h-3.5 w-3.5"/>} text="Verified providers"/>
-                            <HeroChip icon={<PhoneCall className="h-3.5 w-3.5"/>} text="SMS-ready"/>
-                        </div>
-
-                        {/* CTAs */}
-                        <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                            <Button asChild size="lg" className="h-11 px-6 shadow-sm hover:shadow-md">
+                        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                            <Button asChild size="lg" className="gap-2 w-full sm:w-auto">
                                 <Link href="/help">
-                                    Get help now <ArrowRight className="ml-2 h-4 w-4"/>
+                                    Request roadside help <ArrowRight className="h-4 w-4"/>
                                 </Link>
                             </Button>
-                            <Button asChild size="lg" variant="secondary" className="h-11 px-6">
-                                <Link href="/providers">Become a provider</Link>
+                            <Button asChild size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
+                                <Link href="#services">Explore services</Link>
                             </Button>
                         </div>
-
-                        {/* Service chips */}
-                        <div className="mt-6 flex flex-wrap gap-2">
-                            {[
-                                {icon: <Wrench className="h-4 w-4"/>, label: "Roadside"},
-                                {icon: <Fuel className="h-4 w-4"/>, label: "Fuel delivery"},
-                                {icon: <Sparkles className="h-4 w-4"/>, label: "Car wash"},
-                                {icon: <Droplet className="h-4 w-4"/>, label: "Oil change"},
-                                {icon: <BatteryCharging className="h-4 w-4"/>, label: "Battery"},
-                                {icon: <ToolCase className="h-4 w-4"/>, label: "Tyres"},
-                            ].map((s) => (
-                                <span
-                                    key={s.label}
-                                    className="inline-flex items-center gap-1 rounded-full border bg-card px-2.5 py-1 text-xs shadow-sm
-                       transition-colors hover:border-primary/50"
-                                >
-            {s.icon}
-                                    {s.label}
-          </span>
-                            ))}
-                        </div>
-
-                        {/* Trust bar */}
-                        <dl className="mt-8 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3 lg:max-w-2xl">
-                            <div className="rounded-lg border bg-background/70 px-3 py-2">
-                                <dt className="text-muted-foreground">Avg. response</dt>
-                                <dd className="font-semibold">~12 min</dd>
-                            </div>
-                            <div className="rounded-lg border bg-background/70 px-3 py-2">
-                                <dt className="text-muted-foreground">Verified providers</dt>
-                                <dd className="font-semibold">100% KYC</dd>
-                            </div>
-                            <div className="rounded-lg border bg-background/70 px-3 py-2 sm:col-span-1 col-span-2">
-                                <dt className="text-muted-foreground">Coverage</dt>
-                                <dd className="font-semibold">Accra (expanding)</dd>
-                            </div>
-                        </dl>
                     </div>
                 </div>
             </section>
+
             {/* Content anchor */}
             <div id="content"/>
 
-            {/* WHY — colourful lines instead of cards */}
-            <section className="relative bg-card border-b" aria-labelledby="value-heading">
-                {/* colored band behind section title */}
-                <div
-                    className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-12 bg-gradient-to-r from-primary/15 via-accent/10 to-primary/15"/>
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-16">
-                    <h2 id="value-heading" className="text-xl font-semibold tracking-tight">Why MotorAmbos?</h2>
-
-                    <ul className="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                        <VariantRow
-                            icon={<Shield className="h-5 w-5" aria-hidden="true"/>}
-                            title="Trusted network"
-                            body="We verify providers and show ratings so you choose with confidence."
-                        />
-                        <VariantRow
-                            icon={<Navigation2 className="h-5 w-5" aria-hidden="true"/>}
-                            title="Nearby in minutes"
-                            body="Sorted by distance, coverage radius, and availability to cut wait times."
-                        />
-                        <VariantRow
-                            icon={<ToolCase className="h-5 w-5" aria-hidden="true"/>}
-                            title="Transparent pricing"
-                            body="See callout fees and rate cards up front — no surprises."
-                        />
-                    </ul>
-                </div>
-            </section>
-
-            {/* SERVICES — split lists with accents */}
-            <section id="services" className="relative bg-background border-b" aria-labelledby="services-heading">
-                <div
-                    className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-10 bg-gradient-to-r from-accent/20 via-transparent to-accent/20"/>
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-16">
-                    <h2 id="services-heading" className="text-2xl md:text-3xl font-bold">Services</h2>
-
-                    <div className="mt-6 grid gap-10 md:grid-cols-2">
-                        <ServiceList title="Roadside assistance" icon={<Wrench className="h-5 w-5"/>}
-                                     items={["Jumpstart", "Towing", "Diagnostics", "Tyre change", "Lockout"]}/>
-                        <ServiceList title="Fuel delivery" icon={<Fuel className="h-5 w-5"/>}
-                                     items={["Petrol & diesel top-ups", "Emergency refuel"]}/>
-                        <ServiceList title="Oil change" icon={<Droplet className="h-5 w-5"/>}
-                                     items={["Engine oil & filter", "Service reminder log"]}/>
-                        <ServiceList title="Battery & tyres" icon={<BatteryCharging className="h-5 w-5"/>}
-                                     items={["Jumpstart & test", "On-site replacement", "Tyre patch/replace"]}/>
-                        <ServiceList title="Car wash & detailing" icon={<Sparkles className="h-5 w-5"/>}
-                                     items={["Waterless wash", "Interior clean", "Full detail (on-site)"]}/>
-                        <ServiceList title="Fleet & membership" icon={<Truck className="h-5 w-5"/>}
-                                     items={["Priority response", "Discounted rates", "Monthly subscriptions"]}/>
+            {/* Value band */}
+            <section className="w-full bg-primary/95 text-primary-foreground">
+                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10">
+                    <div className="rounded-2xl border border-primary/40 bg-card/10 backdrop-blur">
+                        <div className="mx-auto w-full max-w-3xl text-center px-4 sm:px-6 py-12 md:py-16">
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold">
+                                Save money and time with transparent rates, priority response, and concierge
+                                coordination.
+                            </h2>
+                            <div className="mt-6">
+                                <Button asChild size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
+                                    <Link href="#services">Explore services</Link>
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* MEMBERSHIP & APP — panel look, no borders */}
-            <section id="membership" className="relative bg-card border-b" aria-labelledby="mem-heading">
-                <div
-                    className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_10%_10%,theme(colors.primary/12),transparent_70%)] dark:bg-[radial-gradient(60%_40%_at_10%_10%,theme(colors.primary/15),transparent_70%)]"/>
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-16">
-                    <h2 id="mem-heading" className="text-2xl md:text-3xl font-bold">Membership & Mobile App</h2>
-
-                    <div className="mt-8 grid gap-10 lg:grid-cols-2">
-                        <section
-                            className="rounded-2xl bg-background/80 p-6 shadow-[0_10px_30px_-15px_rgba(0,0,0,.25)] ring-1 ring-border">
-                            <header className="flex items-center gap-2">
-                                <Crown className="h-5 w-5 text-primary"/>
-                                <h3 className="text-lg font-semibold">MotorAmbos Membership</h3>
-                            </header>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                                Priority response, member pricing, and a digital card (Wallet, QR/NFC).
-                                Works online or offline with provider SMS verification.
-                            </p>
-
-                            <ul className="mt-4 grid gap-2 text-sm">
-                                <Li icon={<Star className="h-4 w-4"/>}>Priority dispatch</Li>
-                                <Li icon={<CreditCard className="h-4 w-4"/>}>Member pricing</Li>
-                                <Li icon={<QrCode className="h-4 w-4"/>}>QR / NFC verification</Li>
-                            </ul>
-
-                            <div className="mt-5 flex gap-2">
-                                <Button asChild><Link href="/membership">See plans</Link></Button>
-                                <Button asChild variant="outline"><Link href="/wallet">Add to Wallet</Link></Button>
-                            </div>
-                        </section>
-
-                        <section
-                            className="rounded-2xl bg-background/80 p-6 shadow-[0_10px_30px_-15px_rgba(0,0,0,.25)] ring-1 ring-border">
-                            <header className="flex items-center gap-2">
-                                <Smartphone className="h-5 w-5 text-primary"/>
-                                <h3 className="text-lg font-semibold">The App (driver first)</h3>
-                            </header>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                                Request help, compare providers, chat with SMS fallback, and track jobs.
-                                Providers can stay SMS-only or upgrade to the PWA later.
-                            </p>
-
-                            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                                <Chip>Live location & ETA</Chip>
-                                <Chip>Rate cards & reviews</Chip>
-                                <Chip>Receipts & history</Chip>
-                            </div>
-
-                            <div className="mt-5 flex gap-2">
-                                <Button asChild variant="secondary"><Link href="/app">Get the app</Link></Button>
-                                <Button asChild variant="ghost"><Link href="/learn">Learn more</Link></Button>
-                            </div>
-                        </section>
-                    </div>
+            {/* Services */}
+            <section id="services" className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-10">
+                <div className="text-center">
+                    <h2 className="text-2xl md:text-4xl tracking-tight leading-[1.15]">Services</h2>
+                    <p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
+                        Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
+                        laudantium, totam rem
+                        aperiam, eaque ipsa.
+                    </p>
                 </div>
+                <Carousel className="mt-6">
+                    <CarouselContent>
+                        {services.map((file, index) => (
+                            <CarouselItem key={index} className="pl-1 xs:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                                <div className="p-2 h-full">
+                                    <Card
+                                        className="border-0 bg-background hover:border-primary/60 transition-colors h-full">
+                                        <CardContent
+                                            className="flex aspect-square items-center justify-center p-4 sm:p-6">
+                                            <Image
+                                                src={`/images/${file}`}
+                                                alt={`Service ${index + 1}`}
+                                                width={800}
+                                                height={800}
+                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                                className="rounded-xl object-cover w-full h-full"
+                                                priority={index < 2}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious/>
+                    <CarouselNext/>
+                </Carousel>
             </section>
 
-            {/* HOW — driver & provider */}
-            <section id="how" className="bg-background" aria-labelledby="how-heading">
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-16">
-                    <h2 id="how-heading" className="text-2xl md:text-3xl font-bold">
-                        How to get help & become a provider
-                    </h2>
-
-                    <div className="mt-8 grid gap-10 lg:grid-cols-2">
-                        <section>
-                            <h3 className="text-lg font-semibold">For Drivers</h3>
-                            <div className="mt-4 space-y-3">
-                                <StepRow n="1"
-                                         text="Tell us your location & issue (fuel, wash, oil, battery, tyres, roadside)."/>
-                                <StepRow n="2"
-                                         text="Compare providers by distance, rating, and price. Pick your match."/>
-                                <StepRow n="3"
-                                         text="Connect instantly. Use chat or SMS fallback; pay provider directly."/>
-                            </div>
-                            <div className="mt-5">
-                                <Button asChild><Link href="/help">Get help</Link></Button>
-                            </div>
-                        </section>
-
-                        <section>
-                            <div className="flex items-center gap-2">
-                                <Users className="h-5 w-5 text-primary"/>
-                                <h3 className="text-lg font-semibold">For Providers</h3>
-                            </div>
-                            <div className="mt-4 space-y-3">
-                                <StepRow n="1" text="Apply and get verified (ID + service checks)."/>
-                                <StepRow n="2" text="Set your coverage radius, callout fee, and rate card."/>
-                                <StepRow n="3" text="Receive jobs by SMS; reply to accept. Upgrade to PWA when ready."/>
-                            </div>
-                            <div className="mt-5 flex gap-2">
-                                <Button asChild variant="secondary"><Link href="/providers">Apply as a
-                                    provider</Link></Button>
-                                <Button asChild variant="ghost"><Link href="/providers/faq">Provider FAQ</Link></Button>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-            </section>
-
-            {/* CTA */}
-            <section aria-labelledby="cta-heading" className="relative bg-secondary text-secondary-foreground">
+            {/* Membership section */}
+            <section id="membership" className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-20">
                 <div
-                    className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(80%_60%_at_80%_0%,theme(colors.primary/18),transparent_70%)]"/>
-                <div
-                    className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10 md:py-12 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <h3 id="cta-heading" className="text-xl md:text-2xl font-bold">Need help right now?</h3>
-                        <p className="text-sm md:text-base text-secondary-foreground/80">
-                            Request a nearby provider in a few taps — fuel, wash, oil, tyres, battery or roadside.
+                    className="rounded-2xl flex flex-col items-center justify-center border border-border bg-primary text-primary-foreground px-4 sm:px-6 py-12 md:py-16">
+                    <h2 className="text-2xl md:text-5xl leading-[1.05] my-2 text-center">Become a member</h2>
+                    <div className="flex flex-col items-center justify-center text-center mx-auto p-2 sm:p-6">
+                        <div className="relative w-full max-w-sm sm:max-w-md md:max-w-lg">
+                            <Image
+                                src="/images/membership_card.png"
+                                alt="Membership card"
+                                width={1200}
+                                height={800}
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 70vw, 600px"
+                                className="rounded-xl object-cover shadow-sm ring-1 ring-border w-full h-auto"
+                                priority
+                            />
+                            {/* subtle glow that adapts to theme */}
+                            <span
+                                className="pointer-events-none absolute inset-0 rounded-xl shadow-[0_0_40px_4px_theme(colors.primary/10)] dark:shadow-[0_0_50px_6px_theme(colors.primary/15)]"/>
+                        </div>
+                        <p className="mt-6 max-w-2xl text-sm md:text-base text-primary-foreground/90">
+                            Save money and time with transparent rates, priority response, and concierge coordination.
+                            Your digital
+                            card is QR-enabled and works across our network.
                         </p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button asChild size="lg" className="h-11 px-6"><Link href="/help">Get help</Link></Button>
-                        <Button asChild size="lg" variant="outline" className="h-11 px-6"><Link href="/providers">Become
-                            a provider</Link></Button>
+                        <div className="mt-5 flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                            <Button asChild className="w-full sm:w-auto">
+                                <Link href="/signup">Join Membership</Link>
+                            </Button>
+                            <Button asChild variant="outline"
+                                    className="w-full sm:w-auto bg-transparent text-primary-foreground">
+                                <Link href="#why">Learn more</Link>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </section>
+
+            {/* Why section */}
+            <section id="why" className="w-full">
+                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 text-center">
+                    <h2 className="text-2xl md:text-4xl tracking-tight leading-[1.15]">Why Motor Ambos?</h2>
+                    <p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
+                        Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
+                        laudantium, totam rem
+                        aperiam, eaque ipsa.
+                    </p>
+                </div>
+                <div
+                    className="mx-auto w-full max-w-6xl px-4 sm:px-6 mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <section className="min-h-48 rounded-2xl border border-border bg-card p-6"/>
+                    <section className="min-h-48 rounded-2xl border border-border bg-card p-6"/>
+                    <section className="min-h-48 rounded-2xl border border-border bg-card p-6"/>
+                </div>
+            </section>
+
+            {/* App highlight */}
+            <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-20">
+                <div className="rounded-2xl border border-border bg-muted/40 p-4 sm:p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-6">
+                        <div className="w-full">
+                            <Image
+                                src="/images/iphone_mockup.png"
+                                alt="App mockup"
+                                width={1200}
+                                height={1200}
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                className="rounded-xl object-cover w-full h-auto"
+                                priority
+                            />
+                        </div>
+                        <div className="w-full md:pl-2">
+                            <h3 className="text-2xl sm:text-3xl md:text-5xl font-semibold">
+                                Get help for your car fast — transparent, anywhere.
+                            </h3>
+                            <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-prose">
+                                Book fuel delivery, wash, jumpstart, tyre fixes, or towing. Pick providers by distance,
+                                rating, and
+                                rate card — no surprises.
+                            </p>
+                            <div className="mt-5 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                <AppStoreButtons/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Accent band */}
+            {/*<section className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10">*/}
+            {/*</section>*/}
+            <div className="border border-border bg-black/90 min-h-40 sm:min-h-56"/>
+
 
             {/* Footer */}
-            <footer className="border-t bg-background">
+            <footer className="border-border bg-background">
                 <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 text-sm text-muted-foreground">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div>© {new Date().getFullYear()} MotorAmbos</div>
@@ -371,86 +322,16 @@ export default function LandingPage() {
 
 /* ---------- Presentational bits (lightweight, colourful) ---------- */
 
-function TopNavLink({href, children}: { href: string; children: React.ReactNode }) {
+function TopNavLink({
+                        href,
+                        children,
+                    }: {
+    href: string;
+    children: React.ReactNode;
+}) {
     return (
         <Button asChild variant="ghost" className="rounded-full hover:bg-primary/10">
             <Link href={href}>{children}</Link>
         </Button>
-    );
-}
-
-function HeroChip({icon, text}: { icon: React.ReactNode; text: string }) {
-    return (
-        <span
-            className="inline-flex items-center gap-2 rounded-full border bg-card/80 px-3 py-1.5 text-xs ring-1 ring-primary/10">
-      {icon}
-            <span className="font-medium">{text}</span>
-    </span>
-    );
-}
-
-function VariantRow({icon, title, body}: { icon: React.ReactNode; title: string; body: string }) {
-    return (
-        <li className="group">
-            <div className="flex items-start gap-3">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
-          {icon}
-        </span>
-                <div className="flex-1">
-                    <h3 className="font-semibold">{title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-                </div>
-            </div>
-            <div
-                className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent group-hover:via-primary/40 transition-colors"/>
-        </li>
-    );
-}
-
-function ServiceList({title, icon, items}: { title: string; icon: React.ReactNode; items: string[] }) {
-    return (
-        <section>
-            <header className="flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-md bg-background ring-1 ring-border">
-          {icon}
-        </span>
-                <h3 className="text-lg font-semibold">{title}</h3>
-            </header>
-            <ul className="mt-3 divide-y">
-                {items.map((i) => (
-                    <li key={i} className="flex items-center justify-between py-2">
-                        <span className="text-sm text-muted-foreground">{i}</span>
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary/60"/>
-                    </li>
-                ))}
-            </ul>
-        </section>
-    );
-}
-
-function Li({children, icon}: { children: React.ReactNode; icon?: React.ReactNode }) {
-    return (
-        <div className="inline-flex items-center gap-2">
-      <span className="grid h-5 w-5 place-items-center rounded-md bg-primary/15 text-primary">
-        {icon}
-      </span>
-            <span>{children}</span>
-        </div>
-    );
-}
-
-function Chip({children}: { children: React.ReactNode }) {
-    return <span className="rounded-full border bg-card px-2.5 py-1 shadow-sm">{children}</span>;
-}
-
-function StepRow({n, text}: { n: string; text: string }) {
-    return (
-        <div className="flex items-center gap-3">
-      <span
-          className="grid h-7 w-7 place-items-center rounded-md bg-primary text-primary-foreground text-xs font-semibold">
-        {n}
-      </span>
-            <span className="text-sm">{text}</span>
-        </div>
     );
 }

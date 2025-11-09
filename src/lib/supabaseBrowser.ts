@@ -1,3 +1,4 @@
+// src/lib/supabaseBrowser.ts
 "use client";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -6,12 +7,24 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 let _client: SupabaseClient | null = null;
 
 /** Debug fetch: logs every request & first 200 chars of the response body */
-function debugFetch(input: RequestInfo | URL, init?: RequestInit) {
-    const url = typeof input === "string" ? input : (input as URL).toString();
-    console.log("[sb.fetch] →", init?.method || "GET", url);
+function debugFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    // Build a helpful URL string for the log without using `any`
+    let urlStr: string;
+    if (typeof input === "string") {
+        urlStr = input;
+    } else if (input instanceof URL) {
+        urlStr = input.toString();
+    } else if (typeof Request !== "undefined" && input instanceof Request) {
+        urlStr = input.url;
+    } else {
+        // Fallback (should rarely happen)
+        urlStr = String(input);
+    }
 
-    return fetch(input as any, init).then(async (res) => {
-        // clone so we don't consume the body
+    console.log("[sb.fetch] →", init?.method || "GET", urlStr);
+
+    // Cast only to the *correct* union member (RequestInfo) instead of `any`
+    return fetch(input as RequestInfo, init).then(async (res) => {
         const clone = res.clone();
         let body = "";
         try {
@@ -39,17 +52,14 @@ export function getSupabaseBrowser(): SupabaseClient {
 
     if (!URL || !ANON) {
         // Throw early so you don't get silent "hangs"
-        throw new Error(
-            "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY"
-        );
+        throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
     }
 
     _client = createClient(URL, ANON, {
         auth: {
             persistSession: true,
             autoRefreshToken: true,
-            storage:
-                typeof window !== "undefined" ? window.localStorage : undefined,
+            storage: typeof window !== "undefined" ? window.localStorage : undefined,
         },
         global: {
             fetch: debugFetch,

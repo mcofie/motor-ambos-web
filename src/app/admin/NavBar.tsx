@@ -2,18 +2,18 @@
 "use client";
 
 import {useRouter} from "next/navigation";
-import {logout} from "@/lib/supaFetch"; // ← use the fetch-only logout
+import {logout} from "@/lib/supaFetch";
+import type {User} from "@supabase/supabase-js"; // ✅ import Supabase User type
 
-export default function NavBar({user}: { user: any }) {
+export default function NavBar({user}: { user: User | null }) {
     const router = useRouter();
 
     const handleLogout = async () => {
         try {
-            await logout();              // revoke + clear local session
+            await logout();
         } catch (e) {
             console.error("[logout] failed:", e);
         } finally {
-            // Hard redirect to guarantee client state is reset
             window.location.href = "/login";
         }
     };
@@ -28,8 +28,8 @@ export default function NavBar({user}: { user: any }) {
                 <div className="flex items-center gap-3 text-sm text-gray-700">
                     {user ? (
                         <>
-              <span className="truncate max-w-[200px]" title={user.email}>
-                {user.email}
+              <span className="truncate max-w-[200px]" title={user.email ?? "User"}>
+                {user.email ?? "User"}
               </span>
                             <button
                                 onClick={handleLogout}

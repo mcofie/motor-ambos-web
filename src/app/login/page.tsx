@@ -1,9 +1,10 @@
+import {Suspense} from "react";
 import LoginForm from "@/components/LoginForm";
 
-export default function Page() {
+export default function LoginPage() {
     return (
-        <main className="min-h-screen bg-gray-50 p-4">
+        <Suspense fallback={<div className="p-6">Loading…</div>}>
             <LoginForm/>
-        </main>
+        </Suspense>
     );
 }

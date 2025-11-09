@@ -1,12 +1,13 @@
-// app/admin/page.tsx
+// src/app/admin/page.tsx
 "use client";
 import * as React from "react";
+import type { User as SupabaseUser } from "@supabase/supabase-js"; // ✅ type-only import
 import AdminDashboard from "@/components/AdminDashboard";
 import NavBar from "./NavBar";
 import { getUser } from "@/lib/supaFetch";
 
 export default function AdminPage() {
-    const [user, setUser] = React.useState<any>(null);
+    const [user, setUser] = React.useState<SupabaseUser | null>(null); // ✅ no 'any'
     const [checking, setChecking] = React.useState(true);
 
     React.useEffect(() => {
@@ -14,14 +15,14 @@ export default function AdminPage() {
             // first attempt (getUser does its own short retries)
             const u1 = await getUser();
             if (u1) {
-                setUser(u1);
+                setUser(u1 as SupabaseUser);
                 setChecking(false);
                 return;
             }
             // one last grace attempt
             const u2 = await getUser();
             if (u2) {
-                setUser(u2);
+                setUser(u2 as SupabaseUser);
                 setChecking(false);
                 return;
             }

@@ -425,17 +425,13 @@ export default function GetHelpWizardPage() {
         if (!loc) return;
         setLoading(true);
         try {
-            const service_id = await lookupServiceIdByCode(values.helpType);
-            const list = await rpcFindProvidersByServiceId({
-                lat: loc.lat,
-                lng: loc.lng,
-                radius_km: 15,
-                service_id,
-                limit: 30,
-            });
+
+            const list = await findProvidersNear(values.helpType, loc.lat, loc.lng);
             list.sort((a, b) =>
                 a.distance_km === b.distance_km ? (b.rating ?? 0) - (a.rating ?? 0) : a.distance_km - b.distance_km
             );
+
+
             setProviders(list);
         } finally {
             setLoading(false);
@@ -840,29 +836,17 @@ export default function GetHelpWizardPage() {
                                 <Button
                                     type="button"
                                     className="h-11 w-full sm:flex-1"
-                                    onClick={async () => {
-                                        // if (!loc) return;
-                                        // setLoadingProviders(true);
-                                        // try {
-                                        //     const list = await rpcFindProviders({
-                                        //         service: getValues().helpType,
-                                        //         lat: loc.lat,
-                                        //         lng: loc.lng,
-                                        //         radius_km: 15,
-                                        //         limit: 30,
-                                        //     });
-                                        //     list.sort((a, b) =>
-                                        //         a.distance_km === b.distance_km
-                                        //             ? (b.rating ?? 0) - (a.rating ?? 0)
-                                        //             : a.distance_km - b.distance_km
-                                        //     );
-                                        //     setProviders(list);
-                                        // } finally {
-                                        //     setLoadingProviders(false);
-                                        // }
-                                    }}
+                                    disabled={loadingProviders}
+                                    onClick={() => refreshSearchAgain(setLoadingProviders, setProviders, getValues(), loc)}
                                 >
-                                    Refresh results
+                                    {loadingProviders ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                            Refreshing results…
+                                        </>
+                                    ) : (
+                                        "Refresh results"
+                                    )}
                                 </Button>
                             </div>
                         )}

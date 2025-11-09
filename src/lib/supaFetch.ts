@@ -52,6 +52,78 @@ function baseHeaders(token?: string): HeadersInit {
     };
 }
 
+// function baseHeadersJustAnon(): HeadersInit {
+//     return {
+//         apikey: ANON,
+//         Accept: "application/json",
+//         "Content-Type": "application/json",
+//     };
+// }
+
+
+/** Read Supabase session saved by your login flow */
+function getLocalSession(): any | null {
+    try {
+        const ref = URL.replace(/^https?:\/\//, "").split(".")[0];
+        const raw = localStorage.getItem(`sb-${ref}-auth-token`);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function decodeJwtExp(token: string): number | null {
+    try {
+        const [, payload] = token.split(".");
+        const json = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+        return typeof json.exp === "number" ? json.exp : null; // seconds
+    } catch {
+        return null;
+    }
+}
+
+function getValidAccessToken(): string | null {
+    const sess = getLocalSession();
+    const token: string | undefined = sess?.currentSession?.access_token;
+    if (!token) return null;
+
+    const exp = decodeJwtExp(token);
+    if (!exp) return null;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (exp <= now + 30) return null; // treat as expired (30s skew)
+    return token;
+}
+
+export function baseHeadersJustAnon(
+    mode: "anon" | "user" | "auto" = "auto"
+): HeadersInit {
+    let bearer: string;
+    bearer = "bearer";
+
+    if (mode === "anon") {
+        bearer = ANON;
+    }
+
+    // else if (mode === "user") {
+    //     const token = getValidAccessToken();
+    //     if (!token) throw new Error("You must be signed in.");
+    //     bearer = token;
+    // } else {
+    //     const token = getValidAccessToken();
+    //     bearer = token ?? ANON;
+    // }
+
+    return {
+        apikey: ANON,
+        Authorization: `Bearer ${bearer}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "Accept-Profile": "motorambos",
+        "Content-Profile": "motorambos",
+    };
+}
+
 export function authHeaders(requireUser = false): HeadersInit {
     const token = getAccessToken();
     if (requireUser && !token) throw new Error("You must be signed in.");
@@ -460,8 +532,6 @@ export async function createRequest(payload: {
     provider_id?: string | null;
     status?: "open" | "assigned" | "completed" | "cancelled";
 }) {
-    const token = getAccessToken();
-    if (!token) throw new Error("You must be signed in.");
 
     // Resolve required ids
     const [service_id, created_by] = await Promise.all([
@@ -486,7 +556,7 @@ export async function createRequest(payload: {
     const res = await fetch(`${URL}/rest/v1/requests`, {
         method: "POST",
         headers: {
-            ...authHeaders(true),                  // includes Bearer <user token>
+            ...baseHeadersJustAnon("anon"),                  // includes Bearer <user token>
             "Content-Type": "application/json",
             Prefer: "return=representation",
         },
@@ -509,7 +579,7 @@ export async function findProvidersNear(
     const res = await fetch(`${URL}/rest/v1/rpc/find_providers_near_with_rates`, {
         method: "POST",
         headers: {
-            ...authHeaders(false),           // anon read OK if you granted execute; include user token if you want authenticated-only
+            ...baseHeadersJustAnon("anon"),           // anon read OK if you granted execute; include user token if you want authenticated-only
             "Content-Type": "application/json",
         },
         body: JSON.stringify({

@@ -50,7 +50,7 @@
     --radius: 0.625rem;
 
     /* Neutrals (OKLCH for clean contrast) */
-    --background: #ecefeb;
+    --background: #ffffff;
     --foreground: oklch(0.141 0.005 285.823);
 
     --card: oklch(1 0 0);
@@ -70,7 +70,7 @@
     --accent-foreground: 48 100% 50%; /* vivid yellow */
 
     /* Secondary band: also black/yellow for CTA strips if desired */
-    --secondary: #7078e8;
+    --secondary: #c2c3c3;
     --secondary-foreground: 48 100% 50%;
 
     /* Muted & UI neutrals */

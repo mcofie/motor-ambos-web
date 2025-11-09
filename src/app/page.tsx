@@ -1,31 +1,7 @@
 import Link from "next/link";
 import type {Metadata} from "next";
-import {Button} from "@/components/ui/button";
-import {Badge} from "@/components/ui/badge";
 import Image from "next/image";
-import {
-    Car,
-    Wrench,
-    Shield,
-    PhoneCall,
-    MapPin,
-    ArrowRight,
-    Menu,
-    Fuel,
-    Droplet,
-    BatteryCharging,
-    Sparkles,
-    Truck,
-    ToolCase,
-    Navigation2,
-    Smartphone,
-    Crown,
-    QrCode,
-    Users,
-    Star,
-    CreditCard,
-} from "lucide-react";
-import {ThemeToggle} from "@/components/ThemeToggle";
+import {Button} from "@/components/ui/button";
 import {Card, CardContent} from "@/components/ui/card";
 import {
     Carousel,
@@ -35,6 +11,22 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel";
 import {AppStoreButtons} from "@/components/AppStoreButtons";
+import {ThemeToggle} from "@/components/ThemeToggle";
+import {
+    Car,
+    ArrowRight,
+    Menu,
+    Shield,
+    Star,
+    Wrench,
+    Truck,
+    BatteryCharging,
+    Droplet,
+    Disc,
+    Navigation2,
+    Smartphone,
+    CreditCard,
+} from "lucide-react";
 
 export const metadata: Metadata = {
     title: "Motor Ambos — Roadside & On-Demand Car Care",
@@ -43,7 +35,14 @@ export const metadata: Metadata = {
 };
 
 export default function LandingPage() {
-    const services = ["5.png", "7.png", "11.png", "9.png"];
+    const services = [
+        {title: "Tyres & Puncture", image: "5.png", icon: Disc},
+        {title: "Rescue", image: "12.png", icon: Truck},
+        {title: "Engine Oil", image: "11.png", icon: Droplet},
+        {title: "Battery", image: "9.png", icon: BatteryCharging},
+        {title: "General", image: "7.png", icon: Wrench},
+    ];
+
     return (
         <main className="min-h-screen bg-background text-foreground">
             {/* Skip link */}
@@ -54,93 +53,99 @@ export default function LandingPage() {
                 Skip to content
             </a>
 
-            {/* Header (theme-aware card w/ blur) */}
-            <header className="my-6 sm:my-8 w-full">
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+            {/* HERO */}
+            <section className="relative isolate overflow-hidden text-white">
+                {/* Backdrop */}
+                <div
+                    className="absolute inset-0 -z-20 bg-cover bg-center bg-fixed"
+                    style={{backgroundImage: "url('/images/backdrop.jpg')"}}
+                />
+                <div className="absolute inset-0 -z-10 bg-black/65"/>
+
+                {/* Glow + texture */}
+                <div className="pointer-events-none absolute -z-10 inset-0">
                     <div
-                        className="rounded-2xl border border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-                        <div className="px-4 sm:px-6 py-4">
-                            <div className="flex items-center justify-between">
-                                <Link
-                                    href="/"
-                                    className="flex items-center gap-2 font-semibold text-base sm:text-lg"
-                                    aria-label="Motor Ambos home"
-                                >
-                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 ring-1 ring-primary/25">
-                    <Car className="h-4.5 w-4.5 text-primary"/>
-                  </span>
-                                    <span className="hidden xs:inline">Motor Ambos</span>
-                                </Link>
+                        className="absolute left-1/2 top-[-20%] h-[40rem] w-[40rem] -translate-x-1/2 rounded-full bg-lime-500/25 blur-3xl"/>
+                    <div
+                        className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06)_0%,transparent_60%)]"/>
+                </div>
 
-                                {/* Desktop nav */}
-                                <nav className="hidden md:flex items-center gap-1 sm:gap-2">
-                                    <TopNavLink href="#membership">Membership & App</TopNavLink>
-                                    <Button asChild className="shadow-sm hover:shadow">
-                                        <Link href="/signup">Join now</Link>
-                                    </Button>
-                                    <ThemeToggle/>
-                                </nav>
+                {/* Header */}
+                <header className="pt-5 sm:pt-8">
+                    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+                        <div className="rounded-2xl border border-white/10 bg-black/30 backdrop-blur-md">
+                            <div className="px-4 sm:px-6 py-3.5">
+                                <div className="flex items-center justify-between">
+                                    <Link
+                                        href="/"
+                                        className="group flex items-center gap-2 font-semibold text-base sm:text-lg"
+                                        aria-label="Motor Ambos home"
+                                    >
+                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-lime-500/15 ring-1 ring-lime-400/25">
+                      <Car className="h-4.5 w-4.5 text-lime-400 transition-transform group-hover:scale-110"/>
+                    </span>
+                                        <span className="hidden xs:inline tracking-tight">Motor Ambos</span>
+                                    </Link>
 
-                                {/* Mobile */}
-                                <div className="md:hidden flex items-center gap-1">
-                                    <ThemeToggle/>
-                                    <Button variant="ghost" size="icon" aria-label="Open menu">
-                                        <Menu className="h-5 w-5"/>
-                                    </Button>
+                                    {/* Desktop nav */}
+                                    <nav className="hidden md:flex items-center gap-1 sm:gap-2">
+                                        <TopNavLink href="#services">Services</TopNavLink>
+                                        <TopNavLink href="#membership">Membership</TopNavLink>
+                                        <TopNavLink href="#why">Why us</TopNavLink>
+                                        <Button asChild className="shadow-sm hover:shadow-lg transition">
+                                            <Link href="/signup">Join now</Link>
+                                        </Button>
+                                        <ThemeToggle/>
+                                    </nav>
+
+                                    {/* Mobile */}
+                                    <div className="md:hidden flex items-center gap-1">
+                                        <ThemeToggle/>
+                                        <Button variant="ghost" size="icon" aria-label="Open menu">
+                                            <Menu className="h-5 w-5"/>
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </header>
+                </header>
 
-            {/* HERO — theme-aware neon ribbon */}
-            <section className="relative isolate overflow-hidden">
-                {/* Neon ribbon sweep */}
-                <div className="pointer-events-none absolute inset-0 -z-10">
-                    <div
-                        className="absolute inset-x-[-20%] top-[-35%] h-[140%] rotate-[-3deg]
-            bg-[conic-gradient(at_10%_10%,theme(colors.primary)_0deg,theme(colors.primary/70)_130deg,transparent_240deg)]
-            opacity-25 dark:opacity-40 blur-3xl"
-                    />
-                </div>
+                {/* Hero content */}
+                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-14 sm:py-20 md:py-28 text-center">
+                    <div className="mx-auto max-w-3xl">
+            <span
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-wide text-gray-200">
+              <Shield className="h-3.5 w-3.5"/>
+              Verified mechanics • Transparent pricing
+            </span>
 
-                {/* Soft spotlight */}
-                <div
-                    aria-hidden
-                    className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[40rem] w-[40rem]
-          -translate-x-1/2 rounded-full bg-primary/10 dark:bg-primary/20 blur-3xl"
-                />
-
-                {/* Subtle grid overlay */}
-                <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 -z-10 opacity-[0.08] dark:opacity-[0.12]
-          [mask-image:radial-gradient(60%_60%_at_50%_30%,black,transparent)]
-          bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)]
-          bg-[size:36px_36px]"
-                />
-
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 sm:py-16 md:py-24">
-                    <div className="max-w-3xl text-center mx-auto">
-                        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
-                            Get help for your car <span className="text-primary">fast</span>, transparent, anywhere.
+                        <h1 className="mt-4 text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] drop-shadow-lg">
+                            Get help for your car fast, transparent, anywhere.
                         </h1>
 
-                        <p className="mt-5 text-sm sm:text-base md:text-lg/7 text-muted-foreground max-w-2xl mx-auto">
-                            MotorAmbos connects drivers to nearby, verified mechanics and on-demand providers. See
-                            pricing up front,
-                            choose by distance and rating, and connect instantly. Providers don’t need an app — SMS
-                            works out of the box.
+                        <p className="mt-5 text-sm sm:text-base md:text-lg/7 text-gray-300 mx-auto max-w-2xl">
+                            MotorAmbos connects drivers to nearby, verified providers for roadside and on-demand care.
+                            Pick by
+                            distance, rating, and rate card — no surprises.
                         </p>
 
-                        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-                            <Button asChild size="lg" className="gap-2 w-full sm:w-auto">
+                        <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+                            <Button
+                                asChild
+                                size="lg"
+                                className="gap-2 w-full sm:w-auto bg-lime-500 hover:bg-lime-600 text-black"
+                            >
                                 <Link href="/help">
                                     Request roadside help <ArrowRight className="h-4 w-4"/>
                                 </Link>
                             </Button>
-                            <Button asChild size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
+                            <Button
+                                asChild
+                                size="lg"
+                                variant="outline"
+                                className="gap-2 w-full sm:w-auto border-lime-400 text-lime-400 hover:bg-lime-400/10"
+                            >
                                 <Link href="#services">Explore services</Link>
                             </Button>
                         </div>
@@ -151,70 +156,72 @@ export default function LandingPage() {
             {/* Content anchor */}
             <div id="content"/>
 
-            {/* Value band */}
-            <section className="w-full bg-primary/95 text-primary-foreground">
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10">
-                    <div className="rounded-2xl border border-primary/40 bg-card/10 backdrop-blur">
-                        <div className="mx-auto w-full max-w-3xl text-center px-4 sm:px-6 py-12 md:py-16">
-                            <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold">
-                                Save money and time with transparent rates, priority response, and concierge
-                                coordination.
-                            </h2>
-                            <div className="mt-6">
-                                <Button asChild size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
-                                    <Link href="#services">Explore services</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             {/* Services */}
-            <section id="services" className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-10">
+            <section id="services" className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-12 my-10">
                 <div className="text-center">
-                    <h2 className="text-2xl md:text-4xl tracking-tight leading-[1.15]">Services</h2>
+                    <h2 className="text-2xl md:text-4xl tracking-tight leading-[1.15] dark:text-lime-500">
+                        Services
+                    </h2>
                     <p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
-                        Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
-                        laudantium, totam rem
-                        aperiam, eaque ipsa.
+                        Roadside emergencies and everyday car care — delivered where you are.
                     </p>
                 </div>
-                <Carousel className="mt-6">
+
+                <Carousel className="mt-7">
                     <CarouselContent>
-                        {services.map((file, index) => (
-                            <CarouselItem key={index} className="pl-1 xs:basis-1/2 md:basis-1/3 lg:basis-1/4">
-                                <div className="p-2 h-full">
-                                    <Card
-                                        className="border-0 bg-background hover:border-primary/60 transition-colors h-full">
-                                        <CardContent
-                                            className="flex aspect-square items-center justify-center p-4 sm:p-6">
-                                            <Image
-                                                src={`/images/${file}`}
-                                                alt={`Service ${index + 1}`}
-                                                width={800}
-                                                height={800}
-                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                                className="rounded-xl object-cover w-full h-full"
-                                                priority={index < 2}
-                                            />
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            </CarouselItem>
-                        ))}
+                        {services.map((s, index) => {
+                            const Icon = s.icon;
+                            return (
+                                <CarouselItem key={index} className="pl-1 xs:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                                    {/* Transparent wrapper (no bg), border only on hover */}
+                                    <div className="group relative h-full overflow-hidden rounded-xl transition">
+                                        {/* soft hover glow */}
+                                        <div
+                                            className="pointer-events-none absolute -inset-16 opacity-0 transition group-hover:opacity-20">
+                                            <div
+                                                className="h-full w-full bg-[conic-gradient(at_30%_10%,theme(colors.lime.500),transparent_60%)] blur-2xl"/>
+                                        </div>
+
+                                        {/* No Card/ CardContent — keep it neutral */}
+                                        <div className="relative flex aspect-square items-center justify-center p-0">
+                                            <div
+                                                className="relative h-full w-full overflow-hidden rounded-xl ring-1 ring-border/50 group-hover:ring-lime-400/40 transition">
+                                                <Image
+                                                    src={`/images/${s.image}`}
+                                                    alt={s.title}
+                                                    width={800}
+                                                    height={800}
+                                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                                    priority={index < 2}
+                                                />
+                                                <div
+                                                    className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"/>
+                                                <div
+                                                    className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white ring-1 ring-white/15 backdrop-blur-sm">
+                                                    <Icon className="h-3.5 w-3.5 text-lime-400"/>
+                                                    {s.title}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CarouselItem>
+                            );
+                        })}
                     </CarouselContent>
                     <CarouselPrevious/>
                     <CarouselNext/>
                 </Carousel>
             </section>
 
-            {/* Membership section */}
+            {/* Membership */}
             <section id="membership" className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-20">
                 <div
-                    className="rounded-2xl flex flex-col items-center justify-center border border-border bg-primary text-primary-foreground px-4 sm:px-6 py-12 md:py-16">
-                    <h2 className="text-2xl md:text-5xl leading-[1.05] my-2 text-center">Become a member</h2>
-                    <div className="flex flex-col items-center justify-center text-center mx-auto p-2 sm:p-6">
+                    className="rounded-2xl border border-border bg-primary text-primary-foreground px-4 sm:px-6 py-12 md:py-16">
+                    <h2 className="text-2xl md:text-5xl leading-[1.05] my-2 text-center dark:text-lime-500">
+                        Become a member
+                    </h2>
+                    <div className="mx-auto flex max-w-3xl flex-col items-center justify-center text-center p-2 sm:p-6">
                         <div className="relative w-full max-w-sm sm:max-w-md md:max-w-lg">
                             <Image
                                 src="/images/membership_card.png"
@@ -222,24 +229,23 @@ export default function LandingPage() {
                                 width={1200}
                                 height={800}
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 70vw, 600px"
-                                className="rounded-xl object-cover shadow-sm ring-1 ring-border w-full h-auto"
+                                className="h-auto w-full rounded-xl object-cover shadow-sm ring-1 ring-border"
                                 priority
                             />
-                            {/* subtle glow that adapts to theme */}
                             <span
                                 className="pointer-events-none absolute inset-0 rounded-xl shadow-[0_0_40px_4px_theme(colors.primary/10)] dark:shadow-[0_0_50px_6px_theme(colors.primary/15)]"/>
                         </div>
                         <p className="mt-6 max-w-2xl text-sm md:text-base text-primary-foreground/90">
-                            Save money and time with transparent rates, priority response, and concierge coordination.
-                            Your digital
-                            card is QR-enabled and works across our network.
+                            Save on callouts, get priority response, and unlock concierge coordination. Your digital
+                            card is QR-enabled and
+                            works across our network.
                         </p>
-                        <div className="mt-5 flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <div className="mt-5 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
                             <Button asChild className="w-full sm:w-auto">
                                 <Link href="/signup">Join Membership</Link>
                             </Button>
                             <Button asChild variant="outline"
-                                    className="w-full sm:w-auto bg-transparent text-primary-foreground">
+                                    className="w-full bg-transparent text-primary-foreground sm:w-auto">
                                 <Link href="#why">Learn more</Link>
                             </Button>
                         </div>
@@ -247,28 +253,56 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Why section */}
+            {/* Why */}
             <section id="why" className="w-full">
                 <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 text-center">
-                    <h2 className="text-2xl md:text-4xl tracking-tight leading-[1.15]">Why Motor Ambos?</h2>
+                    <h2 className="text-2xl md:text-4xl tracking-tight leading-[1.15] dark:text-lime-500">
+                        Why Motor Ambos?
+                    </h2>
                     <p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
-                        Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
-                        laudantium, totam rem
-                        aperiam, eaque ipsa.
+                        Everything you need to feel confident on the road.
                     </p>
                 </div>
+
                 <div
-                    className="mx-auto w-full max-w-6xl px-4 sm:px-6 mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <section className="min-h-48 rounded-2xl border border-border bg-card p-6"/>
-                    <section className="min-h-48 rounded-2xl border border-border bg-card p-6"/>
-                    <section className="min-h-48 rounded-2xl border border-border bg-card p-6"/>
+                    className="mx-auto mt-6 grid w-full max-w-6xl grid-cols-1 gap-4 px-4 sm:px-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <Feature
+                        icon={<Shield className="h-5 w-5"/>}
+                        title="Verified network"
+                        body="We vet every provider and rate card. See prices and ratings up front — no surprises."
+                    />
+                    <Feature
+                        icon={<Navigation2 className="h-5 w-5"/>}
+                        title="Smart matching"
+                        body="We rank providers by distance, availability, rating, and service relevance."
+                    />
+                    <Feature
+                        icon={<CreditCard className="h-5 w-5"/>}
+                        title="Clear pricing"
+                        body="Transparent callout fees and rate cards, with receipts and history in your app."
+                    />
+                    <Feature
+                        icon={<Smartphone className="h-5 w-5"/>}
+                        title="Seamless experience"
+                        body="Mobile-first. Book in a few taps, track status, and chat if needed."
+                    />
+                    <Feature
+                        icon={<Star className="h-5 w-5"/>}
+                        title="Quality first"
+                        body="Ratings and job counts promote the best providers — and help everyone improve."
+                    />
+                    <Feature
+                        icon={<Truck className="h-5 w-5"/>}
+                        title="Emergency & everyday"
+                        body="Towing, jumpstarts, tyres — plus oil, wash, fuel delivery and more."
+                    />
                 </div>
             </section>
 
             {/* App highlight */}
             <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-20">
                 <div className="rounded-2xl border border-border bg-muted/40 p-4 sm:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-6">
+                    <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-2">
                         <div className="w-full">
                             <Image
                                 src="/images/iphone_mockup.png"
@@ -276,7 +310,7 @@ export default function LandingPage() {
                                 width={1200}
                                 height={1200}
                                 sizes="(max-width: 768px) 100vw, 50vw"
-                                className="rounded-xl object-cover w-full h-auto"
+                                className="w-full rounded-xl object-cover"
                                 priority
                             />
                         </div>
@@ -284,12 +318,12 @@ export default function LandingPage() {
                             <h3 className="text-2xl sm:text-3xl md:text-5xl font-semibold">
                                 Get help for your car fast — transparent, anywhere.
                             </h3>
-                            <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-prose">
+                            <p className="mt-3 max-w-prose text-sm sm:text-base text-muted-foreground">
                                 Book fuel delivery, wash, jumpstart, tyre fixes, or towing. Pick providers by distance,
-                                rating, and
-                                rate card — no surprises.
+                                rating,
+                                and rate card — no surprises.
                             </p>
-                            <div className="mt-5 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <div className="mt-5 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
                                 <AppStoreButtons/>
                             </div>
                         </div>
@@ -297,16 +331,13 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Accent band */}
-            {/*<section className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10">*/}
-            {/*</section>*/}
-            <div className="border border-border bg-black/90 min-h-40 sm:min-h-56"/>
-
+            {/* Accent strip */}
+            <div className="min-h-40 border border-border bg-black/90 sm:min-h-56"/>
 
             {/* Footer */}
-            <footer className="border-border bg-background">
+            <footer className="bg-background">
                 <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 text-sm text-muted-foreground">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
                         <div>© {new Date().getFullYear()} MotorAmbos</div>
                         <nav className="flex gap-4">
                             <Link href="/about">About</Link>
@@ -320,18 +351,44 @@ export default function LandingPage() {
     );
 }
 
-/* ---------- Presentational bits (lightweight, colourful) ---------- */
+/* ---------- Presentational bits ---------- */
 
-function TopNavLink({
-                        href,
-                        children,
-                    }: {
-    href: string;
-    children: React.ReactNode;
-}) {
+function TopNavLink({href, children}: { href: string; children: React.ReactNode }) {
     return (
-        <Button asChild variant="ghost" className="rounded-full hover:bg-primary/10">
+        <Button
+            asChild
+            variant="ghost"
+            className="rounded-full text-white/90 hover:bg-white/10 hover:text-white"
+        >
             <Link href={href}>{children}</Link>
         </Button>
+    );
+}
+
+function Feature({
+                     icon,
+                     title,
+                     body,
+                 }: {
+    icon: React.ReactNode;
+    title: string;
+    body: string;
+}) {
+    return (
+        <section
+            className="group relative min-h-48 rounded-2xl border border-border bg-card/60 p-6 transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="pointer-events-none absolute -inset-16 opacity-0 transition group-hover:opacity-20">
+                <div
+                    className="h-full w-full bg-[radial-gradient(circle_at_top_left,theme(colors.lime.500),transparent_60%)] blur-2xl"/>
+            </div>
+            <div className="relative">
+                <div
+                    className="mb-2 inline-flex items-center justify-center rounded-xl border border-lime-500/30 bg-lime-500/10 p-2">
+                    {icon}
+                </div>
+                <h3 className="text-lg font-semibold">{title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+            </div>
+        </section>
     );
 }

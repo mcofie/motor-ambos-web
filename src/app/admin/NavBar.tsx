@@ -1,26 +1,20 @@
 // src/app/admin/NavBar.tsx
 "use client";
+
 import {useRouter} from "next/navigation";
-import {supabaseBrowser} from "@/lib/supabaseBrowser";
+import {logout} from "@/lib/supaFetch"; // ← use the fetch-only logout
 
 export default function NavBar({user}: { user: any }) {
     const router = useRouter();
 
     const handleLogout = async () => {
         try {
-            // Clear client session (localStorage)
-            await supabaseBrowser.auth.signOut();
-
-            // Clear server cookie
-            await fetch("/auth/signout", {method: "POST", credentials: "include"});
-
-            // Navigate away and refresh any cached SSR content
-            router.replace("/login");
-            router.refresh();
+            await logout();              // revoke + clear local session
         } catch (e) {
             console.error("[logout] failed:", e);
-            // As a fallback, still go to login
-            router.replace("/login");
+        } finally {
+            // Hard redirect to guarantee client state is reset
+            window.location.href = "/login";
         }
     };
 

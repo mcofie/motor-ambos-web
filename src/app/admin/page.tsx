@@ -1,30 +1,49 @@
-import {redirect} from "next/navigation";
-import AdminClient from "./AdminClient";
-import {getServerSupabase} from "@/lib/supabaseServer";
+// app/admin/page.tsx
+"use client";
+import * as React from "react";
+import AdminDashboard from "@/components/AdminDashboard";
+import NavBar from "./NavBar";
+import { getUser } from "@/lib/supaFetch";
 
-export default async function AdminPage() {
-    const supabase = await getServerSupabase();
+export default function AdminPage() {
+    const [user, setUser] = React.useState<any>(null);
+    const [checking, setChecking] = React.useState(true);
 
-    const {
-        data: {user},
-    } = await supabase.auth.getUser();
+    React.useEffect(() => {
+        (async () => {
+            // first attempt (getUser does its own short retries)
+            const u1 = await getUser();
+            if (u1) {
+                setUser(u1);
+                setChecking(false);
+                return;
+            }
+            // one last grace attempt
+            const u2 = await getUser();
+            if (u2) {
+                setUser(u2);
+                setChecking(false);
+                return;
+            }
+            // really no session → go to login
+            window.location.replace("/login");
+        })();
+    }, []);
 
-    if (!user) {
-        redirect("/login");
+    if (checking) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-600">
+                Checking authentication…
+            </div>
+        );
     }
 
-    // Optional admin allowlist
-    const admins = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
-        .split(",")
-        .map((s) => s.trim().toLowerCase())
-        .filter(Boolean);
-    const allowAllIfUnset = true;
-    const email = (user.email || "").toLowerCase();
-    const isAdmin = admins.length > 0 ? admins.includes(email) : allowAllIfUnset;
-
-    if (!isAdmin) {
-        redirect("/login?err=not_admin");
-    }
-
-    return <AdminClient/>;
+    return (
+        <div className="min-h-screen bg-gray-50">
+            <NavBar user={user} />
+            <main className="mx-auto max-w-6xl p-4 md:p-6">
+                <AdminDashboard />
+            </main>
+        </div>
+    );
 }

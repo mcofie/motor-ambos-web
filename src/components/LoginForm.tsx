@@ -1,25 +1,24 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { supabaseBrowser as supabase } from "@/lib/supabaseBrowser"; // <- fix
+import React from "react";
+import {useRouter, useSearchParams} from "next/navigation";
+import {loginWithPassword} from "@/lib/supaFetch";
 
 export default function LoginForm() {
     const router = useRouter();
     const params = useSearchParams();
     const err = params?.get("err");
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [email, setEmail] = React.useState("");
+    const [password, setPassword] = React.useState("");
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState<string | null>(null);
 
     const signIn = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
         try {
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) throw error;
+            await loginWithPassword(email, password);
             router.replace("/admin");
         } catch (e: any) {
             setError(e.message || String(e));
@@ -44,17 +43,24 @@ export default function LoginForm() {
                     <span className="text-gray-700">Email</span>
                     <input
                         className="mt-1 w-full rounded-xl border px-3 py-2"
-                        type="email" value={email} onChange={e => setEmail((e.target as HTMLInputElement).value)} required
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
+                        required
                     />
                 </label>
                 <label className="block text-sm">
                     <span className="text-gray-700">Password</span>
                     <input
                         className="mt-1 w-full rounded-xl border px-3 py-2"
-                        type="password" value={password} onChange={e => setPassword((e.target as HTMLInputElement).value)} required
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+                        required
                     />
                 </label>
-                <button className="w-full rounded-xl bg-black px-3 py-2 text-white disabled:opacity-50" disabled={loading}>
+                <button className="w-full rounded-xl bg-black px-3 py-2 text-white disabled:opacity-50"
+                        disabled={loading}>
                     {loading ? "Please wait…" : "Sign in"}
                 </button>
             </form>

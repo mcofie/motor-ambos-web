@@ -2,18 +2,18 @@
 "use client";
 
 import * as React from "react";
-import { useMemo, useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import {useMemo, useState} from "react";
+import {z} from "zod";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import {Separator} from "@/components/ui/separator";
+import {cn} from "@/lib/utils";
 import {
     Car,
     Wrench,
@@ -30,13 +30,157 @@ import {
     Star,
     Loader2,
 } from "lucide-react";
+import {createRequest, createRequestRow, findProvidersNear, lookupServiceIdByCode} from "@/lib/supaFetch";
 
-// ---- type-safe error guards ----
+/* ───────────────────────────────
+   Supabase REST helpers (schema: motorambos)
+   ─────────────────────────────── */
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+if (!SB_URL || !SB_ANON) {
+    // Make this loud in dev if envs are missing
+    // eslint-disable-next-line no-console
+    console.error("[get-help] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+}
+
+function baseHeaders(token?: string): HeadersInit {
+    return {
+        apikey: SB_ANON,
+        Authorization: `Bearer ${token ?? SB_ANON}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+    };
+}
+
+function restHeaders(token?: string): HeadersInit {
+    return {
+        ...baseHeaders(token),
+        "Accept-Profile": "motorambos",
+        "Content-Profile": "motorambos",
+    };
+}
+
+/** Read Supabase access token from localStorage (works whether saved as full JSON or currentSession). */
+function getAccessToken(): string | null {
+    if (typeof window === "undefined") return null;
+
+    function parseAuthJSON(raw: string | null) {
+        if (!raw) return null;
+        try {
+            const o = JSON.parse(raw);
+            if (o?.currentSession?.access_token) return o.currentSession.access_token as string;
+            if (o?.access_token) return o.access_token as string;
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
+    const ref = SB_URL.replace(/^https?:\/\//, "").split(".")[0];
+    const canonical = parseAuthJSON(localStorage.getItem(`sb-${ref}-auth-token`));
+    if (canonical) return canonical;
+
+    // fallback: scan any sb-*-auth-token
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i) || "";
+        if (!k.startsWith("sb-") || !k.endsWith("-auth-token")) continue;
+        const t = parseAuthJSON(localStorage.getItem(k));
+        if (t) return t;
+    }
+    return null;
+}
+
+async function readJSONSafe(res: Response) {
+    const len = res.headers.get("content-length");
+    if (len === "0") return null;
+    const text = await res.clone().text();
+    if (!text) return null;
+    try {
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
+}
+
+async function throwIfNotOk(res: Response) {
+    if (res.ok) return;
+    const maybe = await readJSONSafe(res);
+    const msg =
+        (maybe && (maybe.message || maybe.error || JSON.stringify(maybe))) || `HTTP ${res.status}`;
+    throw new Error(msg);
+}
+
+/** Convert numeric lat/lng to EWKT geography string. */
+function ewktFromLatLng(lat?: number | null, lng?: number | null): string | null {
+    if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng)) return null;
+    return `SRID=4326;POINT(${lng} ${lat})`; // POINT(lon lat)
+}
+
+/* ───────────────────────────────
+   API calls used by this page
+   ─────────────────────────────── */
+
+
+/**
+ * Call RPC motorambos.find_providers_near_with_rates(lat,lng,radius_km,service,limit).
+ * Returns a list ready for UI (mapped to Provider type).
+ */
+function mapRpcRowToProvider(r: any): Provider {
+    return {
+        id: r.id,
+        name: r.display_name ?? r.name,
+        phone: r.phone_business ?? r.phone,
+        distance_km: Number(r.distance_km ?? r.distance) || 0,
+        rating: r.rating ?? null,
+        jobs: r.jobs_count ?? null,
+        min_callout_fee: r.provider_callout_fee ?? r.min_callout_fee ?? null,
+        coverage_radius_km: r.coverage_radius_km ?? null,
+        services: Array.isArray(r.rates) ? r.rates.map((x: any) => ({
+            code: x.code ?? "",
+            name: x.name ?? "",
+            price: x.base_price ?? null,
+            unit: x.price_unit ?? null
+        })) : [],
+        // Expecting GeoJSON or x/y fields
+        lat: r.lat ?? r.location?.coordinates?.[1] ?? 0,
+        lng: r.lng ?? r.location?.coordinates?.[0] ?? 0,
+    };
+}
+
+async function rpcFindProvidersByServiceId(args: {
+    lat: number;
+    lng: number;
+    radius_km: number;
+    service_id: string;
+    limit?: number;
+}): Promise<Provider[]> {
+    const token = getAccessToken();
+    const res = await fetch(`${SB_URL}/rest/v1/rpc/find_providers_near_with_rates`, {
+        method: "POST",
+        headers: restHeaders(token),
+        body: JSON.stringify({
+            lat: args.lat,
+            lng: args.lng,
+            radius_km: args.radius_km,
+            service_id: args.service_id,        // <-- use service_id
+            limit: args.limit ?? 20,
+        }),
+    });
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe(res)) ?? [];
+    return (rows as any[]).map(mapRpcRowToProvider);
+}
+
+/* ───────────────────────────────
+   Types & schema for the wizard
+   ─────────────────────────────── */
+
 function isRecord(val: unknown): val is Record<string, unknown> {
     return typeof val === "object" && val !== null;
 }
 
 type GeoErrorLike = { code: number; message?: string };
+
 function isGeoErrorLike(e: unknown): e is GeoErrorLike {
     return isRecord(e) && typeof e.code === "number";
 }
@@ -49,9 +193,8 @@ function extractErrorMessage(e: unknown): string | null {
     return null;
 }
 
-/* --------------------- Schema --------------------- */
 const HelpSchema = z.object({
-    helpType: z.enum(["battery", "tyres", "engine_oil", "towing"]),
+    helpType: z.enum(["battery", "tire", "oil", "tow", "rescue", "fuel"]),
     carMake: z.string().min(2, "Car make is required"),
     carModel: z.string().min(1, "Car model is required"),
     carYear: z
@@ -67,7 +210,6 @@ const HelpSchema = z.object({
 type HelpForm = z.infer<typeof HelpSchema>;
 type StepKey = "help" | "car" | "contact" | "providers";
 
-/* --------------------- Types --------------------- */
 type GeoFix = {
     lat: number;
     lng: number;
@@ -75,7 +217,7 @@ type GeoFix = {
     timestamp: number;
 };
 
-type Provider = {
+export type Provider = {
     id: string;
     name: string;
     phone: string;
@@ -95,20 +237,20 @@ const HELP_OPTIONS: Array<{
     Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     hint: string;
 }> = [
-    { key: "battery", label: "Battery", Icon: BatteryCharging, hint: "Jumpstart or replace" },
-    { key: "tyres", label: "Tyres", Icon: Disc, hint: "Flat, puncture, swap" },
-    { key: "engine_oil", label: "Engine Oil", Icon: Droplets, hint: "Top-up or change" },
-    { key: "towing", label: "Towing", Icon: Truck, hint: "Short or long haul" },
+    {key: "battery", label: "Battery", Icon: BatteryCharging, hint: "Jumpstart or replace"},
+    {key: "tire", label: "Tyres", Icon: Disc, hint: "Flat, puncture, swap"},
+    {key: "oil", label: "Engine Oil", Icon: Droplets, hint: "Top-up or change"},
+    {key: "tow", label: "Towing", Icon: Truck, hint: "Short or long haul"},
 ];
 
-/* --------------------- Geolocation helpers & sentinel --------------------- */
+/* Geo helpers */
 const GEO_ERROR_BLOCKED = "GEO_BLOCKED" as const;
 type PermState = "granted" | "prompt" | "denied" | "unknown";
 
 async function checkGeoPermission(): Promise<PermState> {
     if (!("permissions" in navigator)) return "unknown";
     try {
-        const status = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+        const status = await navigator.permissions.query({name: "geolocation" as PermissionName});
         return (status.state as PermState) ?? "unknown";
     } catch {
         return "unknown";
@@ -120,15 +262,17 @@ function getLocationOnce(): Promise<GeolocationPosition> {
         return Promise.reject(new Error("Geolocation is not supported by your browser."));
     }
     return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-            resolve,
-            reject,
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-        );
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
+        });
     });
 }
 
-/* --------------------- Page --------------------- */
+/* ───────────────────────────────
+   Page
+   ─────────────────────────────── */
 export default function GetHelpWizardPage() {
     const [step, setStep] = useState<StepKey>("help");
 
@@ -140,6 +284,9 @@ export default function GetHelpWizardPage() {
     // Providers
     const [loadingProviders, setLoadingProviders] = useState(false);
     const [providers, setProviders] = useState<Provider[] | null>(null);
+
+    // Request id (optional; could be shown later)
+    const [requestId, setRequestId] = useState<string | null>(null);
 
     const form = useForm<HelpForm>({
         resolver: zodResolver(HelpSchema),
@@ -163,10 +310,10 @@ export default function GetHelpWizardPage() {
         handleSubmit,
         trigger,
         getValues,
-        formState: { isSubmitting, errors },
+        formState: {isSubmitting, errors},
     } = form;
 
-    /* --------------------- Validation snapshots --------------------- */
+    /* validation snapshots */
     const helpType = watch("helpType");
     const carMake = watch("carMake");
     const carModel = watch("carModel");
@@ -190,7 +337,7 @@ export default function GetHelpWizardPage() {
         return fullName.trim().length >= 2 && /^[0-9+\-\s()]{7,}$/.test(phone);
     }, [fullName, phone]);
 
-    /* --------------------- Geolocation --------------------- */
+    /* geolocation */
     async function requestLocation() {
         setLocBusy(true);
         setLocError(null);
@@ -202,7 +349,6 @@ export default function GetHelpWizardPage() {
                 setLoc(null);
                 return;
             }
-
             const pos = await getLocationOnce();
             setLoc({
                 lat: pos.coords.latitude,
@@ -212,20 +358,15 @@ export default function GetHelpWizardPage() {
             });
         } catch (e: unknown) {
             let msg = "Failed to get your location.";
-
             if (isGeoErrorLike(e)) {
                 if (e.code === 1) msg = "You denied the location request.";
                 else if (e.code === 2) msg = "Location unavailable. Try moving to improve signal.";
                 else if (e.code === 3) msg = "Location request timed out. Try again.";
-                // fallthrough to message extraction if provided
-                if (e.message && typeof e.message === "string") {
-                    msg = e.message;
-                }
+                if (e.message && typeof e.message === "string") msg = e.message;
             } else {
                 const m = extractErrorMessage(e);
                 if (m) msg = m;
             }
-
             setLocError(msg);
             setLoc(null);
         } finally {
@@ -233,7 +374,7 @@ export default function GetHelpWizardPage() {
         }
     }
 
-    /* --------------------- Submit -> fetch providers --------------------- */
+    /* submit -> create request + fetch providers via RPC */
     async function onSubmit(values: HelpForm) {
         if (!loc) {
             setLocError("Please share your location so nearby providers can find you.");
@@ -244,21 +385,65 @@ export default function GetHelpWizardPage() {
         setProviders(null);
 
         try {
-            const list = await mockFindProviders(values.helpType, loc.lat, loc.lng);
+            // 1) Create the request row (ALL required columns go in)
+            const requestRow = await createRequest({
+                helpType: values.helpType,          // -> resolves to service_id
+                driver_name: values.fullName,
+                driver_phone: values.phone,
+                details: `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}`,
+                address_line: undefined,            // or capture a typed address field if you add one
+                lat: loc.lat,
+                lng: loc.lng,
+                status: "open",
+            });
+
+            console.log("[request created]", requestRow);
+
+            // 2) Show nearby providers (keep mock now; wire real API when ready)
+            const list = await findProvidersNear(values.helpType, loc.lat, loc.lng);
             list.sort((a, b) =>
                 a.distance_km === b.distance_km ? (b.rating ?? 0) - (a.rating ?? 0) : a.distance_km - b.distance_km
             );
             setProviders(list);
             setStep("providers");
-        } catch {
-            setProviders([]);
+        } catch (e) {
+            console.error(e);
+            setProviders([]);        // show empty state instead of hanging
             setStep("providers");
         } finally {
             setLoadingProviders(false);
         }
     }
 
-    /* --------------------- Action bar logic --------------------- */
+
+    async function refreshSearchAgain(
+        setLoading: (b: boolean) => void,
+        setProviders: (p: Provider[]) => void,
+        values: HelpForm,
+        loc: GeoFix | null
+    ) {
+        if (!loc) return;
+        setLoading(true);
+        try {
+            const service_id = await lookupServiceIdByCode(values.helpType);
+            const list = await rpcFindProvidersByServiceId({
+                lat: loc.lat,
+                lng: loc.lng,
+                radius_km: 15,
+                service_id,
+                limit: 30,
+            });
+            list.sort((a, b) =>
+                a.distance_km === b.distance_km ? (b.rating ?? 0) - (a.rating ?? 0) : a.distance_km - b.distance_km
+            );
+            setProviders(list);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+
+    /* action bar */
     const canNext =
         step === "help"
             ? !!helpType
@@ -291,10 +476,10 @@ export default function GetHelpWizardPage() {
     }
 
     const steps: Array<{ key: StepKey; label: string }> = [
-        { key: "help", label: "Help" },
-        { key: "car", label: "Car" },
-        { key: "contact", label: "Contact" },
-        { key: "providers", label: "Providers" },
+        {key: "help", label: "Help"},
+        {key: "car", label: "Car"},
+        {key: "contact", label: "Contact"},
+        {key: "providers", label: "Providers"},
     ];
     const activeIndex = Math.max(0, steps.findIndex((s) => s.key === step));
 
@@ -305,7 +490,7 @@ export default function GetHelpWizardPage() {
                 <div className="mx-auto w-full max-w-2xl px-4 py-3">
                     <div className="flex items-center justify-between">
                         <div className="inline-flex items-center gap-2 font-semibold text-base sm:text-lg">
-                            <Wrench className="h-5 w-5" />
+                            <Wrench className="h-5 w-5"/>
                             Motor Ambos
                         </div>
                         <div className="text-[10px] sm:text-xs text-muted-foreground">Roadside Request</div>
@@ -356,7 +541,7 @@ export default function GetHelpWizardPage() {
                                         >
                       {s.label}
                     </span>
-                                        {i < steps.length - 1 && <div className="mx-1 h-px w-8 bg-border" />}
+                                        {i < steps.length - 1 && <div className="mx-1 h-px w-8 bg-border"/>}
                                     </div>
                                 );
                             })}
@@ -365,7 +550,7 @@ export default function GetHelpWizardPage() {
                 </div>
             </header>
 
-            {/* Content: pad for fixed action bar */}
+            {/* Content */}
             <section className="mx-auto w-full max-w-2xl px-4 py-6 pb-36 sm:pb-32">
                 <div className="rounded-2xl">
                     <CardHeader className="space-y-1">
@@ -379,14 +564,14 @@ export default function GetHelpWizardPage() {
 
                             {step !== "help" && (
                                 <Button type="button" variant="ghost" size="sm" onClick={onBack} className="gap-1">
-                                    <ChevronLeft className="h-4 w-4" />
+                                    <ChevronLeft className="h-4 w-4"/>
                                     <span className="hidden sm:inline">Back</span>
                                 </Button>
                             )}
                         </div>
                     </CardHeader>
 
-                    {/* ---------------------------- FORM STEPS ---------------------------- */}
+                    {/* FORM STEPS */}
                     {step !== "providers" && (
                         <CardContent>
                             <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
@@ -402,11 +587,13 @@ export default function GetHelpWizardPage() {
                                                     Icon={opt.Icon}
                                                     hint={opt.hint}
                                                     checked={helpType === opt.key}
-                                                    onChange={(v) => setValue("helpType", v, { shouldValidate: true })}
+                                                    onChange={(v) => setValue("helpType", v, {shouldValidate: true})}
                                                 />
                                             ))}
                                         </div>
-                                        {errors.helpType && <p className="text-xs text-destructive">{errors.helpType.message}</p>}
+                                        {errors.helpType && (
+                                            <p className="text-xs text-destructive">{errors.helpType.message}</p>
+                                        )}
                                     </div>
                                 )}
 
@@ -414,7 +601,7 @@ export default function GetHelpWizardPage() {
                                 {step === "car" && (
                                     <div className="space-y-5">
                                         <div className="flex items-center gap-2">
-                                            <Car className="h-4 w-4 text-muted-foreground" />
+                                            <Car className="h-4 w-4 text-muted-foreground"/>
                                             <Label className="text-base">Car details</Label>
                                         </div>
 
@@ -465,7 +652,7 @@ export default function GetHelpWizardPage() {
                                             </div>
                                         </div>
 
-                                        <Separator />
+                                        <Separator/>
                                     </div>
                                 )}
 
@@ -483,7 +670,8 @@ export default function GetHelpWizardPage() {
                                             </Field>
                                             <Field label="Phone" error={errors.phone?.message}>
                                                 <div className="relative">
-                                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                    <Phone
+                                                        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
                                                     <Input
                                                         {...register("phone")}
                                                         inputMode="tel"
@@ -497,12 +685,14 @@ export default function GetHelpWizardPage() {
 
                                         {/* Location capture */}
                                         <div className="rounded-xl border p-3">
-                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                            <div
+                                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                                 <div className="space-y-1">
                                                     <Label className="text-sm">Your location</Label>
                                                     {!loc && !locError && (
                                                         <p className="text-xs text-muted-foreground">
-                                                            Share your current location so nearby providers can find you faster.
+                                                            Share your current location so nearby providers can find you
+                                                            faster.
                                                         </p>
                                                     )}
                                                     {loc && (
@@ -511,15 +701,17 @@ export default function GetHelpWizardPage() {
                                                             <span className="font-medium">
                                 {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
                               </span>
-                                                            {typeof loc.accuracy === "number" && <> • ±{Math.round(loc.accuracy)} m</>}
+                                                            {typeof loc.accuracy === "number" && (
+                                                                <> • ±{Math.round(loc.accuracy)} m</>
+                                                            )}
                                                         </p>
                                                     )}
 
                                                     {locError === GEO_ERROR_BLOCKED ? (
-                                                        <BlockedLocationHelp onRetry={requestLocation} />
+                                                        <BlockedLocationHelp onRetry={requestLocation}/>
                                                     ) : locError ? (
                                                         <p className="flex items-center gap-1 text-xs text-destructive">
-                                                            <AlertTriangle className="h-3.5 w-3.5" />
+                                                            <AlertTriangle className="h-3.5 w-3.5"/>
                                                             {locError}
                                                         </p>
                                                     ) : null}
@@ -532,7 +724,7 @@ export default function GetHelpWizardPage() {
                                                     disabled={locBusy}
                                                     className="whitespace-nowrap h-10"
                                                 >
-                                                    <Crosshair className="mr-2 h-4 w-4" />
+                                                    <Crosshair className="mr-2 h-4 w-4"/>
                                                     {locBusy ? "Locating..." : loc ? "Refresh location" : "Use my location"}
                                                 </Button>
                                             </div>
@@ -543,24 +735,29 @@ export default function GetHelpWizardPage() {
                         </CardContent>
                     )}
 
-                    {/* ---------------------------- PROVIDERS SCREEN ---------------------------- */}
+                    {/* PROVIDERS SCREEN */}
                     {step === "providers" && (
                         <CardContent className="space-y-4">
                             <div className="rounded-lg border p-3">
                                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                                    <MapPin className="h-4 w-4" />
+                                    <MapPin className="h-4 w-4"/>
                                     <span>
                     Showing results near{" "}
                                         <strong>
                       {loc?.lat.toFixed(5)}, {loc?.lng.toFixed(5)}
                     </strong>
                   </span>
+                                    {requestId && (
+                                        <span className="ml-auto text-[11px] text-muted-foreground">
+                      Request ID: <span className="font-mono">{requestId}</span>
+                    </span>
+                                    )}
                                 </div>
                             </div>
 
                             {loadingProviders && (
                                 <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
                                     Fetching nearby providers…
                                 </div>
                             )}
@@ -574,7 +771,11 @@ export default function GetHelpWizardPage() {
                             {!loadingProviders && (providers?.length ?? 0) > 0 && (
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     {providers!.map((p) => (
-                                        <ProviderCard key={p.id} provider={p} smsBody={buildSmsBody(getValues(), loc!)} />
+                                        <ProviderCard
+                                            key={p.id}
+                                            provider={p}
+                                            smsBody={buildSmsBody(getValues(), loc!)}
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -583,18 +784,24 @@ export default function GetHelpWizardPage() {
                 </div>
             </section>
 
-            {/* ---------------------------- FIXED ACTION BAR ---------------------------- */}
-            <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            {/* Fixed Action Bar */}
+            <div
+                className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div className="mx-auto w-full max-w-2xl px-4 py-3 pb-[env(safe-area-inset-bottom)]">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                         {/* Back */}
                         {step !== "help" ? (
-                            <Button type="button" variant="secondary" className="h-11 w-full sm:flex-1" onClick={onBack}>
-                                <ChevronLeft className="mr-1.5 h-4 w-4" />
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                className="h-11 w-full sm:flex-1"
+                                onClick={onBack}
+                            >
+                                <ChevronLeft className="mr-1.5 h-4 w-4"/>
                                 Back
                             </Button>
                         ) : (
-                            <div className="hidden sm:block sm:flex-1" />
+                            <div className="hidden sm:block sm:flex-1"/>
                         )}
 
                         {/* Primary */}
@@ -608,7 +815,7 @@ export default function GetHelpWizardPage() {
                             >
                                 {step === "contact" && (isSubmitting || loadingProviders) ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
                                         Finding providers…
                                     </>
                                 ) : (
@@ -616,19 +823,44 @@ export default function GetHelpWizardPage() {
                                         {step === "help" && "Next"}
                                         {step === "car" && "Next"}
                                         {step === "contact" && "Confirm & Request"}
-                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                        <ArrowRight className="ml-2 h-4 w-4"/>
                                     </>
                                 )}
                             </Button>
                         ) : (
                             <div className="flex w-full gap-2">
-                                <Button type="button" variant="secondary" className="h-11 w-full sm:flex-1" onClick={() => setStep("contact")}>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    className="h-11 w-full sm:flex-1"
+                                    onClick={() => setStep("contact")}
+                                >
                                     Edit Contact
                                 </Button>
                                 <Button
                                     type="button"
                                     className="h-11 w-full sm:flex-1"
-                                    onClick={() => refreshSearchAgain(setLoadingProviders, setProviders, getValues(), loc)}
+                                    onClick={async () => {
+                                        // if (!loc) return;
+                                        // setLoadingProviders(true);
+                                        // try {
+                                        //     const list = await rpcFindProviders({
+                                        //         service: getValues().helpType,
+                                        //         lat: loc.lat,
+                                        //         lng: loc.lng,
+                                        //         radius_km: 15,
+                                        //         limit: 30,
+                                        //     });
+                                        //     list.sort((a, b) =>
+                                        //         a.distance_km === b.distance_km
+                                        //             ? (b.rating ?? 0) - (a.rating ?? 0)
+                                        //             : a.distance_km - b.distance_km
+                                        //     );
+                                        //     setProviders(list);
+                                        // } finally {
+                                        //     setLoadingProviders(false);
+                                        // }
+                                    }}
                                 >
                                     Refresh results
                                 </Button>
@@ -641,7 +873,9 @@ export default function GetHelpWizardPage() {
     );
 }
 
-/* --------------------- UI bits --------------------- */
+/* ───────────────────────────────
+   UI bits
+   ─────────────────────────────── */
 function Field({
                    label,
                    error,
@@ -668,7 +902,7 @@ function HelpTile({
                       checked,
                       onChange,
                   }: {
-    value: "battery" | "tyres" | "engine_oil" | "towing";
+    value: "battery" | "tire" | "oil" | "tow" | "rescue" | "fuel";
     label: string;
     hint: string;
     Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -692,14 +926,14 @@ function HelpTile({
                         checked ? "bg-primary text-primary-foreground border-primary" : "bg-muted"
                     )}
                 >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-5 w-5"/>
                 </div>
                 <div className="flex-1">
                     <div className="font-medium">{label}</div>
                     <div className="text-xs text-muted-foreground">{hint}</div>
                 </div>
                 <RadioGroup className="hidden">
-                    <RadioGroupItem id={`help-${value}`} value={value} />
+                    <RadioGroupItem id={`help-${value}`} value={value}/>
                 </RadioGroup>
             </div>
         </Label>
@@ -726,30 +960,46 @@ function ProviderCard({
                         <span>{provider.distance_km.toFixed(1)} km away</span>
                         {typeof provider.rating === "number" && (
                             <span className="inline-flex items-center gap-1">
-                <Star className="h-3.5 w-3.5" />
+                <Star className="h-3.5 w-3.5"/>
                                 {provider.rating.toFixed(1)} {provider.jobs ? `• ${provider.jobs} jobs` : ""}
               </span>
                         )}
-                        {provider.min_callout_fee != null && <span>• min callout: ${provider.min_callout_fee.toFixed(0)}</span>}
-                        {provider.coverage_radius_km != null && <span>• radius: {provider.coverage_radius_km} km</span>}
+                        {provider.min_callout_fee != null && (
+                            <span>• min callout: ${provider.min_callout_fee.toFixed(0)}</span>
+                        )}
+                        {provider.coverage_radius_km != null && (
+                            <span>• radius: {provider.coverage_radius_km} km</span>
+                        )}
                     </div>
 
                     {provider.services.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                             {provider.services.slice(0, 3).map((s) => (
-                                <span key={s.code} className="rounded-full border px-2 py-0.5 text-[11px]" title={s.name}>
+                                <span
+                                    key={s.code}
+                                    className="rounded-full border px-2 py-0.5 text-[11px]"
+                                    title={s.name}
+                                >
                   {s.name}
                                     {typeof s.price === "number" ? ` • $${s.price}` : ""}
                 </span>
                             ))}
                             {provider.services.length > 3 && (
-                                <span className="text-[11px] text-muted-foreground">+{provider.services.length - 3} more</span>
+                                <span className="text-[11px] text-muted-foreground">
+                  +{provider.services.length - 3} more
+                </span>
                             )}
                         </div>
                     )}
                 </div>
 
-                <a href={mapsHref} target="_blank" rel="noreferrer" className="rounded-md border px-2 py-1 text-xs" title="Open in Maps">
+                <a
+                    href={mapsHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-md border px-2 py-1 text-xs"
+                    title="Open in Maps"
+                >
                     Map
                 </a>
             </div>
@@ -766,24 +1016,25 @@ function ProviderCard({
     );
 }
 
-function BlockedLocationHelp({ onRetry }: { onRetry: () => void }) {
+function BlockedLocationHelp({onRetry}: { onRetry: () => void }) {
     return (
         <div className="mt-2 rounded-md border border-amber-300/60 bg-amber-50 p-3 text-amber-900">
             <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4" />
+                <AlertTriangle className="mt-0.5 h-4 w-4"/>
                 <div className="space-y-1 text-xs">
                     <div className="font-semibold">Location permission is blocked for this site.</div>
                     <p>
-                        Enable it in your browser’s <span className="font-medium">Site settings</span>, then return and tap{" "}
-                        <span className="font-medium">Try again</span>.
+                        Enable it in your browser’s <span className="font-medium">Site settings</span>, then
+                        return and tap <span className="font-medium">Try again</span>.
                     </p>
                     <ul className="list-inside list-disc space-y-0.5 text-[11px] opacity-90">
                         <li>
-                            <span className="font-medium">Chrome:</span> Lock icon → Site settings → <em>Location</em> → Allow
+                            <span className="font-medium">Chrome:</span> Lock icon → Site settings →{" "}
+                            <em>Location</em> → Allow
                         </li>
                         <li>
-                            <span className="font-medium">Safari (iOS):</span> Settings → Privacy &amp; Security → Location Services →
-                            Safari Websites → While Using
+                            <span className="font-medium">Safari (iOS):</span> Settings → Privacy &amp; Security
+                            → Location Services → Safari Websites → While Using
                         </li>
                     </ul>
                     <div className="pt-1">
@@ -797,7 +1048,7 @@ function BlockedLocationHelp({ onRetry }: { onRetry: () => void }) {
     );
 }
 
-/* --------------------- helpers --------------------- */
+/* helpers */
 function buildSmsBody(values: HelpForm, loc: GeoFix) {
     const mapsLink = `https://maps.google.com/?q=${loc.lat},${loc.lng}`;
     const parts = [
@@ -807,101 +1058,4 @@ function buildSmsBody(values: HelpForm, loc: GeoFix) {
         `Name: ${values.fullName} • Phone: ${values.phone}.`,
     ];
     return parts.join(" ");
-}
-
-async function refreshSearchAgain(
-    setLoading: (b: boolean) => void,
-    setProviders: (p: Provider[]) => void,
-    values: HelpForm,
-    loc: GeoFix | null
-) {
-    if (!loc) return;
-    setLoading(true);
-    try {
-        const list = await mockFindProviders(values.helpType, loc.lat, loc.lng);
-        list.sort((a, b) =>
-            a.distance_km === b.distance_km ? (b.rating ?? 0) - (a.rating ?? 0) : a.distance_km - b.distance_km
-        );
-        setProviders(list);
-    } finally {
-        setLoading(false);
-    }
-}
-
-/* --------------------- mock data (replace with API) --------------------- */
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-    const toRad = (v: number) => (v * Math.PI) / 180;
-    const R = 6371; // km
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-        Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
-
-async function mockFindProviders(help: HelpForm["helpType"], lat: number, lng: number): Promise<Provider[]> {
-    const seed: Omit<Provider, "distance_km">[] = [
-        {
-            id: "p1",
-            name: "QuickFix Mobile Mechanics",
-            phone: "+233550000111",
-            rating: 4.8,
-            jobs: 320,
-            min_callout_fee: 30,
-            coverage_radius_km: 12,
-            services: [
-                { code: "battery", name: "Battery Jumpstart", price: 20, unit: "flat" },
-                { code: "tyres", name: "Tyre Change", price: 15, unit: "flat" },
-                { code: "engine_oil", name: "Oil Top-up", price: 25, unit: "flat" },
-            ],
-            lat: 5.6037,
-            lng: -0.187,
-        },
-        {
-            id: "p2",
-            name: "TowPro Ghana",
-            phone: "+233559999222",
-            rating: 4.5,
-            jobs: 180,
-            min_callout_fee: 50,
-            coverage_radius_km: 25,
-            services: [{ code: "towing", name: "City Tow", price: 70, unit: "trip" }],
-            lat: 5.614,
-            lng: -0.205,
-        },
-        {
-            id: "p3",
-            name: "Tyre Masters",
-            phone: "+233501234567",
-            rating: 4.2,
-            jobs: 95,
-            min_callout_fee: 20,
-            coverage_radius_km: 10,
-            services: [{ code: "tyres", name: "Puncture Fix", price: 10, unit: "flat" }],
-            lat: 5.6,
-            lng: -0.18,
-        },
-        {
-            id: "p4",
-            name: "Oil & Go",
-            phone: "+233244555666",
-            rating: 4.0,
-            jobs: 70,
-            min_callout_fee: 15,
-            coverage_radius_km: 8,
-            services: [{ code: "engine_oil", name: "Oil Change", price: 35, unit: "service" }],
-            lat: 5.59,
-            lng: -0.2,
-        },
-    ];
-
-    const filtered = seed.filter((p) => p.services.some((s) => s.code === help));
-    const withDistance: Provider[] = filtered.map((p) => ({
-        ...p,
-        distance_km: haversineKm(lat, lng, p.lat, p.lng),
-    }));
-
-    await new Promise((r) => setTimeout(r, 600));
-    return withDistance;
 }

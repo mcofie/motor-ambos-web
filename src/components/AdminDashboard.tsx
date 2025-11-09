@@ -1,43 +1,26 @@
 "use client";
-import React, {useEffect, useState} from "react";
-import { supabaseBrowser as supabase } from "@/lib/supabaseBrowser"; // <- fix
+import React from "react";
+import {
+    getUser,
+    logout,
+    listProviders,
+    insertProvider,
+    updateProvider,
+    deleteProvider,
+    listRequests, listServices, setProviderServices, getProviderServiceIds,
+} from "@/lib/supaFetch";
 
-const cls = (...arr: (string | false | null | undefined)[]) =>
-    arr.filter(Boolean).join(" ");
+const cls = (...arr: (string | false | null | undefined)[]) => arr.filter(Boolean).join(" ");
 
-/* --------------------------------
-   Common UI helpers
---------------------------------- */
-function TextField(props: {
-    label: string;
-    value: any;
-    onChange: (v: any) => void;
-    type?: string;
-    placeholder?: string;
-    required?: boolean;
-    autoComplete?: string;
-}) {
-    const {
-        label,
-        value,
-        onChange,
-        type = "text",
-        placeholder,
-        required,
-        autoComplete,
-    } = props;
-
-    const handle = (e: React.ChangeEvent<HTMLInputElement>) =>
-        onChange((e.target as HTMLInputElement).value);
-
+function TextField(props: any) {
+    const {label, value, onChange, type = "text", placeholder, required, autoComplete} = props;
     return (
         <label className="block text-sm">
             <span className="text-gray-700">{label}</span>
             <input
                 className="mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-black/10"
-                value={value ?? ""}       // normalize undefined/null so input stays controlled
-                onChange={handle}
-                onInput={handle}          // capture autofill/IME so state updates and button enables
+                value={value ?? ""}
+                onChange={(e) => onChange((e.target as HTMLInputElement).value)}
                 type={type}
                 placeholder={placeholder}
                 required={required}
@@ -48,22 +31,9 @@ function TextField(props: {
 }
 
 const NumberField = (p: any) => <TextField {...p} type="number"/>;
-
-const Toggle = ({
-                    label,
-                    checked,
-                    onChange,
-                }: {
-    label: string;
-    checked: boolean;
-    onChange: (v: boolean) => void;
-}) => (
+const Toggle = ({label, checked, onChange}: { label: string; checked: boolean; onChange: (v: boolean) => void }) => (
     <label className="flex items-center gap-2 text-sm select-none">
-        <input
-            type="checkbox"
-            checked={!!checked}
-            onChange={(e) => onChange((e.target as HTMLInputElement).checked)}
-        />
+        <input type="checkbox" checked={!!checked} onChange={(e) => onChange((e.target as HTMLInputElement).checked)}/>
         <span>{label}</span>
     </label>
 );
@@ -84,13 +54,7 @@ function Section({
     );
 }
 
-function Empty({
-                   title = "Nothing here yet",
-                   subtitle,
-               }: {
-    title?: string;
-    subtitle?: string;
-}) {
+function Empty({title = "Nothing here yet", subtitle}: { title?: string; subtitle?: string }) {
     return (
         <div className="flex flex-col items-center justify-center gap-1 py-10 text-center text-gray-500">
             <div className="i-lucide-inbox h-6 w-6"/>
@@ -100,25 +64,14 @@ function Empty({
     );
 }
 
-function Tabs({
-                  tabs,
-                  active,
-                  onChange,
-              }: {
-    tabs: string[];
-    active: string;
-    onChange: (t: string) => void;
-}) {
+function Tabs({tabs, active, onChange}: { tabs: string[]; active: string; onChange: (t: string) => void }) {
     return (
         <div className="mb-4 flex w-full items-center gap-1 rounded-2xl bg-white p-1 shadow-sm ring-1 ring-black/5">
             {tabs.map((t) => (
                 <button
                     key={t}
                     onClick={() => onChange(t)}
-                    className={cls(
-                        "flex-1 rounded-xl px-4 py-2 text-sm",
-                        active === t ? "bg-black text-white" : "text-gray-700 hover:bg-gray-50"
-                    )}
+                    className={cls("flex-1 rounded-xl px-4 py-2 text-sm", active === t ? "bg-black text-white" : "text-gray-700 hover:bg-gray-50")}
                 >
                     {t}
                 </button>
@@ -127,15 +80,10 @@ function Tabs({
     );
 }
 
-/* ===============================
-   Providers Panel (CRUD + lat/lng)
-   Uses your real columns (from earlier message):
-   - id, display_name, about, phone_business, is_active, coverage_radius_km,
-     callout_fee, rating, jobs_count, location (geography), address_line,
-     created_at, updated_at
-=============================== */
+/* ---------------- Providers ---------------- */
+
 function ProvidersPanel() {
-    const emptyForm = {
+    const empty = {
         id: null as string | null,
         display_name: "",
         phone_business: "",
@@ -144,133 +92,125 @@ function ProvidersPanel() {
         is_active: true,
         coverage_radius_km: 10,
         callout_fee: 0,
-        lat: "" as any,
+        // optional location capture in form (lng/lat)
         lng: "" as any,
+        lat: "" as any,
     };
 
-    const [form, setForm] = useState({...emptyForm});
-    const [list, setList] = useState<any[]>([]);
-    const [loadingList, setLoadingList] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [q, setQ] = useState("");
-    const [error, setError] = useState<string | null>(null);
-    const [okMsg, setOkMsg] = useState<string | null>(null);
+    const [form, setForm] = React.useState({ ...empty });
+    const [list, setList] = React.useState<any[]>([]);
+    const [q, setQ] = React.useState("");
+    const [saving, setSaving] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState<string | null>(null);
+    const [ok, setOk] = React.useState<string | null>(null);
 
-    // IMPORTANT: don’t mix .schema("motorambos").from("providers") with from("motorambos.providers")
-    // Pick one. We'll use the dot-notation consistently here:
+    // services
+    const [services, setServices] = React.useState<any[]>([]);
+    const [selectedServiceIds, setSelectedServiceIds] = React.useState<string[]>([]);
+    const toggleService = (id: string) =>
+        setSelectedServiceIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
     const load = React.useCallback(async () => {
-        setLoadingList(true);
+        setLoading(true);
         setError(null);
-
         try {
-            let query = supabase
-                .schema('motorambos')
-                .from("providers")
-                .select("*")
-                .order("created_at", {ascending: false});
-
-            if (q) query = query.ilike("display_name", `%${q}%`);
-
-            const {data, error} = await query;
-            if (error) throw error;
-
-            // setLoadingList(false);
-
-            setList(data || []);
-            // no console.error on success
-        } catch (err: any) {
-            console.error("[providers.load] error:", err);
-            setError(err.message || String(err));
+            const rows = await listProviders(q);
+            setList(rows);
+        } catch (e: any) {
+            setError(e.message || String(e));
         } finally {
-            setLoadingList(false);
+            setLoading(false);
         }
     }, [q]);
 
-    // mounted guard to survive Strict Mode double-invoke
-    const mounted = React.useRef(true);
-    useEffect(() => {
-        mounted.current = true;
-        return () => {
-            mounted.current = false;
-        };
-    }, []);
-
-    useEffect(() => {
-        // initial fetch
-        load();
+    // initial data
+    React.useEffect(() => {
+        (async () => {
+            try {
+                const svcs = await listServices();
+                setServices(svcs);
+            } catch (e) {
+                console.warn("[ProvidersPanel] failed loading services:", e);
+            }
+            load();
+        })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => {
-        // debounce on q change
-        const t = setTimeout(() => {
-            if (mounted.current) load();
-        }, 300);
+    // refresh on q
+    React.useEffect(() => {
+        const t = setTimeout(load, 300);
         return () => clearTimeout(t);
     }, [q, load]);
 
-    const upsert = async () => {
+    async function save() {
         setSaving(true);
         setError(null);
-        setOkMsg(null);
+        setOk(null);
         try {
-            const p = {...form} as any;
-            if (!p.display_name?.trim()) throw new Error("Provider name is required");
+            const payload: any = {
+                display_name: form.display_name.trim(),
+                phone_business: form.phone_business || null,
+                about: form.about || null,
+                address_line: form.address_line || null,
+                is_active: !!form.is_active,
+                coverage_radius_km: Number(form.coverage_radius_km) || 10,
+                callout_fee: Number(form.callout_fee) || 0,
+            };
 
-            console.log("[providers.upsert] payload:", p);
-
-            if (p.id) {
-                const {error} = await supabase
-                    .schema('motorambos')
-                    .from("providers")
-                    .update({
-                        display_name: p.display_name,
-                        phone_business: p.phone_business || null,
-                        about: p.about || null,
-                        address_line: p.address_line || null,
-                        is_active: !!p.is_active,
-                        coverage_radius_km: p.coverage_radius_km
-                            ? Number(p.coverage_radius_km)
-                            : null,
-                        callout_fee: p.callout_fee ? Number(p.callout_fee) : 0,
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq("id", p.id);
-                if (error) throw error;
-                setOkMsg("Provider updated.");
-            } else {
-                const {error} = await supabase
-                    .schema('motorambos')
-                    .from("providers")
-                    .insert([
-                        {
-                            display_name: p.display_name,
-                            phone_business: p.phone_business || null,
-                            about: p.about || null,
-                            address_line: p.address_line || null,
-                            is_active: !!p.is_active,
-                            coverage_radius_km: p.coverage_radius_km
-                                ? Number(p.coverage_radius_km)
-                                : 10,
-                            callout_fee: p.callout_fee ? Number(p.callout_fee) : 0,
-                        },
-                    ]);
-                if (error) throw error;
-                setOkMsg("Provider created.");
+            // If user typed both lat/lng, pass to insert so we set geography
+            const hasCoords = form.lng !== "" && form.lat !== "" && !isNaN(Number(form.lng)) && !isNaN(Number(form.lat));
+            if (hasCoords) {
+                payload.lng = Number(form.lng);
+                payload.lat = Number(form.lat);
             }
 
-            setForm({...emptyForm});
-            // fire and forget refresh (don’t block UI)
-            load();
-        } catch (err: any) {
-            console.error("[providers.upsert] error:", err);
-            setError(err.message || String(err));
-        } finally {
-            if (mounted.current) setSaving(false);
-        }
-    };
+            if (!payload.display_name) throw new Error("Provider name is required");
 
-    const edit = (row: any) =>
+            let providerId: string;
+            if (form.id) {
+                const row = await updateProvider(form.id, { ...payload, updated_at: new Date().toISOString() });
+                providerId = row?.id ?? form.id;
+                setOk("Provider updated.");
+            } else {
+                const row = await insertProvider(payload); // returns inserted row because we use Prefer:return=representation
+                if (!row?.id) throw new Error("Insert succeeded but no row returned");
+                providerId = row.id;
+                setOk("Provider created.");
+            }
+
+            // sync services
+            await setProviderServices(providerId, selectedServiceIds);
+
+            // reset
+            setForm({ ...empty });
+            setSelectedServiceIds([]);
+            load();
+        } catch (e: any) {
+            setError(e.message || String(e));
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function remove(row: any) {
+        if (!confirm(`Delete provider “${row.display_name || row.id}”?`)) return;
+        setSaving(true);
+        setError(null);
+        setOk(null);
+        try {
+            await deleteProvider(row.id);
+            setOk("Provider deleted.");
+            load();
+        } catch (e: any) {
+            setError(e.message || String(e));
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function startEdit(row: any) {
         setForm({
             id: row.id,
             display_name: row.display_name || "",
@@ -280,36 +220,18 @@ function ProvidersPanel() {
             is_active: !!row.is_active,
             coverage_radius_km: row.coverage_radius_km ?? 10,
             callout_fee: Number(row.callout_fee ?? 0),
-            lat: "",
-            lng: "",
+            lng: row.lng ?? "",
+            lat: row.lat ?? "",
         });
 
-    const del = async (row: any) => {
-        if (!confirm(`Delete provider “${row.display_name || row.id}”?`)) return;
-        setSaving(true);
-        setError(null);
-        setOkMsg(null);
         try {
-            const {error} = await supabase
-                .schema('motorambos')
-                .from("providers")
-                .delete()
-                .eq("id", row.id);
-            if (error) throw error;
-            setOkMsg("Provider deleted.");
-            load();
-        } catch (err: any) {
-            console.error("[providers.delete] error:", err);
-            setError(err.message || String(err));
-        } finally {
-            if (mounted.current) setSaving(false);
+            const ids = await getProviderServiceIds(row.id);
+            setSelectedServiceIds(ids);
+        } catch (e) {
+            console.warn("[ProvidersPanel] failed to load provider services:", e);
+            setSelectedServiceIds([]);
         }
-    };
-
-    const canSave =
-        !saving &&
-        typeof form.display_name === "string" &&
-        form.display_name.trim().length > 0;
+    }
 
     return (
         <div className="space-y-4">
@@ -317,57 +239,26 @@ function ProvidersPanel() {
                 title={form.id ? "Edit provider" : "Add provider"}
                 actions={
                     form.id && (
-                        <button
-                            onClick={() => setForm({...emptyForm})}
-                            className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
-                        >
+                        <button onClick={() => { setForm({ ...empty }); setSelectedServiceIds([]); }} className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50">
                             Cancel
                         </button>
                     )
                 }
             >
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <TextField
-                        label="Provider name"
-                        value={form.display_name}
-                        onChange={(v) => setForm((s) => ({...s, display_name: v}))}
-                        required
-                        autoComplete="organization"
-                    />
-                    <TextField
-                        label="Business phone"
-                        value={form.phone_business}
-                        onChange={(v) => setForm((s) => ({...s, phone_business: v}))}
-                        autoComplete="tel"
-                    />
-                    <TextField
-                        label="Address line"
-                        value={form.address_line}
-                        onChange={(v) => setForm((s) => ({...s, address_line: v}))}
-                        placeholder="Optional street address"
-                        autoComplete="street-address"
-                    />
-                    <NumberField
-                        label="Coverage radius (km)"
-                        value={form.coverage_radius_km}
-                        onChange={(v: any) =>
-                            setForm((s) => ({...s, coverage_radius_km: v}))
-                        }
-                    />
-                    <NumberField
-                        label="Callout fee (min)"
-                        value={form.callout_fee}
-                        onChange={(v: any) => setForm((s) => ({...s, callout_fee: v}))}
-                    />
+                    <TextField label="Provider name" value={form.display_name} onChange={(v: any) => setForm((s) => ({ ...s, display_name: v }))} required />
+                    <TextField label="Business phone" value={form.phone_business} onChange={(v: any) => setForm((s) => ({ ...s, phone_business: v }))} />
+                    <TextField label="Address line" value={form.address_line} onChange={(v: any) => setForm((s) => ({ ...s, address_line: v }))} />
+                    <NumberField label="Coverage radius (km)" value={form.coverage_radius_km} onChange={(v: any) => setForm((s) => ({ ...s, coverage_radius_km: v }))} />
+                    <NumberField label="Callout fee (min)" value={form.callout_fee} onChange={(v: any) => setForm((s) => ({ ...s, callout_fee: v }))} />
+
+                    {/* Optional coordinates to set geography */}
+                    <NumberField label="Longitude" value={form.lng} onChange={(v: any) => setForm((s) => ({ ...s, lng: v }))} />
+                    <NumberField label="Latitude" value={form.lat} onChange={(v: any) => setForm((s) => ({ ...s, lat: v }))} />
+
                     <div className="md:col-span-2 flex items-center justify-between">
-                        <Toggle
-                            label="Active"
-                            checked={form.is_active}
-                            onChange={(v) => setForm((s) => ({...s, is_active: v}))}
-                        />
-                        <div className="text-xs text-gray-500">
-                            {saving ? "saving…" : loadingList ? "loading…" : "idle"}
-                        </div>
+                        <Toggle label="Active" checked={form.is_active} onChange={(v) => setForm((s) => ({ ...s, is_active: v }))} />
+                        <div className="text-xs text-gray-500">{saving ? "saving…" : loading ? "loading…" : "idle"}</div>
                     </div>
 
                     <label className="md:col-span-2 text-sm">
@@ -376,72 +267,49 @@ function ProvidersPanel() {
                             className="mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-black/10"
                             rows={3}
                             value={form.about ?? ""}
-                            onChange={(e) =>
-                                setForm((s) => ({
-                                    ...s,
-                                    about: (e.target as HTMLTextAreaElement).value,
-                                }))
-                            }
+                            onChange={(e) => setForm((s) => ({ ...s, about: (e.target as HTMLTextAreaElement).value }))}
                         />
                     </label>
 
-                    {/* Optional lat/lng capture for future geography RPC */}
-                    <NumberField
-                        label="Latitude"
-                        value={form.lat}
-                        onChange={(v: any) => setForm((s) => ({...s, lat: v}))}
-                        placeholder="e.g. 5.6148"
-                    />
-                    <NumberField
-                        label="Longitude"
-                        value={form.lng}
-                        onChange={(v: any) => setForm((s) => ({...s, lng: v}))}
-                        placeholder="e.g. -0.2059"
-                    />
+                    {/* Services multi-select */}
+                    <div className="md:col-span-2">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Services offered</p>
+                        {services.length === 0 ? (
+                            <p className="text-xs text-gray-500">No services defined.</p>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                {services.map((svc) => (
+                                    <label key={svc.id} className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedServiceIds.includes(svc.id)}
+                                            onChange={() => toggleService(svc.id)}
+                                        />
+                                        <span className="truncate">{svc.name}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     <div className="md:col-span-2 flex items-center justify-end gap-3">
-                        {!canSave && (
-                            <span className="text-xs text-gray-500">
-                {saving
-                    ? "Saving…"
-                    : !form.display_name?.trim()
-                        ? "Enter a provider name to enable"
-                        : "Ready"}
-              </span>
-                        )}
-                        <button
-                            type="button"
-                            onClick={upsert}
-                            disabled={!canSave}
-                            className="rounded-xl bg-black px-4 py-2 text-white hover:bg-black/90 disabled:opacity-50"
-                        >
+                        <button onClick={save} disabled={saving || !form.display_name.trim()} className="rounded-xl bg-black px-4 py-2 text-white disabled:opacity-50">
                             {form.id ? "Save changes" : "Add provider"}
                         </button>
                     </div>
                 </div>
 
-                {okMsg && <p className="mt-2 text-sm text-emerald-600">{okMsg}</p>}
+                {ok && <p className="mt-2 text-sm text-emerald-600">{ok}</p>}
                 {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
             </Section>
 
             <Section
                 title="Providers"
-                actions={
-                    <input
-                        placeholder="Search by name…"
-                        className="rounded-xl border px-3 py-1.5 text-sm"
-                        value={q}
-                        onChange={(e) => setQ((e.target as HTMLInputElement).value)}
-                    />
-                }
+                actions={<input placeholder="Search by name…" className="rounded-xl border px-3 py-1.5 text-sm" value={q} onChange={(e) => setQ((e.target as HTMLInputElement).value)} />}
             >
-                {loadingList && (
-                    <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
-                )}
-                {!loadingList && list.length === 0 && (
-                    <Empty title="No providers yet" subtitle="Add your first provider above."/>
-                )}
-                {!loadingList && list.length > 0 && (
+                {loading && <p className="py-8 text-center text-sm text-gray-500">Loading…</p>}
+                {!loading && list.length === 0 && <Empty title="No providers yet" subtitle="Add your first provider above." />}
+                {!loading && list.length > 0 && (
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
                             <thead>
@@ -458,9 +326,7 @@ function ProvidersPanel() {
                             <tbody>
                             {list.map((row) => (
                                 <tr key={row.id} className="border-t">
-                                    <td className="px-3 py-2 font-medium">
-                                        {row.display_name}
-                                    </td>
+                                    <td className="px-3 py-2 font-medium">{row.display_name}</td>
                                     <td className="px-3 py-2">{row.phone_business || "—"}</td>
                                     <td className="px-3 py-2">{row.is_active ? "Yes" : "No"}</td>
                                     <td className="px-3 py-2">{row.coverage_radius_km ?? "—"}</td>
@@ -468,17 +334,10 @@ function ProvidersPanel() {
                                     <td className="px-3 py-2">{row.address_line || "—"}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => edit(row)}
-                                                className="rounded-xl border px-2 py-1 hover:bg-gray-50"
-                                            >
+                                            <button onClick={() => startEdit(row)} className="rounded-xl border px-2 py-1 hover:bg-gray-50">
                                                 Edit
                                             </button>
-                                            <button
-                                                onClick={() => del(row)}
-                                                disabled={saving}
-                                                className="rounded-xl border px-2 py-1 text-red-600 hover:bg-red-50 disabled:opacity-50"
-                                            >
+                                            <button onClick={() => remove(row)} className="rounded-xl border px-2 py-1 text-red-600 hover:bg-red-50">
                                                 Delete
                                             </button>
                                         </div>
@@ -494,61 +353,40 @@ function ProvidersPanel() {
     );
 }
 
-/* ===============================
-   Requests Panel (viewer)
-=============================== */
+/* ---------------- Requests (read-only) ---------------- */
 function RequestsPanel() {
-    const [list, setList] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState("");
-    const [q, setQ] = useState("");
-    const [error, setError] = useState<string | null>(null);
+    const [list, setList] = React.useState<any[]>([]);
+    const [loading, setLoading] = React.useState(false);
+    const [status, setStatus] = React.useState("");
+    const [q, setQ] = React.useState("");
+    const [error, setError] = React.useState<string | null>(null);
 
-    const load = async () => {
+    const load = React.useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            let query = supabase
-                .schema("motorambos")
-                .from("requests")
-                .select(
-                    "id, created_at, service, status, driver_name, provider_id, location"
-                )
-                .order("created_at", {ascending: false})
-                .limit(200);
-
-            if (status) query = query.eq("status", status);
-
-            const {data, error} = await query;
-            if (error) throw error;
-
-            let rows = data || [];
-            if (q) {
-                const qq = q.toLowerCase();
-                rows = rows.filter((r: any) =>
-                    [r.service, r.status, r.driver_name, r.id].some((v: any) =>
-                        String(v || "").toLowerCase().includes(qq)
-                    )
-                );
-            }
-            setList(rows);
-        } catch (err: any) {
-            console.error("[requests.load] error:", err);
-            setError(err.message || String(err));
+            const rows = await listRequests(status || undefined);
+            const qq = q.toLowerCase();
+            setList(
+                qq
+                    ? rows.filter((r: any) => [r.service, r.status, r.driver_name, r.id].some((v: any) => String(v || "").toLowerCase().includes(qq)))
+                    : rows
+            );
+        } catch (e: any) {
+            setError(e.message || String(e));
         } finally {
             setLoading(false);
         }
-    };
+    }, [status, q]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         load();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    useEffect(() => {
+    React.useEffect(() => {
         const t = setTimeout(load, 250);
         return () => clearTimeout(t);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [status]);
+    }, [status, q, load]);
 
     return (
         <div className="space-y-4">
@@ -556,11 +394,8 @@ function RequestsPanel() {
                 title="Requests"
                 actions={
                     <div className="flex items-center gap-2">
-                        <select
-                            className="rounded-xl border px-3 py-1.5 text-sm"
-                            value={status}
-                            onChange={(e) => setStatus((e.target as HTMLSelectElement).value)}
-                        >
+                        <select className="rounded-xl border px-3 py-1.5 text-sm" value={status}
+                                onChange={(e) => setStatus((e.target as HTMLSelectElement).value)}>
                             <option value="">All statuses</option>
                             <option value="open">Open</option>
                             <option value="assigned">Assigned</option>
@@ -572,24 +407,16 @@ function RequestsPanel() {
                             className="rounded-xl border px-3 py-1.5 text-sm"
                             value={q}
                             onChange={(e) => setQ((e.target as HTMLInputElement).value)}
-                            onKeyDown={(e) =>
-                                (e as React.KeyboardEvent<HTMLInputElement>).key === "Enter" &&
-                                load()
-                            }
+                            onKeyDown={(e) => (e as React.KeyboardEvent<HTMLInputElement>).key === "Enter" && load()}
                         />
-                        <button
-                            onClick={load}
-                            className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
-                        >
+                        <button onClick={load} className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50">
                             Refresh
                         </button>
                     </div>
                 }
             >
                 {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-                {loading && (
-                    <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
-                )}
+                {loading && <p className="py-8 text-center text-sm text-gray-500">Loading…</p>}
                 {!loading && list.length === 0 && <Empty title="No requests found"/>}
                 {!loading && list.length > 0 && (
                     <div className="overflow-x-auto">
@@ -607,9 +434,7 @@ function RequestsPanel() {
                             <tbody>
                             {list.map((r) => (
                                 <tr key={r.id} className="border-t">
-                                    <td className="px-3 py-2 text-gray-600">
-                                        {new Date(r.created_at).toLocaleString()}
-                                    </td>
+                                    <td className="px-3 py-2 text-gray-600">{new Date(r.created_at).toLocaleString()}</td>
                                     <td className="px-3 py-2 font-medium">{r.service || "—"}</td>
                                     <td className="px-3 py-2">
                       <span
@@ -619,9 +444,7 @@ function RequestsPanel() {
                               r.status === "assigned" && "bg-blue-100 text-blue-800",
                               r.status === "completed" && "bg-green-100 text-green-800",
                               r.status === "cancelled" && "bg-red-100 text-red-800",
-                              !["open", "assigned", "completed", "cancelled"].includes(
-                                  r.status
-                              ) && "bg-gray-100 text-gray-700"
+                              !["open", "assigned", "completed", "cancelled"].includes(r.status) && "bg-gray-100 text-gray-700"
                           )}
                       >
                         {r.status || "—"}
@@ -629,19 +452,9 @@ function RequestsPanel() {
                                     </td>
                                     <td className="px-3 py-2">{r.driver_name || "—"}</td>
                                     <td className="px-3 py-2">{r.provider_id || "—"}</td>
-                                    <td
-                                        className="px-3 py-2 max-w-[30ch] truncate"
-                                        title={
-                                            typeof r.location === "string"
-                                                ? r.location
-                                                : JSON.stringify(r.location)
-                                        }
-                                    >
-                                        {typeof r.location === "string"
-                                            ? r.location
-                                            : r.location
-                                                ? JSON.stringify(r.location)
-                                                : "—"}
+                                    <td className="px-3 py-2 max-w-[30ch] truncate"
+                                        title={typeof r.location === "string" ? r.location : JSON.stringify(r.location)}>
+                                        {typeof r.location === "string" ? r.location : r.location ? JSON.stringify(r.location) : "—"}
                                     </td>
                                 </tr>
                             ))}
@@ -654,28 +467,28 @@ function RequestsPanel() {
     );
 }
 
-/* ===============================
-   Account Panel
-=============================== */
+/* ---------------- Account ---------------- */
 function AccountPanel() {
-    const [user, setUser] = useState<any>(null);
-    useEffect(() => {
+    const [user, setUser] = React.useState<any>(null);
+
+    React.useEffect(() => {
         (async () => {
-            const {data} = await supabase.auth.getUser();
-            setUser(data.user);
+            const u = await getUser().catch(() => null);
+            setUser(u);
         })();
     }, []);
+
     const signOut = async () => {
-        await supabase.auth.signOut();
+        await logout().catch(() => {
+        });
+        window.location.href = "/login";
     };
+
     return (
         <Section
             title="Account"
             actions={
-                <button
-                    onClick={signOut}
-                    className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
-                >
+                <button onClick={signOut} className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50">
                     Sign out
                 </button>
             }
@@ -688,9 +501,7 @@ function AccountPanel() {
                     <p>
                         <span className="text-gray-500">Email:</span> {user.email}
                     </p>
-                    <p className="mt-2 text-gray-500">
-                        Tip: protect this route with admin-only RLS.
-                    </p>
+                    <p className="mt-2 text-gray-500">Tip: protect this route with admin-only RLS.</p>
                 </div>
             ) : (
                 <p className="text-sm text-gray-500">Loading user…</p>
@@ -699,11 +510,9 @@ function AccountPanel() {
     );
 }
 
-/* ===============================
-   Admin Dashboard (tabs)
-=============================== */
+/* ---------------- Admin Dashboard ---------------- */
 export default function AdminDashboard() {
-    const [tab, setTab] = useState("Providers");
+    const [tab, setTab] = React.useState("Providers");
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -711,9 +520,7 @@ export default function AdminDashboard() {
                 <header className="mb-4 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold">MotorAmbos Admin</h1>
-                        <p className="text-sm text-gray-600">
-                            Manage providers and view requests
-                        </p>
+                        <p className="text-sm text-gray-600">Manage providers and view requests</p>
                     </div>
                 </header>
                 <Tabs tabs={["Providers", "Requests", "Account"]} active={tab} onChange={setTab}/>

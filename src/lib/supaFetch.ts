@@ -1,20 +1,41 @@
 // src/lib/supaFetch.ts
-// Minimal REST helpers that respect RLS and motorambos schema
-import type { Provider } from "@/app/help/page";
+// REST helpers for MotorAmbos. Clean version with:
+// - anon-only help flow
+// - admin-only dashboard flows
 
+/* ─────────────────────────────────────────
+   Environment
+────────────────────────────────────────── */
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-if (!URL || !ANON) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
-}
+if (!URL || !ANON) throw new Error("Missing environment variables");
 
-/* ───────────────────────────────
-   Small shared types
-   ─────────────────────────────── */
+/* ─────────────────────────────────────────
+   Types
+────────────────────────────────────────── */
+type SupabaseUserPayload =
+    | { id?: string; email?: string }
+    | { user?: { id?: string; email?: string } }
+    | null;
+
 type GeoJSONPoint = {
     type: "Point";
     coordinates: [number, number]; // [lng, lat]
+};
+
+export type Provider = {
+    id: string;
+    name: string;
+    phone: string;
+    distance_km: number;
+    rating?: number;
+    jobs?: number;
+    min_callout_fee?: number | null;
+    coverage_radius_km?: number | null;
+    services: Array<{ code: string; name: string; price?: number | null; unit?: string | null }>;
+    lat: number;
+    lng: number;
 };
 
 type ProviderRow = {
@@ -27,10 +48,10 @@ type ProviderRow = {
     coverage_radius_km?: number | null;
     callout_fee?: number | null;
     location?: GeoJSONPoint | null;
-    lat?: number | null; // optional computed/denormalized
-    lng?: number | null; // optional computed/denormalized
-    created_at?: string;
-    updated_at?: string;
+    lat?: number | null;
+    lng?: number | null;
+    created_at?: string;    // 👈 add this
+    updated_at?: string;    // 👈 and this
 };
 
 type ServiceRow = {
@@ -38,6 +59,8 @@ type ServiceRow = {
     name?: string;
     code?: string;
 };
+
+type ServiceIdRow = { id: string };
 
 type ProviderServiceRow = { service_id: string };
 
@@ -50,6 +73,19 @@ type RequestsListRow = {
     location: unknown;
 };
 
+type RequestRow = {
+    id: string;
+    created_at: string;
+    status: string;
+    driver_name: string | null;
+    driver_phone: string | null;
+    provider_id: string | null;
+    service_id: string;
+    location: unknown;
+    details?: string | null;
+    address_line?: string | null;
+};
+
 type RpcRate = {
     code: string;
     name: string;
@@ -59,6 +95,8 @@ type RpcRate = {
 
 type RpcProviderRow = {
     id: string;
+    name?: string | null;
+    phone?: string | null;
     display_name?: string | null;
     phone_business?: string | null;
     distance_km?: number | null;
@@ -73,67 +111,52 @@ type RpcProviderRow = {
     location?: GeoJSONPoint | null;
 };
 
-type LoginResponse = {
+type ErrorPayload = {
+    message?: string;
+    error?: string;
+};
+
+type AuthSuccessResponse = {
     access_token: string;
     token_type: string;
     expires_in: number;
-    user?: { id?: string } | null;
+    user?: { id?: string; email?: string } | null;
 };
 
-type SupabaseUserPayload = { id?: string } | { user?: { id?: string } } | null;
+type AuthErrorResponse = {
+    error_description?: string;
+    message?: string;
+};
 
-/* ───────────────────────────────
-   Utilities
-   ─────────────────────────────── */
-function parseAuthBlob(raw: string | null): string | null {
-    if (!raw) return null;
+/* ─────────────────────────────────────────
+   Utility helpers
+────────────────────────────────────────── */
+async function readJSONSafe<T>(res: Response): Promise<T | null> {
+    const txt = await res.clone().text();
+    if (!txt) return null;
     try {
-        const o = JSON.parse(raw as string);
-        if (o?.currentSession?.access_token) return o.currentSession.access_token as string;
-        if (o?.access_token) return o.access_token as string;
-        return null;
+        return JSON.parse(txt) as T;
     } catch {
         return null;
     }
 }
 
-/** Try the canonical key and also any sb-* fallback the SDK might have used */
-export function getAccessToken(): string | null {
-    if (typeof window === "undefined") return null;
-
-    const ref = URL.replace(/^https?:\/\//, "").split(".")[0];
-    const canonical = parseAuthBlob(localStorage.getItem(`sb-${ref}-auth-token`));
-    if (canonical) return canonical;
-
-    for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i) || "";
-        if (!k.startsWith("sb-") || !k.endsWith("-auth-token")) continue;
-        const t = parseAuthBlob(localStorage.getItem(k));
-        if (t) return t;
-    }
-    return null;
+async function throwIfNotOk(res: Response): Promise<void> {
+    if (res.ok) return;
+    const body = await readJSONSafe<ErrorPayload>(res);
+    const msg = body?.message || body?.error || `HTTP ${res.status}`;
+    throw new Error(String(msg));
 }
 
-function baseHeaders(token?: string): HeadersInit {
-    return {
-        apikey: ANON,
-        Authorization: `Bearer ${token ?? ANON}`,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-    };
-}
+const ewktFromLatLng = (lat: number, lng: number) =>
+    `SRID=4326;POINT(${lng} ${lat})`;
 
-export function authHeaders(requireUser = false): HeadersInit {
-    const token = getAccessToken();
-    if (requireUser && !token) throw new Error("You must be signed in.");
-    return {
-        ...baseHeaders(token ?? undefined),
-        "Accept-Profile": "motorambos",
-        "Content-Profile": "motorambos",
-    };
-}
+/* ─────────────────────────────────────────
+   Headers
+────────────────────────────────────────── */
 
-export function baseHeadersJustAnon(): HeadersInit {
+// PUBLIC — For Help Flow
+function anonHeaders(): HeadersInit {
     return {
         apikey: ANON,
         Authorization: `Bearer ${ANON}`,
@@ -144,82 +167,97 @@ export function baseHeadersJustAnon(): HeadersInit {
     };
 }
 
-/** Tiny sleep helper */
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-async function readJSONSafe<T = unknown>(res: Response): Promise<T | null> {
-    const len = res.headers.get("content-length");
-    if (len === "0") return null;
-
-    const text = await res.clone().text();
-    if (!text) return null;
-
-    try {
-        return JSON.parse(text) as T;
-    } catch {
-        return null;
-    }
+// ADMIN — For Dashboard
+function authHeaders(): HeadersInit {
+    const token = typeof window !== "undefined" ? localStorage.getItem("sb-access") : null;
+    return {
+        apikey: ANON,
+        Authorization: `Bearer ${token ?? ANON}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "Accept-Profile": "motorambos",
+        "Content-Profile": "motorambos",
+    };
 }
 
-async function throwIfNotOk(res: Response) {
-    if (res.ok) return;
-    const maybe = await readJSONSafe<unknown>(res);
-    const msg =
-        (maybe && (typeof maybe === "object" && maybe !== null && "message" in maybe && (maybe as { message: string }).message)) ||
-        (maybe && (typeof maybe === "object" && maybe !== null && "error" in maybe && (maybe as { error: string }).error)) ||
-        `HTTP ${res.status}`;
-    throw new Error(String(msg));
-}
+/* ─────────────────────────────────────────
+   AUTH (Admin only)
+────────────────────────────────────────── */
 
-function ewktFromLatLng(lat: number, lng: number) {
-    return `SRID=4326;POINT(${lng} ${lat})`;
-}
-
-/* ───────────────────────────────
-   Auth
-   ─────────────────────────────── */
-export async function loginWithPassword(email: string, password: string): Promise<LoginResponse> {
+export async function loginWithPassword(
+    email: string,
+    password: string
+): Promise<AuthSuccessResponse> {
     const res = await fetch(`${URL}/auth/v1/token?grant_type=password`, {
         method: "POST",
         headers: { apikey: ANON, "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
     });
 
-    const json = (await res.json().catch(() => ({}))) as LoginResponse | { error_description?: string; message?: string };
-    if (!res.ok) throw new Error((json as { error_description?: string }).error_description || (json as { message?: string }).message || "Login failed");
+    const json = (await res.json()) as AuthSuccessResponse & AuthErrorResponse;
 
-    const ref = URL.replace(/^https?:\/\//, "").split(".")[0];
-    const key = `sb-${ref}-auth-token`;
-    const currentSession = json as LoginResponse;
-    const currentUser = (json as LoginResponse)?.user ?? null;
-    localStorage.setItem(key, JSON.stringify({ currentSession, currentUser }));
-    return json as LoginResponse;
+    if (!res.ok) {
+        throw new Error(json.error_description || json.message || "Login failed");
+    }
+
+    if (typeof window !== "undefined") {
+        localStorage.setItem("sb-access", json.access_token);
+    }
+
+    return json;
+}
+
+export function logout(): void {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem("sb-access");
 }
 
 export async function getUser(): Promise<SupabaseUserPayload> {
-    for (let i = 0; i < 3; i++) {
-        const token = getAccessToken();
-        if (token) {
-            const res = await fetch(`${URL}/auth/v1/user`, { headers: baseHeaders(token) });
-            if (res.ok) return (await res.json()) as SupabaseUserPayload;
-        }
-        await sleep(150 + i * 150);
-    }
-    return null;
+    if (typeof window === "undefined") return null;
+    const token = localStorage.getItem("sb-access");
+    if (!token) return null;
+
+    const res = await fetch(`${URL}/auth/v1/user`, {
+        headers: { apikey: ANON, Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) return null;
+    return (await res.json()) as SupabaseUserPayload;
 }
 
-export async function logout(): Promise<void> {
-    const ref = URL.replace(/^https?:\/\//, "").split(".")[0];
-    localStorage.removeItem(`sb-${ref}-auth-token`);
+/* ─────────────────────────────────────────
+   SERVICES (Admin + Public lookup)
+────────────────────────────────────────── */
+
+// Admin view
+export async function listServices(): Promise<ServiceRow[]> {
+    const res = await fetch(`${URL}/rest/v1/services?select=id,name,code`, {
+        headers: authHeaders(),
+    });
+
+    await throwIfNotOk(res);
+    return (await readJSONSafe<ServiceRow[]>(res)) ?? [];
 }
 
-/* ───────────────────────────────
-   Providers
-   ─────────────────────────────── */
+// PUBLIC lookup for help flow
+export async function lookupServiceIdByCode(
+    code: "battery" | "tire" | "oil" | "tow" | "rescue" | "fuel"
+): Promise<string> {
+    const res = await fetch(
+        `${URL}/rest/v1/services?select=id&code=eq.${code}&limit=1`,
+        { headers: anonHeaders() }
+    );
 
-/**
- * List providers with computed lat/lng (fallback from GeoJSON).
- */
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe<ServiceIdRow[]>(res)) ?? [];
+    if (!rows[0]?.id) throw new Error(`Service '${code}' not found`);
+    return rows[0].id;
+}
+
+/* ─────────────────────────────────────────
+   PROVIDERS (Admin-only)
+────────────────────────────────────────── */
+
 export async function listProviders(q?: string): Promise<ProviderRow[]> {
     const params = new URLSearchParams();
     params.set(
@@ -236,26 +274,26 @@ export async function listProviders(q?: string): Promise<ProviderRow[]> {
             "location",
             "lat",
             "lng",
-            "created_at",
-            "updated_at",
         ].join(",")
     );
     params.set("order", "created_at.desc");
-    if (q && q.trim()) {
-        params.set("display_name", `ilike.*${q.trim()}*`);
-    }
+    if (q) params.set("display_name", `ilike.*${q}*`);
 
-    const r = await fetch(`${URL}/rest/v1/providers?${params.toString()}`, { headers: authHeaders() });
-    await throwIfNotOk(r);
-    const rows = (await readJSONSafe<ProviderRow[]>(r)) ?? [];
+    const res = await fetch(`${URL}/rest/v1/providers?${params}`, {
+        headers: authHeaders(),
+    });
 
-    // Derive lat/lng from GeoJSON if not present
-    return rows.map((row) => {
-        if ((row.lat == null || row.lng == null) && row.location?.coordinates) {
-            const [lng, lat] = row.location.coordinates;
-            return { ...row, lat, lng };
+    await throwIfNotOk(res);
+
+    const rows = (await readJSONSafe<ProviderRow[]>(res)) ?? [];
+
+    // Fallback lat/lng from GeoJSON
+    return rows.map((r) => {
+        if ((!r.lat || !r.lng) && r.location?.coordinates) {
+            const [lng, lat] = r.location.coordinates;
+            return { ...r, lat, lng };
         }
-        return row;
+        return r;
     });
 }
 
@@ -267,8 +305,8 @@ export type InsertProviderParams = {
     is_active: boolean;
     coverage_radius_km: number;
     callout_fee: number;
-    lng?: number | null;
     lat?: number | null;
+    lng?: number | null;
 };
 
 export async function insertProvider(p: InsertProviderParams): Promise<ProviderRow | null> {
@@ -277,25 +315,24 @@ export async function insertProvider(p: InsertProviderParams): Promise<ProviderR
         phone_business: p.phone_business ?? null,
         about: p.about ?? null,
         address_line: p.address_line ?? null,
-        is_active: !!p.is_active,
-        coverage_radius_km: p.coverage_radius_km ?? 10,
-        callout_fee: p.callout_fee ?? 0,
+        is_active: p.is_active,
+        coverage_radius_km: p.coverage_radius_km,
+        callout_fee: p.callout_fee,
     };
 
-    if (typeof p.lng === "number" && typeof p.lat === "number") {
+    if (typeof p.lat === "number" && typeof p.lng === "number") {
         payload.location = ewktFromLatLng(p.lat, p.lng);
     }
 
-    const r = await fetch(`${URL}/rest/v1/providers`, {
+    const res = await fetch(`${URL}/rest/v1/providers`, {
         method: "POST",
-        headers: { ...authHeaders(), "Content-Type": "application/json", Prefer: "return=representation" },
+        headers: { ...authHeaders(), Prefer: "return=representation" },
         body: JSON.stringify(payload),
     });
 
-    await throwIfNotOk(r);
-    const rows = (await readJSONSafe<ProviderRow[] | ProviderRow>(r)) ?? null;
-    if (!rows) return null;
-    return Array.isArray(rows) ? rows[0] ?? null : rows;
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe<ProviderRow[]>(res)) ?? [];
+    return rows[0] ?? null;
 }
 
 export type UpdateProviderPatch = Partial<{
@@ -306,181 +343,102 @@ export type UpdateProviderPatch = Partial<{
     is_active: boolean;
     coverage_radius_km: number | null;
     callout_fee: number | null;
-    // lat/lng are ignored here (computed or set via location)
-    lng: number | null;
     lat: number | null;
-    updated_at: string;
+    lng: number | null;
+    updated_at: string;          // 👈 allow this
 }>;
 
-export async function updateProvider(id: string, patch: UpdateProviderPatch): Promise<ProviderRow | null> {
-    const sanitized: Record<string, unknown> = { ...patch };
-    delete sanitized.lat;
-    delete sanitized.lng;
+export async function updateProvider(
+    id: string,
+    patch: UpdateProviderPatch
+): Promise<ProviderRow | null> {
+    const clean: Record<string, unknown> = { ...patch };
+    delete clean.lat;
+    delete clean.lng;
 
-    const r = await fetch(`${URL}/rest/v1/providers?id=eq.${encodeURIComponent(id)}`, {
+    const res = await fetch(`${URL}/rest/v1/providers?id=eq.${id}`, {
         method: "PATCH",
-        headers: { ...authHeaders(), "Content-Type": "application/json", Prefer: "return=representation" },
-        body: JSON.stringify(sanitized),
+        headers: { ...authHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify(clean),
     });
 
-    await throwIfNotOk(r);
-    const rows = (await readJSONSafe<ProviderRow[] | ProviderRow>(r)) ?? null;
-    if (!rows) return null;
-    return Array.isArray(rows) ? rows[0] ?? null : rows;
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe<ProviderRow[]>(res)) ?? [];
+    return rows[0] ?? null;
 }
 
 export async function deleteProvider(id: string): Promise<void> {
-    const res = await fetch(`${URL}/rest/v1/providers?id=eq.${encodeURIComponent(id)}`, {
+    const res = await fetch(`${URL}/rest/v1/providers?id=eq.${id}`, {
         method: "DELETE",
-        headers: authHeaders(true),
+        headers: authHeaders(),
     });
-    if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string };
-        throw new Error(data?.message || "Delete failed");
-    }
+    await throwIfNotOk(res);
 }
 
-export async function listServices(): Promise<ServiceRow[]> {
-    const params = new URLSearchParams();
-    params.set("select", "id,name,code");
-    params.set("order", "name.asc");
+/* ─────────────────────────────────────────
+   Provider Services
+────────────────────────────────────────── */
 
-    const r = await fetch(`${URL}/rest/v1/services?${params.toString()}`, { headers: authHeaders() });
-    await throwIfNotOk(r);
-    return (await readJSONSafe<ServiceRow[]>(r)) ?? [];
-}
-
-/** Get current services for a provider (returns service_id[]) */
 export async function getProviderServiceIds(providerId: string): Promise<string[]> {
-    const r = await fetch(
-        `${URL}/rest/v1/provider_services?select=service_id&provider_id=eq.${encodeURIComponent(providerId)}`,
+    const res = await fetch(
+        `${URL}/rest/v1/provider_services?select=service_id&provider_id=eq.${providerId}`,
         { headers: authHeaders() }
     );
-    await throwIfNotOk(r);
-    const rows = (await readJSONSafe<ProviderServiceRow[]>(r)) ?? [];
-    return rows.map((row) => row.service_id);
+
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe<ProviderServiceRow[]>(res)) ?? [];
+    return rows.map((x) => x.service_id);
 }
 
-/**
- * Set services for a provider by computing diff:
- * - Deletes removed relations
- * - Inserts new relations
- */
-export async function setProviderServices(providerId: string, desired: string[]): Promise<{ added: number; removed: number }> {
+export async function setProviderServices(
+    providerId: string,
+    desired: string[]
+): Promise<{ added: number; removed: number }> {
     const current = await getProviderServiceIds(providerId);
 
-    const want = new Set(desired.filter(Boolean));
+    const want = new Set(desired);
     const have = new Set(current);
 
     const toAdd: string[] = [];
     const toRemove: string[] = [];
 
-    for (const id of want) if (!have.has(id)) toAdd.push(id);
-    for (const id of have) if (!want.has(id)) toRemove.push(id);
+    for (const id of want) {
+        if (!have.has(id)) toAdd.push(id);
+    }
+    for (const id of have) {
+        if (!want.has(id)) toRemove.push(id);
+    }
 
-    if (toRemove.length > 0) {
+    // DELETE removed services
+    if (toRemove.length) {
         const inList = `(${toRemove.map((s) => `"${s}"`).join(",")})`;
-        const delUrl = `${URL}/rest/v1/provider_services?provider_id=eq.${encodeURIComponent(
-            providerId
-        )}&service_id=in.${encodeURIComponent(inList)}`;
-
-        const delRes = await fetch(delUrl, {
+        const url = `${URL}/rest/v1/provider_services?provider_id=eq.${providerId}&service_id=in.${encodeURIComponent(
+            inList
+        )}`;
+        const res = await fetch(url, {
             method: "DELETE",
             headers: { ...authHeaders(), Prefer: "return=minimal" },
         });
-        await throwIfNotOk(delRes);
+        await throwIfNotOk(res);
     }
 
-    if (toAdd.length > 0) {
+    // INSERT added services
+    if (toAdd.length) {
         const payload = toAdd.map((service_id) => ({ provider_id: providerId, service_id }));
-        const insRes = await fetch(`${URL}/rest/v1/provider_services`, {
+        const res = await fetch(`${URL}/rest/v1/provider_services`, {
             method: "POST",
-            headers: { ...authHeaders(), "Content-Type": "application/json", Prefer: "return=minimal" },
+            headers: { ...authHeaders(), Prefer: "return=minimal" },
             body: JSON.stringify(payload),
         });
-        await throwIfNotOk(insRes);
+        await throwIfNotOk(res);
     }
 
     return { added: toAdd.length, removed: toRemove.length };
 }
 
-/* ───────────────────────────────
-   Requests + Helpers
-   ─────────────────────────────── */
-function restHeaders(token?: string | null): HeadersInit {
-    return {
-        apikey: ANON,
-        Authorization: `Bearer ${token ?? ANON}`,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "Accept-Profile": "motorambos",
-        "Content-Profile": "motorambos",
-    };
-}
-
-async function getUserId(): Promise<string> {
-    const token = getAccessToken();
-    if (!token) throw new Error("You must be signed in to create a request.");
-    const res = await fetch(`${URL}/auth/v1/user`, {
-        headers: { apikey: ANON, Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("Failed to load user");
-    const j = (await res.json()) as SupabaseUserPayload;
-    const id = (j && "id" in j ? j.id : j && "user" in j ? j.user?.id : undefined) ?? null;
-    if (!id) throw new Error("No user id in session");
-    return id;
-}
-
-export async function lookupServiceIdByCode(
-    code: "battery" | "tire" | "oil" | "tow" | "rescue" | "fuel"
-): Promise<string> {
-    const qs = new URLSearchParams({ select: "id,code", code: `eq.${code}`, limit: "1" });
-    const res = await fetch(`${URL}/rest/v1/services?${qs}`, { headers: restHeaders(getAccessToken()) });
-    await throwIfNotOk(res);
-    const rows = (await readJSONSafe<Array<{ id: string }>>(res)) ?? [];
-    if (!rows?.[0]?.id) throw new Error(`Service '${code}' not found in 'services'`);
-    return rows[0].id;
-}
-
-export async function getCurrentUserId(): Promise<string | null> {
-    const token = getAccessToken();
-    if (!token) return null;
-    const r = await fetch(`${URL}/auth/v1/user`, {
-        headers: { apikey: ANON, Authorization: `Bearer ${token}` },
-    });
-    if (!r.ok) return null;
-    const j = (await r.json()) as SupabaseUserPayload;
-    return (j && "id" in j ? j.id : j && "user" in j ? j.user?.id : null) ?? null;
-}
-
-export async function createRequestRow(params: {
-    serviceCode: "battery" | "tire" | "oil" | "tow" | "rescue" | "fuel";
-    driver_name: string;
-    driver_phone: string;
-    lat: number;
-    lng: number;
-}) {
-    const token = getAccessToken();
-    const [service_id, created_by] = await Promise.all([lookupServiceIdByCode(params.serviceCode), getUserId()]);
-
-    const body = {
-        status: "open",
-        driver_name: params.driver_name,
-        driver_phone: params.driver_phone,
-        service_id,
-        created_by,
-        location: ewktFromLatLng(params.lat, params.lng),
-    };
-
-    const res = await fetch(`${URL}/rest/v1/requests`, {
-        method: "POST",
-        headers: { ...restHeaders(token), Prefer: "return=representation" },
-        body: JSON.stringify(body),
-    });
-    await throwIfNotOk(res);
-    const rows = (await readJSONSafe<Record<string, unknown>[] | Record<string, unknown>>(res)) ?? [];
-    return Array.isArray(rows) ? rows[0] ?? null : rows;
-}
+/* ─────────────────────────────────────────
+   HELP FLOW — Anon Only
+────────────────────────────────────────── */
 
 export async function createRequest(payload: {
     helpType: "battery" | "tire" | "oil" | "tow" | "rescue" | "fuel";
@@ -491,16 +449,15 @@ export async function createRequest(payload: {
     lat: number;
     lng: number;
     provider_id?: string | null;
-    status?: "open" | "assigned" | "completed" | "cancelled";
-}) {
-    const [service_id, created_by] = await Promise.all([lookupServiceIdByCode(payload.helpType), getCurrentUserId()]);
-    if (!created_by) throw new Error("Could not resolve current user for created_by.");
+    status?: "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
+}): Promise<RequestRow | null> {
+    const service_id = await lookupServiceIdByCode(payload.helpType);
 
     const body = {
-        created_by,
+        created_by: null as string | null,
         provider_id: payload.provider_id ?? null,
         service_id,
-        status: payload.status ?? "open",
+        status: payload.status ?? "pending",
         driver_name: payload.driver_name,
         driver_phone: payload.driver_phone,
         details: payload.details ?? null,
@@ -510,40 +467,35 @@ export async function createRequest(payload: {
 
     const res = await fetch(`${URL}/rest/v1/requests`, {
         method: "POST",
-        headers: { ...baseHeadersJustAnon(), "Content-Type": "application/json", Prefer: "return=representation" },
+        headers: { ...anonHeaders(), Prefer: "return=representation" },
         body: JSON.stringify(body),
     });
 
     await throwIfNotOk(res);
-    const rows = (await readJSONSafe<Record<string, unknown>[] | Record<string, unknown>>(res)) ?? [];
-    return Array.isArray(rows) ? rows[0] ?? null : rows;
+    const rows = (await readJSONSafe<RequestRow[]>(res)) ?? [];
+    return rows[0] ?? null;
 }
 
-/* ───────────────────────────────
-   RPC: find_providers_near_with_rates
-   ─────────────────────────────── */
-function mapRpcToProvider(r: RpcProviderRow): Provider {
-    const [lngFromGeo, latFromGeo] = r.location?.coordinates ?? [undefined, undefined];
+function mapRpcProvider(r: RpcProviderRow): Provider {
+    const [lngGeo, latGeo] = r.location?.coordinates ?? [];
     return {
         id: r.id,
-        name: r.display_name ?? "",
-        phone: r.phone_business ?? "",
+        name: r.name ?? r.display_name ?? "",
+        phone: r.phone_business ?? r.phone ?? "",
         distance_km: Number(r.distance_km ?? 0),
         rating: r.rating ?? undefined,
         jobs: r.jobs_count ?? undefined,
         min_callout_fee: r.provider_callout_fee ?? r.min_callout_fee ?? null,
         coverage_radius_km: r.coverage_radius_km ?? null,
         services:
-            Array.isArray(r.rates)
-                ? r.rates.map((x) => ({
-                    code: x.code,
-                    name: x.name,
-                    price: x.base_price,
-                    unit: x.price_unit,
-                }))
-                : [],
-        lat: r.lat ?? (typeof latFromGeo === "number" ? latFromGeo : 0),
-        lng: r.lng ?? (typeof lngFromGeo === "number" ? lngFromGeo : 0),
+            r.rates?.map((x) => ({
+                code: x.code,
+                name: x.name,
+                price: x.base_price,
+                unit: x.price_unit,
+            })) ?? [],
+        lat: r.lat ?? latGeo ?? 0,
+        lng: r.lng ?? lngGeo ?? 0,
     };
 }
 
@@ -556,7 +508,7 @@ export async function findProvidersNear(
 ): Promise<Provider[]> {
     const res = await fetch(`${URL}/rest/v1/rpc/find_providers_near_with_rates`, {
         method: "POST",
-        headers: { ...baseHeadersJustAnon(), "Content-Type": "application/json" },
+        headers: anonHeaders(),
         body: JSON.stringify({
             p_lat: lat,
             p_lng: lng,
@@ -567,21 +519,26 @@ export async function findProvidersNear(
     });
 
     await throwIfNotOk(res);
-    const rows = (await readJSONSafe<RpcProviderRow[] | null>(res)) ?? [];
-    return rows.map(mapRpcToProvider);
+    const rows = (await readJSONSafe<RpcProviderRow[]>(res)) ?? [];
+    return rows.map(mapRpcProvider);
 }
 
-/* ───────────────────────────────
-   Requests (read-only)
-   ─────────────────────────────── */
+/* ─────────────────────────────────────────
+   Requests list (Admin)
+────────────────────────────────────────── */
+
 export async function listRequests(status?: string): Promise<RequestsListRow[]> {
     const params = new URLSearchParams();
     params.set("select", "id,created_at,status,driver_name,provider_id,location");
     params.set("order", "created_at.desc");
+
     if (status) params.set("status", `eq.${status}`);
 
-    const res = await fetch(`${URL}/rest/v1/requests?${params.toString()}`, { headers: authHeaders(false) });
-    const data = (await res.json().catch(() => [])) as RequestsListRow[] | { message?: string };
-    if (!res.ok) throw new Error((data as { message?: string })?.message || "Failed to load requests");
-    return Array.isArray(data) ? data : [];
+    const res = await fetch(`${URL}/rest/v1/requests?${params.toString()}`, {
+        headers: authHeaders(),
+    });
+
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe<RequestsListRow[]>(res)) ?? [];
+    return rows;
 }

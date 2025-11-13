@@ -45,6 +45,7 @@ export type ProviderInsert = {
     callout_fee: number;
     lng?: number | null;
     lat?: number | null;
+    created_at?: string;
 };
 
 export interface ServiceRow {
@@ -109,7 +110,7 @@ const NumberField: React.FC<
     value: number | string;
     onChange: (v: string) => void;
 }
-> = (p) => <TextField {...p} type="number" />;
+> = (p) => <TextField {...p} type="number"/>;
 
 const Toggle = ({
                     label,
@@ -155,7 +156,7 @@ function Empty({
 }) {
     return (
         <div className="flex flex-col items-center justify-center gap-1 py-10 text-center text-gray-500">
-            <div className="i-lucide-inbox h-6 w-6" />
+            <div className="i-lucide-inbox h-6 w-6"/>
             <p className="font-medium">{title}</p>
             {subtitle && <p className="text-sm">{subtitle}</p>}
         </div>
@@ -218,7 +219,7 @@ function ProvidersPanel() {
         lat: "",
     };
 
-    const [form, setForm] = React.useState<ProviderFormState>({ ...empty });
+    const [form, setForm] = React.useState<ProviderFormState>({...empty});
     const [list, setList] = React.useState<ProviderRow[]>([]);
     const [q, setQ] = React.useState<string>("");
     const [saving, setSaving] = React.useState<boolean>(false);
@@ -312,7 +313,7 @@ function ProvidersPanel() {
 
             await setProviderServices(providerId, selectedServiceIds);
 
-            setForm({ ...empty });
+            setForm({...empty});
             setSelectedServiceIds([]);
             load();
         } catch (e: unknown) {
@@ -372,7 +373,7 @@ function ProvidersPanel() {
                     form.id && (
                         <button
                             onClick={() => {
-                                setForm({ ...empty });
+                                setForm({...empty});
                                 setSelectedServiceIds([]);
                             }}
                             className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
@@ -386,49 +387,49 @@ function ProvidersPanel() {
                     <TextField
                         label="Provider name"
                         value={form.display_name}
-                        onChange={(v) => setForm((s) => ({ ...s, display_name: v }))}
+                        onChange={(v) => setForm((s) => ({...s, display_name: v}))}
                         required
                     />
                     <TextField
                         label="Business phone"
                         value={form.phone_business}
-                        onChange={(v) => setForm((s) => ({ ...s, phone_business: v }))}
+                        onChange={(v) => setForm((s) => ({...s, phone_business: v}))}
                     />
                     <TextField
                         label="Address line"
                         value={form.address_line}
-                        onChange={(v) => setForm((s) => ({ ...s, address_line: v }))}
+                        onChange={(v) => setForm((s) => ({...s, address_line: v}))}
                     />
                     <NumberField
                         label="Coverage radius (km)"
                         value={form.coverage_radius_km}
                         onChange={(v) =>
-                            setForm((s) => ({ ...s, coverage_radius_km: v }))
+                            setForm((s) => ({...s, coverage_radius_km: v}))
                         }
                     />
                     <NumberField
                         label="Callout fee (min)"
                         value={form.callout_fee}
-                        onChange={(v) => setForm((s) => ({ ...s, callout_fee: v }))}
+                        onChange={(v) => setForm((s) => ({...s, callout_fee: v}))}
                     />
 
                     {/* Optional coordinates to set geography */}
                     <NumberField
                         label="Longitude"
                         value={form.lng}
-                        onChange={(v) => setForm((s) => ({ ...s, lng: v }))}
+                        onChange={(v) => setForm((s) => ({...s, lng: v}))}
                     />
                     <NumberField
                         label="Latitude"
                         value={form.lat}
-                        onChange={(v) => setForm((s) => ({ ...s, lat: v }))}
+                        onChange={(v) => setForm((s) => ({...s, lat: v}))}
                     />
 
                     <div className="md:col-span-2 flex items-center justify-between">
                         <Toggle
                             label="Active"
                             checked={form.is_active}
-                            onChange={(v) => setForm((s) => ({ ...s, is_active: v }))}
+                            onChange={(v) => setForm((s) => ({...s, is_active: v}))}
                         />
                         <div className="text-xs text-gray-500">
                             {saving ? "saving…" : loading ? "loading…" : "idle"}
@@ -506,7 +507,7 @@ function ProvidersPanel() {
                     <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
                 )}
                 {!loading && list.length === 0 && (
-                    <Empty title="No providers yet" subtitle="Add your first provider above." />
+                    <Empty title="No providers yet" subtitle="Add your first provider above."/>
                 )}
                 {!loading && list.length > 0 && (
                     <div className="overflow-x-auto">
@@ -563,13 +564,14 @@ function ProvidersPanel() {
 function RequestsPanel() {
     const [list, setList] = React.useState<RequestRow[]>([]);
     const [loading, setLoading] = React.useState<boolean>(false);
-    const [status, setStatus] = React.useState<string>("");
+    const [status, setStatus] = React.useState<string>("pending");
     const [q, setQ] = React.useState<string>("");
     const [error, setError] = React.useState<string | null>(null);
 
     const load = React.useCallback(async () => {
         setLoading(true);
         setError(null);
+        console.error(status);
         try {
             const rows = (await listRequests(status || undefined)) as RequestRow[];
             const qq = q.toLowerCase();
@@ -613,7 +615,7 @@ function RequestsPanel() {
                             }
                         >
                             <option value="">All statuses</option>
-                            <option value="open">Open</option>
+                            <option value="pending">Pending</option>
                             <option value="assigned">Assigned</option>
                             <option value="completed">Completed</option>
                             <option value="cancelled">Cancelled</option>
@@ -641,7 +643,7 @@ function RequestsPanel() {
                 {loading && (
                     <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
                 )}
-                {!loading && list.length === 0 && <Empty title="No requests found" />}
+                {!loading && list.length === 0 && <Empty title="No requests found"/>}
                 {!loading && list.length > 0 && (
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
@@ -668,14 +670,14 @@ function RequestsPanel() {
                       <span
                           className={cls(
                               "rounded-full px-2 py-0.5 text-xs",
-                              r.status === "open" && "bg-yellow-100 text-yellow-800",
+                              r.status === "pending" && "bg-yellow-100 text-yellow-800",
                               r.status === "assigned" &&
                               "bg-blue-100 text-blue-800",
                               r.status === "completed" &&
                               "bg-green-100 text-green-800",
                               r.status === "cancelled" &&
                               "bg-red-100 text-red-800",
-                              !["open", "assigned", "completed", "cancelled"].includes(
+                              !["pending", "assigned", "completed", "cancelled"].includes(
                                   r.status ?? ""
                               ) && "bg-gray-100 text-gray-700"
                           )}
@@ -732,7 +734,7 @@ function AccountPanel() {
     }, []);
 
     const signOut = async () => {
-        await logout().catch(() => {});
+        logout();
         window.location.href = "/login";
     };
 
@@ -792,9 +794,9 @@ export default function AdminDashboard() {
                         setTab(t as "Providers" | "Requests" | "Account")
                     }
                 />
-                {tab === "Providers" && <ProvidersPanel />}
-                {tab === "Requests" && <RequestsPanel />}
-                {tab === "Account" && <AccountPanel />}
+                {tab === "Providers" && <ProvidersPanel/>}
+                {tab === "Requests" && <RequestsPanel/>}
+                {tab === "Account" && <AccountPanel/>}
             </div>
         </div>
     );

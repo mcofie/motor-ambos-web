@@ -1262,11 +1262,16 @@ function BlockedLocationHelp({onRetry}: { onRetry: () => void }) {
 /* helpers */
 function buildSmsBody(values: HelpForm, loc: GeoFix) {
     const mapsLink = `https://maps.google.com/?q=${loc.lat},${loc.lng}`;
-    const parts = [
-        `Hi, I need roadside help for ${values.helpType.replace("_", " ")}.`,
-        `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}.`,
-        `My location: ${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)} (${mapsLink}).`,
-        `Name: ${values.fullName} • Phone: ${values.phone}.`,
-    ];
-    return parts.join(" ");
+
+    const helpType = values.helpType
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalise nicely
+
+    return [
+        `Hi, I need roadside assistance for a ${helpType}.`,
+        `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) – Plate: ${values.plateNumber}.`,
+        `Location: ${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}.`,
+        `Maps: ${mapsLink}`,
+        `Name: ${values.fullName}. Phone: ${values.phone}.`
+    ].join(" ");
 }

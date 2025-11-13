@@ -412,7 +412,7 @@ export default function GetHelpWizardPage() {
             {/* Content */}
             <section className="mx-auto w-full max-w-2xl px-4 py-6 pb-36 sm:pb-32">
                 <div className="rounded-2xl">
-                    <CardHeader className="space-y-1">
+                    <CardHeader className="space-y-1 px-4">
                         <div className="flex items-center justify-between">
                             <CardTitle className="text-lg sm:text-xl font-extrabold py-2">
                                 {step === "help" && "What do you need help with?"}
@@ -595,7 +595,7 @@ export default function GetHelpWizardPage() {
 
                     {/* PROVIDERS SCREEN (no borders) */}
                     {step === "providers" && (
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-4 px-2">
                             <div className="rounded-xl p-3 bg-card/60">
                                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                                     <MapPin className="h-4 w-4"/>
@@ -644,26 +644,11 @@ export default function GetHelpWizardPage() {
                 className="fixed inset-x-0 bottom-0 z-30 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
                 <div className="mx-auto w-full max-w-2xl px-4 py-3 pb-[env(safe-area-inset-bottom)]">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        {/* Back */}
-                        {step !== "help" ? (
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                className="h-11 w-full sm:flex-1"
-                                onClick={onBack}
-                            >
-                                <ChevronLeft className="mr-1.5 h-4 w-4"/>
-                                Back
-                            </Button>
-                        ) : (
-                            <div className="hidden sm:block sm:flex-1"/>
-                        )}
-
-                        {/* Primary */}
+                        {/* Primary only – no Back, no Edit Contact */}
                         {step !== "providers" ? (
                             <Button
                                 type="button"
-                                className="h-11 w-full sm:flex-[2]"
+                                className="h-11 w-full"
                                 disabled={!canNext || isSubmitting || (step === "contact" && loadingProviders)}
                                 onClick={onNext}
                                 title={step === "contact" && !loc ? "Share your location to continue" : undefined}
@@ -683,33 +668,28 @@ export default function GetHelpWizardPage() {
                                 )}
                             </Button>
                         ) : (
-                            <div className="flex w-full flex-col sm:flex-row gap-2">
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    className="h-11 w-full sm:flex-1"
-                                    onClick={() => setStep("contact")}
-                                >
-                                    Edit Contact
-                                </Button>
-                                <Button
-                                    type="button"
-                                    className="h-11 w-full sm:flex-1"
-                                    disabled={loadingProviders}
-                                    onClick={() =>
-                                        refreshSearchAgain(setLoadingProviders, (p) => setProviders(p), getValues(), loc)
-                                    }
-                                >
-                                    {loadingProviders ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                            Refreshing results…
-                                        </>
-                                    ) : (
-                                        "Refresh results"
-                                    )}
-                                </Button>
-                            </div>
+                            <Button
+                                type="button"
+                                className="h-11 w-full"
+                                disabled={loadingProviders}
+                                onClick={() =>
+                                    refreshSearchAgain(
+                                        setLoadingProviders,
+                                        (p) => setProviders(p),
+                                        getValues(),
+                                        loc
+                                    )
+                                }
+                            >
+                                {loadingProviders ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                        Refreshing results…
+                                    </>
+                                ) : (
+                                    "Refresh results"
+                                )}
+                            </Button>
                         )}
                     </div>
                 </div>

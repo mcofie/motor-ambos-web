@@ -778,8 +778,6 @@ function ProviderCard({
     const smsHref = `sms:${provider.phone}?&body=${encodeURIComponent(smsBody)}`;
     const mapsHref = `https://maps.google.com/?q=${provider.lat},${provider.lng}`;
 
-    console.log(provider)
-
     return (
         <div
             className="group relative rounded-2xl bg-card/60 p-4 shadow-sm ring-1 ring-border/40 transition hover:shadow-md hover:ring-border">
@@ -800,18 +798,22 @@ function ProviderCard({
                     {/* Meta chips (coloured + theme-aware) */}
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                         {/* Distance */}
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                        <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
               bg-blue-100 border border-blue-300 text-blue-700
-              dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
+              dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300"
+                        >
               <span className="font-semibold">Distance</span>
               • {provider.distance_km.toFixed(1)} km
             </span>
 
                         {/* Callout Fee */}
                         {provider.min_callout_fee != null && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                            <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
                 bg-emerald-100 border border-emerald-300 text-emerald-700
-                dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300">
+                dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300"
+                            >
                 <span className="font-semibold">Call-out</span>
                 • GH₵ {provider.min_callout_fee.toFixed(0)}
               </span>
@@ -819,9 +821,11 @@ function ProviderCard({
 
                         {/* Coverage Radius */}
                         {provider.coverage_radius_km != null && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                            <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
                 bg-purple-100 border border-purple-300 text-purple-700
-                dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-300">
+                dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-300"
+                            >
                 <span className="font-semibold">Coverage</span>
                 • {provider.coverage_radius_km} km
               </span>
@@ -839,22 +843,29 @@ function ProviderCard({
 
                     {/* Services offered */}
                     {provider.services.length > 0 && (
-                        <div className="mt-3 space-y-1.5">
-                            <div
-                                className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-                                <Wrench className="h-3.5 w-3.5"/>
-                                <span>Services offered</span>
+                        <div className="mt-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-2">
+                            <div className="mb-1.5 flex items-center justify-between gap-2">
+                                <div
+                                    className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+                                    <Wrench className="h-3.5 w-3.5"/>
+                                    <span>Services offered</span>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground">
+                  {provider.services.length} service
+                                    {provider.services.length > 1 && "s"}
+                </span>
                             </div>
-                            <ul className="space-y-1 text-xs text-muted-foreground">
-                                {provider.services.slice(0, 5).map((s) => (
-                                    <li
+
+                            <div className="flex flex-wrap gap-1.5">
+                                {provider.services.slice(0, 6).map((s) => (
+                                    <span
                                         key={s.code}
-                                        className="flex items-center justify-between gap-2"
+                                        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px]"
                                         title={s.name}
                                     >
-                                        <span className="truncate">{s.name}</span>
+                    <span className="truncate max-w-[7rem]">{s.name}</span>
                                         {typeof s.price === "number" && (
-                                            <span className="shrink-0 font-medium text-foreground">
+                                            <span className="font-semibold text-foreground">
                         GH₵{s.price.toFixed(0)}
                                                 {s.unit && (
                                                     <span className="ml-0.5 text-[10px] text-muted-foreground">
@@ -863,15 +874,15 @@ function ProviderCard({
                                                 )}
                       </span>
                                         )}
-                                    </li>
+                  </span>
                                 ))}
 
-                                {provider.services.length > 5 && (
-                                    <li className="text-[11px] text-muted-foreground">
-                                        +{provider.services.length - 5} more
-                                    </li>
+                                {provider.services.length > 6 && (
+                                    <span className="text-[11px] text-muted-foreground">
+                    +{provider.services.length - 6} more
+                  </span>
                                 )}
-                            </ul>
+                            </div>
                         </div>
                     )}
                 </div>

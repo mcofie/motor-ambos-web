@@ -831,6 +831,10 @@ function ProviderCard({
     const [locking, setLocking] = React.useState(false);
     const [lockError, setLockError] = React.useState<string | null>(null);
 
+    const [smsDialogOpen, setSmsDialogOpen] = React.useState(false);
+    const [sendingSms, setSendingSms] = React.useState(false);
+    const [smsError, setSmsError] = React.useState<string | null>(null);
+
     const handleCallClick = () => {
         setLockError(null);
         setCallDialogOpen(true);
@@ -845,19 +849,57 @@ function ProviderCard({
                 await onLockRequest(provider);
             }
 
-            setLocking(false);
             setCallDialogOpen(false);
+            // place the call only after successful lock
+            window.location.href = telHref;
         } catch (e) {
             const msg =
                 e instanceof Error
                     ? e.message
                     : "Something went wrong while locking the request.";
             setLockError(msg);
+        } finally {
             setLocking(false);
         }
 
-        // finally open the dialer (uncomment when ready)
-        // window.location.href = telHref;
+        // (no dialer here anymore; it happens only on success above)
+    };
+
+    const handleSendDetailsClick = () => {
+        setSmsError(null);
+        setSmsDialogOpen(true);
+    };
+
+    const handleConfirmSendDetails = async () => {
+        try {
+            setSmsError(null);
+            setSendingSms(true);
+
+            const res = await fetch("/api/send-sms", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    to: provider.phone,
+                    content: smsBody,
+                }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => null);
+                throw new Error(data?.error || "Failed to send SMS");
+            }
+
+            setSmsDialogOpen(false);
+
+            // Optional: also open native SMS app as UX confirmation/fallback
+            // window.location.href = smsHref;
+        } catch (e) {
+            const msg =
+                e instanceof Error ? e.message : "Something went wrong sending SMS.";
+            setSmsError(msg);
+        } finally {
+            setSendingSms(false);
+        }
     };
 
     const visibleServices = provider.services.slice(0, 4);
@@ -1003,20 +1045,15 @@ function ProviderCard({
                         Call
                     </Button>
 
-                    {/* SMS – sends details directly */}
+                    {/* SEND DETAILS -> opens dialog, sends SMS via API */}
                     <Button
-                        asChild
+                        type="button"
                         variant="ghost"
                         className="w-full h-10 text-sm text-muted-foreground hover:bg-accent/40"
+                        onClick={handleSendDetailsClick}
                     >
-                        <a
-                            href={smsHref}
-                            className="flex items-center justify-center gap-1.5"
-                            title="Send your car details & exact location"
-                        >
-                            <MessageCircleIcon className="h-4 w-4"/>
-                            Send details
-                        </a>
+                        <MessageCircleIcon className="h-4 w-4"/>
+                        Send details
                     </Button>
                 </div>
             </div>
@@ -1035,8 +1072,8 @@ function ProviderCard({
                                     Lock this request before calling
                                 </DialogTitle>
                                 <DialogDescription className="mt-1 text-xs sm:text-sm">
-                                    We’ll save this provider against your request so we can track your help
-                                    and keep your history tidy.
+                                    We’ll save this provider against your request so we can track
+                                    your help and keep your history tidy.
                                 </DialogDescription>
                             </div>
                         </div>
@@ -1047,9 +1084,9 @@ function ProviderCard({
                         <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
                                 <p className="flex items-center gap-1.5">
-            <span className="font-medium text-foreground truncate">
-              {provider.name}
-            </span>
+                  <span className="font-medium text-foreground truncate">
+                    {provider.name}
+                  </span>
                                     <BadgeCheck className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400"/>
                                 </p>
                                 {provider.address_line && (
@@ -1062,17 +1099,17 @@ function ProviderCard({
                             {provider.distance_km != null && (
                                 <span
                                     className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-            {provider.distance_km.toFixed(1)} km away
-          </span>
+                  {provider.distance_km.toFixed(1)} km away
+                </span>
                             )}
                         </div>
 
                         {/* Tiny hint row */}
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <Wrench className="h-3 w-3"/>
-          <span>We’ll attach this mechanic to your request.</span>
-        </span>
+              <span className="inline-flex items-center gap-1">
+                <Wrench className="h-3 w-3"/>
+                <span>We’ll attach this mechanic to your request.</span>
+              </span>
                         </div>
                     </div>
 
@@ -1119,7 +1156,69 @@ function ProviderCard({
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>        </>
+            </Dialog>
+
+            {/* Send details dialog */}
+            <Dialog open={smsDialogOpen} onOpenChange={setSmsDialogOpen}>
+                <DialogContent className="sm:max-w-md rounded-2xl border border-border/60">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2">
+                            <div
+                                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <MessageCircleIcon className="h-4 w-4"/>
+                            </div>
+                            <div>
+                                <DialogTitle className="text-base sm:text-lg">
+                                    Send your details to this provider
+                                </DialogTitle>
+                                <DialogDescription className="mt-1 text-xs sm:text-sm">
+                                    We’ll send your car details and location to{" "}
+                                    <span className="font-medium text-foreground">
+                    {provider.name}
+                  </span>{" "}
+                                    via SMS.
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="mt-4 rounded-xl bg-muted/40 px-3 py-3 text-xs text-muted-foreground">
+                        <p className="font-medium text-foreground mb-1">
+                            Preview of what we’ll send:
+                        </p>
+                        <p className="line-clamp-4 whitespace-pre-wrap break-words">
+                            {smsBody}
+                        </p>
+                    </div>
+
+                    {smsError && (
+                        <p className="mt-3 rounded-md bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
+                            {smsError}
+                        </p>
+                    )}
+
+                    <DialogFooter className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-9 text-sm sm:min-w-[96px]"
+                            onClick={() => setSmsDialogOpen(false)}
+                            disabled={sendingSms}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            className="h-9 text-sm sm:min-w-[150px] flex items-center justify-center gap-1.5"
+                            onClick={handleConfirmSendDetails}
+                            disabled={sendingSms}
+                        >
+                            {sendingSms ? "Sending…" : "Send SMS"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
 

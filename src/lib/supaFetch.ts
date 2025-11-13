@@ -30,6 +30,7 @@ export type Provider = {
     phone: string;
     distance_km: number;
     rating?: number;
+    address_line?: string;
     jobs?: number;
     min_callout_fee?: number | null;
     coverage_radius_km?: number | null;
@@ -97,6 +98,7 @@ type RpcProviderRow = {
     id: string;
     name?: string | null;
     phone?: string | null;
+    address_line?: string | null;
     display_name?: string | null;
     phone_business?: string | null;
     distance_km?: number | null;
@@ -190,8 +192,8 @@ export async function loginWithPassword(
 ): Promise<AuthSuccessResponse> {
     const res = await fetch(`${URL}/auth/v1/token?grant_type=password`, {
         method: "POST",
-        headers: { apikey: ANON, "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        headers: {apikey: ANON, "Content-Type": "application/json"},
+        body: JSON.stringify({email, password}),
     });
 
     const json = (await res.json()) as AuthSuccessResponse & AuthErrorResponse;
@@ -218,7 +220,7 @@ export async function getUser(): Promise<SupabaseUserPayload> {
     if (!token) return null;
 
     const res = await fetch(`${URL}/auth/v1/user`, {
-        headers: { apikey: ANON, Authorization: `Bearer ${token}` },
+        headers: {apikey: ANON, Authorization: `Bearer ${token}`},
     });
 
     if (!res.ok) return null;
@@ -245,7 +247,7 @@ export async function lookupServiceIdByCode(
 ): Promise<string> {
     const res = await fetch(
         `${URL}/rest/v1/services?select=id&code=eq.${code}&limit=1`,
-        { headers: anonHeaders() }
+        {headers: anonHeaders()}
     );
 
     await throwIfNotOk(res);
@@ -291,7 +293,7 @@ export async function listProviders(q?: string): Promise<ProviderRow[]> {
     return rows.map((r) => {
         if ((!r.lat || !r.lng) && r.location?.coordinates) {
             const [lng, lat] = r.location.coordinates;
-            return { ...r, lat, lng };
+            return {...r, lat, lng};
         }
         return r;
     });
@@ -326,7 +328,7 @@ export async function insertProvider(p: InsertProviderParams): Promise<ProviderR
 
     const res = await fetch(`${URL}/rest/v1/providers`, {
         method: "POST",
-        headers: { ...authHeaders(), Prefer: "return=representation" },
+        headers: {...authHeaders(), Prefer: "return=representation"},
         body: JSON.stringify(payload),
     });
 
@@ -352,13 +354,13 @@ export async function updateProvider(
     id: string,
     patch: UpdateProviderPatch
 ): Promise<ProviderRow | null> {
-    const clean: Record<string, unknown> = { ...patch };
+    const clean: Record<string, unknown> = {...patch};
     delete clean.lat;
     delete clean.lng;
 
     const res = await fetch(`${URL}/rest/v1/providers?id=eq.${id}`, {
         method: "PATCH",
-        headers: { ...authHeaders(), Prefer: "return=representation" },
+        headers: {...authHeaders(), Prefer: "return=representation"},
         body: JSON.stringify(clean),
     });
 
@@ -382,7 +384,7 @@ export async function deleteProvider(id: string): Promise<void> {
 export async function getProviderServiceIds(providerId: string): Promise<string[]> {
     const res = await fetch(
         `${URL}/rest/v1/provider_services?select=service_id&provider_id=eq.${providerId}`,
-        { headers: authHeaders() }
+        {headers: authHeaders()}
     );
 
     await throwIfNotOk(res);
@@ -417,23 +419,23 @@ export async function setProviderServices(
         )}`;
         const res = await fetch(url, {
             method: "DELETE",
-            headers: { ...authHeaders(), Prefer: "return=minimal" },
+            headers: {...authHeaders(), Prefer: "return=minimal"},
         });
         await throwIfNotOk(res);
     }
 
     // INSERT added services
     if (toAdd.length) {
-        const payload = toAdd.map((service_id) => ({ provider_id: providerId, service_id }));
+        const payload = toAdd.map((service_id) => ({provider_id: providerId, service_id}));
         const res = await fetch(`${URL}/rest/v1/provider_services`, {
             method: "POST",
-            headers: { ...authHeaders(), Prefer: "return=minimal" },
+            headers: {...authHeaders(), Prefer: "return=minimal"},
             body: JSON.stringify(payload),
         });
         await throwIfNotOk(res);
     }
 
-    return { added: toAdd.length, removed: toRemove.length };
+    return {added: toAdd.length, removed: toRemove.length};
 }
 
 /* ─────────────────────────────────────────
@@ -467,7 +469,7 @@ export async function createRequest(payload: {
 
     const res = await fetch(`${URL}/rest/v1/requests`, {
         method: "POST",
-        headers: { ...anonHeaders(), Prefer: "return=representation" },
+        headers: {...anonHeaders(), Prefer: "return=representation"},
         body: JSON.stringify(body),
     });
 
@@ -482,6 +484,7 @@ function mapRpcProvider(r: RpcProviderRow): Provider {
         id: r.id,
         name: r.name ?? r.display_name ?? "",
         phone: r.phone_business ?? r.phone ?? "",
+        address_line: r.address_line ?? "",
         distance_km: Number(r.distance_km ?? 0),
         rating: r.rating ?? undefined,
         jobs: r.jobs_count ?? undefined,

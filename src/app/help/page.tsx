@@ -87,6 +87,7 @@ export type Provider = {
     id: string;
     name: string;
     phone: string;
+    address_line?: string;
     distance_km: number;
     rating?: number;
     jobs?: number;
@@ -642,7 +643,7 @@ export default function GetHelpWizardPage() {
             {/* Fixed Action Bar (no borders; fully responsive buttons) */}
             <div
                 className="fixed inset-x-0 bottom-0 z-30 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-                <div className="mx-auto w-full max-w-2xl px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+                <div className="mx-auto w-full max-w-2xl px-4 mb-5 py-3 pb-[env(safe-area-inset-bottom)]">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                         {/* Primary only – no Back, no Edit Contact */}
                         {step !== "providers" ? (
@@ -777,6 +778,8 @@ function ProviderCard({
     const smsHref = `sms:${provider.phone}?&body=${encodeURIComponent(smsBody)}`;
     const mapsHref = `https://maps.google.com/?q=${provider.lat},${provider.lng}`;
 
+    console.log(provider)
+
     return (
         <div
             className="group relative rounded-2xl bg-card/60 p-4 shadow-sm ring-1 ring-border/40 transition hover:shadow-md hover:ring-border">
@@ -788,66 +791,87 @@ function ProviderCard({
                         <BadgeCheck className="h-4 w-4 text-blue-500 dark:text-blue-400"/>
                     </div>
 
+                    {provider.address_line && (
+                        <p className="mt-1 text-xs text-muted-foreground truncate">
+                            {provider.address_line}
+                        </p>
+                    )}
+
                     {/* Meta chips (coloured + theme-aware) */}
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-
                         {/* Distance */}
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                            bg-blue-100 border border-blue-300 text-blue-700
-                            dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
-                            <span className="font-semibold">Distance</span>
-                            • {provider.distance_km.toFixed(1)} km
-                        </span>
+              bg-blue-100 border border-blue-300 text-blue-700
+              dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
+              <span className="font-semibold">Distance</span>
+              • {provider.distance_km.toFixed(1)} km
+            </span>
 
                         {/* Callout Fee */}
                         {provider.min_callout_fee != null && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                bg-emerald-100 border border-emerald-300 text-emerald-700
-                                dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300">
-                                <span className="font-semibold">Call-out</span>
-                                • GH₵ {provider.min_callout_fee.toFixed(0)}
-                            </span>
+                bg-emerald-100 border border-emerald-300 text-emerald-700
+                dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300">
+                <span className="font-semibold">Call-out</span>
+                • GH₵ {provider.min_callout_fee.toFixed(0)}
+              </span>
                         )}
 
                         {/* Coverage Radius */}
                         {provider.coverage_radius_km != null && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                                bg-purple-100 border border-purple-300 text-purple-700
-                                dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-300">
-                                <span className="font-semibold">Coverage</span>
-                                • {provider.coverage_radius_km} km
-                            </span>
+                bg-purple-100 border border-purple-300 text-purple-700
+                dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-300">
+                <span className="font-semibold">Coverage</span>
+                • {provider.coverage_radius_km} km
+              </span>
                         )}
 
                         {/* Rating */}
                         {typeof provider.rating === "number" && (
                             <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                                <Star className="h-3.5 w-3.5 text-yellow-500"/>
+                <Star className="h-3.5 w-3.5 text-yellow-500"/>
                                 {provider.rating.toFixed(1)}
                                 {provider.jobs ? ` (${provider.jobs})` : ""}
-                            </span>
+              </span>
                         )}
                     </div>
 
-                    {/* Services */}
+                    {/* Services offered */}
                     {provider.services.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                            {provider.services.slice(0, 3).map((s) => (
-                                <span
-                                    key={s.code}
-                                    className="rounded-full px-2 py-0.5 text-[11px]
-                                        border border-border/60 text-muted-foreground"
-                                    title={s.name}
-                                >
-                                    {s.name}
-                                    {typeof s.price === "number" ? ` • GH₵${s.price}` : ""}
-                                </span>
-                            ))}
-                            {provider.services.length > 3 && (
-                                <span className="text-[11px] text-muted-foreground">
-                                    +{provider.services.length - 3} more
-                                </span>
-                            )}
+                        <div className="mt-3 space-y-1.5">
+                            <div
+                                className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+                                <Wrench className="h-3.5 w-3.5"/>
+                                <span>Services offered</span>
+                            </div>
+                            <ul className="space-y-1 text-xs text-muted-foreground">
+                                {provider.services.slice(0, 5).map((s) => (
+                                    <li
+                                        key={s.code}
+                                        className="flex items-center justify-between gap-2"
+                                        title={s.name}
+                                    >
+                                        <span className="truncate">{s.name}</span>
+                                        {typeof s.price === "number" && (
+                                            <span className="shrink-0 font-medium text-foreground">
+                        GH₵{s.price.toFixed(0)}
+                                                {s.unit && (
+                                                    <span className="ml-0.5 text-[10px] text-muted-foreground">
+                            /{s.unit}
+                          </span>
+                                                )}
+                      </span>
+                                        )}
+                                    </li>
+                                ))}
+
+                                {provider.services.length > 5 && (
+                                    <li className="text-[11px] text-muted-foreground">
+                                        +{provider.services.length - 5} more
+                                    </li>
+                                )}
+                            </ul>
                         </div>
                     )}
                 </div>

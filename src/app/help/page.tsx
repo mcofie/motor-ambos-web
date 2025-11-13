@@ -31,6 +31,15 @@ import {
     Loader2, MessageCircleIcon, BadgeCheck,
 } from "lucide-react";
 import {createRequest, findProvidersNear} from "@/lib/supaFetch";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from "@/components/ui/dialog";
+
 
 /* ───────────────────────────────
    Types & schema for the wizard
@@ -149,6 +158,7 @@ export default function GetHelpWizardPage() {
     const [locBusy, setLocBusy] = useState(false);
     const [locError, setLocError] = useState<string | null>(null);
 
+
     // Providers
     const [loadingProviders, setLoadingProviders] = useState(false);
     const [providers, setProviders] = useState<Provider[] | null>(null);
@@ -205,6 +215,37 @@ export default function GetHelpWizardPage() {
         return fullName.trim().length >= 2 && /^[0-9+\-\s()]{7,}$/.test(phone);
     }, [fullName, phone]);
 
+
+    // inside GetHelpWizardPage component
+
+    async function lockRequestForProvider(provider: Provider) {
+        if (!loc) {
+            setLocError("Please share your location so nearby providers can find you.");
+            throw new Error("Missing location");
+        }
+
+        const values = getValues(); // from react-hook-form
+
+        // Build the same details you already used in onSubmit
+        const details = `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}`;
+
+        const requestRow = await createRequest({
+            helpType: values.helpType,              // "battery" | "tire" | ...
+            driver_name: values.fullName,          // ✅ driver_name
+            driver_phone: values.phone,            // ✅ driver_phone
+            details,                               // ✅ details
+            address_line: provider.address_line ?? null, // ✅ address_line (provider’s or null)
+            lat: loc.lat,                          // ✅ driver’s lat
+            lng: loc.lng,                          // ✅ driver’s lng
+            provider_id: provider.id,             // optional, but nice to attach
+            status: "pending",
+        });
+
+        setRequestId(requestRow?.id ?? null);
+
+        window.location.href = `tel:${provider.phone}`;
+    }
+
     /* geolocation */
     async function requestLocation() {
         setLocBusy(true);
@@ -254,18 +295,20 @@ export default function GetHelpWizardPage() {
 
         try {
             // 1) Create the request row (required columns are set server-side in your lib)
-            const requestRow = await createRequest({
-                helpType: values.helpType, // -> your lib resolves to service_id
-                driver_name: values.fullName,
-                driver_phone: values.phone,
-                details: `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}`,
-                address_line: undefined,
-                lat: loc.lat,
-                lng: loc.lng,
-                status: "pending",
-            });
+            // const requestRow = await createRequest({
+            //     helpType: values.helpType, // -> your lib resolves to service_id
+            //     driver_name: values.fullName,
+            //     driver_phone: values.phone,
+            //     details: `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}`,
+            //     address_line: undefined,
+            //     lat: loc.lat,
+            //     lng: loc.lng,
+            //     status: "pending",
+            // });
+            //
+            // setRequestId((requestRow && (requestRow as { id?: string }).id) ?? null);
 
-            setRequestId((requestRow && (requestRow as { id?: string }).id) ?? null);
+            // setRequestId()
 
             // 2) Nearby providers
             const list = await findProvidersNear(values.helpType, loc.lat, loc.lng);
@@ -630,8 +673,12 @@ export default function GetHelpWizardPage() {
                             {!loadingProviders && (providers?.length ?? 0) > 0 && (
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     {providers!.map((p) => (
-                                        <ProviderCard key={p.id} provider={p}
-                                                      smsBody={buildSmsBody(getValues(), loc!)}/>
+                                        <ProviderCard
+                                            key={p.id}
+                                            provider={p}
+                                            smsBody={buildSmsBody(getValues(), loc!)}
+                                            onLockRequest={lockRequestForProvider}  // 👈 pass callback
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -770,166 +817,312 @@ function HelpTile({
 function ProviderCard({
                           provider,
                           smsBody,
+                          onLockRequest, // 👈 optional callback to lock request before calling
                       }: {
     provider: Provider;
     smsBody: string;
+    onLockRequest?: (provider: Provider) => Promise<void> | void;
 }) {
     const telHref = `tel:${provider.phone}`;
     const smsHref = `sms:${provider.phone}?&body=${encodeURIComponent(smsBody)}`;
     const mapsHref = `https://maps.google.com/?q=${provider.lat},${provider.lng}`;
 
+    const [callDialogOpen, setCallDialogOpen] = React.useState(false);
+    const [locking, setLocking] = React.useState(false);
+    const [lockError, setLockError] = React.useState<string | null>(null);
+
+    const handleCallClick = () => {
+        setLockError(null);
+        setCallDialogOpen(true);
+    };
+
+    const handleConfirmCall = async () => {
+        try {
+            setLockError(null);
+            setLocking(true);
+
+            if (onLockRequest) {
+                await onLockRequest(provider);
+            }
+
+            setLocking(false);
+            setCallDialogOpen(false);
+        } catch (e) {
+            const msg =
+                e instanceof Error
+                    ? e.message
+                    : "Something went wrong while locking the request.";
+            setLockError(msg);
+            setLocking(false);
+        }
+
+        // finally open the dialer (uncomment when ready)
+        // window.location.href = telHref;
+    };
+
+    const visibleServices = provider.services.slice(0, 4);
+    const extraCount =
+        provider.services.length > visibleServices.length
+            ? provider.services.length - visibleServices.length
+            : 0;
+
     return (
-        <div
-            className="group relative rounded-2xl bg-card/60 p-4 shadow-sm ring-1 ring-border/40 transition hover:shadow-md hover:ring-border">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                    {/* Provider Name with Verified Badge */}
-                    <div className="flex items-center gap-1">
-                        <div className="text-base font-semibold">{provider.name}</div>
-                        <BadgeCheck className="h-4 w-4 text-blue-500 dark:text-blue-400"/>
+        <>
+            <div
+                className="group relative rounded-2xl bg-card/60 p-4 shadow-sm ring-1 ring-border/40 transition hover:shadow-md hover:ring-border">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        {/* Provider Name with Verified Badge */}
+                        <div className="flex items-center gap-1">
+                            <div className="text-base font-semibold">{provider.name}</div>
+                            <BadgeCheck className="h-4 w-4 text-blue-500 dark:text-blue-400"/>
+                        </div>
+
+                        {provider.address_line && (
+                            <p className="mt-1 text-xs text-muted-foreground truncate">
+                                {provider.address_line}
+                            </p>
+                        )}
+
+                        {/* Meta chips */}
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {/* Distance */}
+                            <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                  bg-blue-100 border border-blue-300 text-blue-700
+                  dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300"
+                            >
+                <span className="font-semibold">Distance</span>
+                • {provider.distance_km.toFixed(1)} km
+              </span>
+
+                            {/* Callout Fee */}
+                            {provider.min_callout_fee != null && (
+                                <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                    bg-emerald-100 border border-emerald-300 text-emerald-700
+                    dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300"
+                                >
+                  <span className="font-semibold">Call-out</span>
+                  • GH₵ {provider.min_callout_fee.toFixed(0)}
+                </span>
+                            )}
+
+                            {/* Coverage Radius */}
+                            {provider.coverage_radius_km != null && (
+                                <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                    bg-purple-100 border border-purple-300 text-purple-700
+                    dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-300"
+                                >
+                  <span className="font-semibold">Coverage</span>
+                  • {provider.coverage_radius_km} km
+                </span>
+                            )}
+
+                            {/* Rating */}
+                            {typeof provider.rating === "number" && (
+                                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Star className="h-3.5 w-3.5 text-yellow-500"/>
+                                    {provider.rating.toFixed(1)}
+                                    {provider.jobs ? ` (${provider.jobs})` : ""}
+                </span>
+                            )}
+                        </div>
+
+                        {/* Services offered – card section */}
+                        {provider.services.length > 0 && (
+                            <div className="mt-3 rounded-xl border border-border/60 bg-muted/40 p-3 space-y-2">
+                                <div
+                                    className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Wrench className="h-3.5 w-3.5"/>
+                    <span>Services offered</span>
+                  </span>
+                                    <span className="text-[10px] font-medium">
+                    {provider.services.length}{" "}
+                                        {provider.services.length === 1 ? "service" : "services"}
+                  </span>
+                                </div>
+
+                                <div className="flex flex-wrap gap-1.5">
+                                    {visibleServices.map((s) => (
+                                        <span
+                                            key={s.code}
+                                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]
+                        border border-border/60 bg-background/60 text-muted-foreground"
+                                            title={s.name}
+                                        >
+                      <span className="truncate max-w-[9rem]">{s.name}</span>
+                                            {typeof s.price === "number" && (
+                                                <span className="shrink-0 font-medium text-foreground">
+                          GH₵{s.price.toFixed(0)}
+                                                    {s.unit && (
+                                                        <span className="ml-0.5 text-[10px] text-muted-foreground">
+                              /{s.unit}
+                            </span>
+                                                    )}
+                        </span>
+                                            )}
+                    </span>
+                                    ))}
+
+                                    {extraCount > 0 && (
+                                        <span className="text-[11px] text-muted-foreground">
+                      +{extraCount} more
+                    </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {provider.address_line && (
-                        <p className="mt-1 text-xs text-muted-foreground truncate">
-                            {provider.address_line}
+                    {/* Map Button */}
+                    <a
+                        href={mapsHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] border border-border/60 text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
+                        title="Open in Maps"
+                    >
+                        <MapPin className="h-4 w-4"/>
+                        <span className="hidden sm:inline">Map</span>
+                    </a>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-4 grid grid-cols-1 xs:grid-cols-2 gap-2">
+                    {/* CALL -> opens dialog first */}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-10 text-sm border-border/70 text-foreground hover:bg-accent/40"
+                        onClick={handleCallClick}
+                    >
+                        <Phone className="h-4 w-4 mr-1.5"/>
+                        Call
+                    </Button>
+
+                    {/* SMS – sends details directly */}
+                    <Button
+                        asChild
+                        variant="ghost"
+                        className="w-full h-10 text-sm text-muted-foreground hover:bg-accent/40"
+                    >
+                        <a
+                            href={smsHref}
+                            className="flex items-center justify-center gap-1.5"
+                            title="Send your car details & exact location"
+                        >
+                            <MessageCircleIcon className="h-4 w-4"/>
+                            Send details
+                        </a>
+                    </Button>
+                </div>
+            </div>
+
+            {/* Call lock dialog */}
+            <Dialog open={callDialogOpen} onOpenChange={setCallDialogOpen}>
+                <DialogContent className="sm:max-w-md rounded-2xl border border-border/60">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2">
+                            <div
+                                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <Phone className="h-4 w-4"/>
+                            </div>
+                            <div>
+                                <DialogTitle className="text-base sm:text-lg">
+                                    Lock this request before calling
+                                </DialogTitle>
+                                <DialogDescription className="mt-1 text-xs sm:text-sm">
+                                    We’ll save this provider against your request so we can track your help
+                                    and keep your history tidy.
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    {/* Provider summary card */}
+                    <div className="mt-4 rounded-xl border border-border/60 bg-muted/40 px-3 py-3 text-xs sm:text-sm">
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                                <p className="flex items-center gap-1.5">
+            <span className="font-medium text-foreground truncate">
+              {provider.name}
+            </span>
+                                    <BadgeCheck className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400"/>
+                                </p>
+                                {provider.address_line && (
+                                    <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                        {provider.address_line}
+                                    </p>
+                                )}
+                            </div>
+
+                            {provider.distance_km != null && (
+                                <span
+                                    className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+            {provider.distance_km.toFixed(1)} km away
+          </span>
+                            )}
+                        </div>
+
+                        {/* Tiny hint row */}
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <Wrench className="h-3 w-3"/>
+          <span>We’ll attach this mechanic to your request.</span>
+        </span>
+                        </div>
+                    </div>
+
+                    {/* What happens text */}
+                    <div className="mt-3 space-y-1.5 text-[11px] text-muted-foreground">
+                        <p className="font-medium text-foreground text-xs">What happens next</p>
+                        <ul className="space-y-1">
+                            <li>• We lock this provider to your current help request.</li>
+                            <li>• You place the call and speak directly with them.</li>
+                            <li>• Your request stays in your history for follow-up.</li>
+                        </ul>
+                    </div>
+
+                    {lockError && (
+                        <p className="mt-3 rounded-md bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
+                            {lockError}
                         </p>
                     )}
 
-                    {/* Meta chips (coloured + theme-aware) */}
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                        {/* Distance */}
-                        <span
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-              bg-blue-100 border border-blue-300 text-blue-700
-              dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300"
+                    <DialogFooter className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-9 text-sm sm:min-w-[96px]"
+                            onClick={() => setCallDialogOpen(false)}
+                            disabled={locking}
                         >
-              <span className="font-semibold">Distance</span>
-              • {provider.distance_km.toFixed(1)} km
-            </span>
-
-                        {/* Callout Fee */}
-                        {provider.min_callout_fee != null && (
-                            <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                bg-emerald-100 border border-emerald-300 text-emerald-700
-                dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300"
-                            >
-                <span className="font-semibold">Call-out</span>
-                • GH₵ {provider.min_callout_fee.toFixed(0)}
-              </span>
-                        )}
-
-                        {/* Coverage Radius */}
-                        {provider.coverage_radius_km != null && (
-                            <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                bg-purple-100 border border-purple-300 text-purple-700
-                dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-300"
-                            >
-                <span className="font-semibold">Coverage</span>
-                • {provider.coverage_radius_km} km
-              </span>
-                        )}
-
-                        {/* Rating */}
-                        {typeof provider.rating === "number" && (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Star className="h-3.5 w-3.5 text-yellow-500"/>
-                                {provider.rating.toFixed(1)}
-                                {provider.jobs ? ` (${provider.jobs})` : ""}
-              </span>
-                        )}
-                    </div>
-
-                    {/* Services offered */}
-                    {provider.services.length > 0 && (
-                        <div className="mt-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-2">
-                            <div className="mb-1.5 flex items-center justify-between gap-2">
-                                <div
-                                    className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-                                    <Wrench className="h-3.5 w-3.5"/>
-                                    <span>Services offered</span>
-                                </div>
-                                <span className="text-[10px] text-muted-foreground">
-                  {provider.services.length} service
-                                    {provider.services.length > 1 && "s"}
-                </span>
-                            </div>
-
-                            <div className="flex flex-wrap gap-1.5">
-                                {provider.services.slice(0, 6).map((s) => (
-                                    <span
-                                        key={s.code}
-                                        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px]"
-                                        title={s.name}
-                                    >
-                    <span className="truncate max-w-[7rem]">{s.name}</span>
-                                        {typeof s.price === "number" && (
-                                            <span className="font-semibold text-foreground">
-                        GH₵{s.price.toFixed(0)}
-                                                {s.unit && (
-                                                    <span className="ml-0.5 text-[10px] text-muted-foreground">
-                            /{s.unit}
-                          </span>
-                                                )}
-                      </span>
-                                        )}
-                  </span>
-                                ))}
-
-                                {provider.services.length > 6 && (
-                                    <span className="text-[11px] text-muted-foreground">
-                    +{provider.services.length - 6} more
-                  </span>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Map Button */}
-                <a
-                    href={mapsHref}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] border border-border/60 text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
-                    title="Open in Maps"
-                >
-                    <MapPin className="h-4 w-4"/>
-                    <span className="hidden sm:inline">Map</span>
-                </a>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="mt-4 grid grid-cols-1 xs:grid-cols-2 gap-2">
-                <Button
-                    asChild
-                    variant="outline"
-                    className="w-full h-10 text-sm border-border/70 text-foreground hover:bg-accent/40"
-                >
-                    <a href={telHref} className="flex items-center justify-center gap-1.5">
-                        <Phone className="h-4 w-4"/>
-                        Call
-                    </a>
-                </Button>
-                <Button
-                    asChild
-                    variant="ghost"
-                    className="w-full h-10 text-sm text-muted-foreground hover:bg-accent/40"
-                >
-                    <a
-                        href={smsHref}
-                        className="flex items-center justify-center gap-1.5"
-                        title="Send your car details & exact location"
-                    >
-                        <MessageCircleIcon className="h-4 w-4"/>
-                        Send details
-                    </a>
-                </Button>
-            </div>
-        </div>
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            className="h-9 text-sm sm:min-w-[150px] flex items-center justify-center gap-1.5"
+                            onClick={handleConfirmCall}
+                            disabled={locking}
+                        >
+                            {locking ? (
+                                <>Locking…</>
+                            ) : (
+                                <>
+                                    Lock request &amp; call
+                                    <Phone className="h-4 w-4"/>
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>        </>
     );
 }
+
 
 /** Tiny SMS icon using lucide's MessageCircle; add this import at the top:
  *  import { ..., MessageCircle as MessageCircleIcon } from "lucide-react";

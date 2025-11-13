@@ -121,7 +121,13 @@ const Toggle = ({
     checked: boolean;
     onChange: (v: boolean) => void;
 }) => (
-    <label className="flex items-center gap-2 text-xs sm:text-sm select-none">
+    <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className="inline-flex items-center gap-2 text-xs sm:text-sm select-none"
+    >
     <span
         className={cls(
             "relative inline-flex h-5 w-9 items-center rounded-full border transition",
@@ -138,7 +144,7 @@ const Toggle = ({
       />
     </span>
         <span className="text-slate-700">{label}</span>
-    </label>
+    </button>
 );
 
 function Section({

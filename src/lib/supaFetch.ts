@@ -65,14 +65,19 @@ type ServiceIdRow = { id: string };
 
 type ProviderServiceRow = { service_id: string };
 
+
 type RequestsListRow = {
     id: string;
     created_at: string;
     status: string;
     driver_name: string | null;
+    driver_phone?: string | null;   // 👈 add
     provider_id: string | null;
+    details?: string | null;        // 👈 add
+    address_line?: string | null;   // 👈 add
     location: unknown;
 };
+
 
 type RequestRow = {
     id: string;
@@ -532,7 +537,20 @@ export async function findProvidersNear(
 
 export async function listRequests(status?: string): Promise<RequestsListRow[]> {
     const params = new URLSearchParams();
-    params.set("select", "id,created_at,status,driver_name,provider_id,location");
+    params.set(
+        "select",
+        [
+            "id",
+            "created_at",
+            "status",
+            "driver_name",
+            "driver_phone",   // 👈 added
+            "provider_id",
+            "details",        // 👈 added
+            "address_line",   // 👈 added
+            "location",
+        ].join(",")
+    );
     params.set("order", "created_at.desc");
 
     if (status) params.set("status", `eq.${status}`);

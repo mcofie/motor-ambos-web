@@ -57,11 +57,13 @@ export interface ServiceRow {
 export interface RequestRow {
     id: UUID;
     created_at: string;
-    service_id: UUID | null;
+    service_id: UUID | null; // (note: listRequests doesn't actually select this; optional)
     status: string | null;
     driver_name: string | null;
+    driver_phone?: string | null; // 👈 add
     provider_id: UUID | null;
-    // Could be string (WKT) or GeoJSON object depending on your SELECT
+    details?: string | null;      // 👈 add
+    address_line?: string | null; // 👈 add
     location?: unknown;
 }
 
@@ -742,79 +744,86 @@ function RequestsPanel() {
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-xs sm:text-sm">
                             <thead>
-                            <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                            <tr className="text-left text-gray-600">
                                 <th className="px-3 py-2">When</th>
-                                <th className="px-3 py-2">Service ID</th>
                                 <th className="px-3 py-2">Status</th>
                                 <th className="px-3 py-2">Driver</th>
+                                <th className="px-3 py-2">Phone</th>
+                                {/*<th className="px-3 py-2">Details</th>*/}
                                 <th className="px-3 py-2">Provider</th>
-                                <th className="px-3 py-2">Location</th>
+                                {/*<th className="px-3 py-2">Location</th>*/}
                             </tr>
                             </thead>
                             <tbody>
-                            {list.map((r, idx) => (
-                                <tr
-                                    key={r.id}
-                                    className={cls(
-                                        "border-b border-slate-100",
-                                        idx % 2 === 1 && "bg-slate-50/40"
-                                    )}
-                                >
-                                    <td className="px-3 py-2 text-slate-700">
+                            {list.map((r) => (
+                                <tr key={r.id} className="border-t">
+                                    <td className="px-3 py-2 text-gray-600">
                                         {new Date(r.created_at).toLocaleString()}
                                     </td>
-                                    <td className="px-3 py-2 font-mono text-[11px] text-slate-800">
-                                        {r.service_id || "—"}
-                                    </td>
+
+                                    {/* Status badge */}
                                     <td className="px-3 py-2">
-                      <span
-                          className={cls(
-                              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px]",
-                              r.status === "pending" &&
-                              "bg-yellow-50 text-yellow-800 ring-1 ring-yellow-100",
-                              r.status === "accepted" &&
-                              "bg-blue-50 text-blue-800 ring-1 ring-blue-100",
-                              r.status === "in_progress" &&
-                              "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100",
-                              r.status === "completed" &&
-                              "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100",
-                              r.status === "cancelled" &&
-                              "bg-rose-50 text-rose-800 ring-1 ring-rose-100",
-                              ![
-                                  "pending",
-                                  "accepted",
-                                  "in_progress",
-                                  "completed",
-                                  "cancelled",
-                              ].includes(r.status ?? "") &&
-                              "bg-slate-50 text-slate-700 ring-1 ring-slate-200"
-                          )}
-                      >
-                        {r.status || "—"}
-                      </span>
+        <span
+            className={cls(
+                "rounded-full px-2 py-0.5 text-xs",
+                r.status === "pending" && "bg-yellow-100 text-yellow-800",
+                r.status === "assigned" && "bg-blue-100 text-blue-800",
+                r.status === "completed" && "bg-green-100 text-green-800",
+                r.status === "cancelled" && "bg-red-100 text-red-800",
+                !["pending", "assigned", "completed", "cancelled"].includes(
+                    r.status ?? ""
+                ) && "bg-gray-100 text-gray-700"
+            )}
+        >
+          {r.status || "—"}
+        </span>
                                     </td>
-                                    <td className="px-3 py-2 text-slate-700">
-                                        {r.driver_name || "—"}
+
+                                    {/* Driver */}
+                                    <td className="px-3 py-2">{r.driver_name || "—"}</td>
+
+                                    {/* Phone */}
+                                    <td className="px-3 py-2">
+                                        {r.driver_phone ? (
+                                            <a
+                                                href={`tel:${r.driver_phone}`}
+                                                className="text-blue-600 hover:underline"
+                                            >
+                                                {r.driver_phone}
+                                            </a>
+                                        ) : (
+                                            "—"
+                                        )}
                                     </td>
-                                    <td className="px-3 py-2 text-slate-700">
-                                        {r.provider_id || "—"}
-                                    </td>
-                                    <td
-                                        className="px-3 py-2 max-w-[30ch] truncate text-slate-700"
-                                        title={
-                                            typeof r.location === "string"
-                                                ? r.location
-                                                : r.location
-                                                    ? JSON.stringify(r.location)
-                                                    : "—"
-                                        }
-                                    >
-                                        {typeof r.location === "string"
-                                            ? r.location
-                                            : r.location
-                                                ? JSON.stringify(r.location)
-                                                : "—"}
-                                    </td>
+
+                                    {/*/!* Details *!/*/}
+                                    {/*<td*/}
+                                    {/*    className="px-3 py-2 max-w-[28ch] truncate text-gray-700"*/}
+                                    {/*    title={r.details || ""}*/}
+                                    {/*>*/}
+                                    {/*    {r.details || "—"}*/}
+                                    {/*</td>*/}
+
+                                    {/* Provider */}
+                                    <td className="px-3 py-2">{r.provider_id || "—"}</td>
+
+                                    {/*/!* Location (unchanged) *!/*/}
+                                    {/*<td*/}
+                                    {/*    className="px-3 py-2 max-w-[30ch] truncate"*/}
+                                    {/*    title={*/}
+                                    {/*        typeof r.location === "string"*/}
+                                    {/*            ? r.location*/}
+                                    {/*            : r.location*/}
+                                    {/*                ? JSON.stringify(r.location)*/}
+                                    {/*                : "—"*/}
+                                    {/*    }*/}
+                                    {/*>*/}
+                                    {/*    {typeof r.location === "string"*/}
+                                    {/*        ? r.location*/}
+                                    {/*        : r.location*/}
+                                    {/*            ? JSON.stringify(r.location)*/}
+                                    {/*            : "—"}*/}
+                                    {/*</td>*/}
                                 </tr>
                             ))}
                             </tbody>

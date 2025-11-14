@@ -132,13 +132,12 @@ export default function LandingPage() {
             </span>
 
                         <h1 className="mt-4 text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] drop-shadow-lg">
-                            Get help for your car fast, transparent, anywhere.
+                            Car trouble? Help is minutes away.
                         </h1>
 
                         <p className="mt-5 text-sm sm:text-base md:text-lg/7 text-gray-300 mx-auto max-w-2xl">
-                            MotorAmbos connects drivers to nearby, verified providers for
-                            roadside and on-demand care. Pick by distance, rating, and rate
-                            card — no surprises.
+                            MotorAmbos finds the closest trusted mechanic to get you moving again. Everything you need
+                            on the road, delivered in moments.
                         </p>
 
                         <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">

@@ -92,6 +92,19 @@ type RequestRow = {
     address_line?: string | null;
 };
 
+type RequestReviewContext = {
+    id: string;
+    status: string;
+    created_at: string;
+    driver_name: string | null;
+    driver_phone: string | null;
+    provider_id: string | null;
+    provider_name: string | null;
+    provider_phone: string | null;
+    service_code: string | null;
+    service_name: string | null;
+};
+
 type RpcRate = {
     code: string;
     name: string;
@@ -562,4 +575,97 @@ export async function listRequests(status?: string): Promise<RequestsListRow[]> 
     await throwIfNotOk(res);
     const rows = (await readJSONSafe<RequestsListRow[]>(res)) ?? [];
     return rows;
+}
+
+// ─────────────────────────────────────────
+// Reviews (Anon – driver feedback)
+// ─────────────────────────────────────────
+
+export async function submitProviderReview(params: {
+    requestId: string;
+    rating: number;
+    review: string;
+    driverPhone?: string | null;
+    outcome?: string | null;
+}): Promise<void> {
+    const res = await fetch(`${URL}/rest/v1/rpc/add_provider_review`, {
+        method: "POST",
+        headers: anonHeaders(),
+        body: JSON.stringify({
+            p_request_id: params.requestId,
+            p_rating: params.rating,
+            p_review: params.review,
+            p_driver_phone: params.driverPhone ?? null,
+            p_outcome: params.outcome ?? "other",
+        }),
+    });
+
+    if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const message: string | undefined = body?.message;
+
+        if (message?.includes("already submitted a review")) {
+            // Surface a friendly error in the UI
+            throw new Error("You’ve already reviewed this request. Thank you!");
+        }
+
+        // fallback for other errors
+        throw new Error(message || `HTTP ${res.status}`);
+    }
+}
+
+// ─────────────────────────────────────────
+// Review context (Anon) – for driver review page
+// ─────────────────────────────────────────
+
+export async function getRequestReviewContext(
+    requestId: string
+): Promise<RequestReviewContext | null> {
+    const params = new URLSearchParams();
+    params.set(
+        "select",
+        [
+            "id",
+            "status",
+            "created_at",
+            "driver_name",
+            "driver_phone",
+            "provider_id",
+            "provider_name",
+            "provider_phone",
+            "service_code",
+            "service_name",
+        ].join(",")
+    );
+    params.set("id", `eq.${requestId}`);
+    params.set("limit", "1");
+
+    const res = await fetch(`${URL}/rest/v1/request_review_context?${params}`, {
+        headers: anonHeaders(),
+    });
+
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe<RequestReviewContext[]>(res)) ?? [];
+    return rows[0] ?? null;
+}
+
+
+type RequestStatus =
+    | "pending"
+    | "accepted"
+    | "in_progress"
+    | "completed"
+    | "cancelled";
+
+export async function updateRequestStatus(
+    id: string,
+    status: RequestStatus
+): Promise<void> {
+    const res = await fetch(`${URL}/rest/v1/requests?id=eq.${id}`, {
+        method: "PATCH",
+        headers: {...authHeaders(), Prefer: "return=minimal"},
+        body: JSON.stringify({status}),
+    });
+
+    await throwIfNotOk(res);
 }

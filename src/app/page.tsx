@@ -43,8 +43,10 @@ export default function LandingPage() {
         {title: "General", image: "7.png", icon: Wrench},
     ];
 
+    const year = new Date().getFullYear();
+
     return (
-        <main className="min-h-screen bg-background text-foreground">
+        <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
             {/* Skip link */}
             <a
                 href="#content"
@@ -84,7 +86,9 @@ export default function LandingPage() {
                     <span className="grid h-9 w-9 place-items-center rounded-lg bg-lime-500/15 ring-1 ring-lime-400/25">
                       <Car className="h-4.5 w-4.5 text-lime-400 transition-transform group-hover:scale-110"/>
                     </span>
-                                        <span className="hidden xs:inline tracking-tight">Motor Ambos</span>
+                                        <span className="hidden xs:inline tracking-tight">
+                      Motor Ambos
+                    </span>
                                     </Link>
 
                                     {/* Desktop nav */}
@@ -92,7 +96,10 @@ export default function LandingPage() {
                                         <TopNavLink href="#services">Services</TopNavLink>
                                         <TopNavLink href="#membership">Membership</TopNavLink>
                                         <TopNavLink href="#why">Why us</TopNavLink>
-                                        <Button asChild className="shadow-sm hover:shadow-lg transition">
+                                        <Button
+                                            asChild
+                                            className="shadow-sm hover:shadow-lg transition"
+                                        >
                                             <Link href="/signup">Join now</Link>
                                         </Button>
                                         <ThemeToggle/>
@@ -101,7 +108,11 @@ export default function LandingPage() {
                                     {/* Mobile */}
                                     <div className="md:hidden flex items-center gap-1">
                                         <ThemeToggle/>
-                                        <Button variant="ghost" size="icon" aria-label="Open menu">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            aria-label="Open menu"
+                                        >
                                             <Menu className="h-5 w-5"/>
                                         </Button>
                                     </div>
@@ -125,9 +136,9 @@ export default function LandingPage() {
                         </h1>
 
                         <p className="mt-5 text-sm sm:text-base md:text-lg/7 text-gray-300 mx-auto max-w-2xl">
-                            MotorAmbos connects drivers to nearby, verified providers for roadside and on-demand care.
-                            Pick by
-                            distance, rating, and rate card — no surprises.
+                            MotorAmbos connects drivers to nearby, verified providers for
+                            roadside and on-demand care. Pick by distance, rating, and rate
+                            card — no surprises.
                         </p>
 
                         <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -157,13 +168,17 @@ export default function LandingPage() {
             <div id="content"/>
 
             {/* Services */}
-            <section id="services" className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-12 my-10">
+            <section
+                id="services"
+                className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-12 my-10"
+            >
                 <div className="text-center">
                     <h2 className="text-2xl md:text-4xl tracking-tight leading-[1.15] dark:text-lime-500">
                         Services
                     </h2>
                     <p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
-                        Roadside emergencies and everyday car care — delivered where you are.
+                        Roadside emergencies and everyday car care — delivered where you
+                        are.
                     </p>
                 </div>
 
@@ -172,7 +187,10 @@ export default function LandingPage() {
                         {services.map((s, index) => {
                             const Icon = s.icon;
                             return (
-                                <CarouselItem key={index} className="pl-1 xs:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                                <CarouselItem
+                                    key={index}
+                                    className="pl-1 xs:basis-1/2 md:basis-1/3 lg:basis-1/4"
+                                >
                                     {/* Transparent wrapper (no bg), border only on hover */}
                                     <div className="group relative h-full overflow-hidden rounded-xl transition">
                                         {/* soft hover glow */}
@@ -215,7 +233,10 @@ export default function LandingPage() {
             </section>
 
             {/* Membership */}
-            <section id="membership" className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-20">
+            <section
+                id="membership"
+                className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 md:py-20"
+            >
                 <div
                     className="rounded-2xl border border-border bg-primary text-primary-foreground px-4 sm:px-6 py-12 md:py-16">
                     <h2 className="text-2xl md:text-5xl leading-[1.05] my-2 text-center dark:text-lime-500">
@@ -236,16 +257,19 @@ export default function LandingPage() {
                                 className="pointer-events-none absolute inset-0 rounded-xl shadow-[0_0_40px_4px_theme(colors.primary/10)] dark:shadow-[0_0_50px_6px_theme(colors.primary/15)]"/>
                         </div>
                         <p className="mt-6 max-w-2xl text-sm md:text-base text-primary-foreground/90">
-                            Save on callouts, get priority response, and unlock concierge coordination. Your digital
-                            card is QR-enabled and
-                            works across our network.
+                            Save on callouts, get priority response, and unlock concierge
+                            coordination. Your digital card is QR-enabled and works across our
+                            network.
                         </p>
                         <div className="mt-5 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
                             <Button asChild className="w-full sm:w-auto">
                                 <Link href="/signup">Join Membership</Link>
                             </Button>
-                            <Button asChild variant="outline"
-                                    className="w-full bg-transparent text-primary-foreground sm:w-auto">
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="w-full bg-transparent text-primary-foreground sm:w-auto"
+                            >
                                 <Link href="#why">Learn more</Link>
                             </Button>
                         </div>
@@ -319,9 +343,8 @@ export default function LandingPage() {
                                 Get help for your car fast — transparent, anywhere.
                             </h3>
                             <p className="mt-3 max-w-prose text-sm sm:text-base text-muted-foreground">
-                                Book fuel delivery, wash, jumpstart, tyre fixes, or towing. Pick providers by distance,
-                                rating,
-                                and rate card — no surprises.
+                                Book fuel delivery, wash, jumpstart, tyre fixes, or towing. Pick
+                                providers by distance, rating, and rate card — no surprises.
                             </p>
                             <div className="mt-5 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
                                 <AppStoreButtons/>
@@ -331,19 +354,154 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Accent strip */}
-            <div className="min-h-40 border border-border bg-black/90 sm:min-h-56"/>
+            {/* Theme-aware accent strip before footer */}
+            <section
+                className="border-t border-border bg-gradient-to-r from-background via-muted/70 to-background dark:via-muted/50">
+                <div
+                    className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-4 py-6 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Always on
+                        </p>
+                        <p className="mt-1 text-base sm:text-lg font-semibold">
+                            24/7 support, wherever the road takes you.
+                        </p>
+                        <p className="mt-1 text-xs sm:text-sm text-muted-foreground max-w-md">
+                            From quick jumpstarts to full recovery, MotorAmbos keeps you
+                            moving — day or night.
+                        </p>
+                    </div>
+                    <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                    >
+                        <Link href="/help">Get help now</Link>
+                    </Button>
+                </div>
+            </section>
 
             {/* Footer */}
-            <footer className="bg-background">
-                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 text-sm text-muted-foreground">
-                    <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                        <div>© {new Date().getFullYear()} MotorAmbos</div>
-                        <nav className="flex gap-4">
-                            <Link href="/about">About</Link>
-                            <Link href="/terms">Terms</Link>
-                            <Link href="/privacy">Privacy</Link>
-                        </nav>
+            <footer className="border-t border-border bg-background">
+                <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8 md:py-10">
+                    <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+                        {/* Brand + short blurb */}
+                        <div className="max-w-sm space-y-3">
+                            <div className="flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-lime-500/15 ring-1 ring-lime-400/25">
+                  <Car className="h-4 w-4 text-lime-400"/>
+                </span>
+                                <span className="text-sm font-semibold tracking-tight">
+                  Motor Ambos
+                </span>
+                            </div>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                                A decentralised network of verified mechanics and car-care
+                                providers built for African roads.
+                            </p>
+                        </div>
+
+                        {/* Link columns */}
+                        <div className="grid w-full max-w-md grid-cols-2 gap-6 text-xs sm:text-sm sm:grid-cols-3">
+                            <div className="space-y-2">
+                                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Product
+                                </h4>
+                                <ul className="space-y-1.5">
+                                    <li>
+                                        <Link
+                                            href="#services"
+                                            className="hover:text-foreground transition-colors"
+                                        >
+                                            Services
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="#membership"
+                                            className="hover:text-foreground transition-colors"
+                                        >
+                                            Membership
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="#why"
+                                            className="hover:text-foreground transition-colors"
+                                        >
+                                            How it works
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div className="space-y-2">
+                                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Company
+                                </h4>
+                                <ul className="space-y-1.5">
+                                    <li>
+                                        <Link
+                                            href="/about"
+                                            className="hover:text-foreground transition-colors"
+                                        >
+                                            About
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/contact"
+                                            className="hover:text-foreground transition-colors"
+                                        >
+                                            Contact
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/providers"
+                                            className="hover:text-foreground transition-colors"
+                                        >
+                                            Become a provider
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div className="space-y-2">
+                                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Legal
+                                </h4>
+                                <ul className="space-y-1.5">
+                                    <li>
+                                        <Link
+                                            href="/terms"
+                                            className="hover:text-foreground transition-colors"
+                                        >
+                                            Terms
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/privacy"
+                                            className="hover:text-foreground transition-colors"
+                                        >
+                                            Privacy
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom strip */}
+                    <div
+                        className="mt-6 flex flex-col gap-3 border-t border-border/60 pt-4 text-[11px] sm:text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                        <p>© {year} MotorAmbos. All rights reserved.</p>
+                        <p className="flex flex-wrap gap-2">
+                            <span>Built for drivers in Ghana.</span>
+                            <span className="hidden sm:inline">More markets coming soon.</span>
+                        </p>
                     </div>
                 </div>
             </footer>
@@ -353,7 +511,13 @@ export default function LandingPage() {
 
 /* ---------- Presentational bits ---------- */
 
-function TopNavLink({href, children}: { href: string; children: React.ReactNode }) {
+function TopNavLink({
+                        href,
+                        children,
+                    }: {
+    href: string;
+    children: React.ReactNode;
+}) {
     return (
         <Button
             asChild

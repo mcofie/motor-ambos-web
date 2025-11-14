@@ -13,6 +13,7 @@ import {
     listServices,
     setProviderServices,
     getProviderServiceIds,
+    updateRequestStatus,   // 👈 add this
 } from "@/lib/supaFetch";
 
 /* ---------------- Types ---------------- */
@@ -66,6 +67,13 @@ export interface RequestRow {
     address_line?: string | null; // 👈 add
     location?: unknown;
 }
+
+type RequestStatus =
+    | "pending"
+    | "accepted"
+    | "in_progress"
+    | "completed"
+    | "cancelled";
 
 /* --------------- UI helpers --------------- */
 
@@ -660,6 +668,7 @@ function RequestsPanel() {
     const [status, setStatus] = React.useState<string>("pending");
     const [q, setQ] = React.useState<string>("");
     const [error, setError] = React.useState<string | null>(null);
+    const [updatingId, setUpdatingId] = React.useState<string | null>(null); // 👈 NEW
 
     const load = React.useCallback(async () => {
         setLoading(true);
@@ -692,6 +701,32 @@ function RequestsPanel() {
         const t = setTimeout(load, 250);
         return () => clearTimeout(t);
     }, [status, q, load]);
+
+
+    async function handleStatusChange(id: string, next: RequestStatus) {
+        setUpdatingId(id);
+        setError(null);
+        try {
+            await updateRequestStatus(id, next);
+
+            // Optimistic UI: update local state
+            setList((prev) =>
+                prev.map((r) =>
+                    r.id === id
+                        ? {
+                            ...r,
+                            status: next,
+                        }
+                        : r
+                )
+            );
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            setError(msg);
+        } finally {
+            setUpdatingId(null);
+        }
+    }
 
     return (
         <div className="space-y-5">
@@ -763,20 +798,23 @@ function RequestsPanel() {
 
                                     {/* Status badge */}
                                     <td className="px-3 py-2">
-        <span
-            className={cls(
-                "rounded-full px-2 py-0.5 text-xs",
-                r.status === "pending" && "bg-yellow-100 text-yellow-800",
-                r.status === "assigned" && "bg-blue-100 text-blue-800",
-                r.status === "completed" && "bg-green-100 text-green-800",
-                r.status === "cancelled" && "bg-red-100 text-red-800",
-                !["pending", "assigned", "completed", "cancelled"].includes(
-                    r.status ?? ""
-                ) && "bg-gray-100 text-gray-700"
-            )}
-        >
-          {r.status || "—"}
-        </span>
+                                        <select
+                                            className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] sm:text-xs text-slate-700 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                                            value={r.status ?? "pending"}
+                                            onChange={(e) =>
+                                                handleStatusChange(
+                                                    r.id,
+                                                    e.target.value as RequestStatus
+                                                )
+                                            }
+                                            disabled={updatingId === r.id}
+                                        >
+                                            <option value="pending">Pending</option>
+                                            <option value="accepted">Accepted</option>
+                                            <option value="in_progress">In progress</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
                                     </td>
 
                                     {/* Driver */}

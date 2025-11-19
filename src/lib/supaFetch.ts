@@ -496,6 +496,48 @@ export async function createRequest(payload: {
     return rows[0] ?? null;
 }
 
+export async function fetchMembershipByNumber(membershipNumber: string) {
+    if (!membershipNumber) {
+        throw new Error("No membership number provided");
+    }
+
+    const trimmed = membershipNumber.trim()
+
+    console.log("[fetchMembershipByNumber] looking up:", trimmed)
+
+    const res = await fetch(
+        `${URL}/rest/v1/rpc/get_membership_by_number`,
+        {
+            method: "POST",
+            headers: {
+                ...anonHeaders(),
+                Prefer: "return=representation",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ in_membership_number: trimmed }),
+            cache: "no-store",
+        },
+    );
+
+    console.log(
+        "[fetchMembershipByNumber] status:",
+        res.status,
+        res.statusText,
+    )
+
+    if (!res.ok) {
+        const text = await res.text();
+        console.error("[fetchMembershipByNumber] error body:", text)
+        throw new Error(text || "Failed to fetch membership");
+    }
+
+    const json = await res.json()
+    console.log("[fetchMembershipByNumber] json:", json)
+
+    // json will be null if the function returns null
+    return json as any | null;
+}
+
 function mapRpcProvider(r: RpcProviderRow): Provider {
     const [lngGeo, latGeo] = r.location?.coordinates ?? [];
     return {

@@ -13,8 +13,24 @@ import {
     listServices,
     setProviderServices,
     getProviderServiceIds,
-    updateRequestStatus,   // 👈 add this
+    updateRequestStatus,
+    listProviderRates,
+    upsertProviderRates,
 } from "@/lib/supaFetch";
+
+import {
+    Wrench,
+    LifeBuoy,
+    UserCog,
+    ShieldCheck,
+    CheckCircle2,
+    XCircle,
+    Phone,
+    MapPin,
+    AlertCircle,
+    RefreshCw,
+    LogOut,
+} from "lucide-react";
 
 /* ---------------- Types ---------------- */
 
@@ -29,11 +45,11 @@ export interface ProviderRow {
     is_active: boolean;
     coverage_radius_km: number | null;
     callout_fee: number | null;
-    // Optional coordinates (either real columns or derived from GeoJSON)
     lng?: number | null;
     lat?: number | null;
     created_at?: string;
     updated_at?: string;
+    is_verified?: boolean | null;
 }
 
 export type ProviderInsert = {
@@ -47,6 +63,7 @@ export type ProviderInsert = {
     lng?: number | null;
     lat?: number | null;
     created_at?: string;
+    is_verified?: boolean;
 };
 
 export interface ServiceRow {
@@ -58,13 +75,13 @@ export interface ServiceRow {
 export interface RequestRow {
     id: UUID;
     created_at: string;
-    service_id: UUID | null; // (note: listRequests doesn't actually select this; optional)
+    service_id: UUID | null;
     status: string | null;
     driver_name: string | null;
-    driver_phone?: string | null; // 👈 add
+    driver_phone?: string | null;
     provider_id: UUID | null;
-    details?: string | null;      // 👈 add
-    address_line?: string | null; // 👈 add
+    details?: string | null;
+    address_line?: string | null;
     location?: unknown;
 }
 
@@ -74,6 +91,12 @@ type RequestStatus =
     | "in_progress"
     | "completed"
     | "cancelled";
+
+interface ProviderRateRow {
+    service_id: UUID;
+    base_price: number | null;
+    price_unit: string | null;
+}
 
 /* --------------- UI helpers --------------- */
 
@@ -101,9 +124,9 @@ function TextField({
                    }: TextFieldProps) {
     return (
         <label className="block text-xs sm:text-sm">
-            <span className="font-medium text-slate-700">{label}</span>
+            <span className="font-medium text-slate-100/90">{label}</span>
             <input
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                className="mt-1 w-full rounded-xl border border-slate-700/70 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
                 value={value ?? ""}
                 onChange={(e) => onChange((e.target as HTMLInputElement).value)}
                 type={type}
@@ -120,7 +143,7 @@ const NumberField: React.FC<
     value: number | string;
     onChange: (v: string) => void;
 }
-> = (p) => <TextField {...p} type="number"/>;
+> = (p) => <TextField {...p} type="number" />;
 
 const Toggle = ({
                     label,
@@ -136,24 +159,24 @@ const Toggle = ({
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className="inline-flex items-center gap-2 text-xs sm:text-sm select-none"
+        className="inline-flex items-center gap-2 select-none text-xs sm:text-sm"
     >
     <span
         className={cls(
             "relative inline-flex h-5 w-9 items-center rounded-full border transition",
             checked
-                ? "border-emerald-500 bg-emerald-500/10"
-                : "border-slate-300 bg-slate-100"
+                ? "border-emerald-500 bg-emerald-500/15"
+                : "border-slate-600 bg-slate-800",
         )}
     >
       <span
           className={cls(
               "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition",
-              checked ? "translate-x-4" : "translate-x-1"
+              checked ? "translate-x-4" : "translate-x-1",
           )}
       />
     </span>
-        <span className="text-slate-700">{label}</span>
+        <span className="text-slate-100/90">{label}</span>
     </button>
 );
 
@@ -168,14 +191,14 @@ function Section({
     actions?: React.ReactNode;
 }>) {
     return (
-        <section className="rounded-2xl bg-white/90 p-4 sm:p-5 shadow-sm ring-1 ring-slate-200/80">
+        <section className="rounded-2xl bg-slate-900/80 p-4 shadow-lg shadow-black/30 ring-1 ring-slate-800/80 backdrop-blur sm:p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+                    <h2 className="text-base font-semibold text-slate-50 sm:text-lg">
                         {title}
                     </h2>
                     {subtitle && (
-                        <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
+                        <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
                             {subtitle}
                         </p>
                     )}
@@ -195,11 +218,63 @@ function Empty({
     subtitle?: string;
 }) {
     return (
-        <div className="flex flex-col items-center justify-center gap-1 py-10 text-center text-slate-500">
-            <div className="i-lucide-inbox h-7 w-7 opacity-70"/>
-            <p className="mt-1 text-sm font-medium">{title}</p>
+        <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-slate-500">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/80 text-slate-400">
+                <LifeBuoy className="h-5 w-5" />
+            </div>
+            <p className="mt-1 text-sm font-medium text-slate-200">{title}</p>
             {subtitle && <p className="text-xs sm:text-sm">{subtitle}</p>}
         </div>
+    );
+}
+
+function StatusPill({ status }: { status: RequestStatus | string | null }) {
+    const s = (status || "pending") as RequestStatus;
+    const map: Record<
+        RequestStatus,
+        { label: string; className: string; icon?: React.ReactNode }
+    > = {
+        pending: {
+            label: "Pending",
+            className: "bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/40",
+            icon: <AlertCircle className="h-3.5 w-3.5" />,
+        },
+        accepted: {
+            label: "Accepted",
+            className: "bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/40",
+            icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+        },
+        in_progress: {
+            label: "In progress",
+            className:
+                "bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/40",
+            icon: <LifeBuoy className="h-3.5 w-3.5" />,
+        },
+        completed: {
+            label: "Completed",
+            className:
+                "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/40",
+            icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+        },
+        cancelled: {
+            label: "Cancelled",
+            className: "bg-red-500/10 text-red-300 ring-1 ring-red-500/40",
+            icon: <XCircle className="h-3.5 w-3.5" />,
+        },
+    };
+
+    const cfg = map[s] ?? map.pending;
+
+    return (
+        <span
+            className={cls(
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
+                cfg.className,
+            )}
+        >
+      {cfg.icon}
+            <span>{cfg.label}</span>
+    </span>
     );
 }
 
@@ -213,22 +288,25 @@ function Tabs({
     onChange: (t: string) => void;
 }) {
     return (
-        <div
-            className="mb-5 inline-flex w-full items-center justify-start rounded-2xl bg-white/80 p-1 shadow-sm ring-1 ring-slate-200/80">
+        <div className="mb-6 inline-flex w-full items-center justify-start rounded-2xl bg-slate-950/70 p-1 shadow-lg shadow-black/30 ring-1 ring-slate-800/80">
             {tabs.map((t) => {
                 const isActive = active === t;
+                const Icon =
+                    t === "Providers" ? Wrench : t === "Requests" ? LifeBuoy : UserCog;
+
                 return (
                     <button
                         key={t}
                         onClick={() => onChange(t)}
                         className={cls(
-                            "flex-1 rounded-xl px-4 py-2 text-xs sm:text-sm font-medium transition",
+                            "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-medium transition sm:text-sm",
                             isActive
-                                ? "bg-slate-900 text-white shadow-sm"
-                                : "text-slate-700 hover:bg-slate-50"
+                                ? "bg-slate-100 text-slate-900 shadow-sm"
+                                : "text-slate-200 hover:bg-slate-900/60",
                         )}
                     >
-                        {t}
+                        <Icon className={cls("h-4 w-4", isActive && "text-slate-900")} />
+                        <span>{t}</span>
                     </button>
                 );
             })}
@@ -249,6 +327,7 @@ type ProviderFormState = {
     callout_fee: number | string;
     lng: number | string;
     lat: number | string;
+    is_verified: boolean;
 };
 
 function ProvidersPanel() {
@@ -263,9 +342,10 @@ function ProvidersPanel() {
         callout_fee: 0,
         lng: "",
         lat: "",
+        is_verified: true,
     };
 
-    const [form, setForm] = React.useState<ProviderFormState>({...empty});
+    const [form, setForm] = React.useState<ProviderFormState>({ ...empty });
     const [list, setList] = React.useState<ProviderRow[]>([]);
     const [q, setQ] = React.useState<string>("");
     const [saving, setSaving] = React.useState<boolean>(false);
@@ -274,11 +354,28 @@ function ProvidersPanel() {
     const [ok, setOk] = React.useState<string | null>(null);
 
     const [services, setServices] = React.useState<ServiceRow[]>([]);
-    const [selectedServiceIds, setSelectedServiceIds] = React.useState<UUID[]>([]);
+    const [selectedServiceIds, setSelectedServiceIds] = React.useState<UUID[]>(
+        [],
+    );
+
+    type ServiceRateForm = { base_price: string; price_unit: string };
+    const [serviceRates, setServiceRates] = React.useState<
+        Record<UUID, ServiceRateForm>
+    >({});
+
     const toggleService = (id: UUID) =>
         setSelectedServiceIds((s) =>
-            s.includes(id) ? s.filter((x) => x !== id) : [...s, id]
+            s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
         );
+
+    const updateServiceRate = (id: UUID, patch: Partial<ServiceRateForm>) =>
+        setServiceRates((prev) => {
+            const current = prev[id] ?? { base_price: "", price_unit: "" };
+            return {
+                ...prev,
+                [id]: { ...current, ...patch },
+            };
+        });
 
     const load = React.useCallback(async () => {
         setLoading(true);
@@ -300,7 +397,6 @@ function ProvidersPanel() {
                 const svcs = await listServices();
                 setServices(svcs as ServiceRow[]);
             } catch (e) {
-                // eslint-disable-next-line no-console
                 console.warn("[ProvidersPanel] failed loading services:", e);
             }
             load();
@@ -326,6 +422,7 @@ function ProvidersPanel() {
                 is_active: !!form.is_active,
                 coverage_radius_km: Number(form.coverage_radius_km) || 10,
                 callout_fee: Number(form.callout_fee) || 0,
+                is_verified: !!form.is_verified,
             };
 
             const hasCoords =
@@ -358,8 +455,36 @@ function ProvidersPanel() {
 
             await setProviderServices(providerId, selectedServiceIds);
 
-            setForm({...empty});
+            if (services.length > 0) {
+                const ratePayload = services.map((svc) => {
+                    const rate = serviceRates[svc.id];
+                    const selected = selectedServiceIds.includes(svc.id);
+
+                    const base_price =
+                        rate && rate.base_price.trim() !== ""
+                            ? Number(rate.base_price)
+                            : 0;
+
+                    const price_unit =
+                        rate && rate.price_unit.trim() !== ""
+                            ? rate.price_unit.trim()
+                            : "job";
+
+                    return {
+                        service_id: svc.id,
+                        base_price,
+                        price_unit,
+                        min_callout_fee: null,
+                        is_active: selected,
+                    };
+                });
+
+                await upsertProviderRates(providerId, ratePayload);
+            }
+
+            setForm({ ...empty });
             setSelectedServiceIds([]);
+            setServiceRates({});
             load();
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
@@ -398,32 +523,49 @@ function ProvidersPanel() {
             callout_fee: Number(row.callout_fee ?? 0),
             lng: row.lng ?? "",
             lat: row.lat ?? "",
+            is_verified: !!row.is_verified,
         });
 
         try {
             const ids = await getProviderServiceIds(row.id);
             setSelectedServiceIds(ids as UUID[]);
+
+            const rateRows = (await listProviderRates(
+                row.id,
+            )) as ProviderRateRow[];
+            const rateState: Record<UUID, ServiceRateForm> = {};
+            rateRows.forEach((r) => {
+                rateState[r.service_id] = {
+                    base_price: r.base_price != null ? String(r.base_price) : "",
+                    price_unit: r.price_unit ?? "",
+                };
+            });
+            setServiceRates(rateState);
         } catch (e) {
-            // eslint-disable-next-line no-console
-            console.warn("[ProvidersPanel] failed to load provider services:", e);
+            console.warn(
+                "[ProvidersPanel] failed to load provider services/rates:",
+                e,
+            );
             setSelectedServiceIds([]);
+            setServiceRates({});
         }
     }
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-6">
             {/* Form + Services */}
             <Section
                 title={form.id ? "Edit provider" : "Add provider"}
-                subtitle="Set up details, coverage and services for a roadside provider."
+                subtitle="Set up details, coverage, verification and services for a roadside provider."
                 actions={
                     form.id && (
                         <button
                             onClick={() => {
-                                setForm({...empty});
+                                setForm({ ...empty });
                                 setSelectedServiceIds([]);
+                                setServiceRates({});
                             }}
-                            className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs sm:text-sm text-slate-700 hover:bg-slate-50"
+                            className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800 sm:text-sm"
                         >
                             Clear form
                         </button>
@@ -437,63 +579,78 @@ function ProvidersPanel() {
                             <TextField
                                 label="Provider name"
                                 value={form.display_name}
-                                onChange={(v) => setForm((s) => ({...s, display_name: v}))}
+                                onChange={(v) => setForm((s) => ({ ...s, display_name: v }))}
                                 required
                                 placeholder="e.g. Kofi Mobile Auto"
                             />
                             <TextField
                                 label="Business phone"
                                 value={form.phone_business}
-                                onChange={(v) => setForm((s) => ({...s, phone_business: v}))}
+                                onChange={(v) =>
+                                    setForm((s) => ({ ...s, phone_business: v }))
+                                }
                                 placeholder="+233…"
                             />
                             <TextField
                                 label="Address line"
                                 value={form.address_line}
-                                onChange={(v) => setForm((s) => ({...s, address_line: v}))}
+                                onChange={(v) =>
+                                    setForm((s) => ({ ...s, address_line: v }))
+                                }
                                 placeholder="e.g. Spintex Road, Accra"
                             />
                             <NumberField
                                 label="Coverage radius (km)"
                                 value={form.coverage_radius_km}
                                 onChange={(v) =>
-                                    setForm((s) => ({...s, coverage_radius_km: v}))
+                                    setForm((s) => ({ ...s, coverage_radius_km: v }))
                                 }
                             />
                             <NumberField
                                 label="Callout fee (min)"
                                 value={form.callout_fee}
-                                onChange={(v) => setForm((s) => ({...s, callout_fee: v}))}
+                                onChange={(v) => setForm((s) => ({ ...s, callout_fee: v }))}
                             />
 
                             {/* Coordinates */}
                             <NumberField
                                 label="Longitude (optional)"
                                 value={form.lng}
-                                onChange={(v) => setForm((s) => ({...s, lng: v}))}
+                                onChange={(v) => setForm((s) => ({ ...s, lng: v }))}
                             />
                             <NumberField
                                 label="Latitude (optional)"
                                 value={form.lat}
-                                onChange={(v) => setForm((s) => ({...s, lat: v}))}
+                                onChange={(v) => setForm((s) => ({ ...s, lat: v }))}
                             />
                         </div>
 
-                        <div className="flex items-center justify-between pt-1">
-                            <Toggle
-                                label="Provider is active"
-                                checked={form.is_active}
-                                onChange={(v) => setForm((s) => ({...s, is_active: v}))}
-                            />
-                            <div className="text-[11px] text-slate-500">
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                            <div className="flex flex-wrap gap-3">
+                                <Toggle
+                                    label="Provider is active"
+                                    checked={form.is_active}
+                                    onChange={(v) =>
+                                        setForm((s) => ({ ...s, is_active: v }))
+                                    }
+                                />
+                                <Toggle
+                                    label="Verified provider"
+                                    checked={form.is_verified}
+                                    onChange={(v) =>
+                                        setForm((s) => ({ ...s, is_verified: v }))
+                                    }
+                                />
+                            </div>
+                            <div className="text-[11px] text-slate-400">
                                 {saving ? "Saving…" : loading ? "Loading…" : "Idle"}
                             </div>
                         </div>
 
                         <label className="block text-xs sm:text-sm">
-                            <span className="font-medium text-slate-700">About</span>
+                            <span className="font-medium text-slate-100/90">About</span>
                             <textarea
-                                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                                className="mt-1 w-full rounded-xl border border-slate-700/70 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
                                 rows={3}
                                 value={form.about ?? ""}
                                 onChange={(e) =>
@@ -507,50 +664,108 @@ function ProvidersPanel() {
                         </label>
                     </div>
 
-                    {/* Right: services checklist */}
-                    <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/60 p-3 sm:p-4">
+                    {/* Right: services checklist + rates */}
+                    <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-3 sm:p-4">
                         <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs sm:text-sm font-medium text-slate-800">
-                                Services offered
+                            <p className="flex items-center gap-1.5 text-xs font-medium text-slate-100 sm:text-sm">
+                                <Wrench className="h-4 w-4 text-emerald-400" />
+                                <span>Services &amp; rates</span>
                             </p>
-                            <span className="rounded-full bg-slate-900/5 px-2 py-0.5 text-[10px] text-slate-500">
+                            <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] text-slate-400">
                 {selectedServiceIds.length} selected
               </span>
                         </div>
                         {services.length === 0 ? (
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-400">
                                 No services defined yet. Add services in the database first.
                             </p>
                         ) : (
-                            <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
-                                {services.map((svc) => (
-                                    <label
-                                        key={svc.id}
-                                        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm hover:border-slate-300"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            className="h-3.5 w-3.5 rounded border-slate-300 text-slate-900"
-                                            checked={selectedServiceIds.includes(svc.id)}
-                                            onChange={() => toggleService(svc.id)}
-                                        />
-                                        <span className="truncate">{svc.name}</span>
-                                    </label>
-                                ))}
+                            <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
+                                {services.map((svc) => {
+                                    const selected = selectedServiceIds.includes(svc.id);
+                                    const rate = serviceRates[svc.id] ?? {
+                                        base_price: "",
+                                        price_unit: "",
+                                    };
+
+                                    return (
+                                        <div
+                                            key={svc.id}
+                                            className={cls(
+                                                "flex items-center justify-between gap-3 rounded-xl border px-3 py-1.5 text-xs sm:text-sm",
+                                                selected
+                                                    ? "border-emerald-500/40 bg-slate-900/90"
+                                                    : "border-slate-800 bg-slate-950/80",
+                                            )}
+                                        >
+                                            <label className="flex min-w-0 items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    className="h-3.5 w-3.5 rounded border-slate-500 text-emerald-400"
+                                                    checked={selected}
+                                                    onChange={() => toggleService(svc.id)}
+                                                />
+                                                <span className="truncate text-slate-100">
+                          {svc.name}
+                        </span>
+                                            </label>
+
+                                            {/* Rate inputs */}
+                                            <div className="flex items-center gap-1.5">
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    placeholder="Rate"
+                                                    className="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-50 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/30"
+                                                    value={rate.base_price}
+                                                    onChange={(e) =>
+                                                        updateServiceRate(svc.id, {
+                                                            base_price: (
+                                                                e.target as HTMLInputElement
+                                                            ).value,
+                                                        })
+                                                    }
+                                                />
+                                                <input
+                                                    type="text"
+                                                    placeholder="unit"
+                                                    className="w-16 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-50 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/30"
+                                                    value={rate.price_unit}
+                                                    onChange={(e) =>
+                                                        updateServiceRate(svc.id, {
+                                                            price_unit: (
+                                                                e.target as HTMLInputElement
+                                                            ).value,
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-end gap-3">
-                    {ok && <p className="text-xs text-emerald-600">{ok}</p>}
-                    {error && <p className="text-xs text-red-600">{error}</p>}
+                    {ok && <p className="text-xs text-emerald-400">{ok}</p>}
+                    {error && <p className="text-xs text-red-400">{error}</p>}
                     <button
                         onClick={save}
                         disabled={saving || !form.display_name.trim()}
-                        className="rounded-xl bg-slate-900 px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-medium text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 disabled:opacity-50 sm:text-sm"
                     >
-                        {form.id ? "Save changes" : "Add provider"}
+                        {saving ? (
+                            <>
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                Saving…
+                            </>
+                        ) : form.id ? (
+                            "Save changes"
+                        ) : (
+                            "Add provider"
+                        )}
                     </button>
                 </div>
             </Section>
@@ -562,14 +777,14 @@ function ProvidersPanel() {
                 actions={
                     <input
                         placeholder="Search by name…"
-                        className="w-40 sm:w-60 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-slate-700 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                        className="w-40 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 sm:w-60 sm:text-sm"
                         value={q}
                         onChange={(e) => setQ((e.target as HTMLInputElement).value)}
                     />
                 }
             >
                 {loading && (
-                    <p className="py-8 text-center text-sm text-slate-500">Loading…</p>
+                    <p className="py-8 text-center text-sm text-slate-400">Loading…</p>
                 )}
                 {!loading && list.length === 0 && (
                     <Empty
@@ -581,10 +796,11 @@ function ProvidersPanel() {
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-xs sm:text-sm">
                             <thead>
-                            <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                            <tr className="border-b border-slate-800 bg-slate-950/80 text-left text-[11px] font-medium uppercase tracking-wide text-slate-400">
                                 <th className="px-3 py-2">Name</th>
                                 <th className="px-3 py-2">Phone</th>
                                 <th className="px-3 py-2">Active</th>
+                                <th className="px-3 py-2">Verified</th>
                                 <th className="px-3 py-2">Radius</th>
                                 <th className="px-3 py-2">Callout fee</th>
                                 <th className="px-3 py-2">Address</th>
@@ -596,54 +812,85 @@ function ProvidersPanel() {
                                 <tr
                                     key={row.id}
                                     className={cls(
-                                        "border-b border-slate-100",
-                                        idx % 2 === 1 && "bg-slate-50/40"
+                                        "border-b border-slate-800/70",
+                                        idx % 2 === 1 && "bg-slate-950/50",
                                     )}
                                 >
-                                    <td className="px-3 py-2 text-slate-900">
-                                        <div className="font-medium">{row.display_name}</div>
-                                        {row.about && (
-                                            <div className="mt-0.5 line-clamp-1 text-[11px] text-slate-500">
-                                                {row.about}
+                                    <td className="px-3 py-2 text-slate-100">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
+                                            <div>
+                                                <div className="font-medium">
+                                                    {row.display_name || "Untitled provider"}
+                                                </div>
+                                                {row.about && (
+                                                    <div className="mt-0.5 line-clamp-1 text-[11px] text-slate-400">
+                                                        {row.about}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                     </td>
-                                    <td className="px-3 py-2 text-slate-700">
-                                        {row.phone_business || "—"}
+                                    <td className="px-3 py-2 text-slate-200">
+                                        {row.phone_business ? (
+                                            <a
+                                                href={`tel:${row.phone_business}`}
+                                                className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-200 hover:underline"
+                                            >
+                                                <Phone className="h-3.5 w-3.5" />
+                                                {row.phone_business}
+                                            </a>
+                                        ) : (
+                                            "—"
+                                        )}
                                     </td>
                                     <td className="px-3 py-2">
                       <span
                           className={cls(
-                              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px]",
+                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
                               row.is_active
-                                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
-                                  : "bg-slate-50 text-slate-500 ring-1 ring-slate-200"
+                                  ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/40"
+                                  : "bg-slate-700/60 text-slate-300 ring-1 ring-slate-600",
                           )}
                       >
-                        {row.is_active ? "Active" : "Inactive"}
+                        <span className="h-2 w-2 rounded-full bg-current opacity-80" />
+                          {row.is_active ? "Active" : "Inactive"}
                       </span>
                                     </td>
-                                    <td className="px-3 py-2 text-slate-700">
+                                    <td className="px-3 py-2">
+                      <span
+                          className={cls(
+                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
+                              row.is_verified
+                                  ? "bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/40"
+                                  : "bg-slate-700/60 text-slate-300 ring-1 ring-slate-600",
+                          )}
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                          {row.is_verified ? "Verified" : "Unverified"}
+                      </span>
+                                    </td>
+                                    <td className="px-3 py-2 text-slate-200">
                                         {row.coverage_radius_km ?? "—"}{" "}
                                         {row.coverage_radius_km != null && "km"}
                                     </td>
-                                    <td className="px-3 py-2 text-slate-700">
+                                    <td className="px-3 py-2 text-slate-200">
                                         {row.callout_fee != null ? `GH₵${row.callout_fee}` : "—"}
                                     </td>
-                                    <td className="px-3 py-2 text-slate-700">
+                                    <td className="px-3 py-2 text-slate-200">
                                         {row.address_line || "—"}
                                     </td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-2">
                                             <button
                                                 onClick={() => startEdit(row)}
-                                                className="rounded-xl border border-slate-200 px-2.5 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                                                className="rounded-xl border border-slate-700 bg-slate-900 px-2.5 py-1 text-[11px] text-slate-100 hover:bg-slate-800"
                                             >
                                                 Edit
                                             </button>
                                             <button
                                                 onClick={() => remove(row)}
-                                                className="rounded-xl border border-red-200 px-2.5 py-1 text-[11px] text-red-600 hover:bg-red-50"
+                                                className="rounded-xl border border-red-500/40 bg-red-950/60 px-2.5 py-1 text-[11px] text-red-100 hover:bg-red-900/80"
                                             >
                                                 Delete
                                             </button>
@@ -660,7 +907,7 @@ function ProvidersPanel() {
     );
 }
 
-/* ---------------- Requests (read-only) ---------------- */
+/* ---------------- Requests ---------------- */
 
 function RequestsPanel() {
     const [list, setList] = React.useState<RequestRow[]>([]);
@@ -668,7 +915,7 @@ function RequestsPanel() {
     const [status, setStatus] = React.useState<string>("pending");
     const [q, setQ] = React.useState<string>("");
     const [error, setError] = React.useState<string | null>(null);
-    const [updatingId, setUpdatingId] = React.useState<string | null>(null); // 👈 NEW
+    const [updatingId, setUpdatingId] = React.useState<string | null>(null);
 
     const load = React.useCallback(async () => {
         setLoading(true);
@@ -680,10 +927,10 @@ function RequestsPanel() {
                 qq
                     ? rows.filter((r) =>
                         [r.status, r.driver_name, r.id].some((v) =>
-                            String(v || "").toLowerCase().includes(qq)
-                        )
+                            String(v || "").toLowerCase().includes(qq),
+                        ),
                     )
-                    : rows
+                    : rows,
             );
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
@@ -702,14 +949,12 @@ function RequestsPanel() {
         return () => clearTimeout(t);
     }, [status, q, load]);
 
-
     async function handleStatusChange(id: string, next: RequestStatus) {
         setUpdatingId(id);
         setError(null);
         try {
             await updateRequestStatus(id, next);
 
-            // Optimistic UI: update local state
             setList((prev) =>
                 prev.map((r) =>
                     r.id === id
@@ -717,8 +962,8 @@ function RequestsPanel() {
                             ...r,
                             status: next,
                         }
-                        : r
-                )
+                        : r,
+                ),
             );
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
@@ -729,14 +974,14 @@ function RequestsPanel() {
     }
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-6">
             <Section
                 title="Requests"
-                subtitle="View incoming roadside requests and their current status."
+                subtitle="View incoming roadside requests and manage their lifecycle."
                 actions={
                     <div className="flex flex-wrap items-center gap-2">
                         <select
-                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-slate-700 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                            className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 sm:text-sm"
                             value={status}
                             onChange={(e) =>
                                 setStatus((e.target as HTMLSelectElement).value)
@@ -751,82 +996,87 @@ function RequestsPanel() {
                         </select>
                         <input
                             placeholder="Search…"
-                            className="w-32 sm:w-48 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-slate-700 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                            className="w-32 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 sm:w-48 sm:text-sm"
                             value={q}
                             onChange={(e) => setQ((e.target as HTMLInputElement).value)}
                             onKeyDown={(e) =>
-                                (e as React.KeyboardEvent<HTMLInputElement>).key === "Enter" &&
-                                load()
+                                (e as React.KeyboardEvent<HTMLInputElement>).key ===
+                                "Enter" && load()
                             }
                         />
                         <button
                             onClick={load}
-                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-slate-700 hover:bg-slate-50"
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800 sm:text-sm"
                         >
+                            <RefreshCw className="h-3.5 w-3.5" />
                             Refresh
                         </button>
                     </div>
                 }
             >
                 {error && (
-                    <p className="mb-2 text-xs sm:text-sm text-red-600">{error}</p>
+                    <p className="mb-2 text-xs text-red-400 sm:text-sm">{error}</p>
                 )}
                 {loading && (
-                    <p className="py-8 text-center text-sm text-slate-500">Loading…</p>
+                    <p className="py-8 text-center text-sm text-slate-400">Loading…</p>
                 )}
-                {!loading && list.length === 0 && <Empty title="No requests found"/>}
+                {!loading && list.length === 0 && <Empty title="No requests found" />}
                 {!loading && list.length > 0 && (
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-xs sm:text-sm">
                             <thead>
-                            <tr className="text-left text-gray-600">
+                            <tr className="border-b border-slate-800 bg-slate-950/80 text-left text-[11px] font-medium uppercase tracking-wide text-slate-400">
                                 <th className="px-3 py-2">When</th>
                                 <th className="px-3 py-2">Status</th>
                                 <th className="px-3 py-2">Driver</th>
                                 <th className="px-3 py-2">Phone</th>
-                                {/*<th className="px-3 py-2">Details</th>*/}
                                 <th className="px-3 py-2">Provider</th>
-                                {/*<th className="px-3 py-2">Location</th>*/}
                             </tr>
                             </thead>
                             <tbody>
                             {list.map((r) => (
-                                <tr key={r.id} className="border-t">
-                                    <td className="px-3 py-2 text-gray-600">
+                                <tr key={r.id} className="border-t border-slate-800/70">
+                                    <td className="px-3 py-2 text-slate-200">
                                         {new Date(r.created_at).toLocaleString()}
                                     </td>
 
-                                    {/* Status badge */}
+                                    {/* Status with pill + select */}
                                     <td className="px-3 py-2">
-                                        <select
-                                            className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] sm:text-xs text-slate-700 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-                                            value={r.status ?? "pending"}
-                                            onChange={(e) =>
-                                                handleStatusChange(
-                                                    r.id,
-                                                    e.target.value as RequestStatus
-                                                )
-                                            }
-                                            disabled={updatingId === r.id}
-                                        >
-                                            <option value="pending">Pending</option>
-                                            <option value="accepted">Accepted</option>
-                                            <option value="in_progress">In progress</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="cancelled">Cancelled</option>
-                                        </select>
+                                        <div className="flex items-center gap-2">
+                                            <StatusPill status={r.status as RequestStatus} />
+                                            <select
+                                                className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 sm:text-xs"
+                                                value={r.status ?? "pending"}
+                                                onChange={(e) =>
+                                                    handleStatusChange(
+                                                        r.id,
+                                                        e.target.value as RequestStatus,
+                                                    )
+                                                }
+                                                disabled={updatingId === r.id}
+                                            >
+                                                <option value="pending">Pending</option>
+                                                <option value="accepted">Accepted</option>
+                                                <option value="in_progress">In progress</option>
+                                                <option value="completed">Completed</option>
+                                                <option value="cancelled">Cancelled</option>
+                                            </select>
+                                        </div>
                                     </td>
 
                                     {/* Driver */}
-                                    <td className="px-3 py-2">{r.driver_name || "—"}</td>
+                                    <td className="px-3 py-2 text-slate-200">
+                                        {r.driver_name || "—"}
+                                    </td>
 
                                     {/* Phone */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 text-slate-200">
                                         {r.driver_phone ? (
                                             <a
                                                 href={`tel:${r.driver_phone}`}
-                                                className="text-blue-600 hover:underline"
+                                                className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-200 hover:underline"
                                             >
+                                                <Phone className="h-3.5 w-3.5" />
                                                 {r.driver_phone}
                                             </a>
                                         ) : (
@@ -834,34 +1084,17 @@ function RequestsPanel() {
                                         )}
                                     </td>
 
-                                    {/*/!* Details *!/*/}
-                                    {/*<td*/}
-                                    {/*    className="px-3 py-2 max-w-[28ch] truncate text-gray-700"*/}
-                                    {/*    title={r.details || ""}*/}
-                                    {/*>*/}
-                                    {/*    {r.details || "—"}*/}
-                                    {/*</td>*/}
-
                                     {/* Provider */}
-                                    <td className="px-3 py-2">{r.provider_id || "—"}</td>
-
-                                    {/*/!* Location (unchanged) *!/*/}
-                                    {/*<td*/}
-                                    {/*    className="px-3 py-2 max-w-[30ch] truncate"*/}
-                                    {/*    title={*/}
-                                    {/*        typeof r.location === "string"*/}
-                                    {/*            ? r.location*/}
-                                    {/*            : r.location*/}
-                                    {/*                ? JSON.stringify(r.location)*/}
-                                    {/*                : "—"*/}
-                                    {/*    }*/}
-                                    {/*>*/}
-                                    {/*    {typeof r.location === "string"*/}
-                                    {/*        ? r.location*/}
-                                    {/*        : r.location*/}
-                                    {/*            ? JSON.stringify(r.location)*/}
-                                    {/*            : "—"}*/}
-                                    {/*</td>*/}
+                                    <td className="px-3 py-2 text-slate-200">
+                                        {r.provider_id ? (
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/80 px-2 py-0.5 text-[11px] text-slate-300">
+                          <MapPin className="h-3.5 w-3.5" />
+                                                {r.provider_id}
+                        </span>
+                                        ) : (
+                                            "—"
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                             </tbody>
@@ -904,26 +1137,31 @@ function AccountPanel() {
             actions={
                 <button
                     onClick={signOut}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800 sm:text-sm"
                 >
+                    <LogOut className="h-3.5 w-3.5" />
                     Sign out
                 </button>
             }
         >
             {user ? (
-                <div className="space-y-1 text-xs sm:text-sm text-slate-800">
-                    <p>
-                        <span className="text-slate-500">User ID:</span> {user.id}
+                <div className="space-y-2 text-xs text-slate-100 sm:text-sm">
+                    <div className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-1.5 text-[11px] text-emerald-300 ring-1 ring-emerald-500/40">
+                        <ShieldCheck className="h-4 w-4" />
+                        <span>Admin session active</span>
+                    </div>
+                    <p className="pt-1">
+                        <span className="text-slate-400">User ID:</span> {user.id}
                     </p>
                     <p>
-                        <span className="text-slate-500">Email:</span> {user.email}
+                        <span className="text-slate-400">Email:</span> {user.email}
                     </p>
-                    <p className="mt-2 text-slate-500">
+                    <p className="mt-2 text-slate-400">
                         Ensure this dashboard is protected behind admin-only auth &amp; RLS.
                     </p>
                 </div>
             ) : (
-                <p className="text-sm text-slate-500">Loading user…</p>
+                <p className="text-sm text-slate-400">Loading user…</p>
             )}
         </Section>
     );
@@ -933,19 +1171,24 @@ function AccountPanel() {
 
 export default function AdminDashboard() {
     const [tab, setTab] = React.useState<"Providers" | "Requests" | "Account">(
-        "Providers"
+        "Providers",
     );
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-200/70">
-            <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-8">
-                <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+            <div className="mx-auto max-w-6xl px-4 py-6 text-slate-50 sm:px-6 sm:py-8">
+                <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">
-                            MotorAmbos Admin
+                        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-slate-700/80">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            MotorAmbos Admin Console
+                        </div>
+                        <h1 className="text-xl font-semibold text-slate-50 sm:text-2xl">
+                            Command centre for roadside assistance
                         </h1>
-                        <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
-                            Manage providers, review roadside requests and your admin account.
+                        <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
+                            Manage providers, review incoming requests, and stay in control of
+                            your MotorAmbos network.
                         </p>
                     </div>
                 </header>
@@ -956,9 +1199,9 @@ export default function AdminDashboard() {
                     onChange={(t) => setTab(t as "Providers" | "Requests" | "Account")}
                 />
 
-                {tab === "Providers" && <ProvidersPanel/>}
-                {tab === "Requests" && <RequestsPanel/>}
-                {tab === "Account" && <AccountPanel/>}
+                {tab === "Providers" && <ProvidersPanel />}
+                {tab === "Requests" && <RequestsPanel />}
+                {tab === "Account" && <AccountPanel />}
             </div>
         </div>
     );

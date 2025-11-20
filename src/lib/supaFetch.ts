@@ -37,6 +37,7 @@ export type Provider = {
     services: Array<{ code: string; name: string; price?: number | null; unit?: string | null }>;
     lat: number;
     lng: number;
+    is_verified: boolean;
 };
 
 type ProviderRow = {
@@ -92,6 +93,16 @@ type RequestRow = {
     address_line?: string | null;
 };
 
+type ProviderRateRow = {
+    id: string;
+    provider_id: string;
+    service_id: string;
+    base_price: number | null;
+    price_unit: string | null;
+    min_callout_fee: number | null;
+    is_active: boolean | null;
+};
+
 type RequestReviewContext = {
     id: string;
     status: string;
@@ -129,6 +140,7 @@ type RpcProviderRow = {
     lat?: number | null;
     lng?: number | null;
     location?: GeoJSONPoint | null;
+    is_verified?: boolean | null;
 };
 
 type ErrorPayload = {
@@ -147,6 +159,50 @@ type AuthErrorResponse = {
     error_description?: string;
     message?: string;
 };
+
+export async function listProviderRates(providerId: string): Promise<ProviderRateRow[]> {
+    const res = await fetch(
+        `${URL}/rest/v1/provider_rates?provider_id=eq.${providerId}`,
+        {headers: authHeaders()}
+    );
+
+    await throwIfNotOk(res);
+    return (await readJSONSafe<ProviderRateRow[]>(res)) ?? [];
+}
+
+export async function upsertProviderRates(
+    providerId: string,
+    payload: {
+        service_id: string;
+        base_price: number | null;
+        price_unit: string | null;
+        min_callout_fee: number | null;
+        is_active: boolean;
+    }[]
+): Promise<void> {
+    if (!payload.length) return;
+
+    const rows = payload.map((p) => ({
+        provider_id: providerId,
+        service_id: p.service_id,
+        base_price: p.base_price,                       // keep whatever you decided for base_price
+        price_unit: p.price_unit ?? "job",              // 👈 ensure NOT NULL
+        min_callout_fee: p.min_callout_fee ?? null,
+        is_active: p.is_active,
+    }));
+
+    const res = await fetch(
+        `${URL}/rest/v1/provider_rates?on_conflict=provider_id,service_id`,
+        {
+            method: "POST",
+            headers: {...authHeaders(), Prefer: "resolution=merge-duplicates"},
+            body: JSON.stringify(rows),
+        }
+    );
+
+    await throwIfNotOk(res);
+}
+
 
 /* ─────────────────────────────────────────
    Utility helpers
@@ -327,7 +383,9 @@ export type InsertProviderParams = {
     callout_fee: number;
     lat?: number | null;
     lng?: number | null;
+    is_verified?: boolean; // 👈 NEW
 };
+
 
 export async function insertProvider(p: InsertProviderParams): Promise<ProviderRow | null> {
     const payload: Record<string, unknown> = {
@@ -338,6 +396,7 @@ export async function insertProvider(p: InsertProviderParams): Promise<ProviderR
         is_active: p.is_active,
         coverage_radius_km: p.coverage_radius_km,
         callout_fee: p.callout_fee,
+        is_verified: p.is_verified ?? false, // 👈 NEW
     };
 
     if (typeof p.lat === "number" && typeof p.lng === "number") {
@@ -365,7 +424,8 @@ export type UpdateProviderPatch = Partial<{
     callout_fee: number | null;
     lat: number | null;
     lng: number | null;
-    updated_at: string;          // 👈 allow this
+    updated_at: string;
+    is_verified: boolean; // 👈 NEW
 }>;
 
 export async function updateProvider(
@@ -514,7 +574,7 @@ export async function fetchMembershipByNumber<T = unknown>(
             Prefer: "return=representation",
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ in_membership_number: trimmed }),
+        body: JSON.stringify({in_membership_number: trimmed}),
         cache: "no-store",
     });
 
@@ -553,6 +613,7 @@ function mapRpcProvider(r: RpcProviderRow): Provider {
             })) ?? [],
         lat: r.lat ?? latGeo ?? 0,
         lng: r.lng ?? lngGeo ?? 0,
+        is_verified: r.is_verified ?? false
     };
 }
 

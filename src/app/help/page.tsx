@@ -28,18 +28,19 @@ import {
     Phone,
     MapPin,
     Star,
-    Loader2, MessageCircleIcon, BadgeCheck,
+    Loader2,
+    BadgeCheck,
+    MessageCircle as MessageCircleIcon, ChevronDown,
 } from "lucide-react";
-import {createRequest, findProvidersNear} from "@/lib/supaFetch";
+import {createRequest, findProvidersNear,} from "@/lib/supaFetch";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
-    DialogTitle
+    DialogTitle,
 } from "@/components/ui/dialog";
-
 
 /* ───────────────────────────────
    Types & schema for the wizard
@@ -102,9 +103,15 @@ export type Provider = {
     jobs?: number;
     min_callout_fee?: number | null;
     coverage_radius_km?: number | null;
-    services: Array<{ code: string; name: string; price?: number | null; unit?: string | null }>;
+    services: Array<{
+        code: string;
+        name: string;
+        price?: number | null;
+        unit?: string | null;
+    }>;
     lat: number;
     lng: number;
+    is_verified?: boolean;
 };
 
 const HELP_OPTIONS: Array<{
@@ -113,9 +120,19 @@ const HELP_OPTIONS: Array<{
     Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     hint: string;
 }> = [
-    {key: "battery", label: "Battery", Icon: BatteryCharging, hint: "Jumpstart or replace"},
+    {
+        key: "battery",
+        label: "Battery",
+        Icon: BatteryCharging,
+        hint: "Jumpstart or replace",
+    },
     {key: "tire", label: "Tyres", Icon: Disc, hint: "Flat, puncture, swap"},
-    {key: "oil", label: "Engine Oil", Icon: Droplets, hint: "Top-up or change"},
+    {
+        key: "oil",
+        label: "Engine Oil",
+        Icon: Droplets,
+        hint: "Top-up or change",
+    },
     {key: "tow", label: "Towing", Icon: Truck, hint: "Short or long haul"},
     {key: "rescue", label: "Rescue", Icon: Truck, hint: "General rescue"},
 ];
@@ -127,7 +144,9 @@ type PermState = "granted" | "prompt" | "denied" | "unknown";
 async function checkGeoPermission(): Promise<PermState> {
     if (!("permissions" in navigator)) return "unknown";
     try {
-        const status = await navigator.permissions.query({name: "geolocation" as PermissionName});
+        const status = await navigator.permissions.query({
+            name: "geolocation" as PermissionName,
+        });
         return (status.state as PermState) ?? "unknown";
     } catch {
         return "unknown";
@@ -136,7 +155,9 @@ async function checkGeoPermission(): Promise<PermState> {
 
 function getLocationOnce(): Promise<GeolocationPosition> {
     if (!("geolocation" in navigator)) {
-        return Promise.reject(new Error("Geolocation is not supported by your browser."));
+        return Promise.reject(
+            new Error("Geolocation is not supported by your browser."),
+        );
     }
     return new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -157,7 +178,6 @@ export default function GetHelpWizardPage() {
     const [loc, setLoc] = useState<GeoFix | null>(null);
     const [locBusy, setLocBusy] = useState(false);
     const [locError, setLocError] = useState<string | null>(null);
-
 
     // Providers
     const [loadingProviders, setLoadingProviders] = useState(false);
@@ -215,35 +235,30 @@ export default function GetHelpWizardPage() {
         return fullName.trim().length >= 2 && /^[0-9+\-\s()]{7,}$/.test(phone);
     }, [fullName, phone]);
 
-
-    // inside GetHelpWizardPage component
-
+    // Lock a request for a specific provider (used by both Call & SMS flows)
     async function lockRequestForProvider(provider: Provider) {
         if (!loc) {
             setLocError("Please share your location so nearby providers can find you.");
             throw new Error("Missing location");
         }
 
-        const values = getValues(); // from react-hook-form
+        const values = getValues();
 
-        // Build the same details you already used in onSubmit
         const details = `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}`;
 
         const requestRow = await createRequest({
-            helpType: values.helpType,              // "battery" | "tire" | ...
-            driver_name: values.fullName,          // ✅ driver_name
-            driver_phone: values.phone,            // ✅ driver_phone
-            details,                               // ✅ details
-            address_line: provider.address_line ?? null, // ✅ address_line (provider’s or null)
-            lat: loc.lat,                          // ✅ driver’s lat
-            lng: loc.lng,                          // ✅ driver’s lng
-            provider_id: provider.id,             // optional, but nice to attach
+            helpType: values.helpType,
+            driver_name: values.fullName,
+            driver_phone: values.phone,
+            details,
+            address_line: provider.address_line ?? null,
+            lat: loc.lat,
+            lng: loc.lng,
+            provider_id: provider.id,
             status: "pending",
         });
 
         setRequestId(requestRow?.id ?? null);
-
-        window.location.href = `tel:${provider.phone}`;
     }
 
     /* geolocation */
@@ -269,8 +284,10 @@ export default function GetHelpWizardPage() {
             let msg = "Failed to get your location.";
             if (isGeoErrorLike(e)) {
                 if (e.code === 1) msg = "You denied the location request.";
-                else if (e.code === 2) msg = "Location unavailable. Try moving to improve signal.";
-                else if (e.code === 3) msg = "Location request timed out. Try again.";
+                else if (e.code === 2)
+                    msg = "Location unavailable. Try moving to improve signal.";
+                else if (e.code === 3)
+                    msg = "Location request timed out. Try again.";
                 if (e.message && typeof e.message === "string") msg = e.message;
             } else {
                 const m = extractErrorMessage(e);
@@ -283,7 +300,7 @@ export default function GetHelpWizardPage() {
         }
     }
 
-    /* submit -> create request + fetch providers (via your current API/mock) */
+    /* submit -> fetch providers (request locking happens on call/SMS) */
     async function onSubmit(values: HelpForm) {
         if (!loc) {
             setLocError("Please share your location so nearby providers can find you.");
@@ -294,26 +311,12 @@ export default function GetHelpWizardPage() {
         setProviders(null);
 
         try {
-            // 1) Create the request row (required columns are set server-side in your lib)
-            // const requestRow = await createRequest({
-            //     helpType: values.helpType, // -> your lib resolves to service_id
-            //     driver_name: values.fullName,
-            //     driver_phone: values.phone,
-            //     details: `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}`,
-            //     address_line: undefined,
-            //     lat: loc.lat,
-            //     lng: loc.lng,
-            //     status: "pending",
-            // });
-            //
-            // setRequestId((requestRow && (requestRow as { id?: string }).id) ?? null);
-
-            // setRequestId()
-
-            // 2) Nearby providers
+            // Get nearby providers
             const list = await findProvidersNear(values.helpType, loc.lat, loc.lng);
             list.sort((a, b) =>
-                a.distance_km === b.distance_km ? (b.rating ?? 0) - (a.rating ?? 0) : a.distance_km - b.distance_km
+                a.distance_km === b.distance_km
+                    ? (b.rating ?? 0) - (a.rating ?? 0)
+                    : a.distance_km - b.distance_km,
             );
             setProviders(list);
             setStep("providers");
@@ -330,14 +333,20 @@ export default function GetHelpWizardPage() {
         setLoading: (b: boolean) => void,
         setProvidersList: (p: Provider[]) => void,
         values: HelpForm,
-        currentLoc: GeoFix | null
+        currentLoc: GeoFix | null,
     ) {
         if (!currentLoc) return;
         setLoading(true);
         try {
-            const list = await findProvidersNear(values.helpType, currentLoc.lat, currentLoc.lng);
+            const list = await findProvidersNear(
+                values.helpType,
+                currentLoc.lat,
+                currentLoc.lng,
+            );
             list.sort((a, b) =>
-                a.distance_km === b.distance_km ? (b.rating ?? 0) - (a.rating ?? 0) : a.distance_km - b.distance_km
+                a.distance_km === b.distance_km
+                    ? (b.rating ?? 0) - (a.rating ?? 0)
+                    : a.distance_km - b.distance_km,
             );
             setProvidersList(list);
         } finally {
@@ -361,7 +370,13 @@ export default function GetHelpWizardPage() {
             return;
         }
         if (step === "car") {
-            const ok = await trigger(["carMake", "carModel", "carYear", "carColor", "plateNumber"]);
+            const ok = await trigger([
+                "carMake",
+                "carModel",
+                "carYear",
+                "carColor",
+                "plateNumber",
+            ]);
             if (ok) setStep("contact");
             return;
         }
@@ -383,24 +398,29 @@ export default function GetHelpWizardPage() {
         {key: "contact", label: "Contact"},
         {key: "providers", label: "Providers"},
     ];
-    const activeIndex = Math.max(0, steps.findIndex((s) => s.key === step));
+    const activeIndex = Math.max(
+        0,
+        steps.findIndex((s) => s.key === step),
+    );
 
     return (
         <main className="min-h-screen bg-background text-foreground">
-            {/* Top Bar (no borders) */}
+            {/* Top Bar */}
             <header
                 className="sticky top-0 z-20 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="mx-auto w-full max-w-2xl px-4 py-3">
                     <div className="flex items-center justify-between">
-                        <div className="inline-flex items-center gap-2 font-semibold text-base sm:text-lg">
+                        <div className="inline-flex items-center gap-2 text-base font-semibold sm:text-lg">
                             <Wrench className="h-5 w-5"/>
                             Motor Ambos
                         </div>
-                        <div className="text-[10px] sm:text-xs text-muted-foreground">Roadside Request</div>
+                        <div className="text-[10px] text-muted-foreground sm:text-xs">
+                            Roadside Request
+                        </div>
                     </div>
 
                     {/* Stepper */}
-                    <div className="mt-3 flex items-center justify-between sm:justify-start sm:gap-2">
+                    <div className="mt-3 flex items-center justify-between sm:gap-2 sm:justify-start">
                         {/* Mobile dots */}
                         <div className="flex items-center gap-1 sm:hidden">
                             {steps.map((s, i) => {
@@ -412,7 +432,7 @@ export default function GetHelpWizardPage() {
                                         className={cn(
                                             "h-2 w-2 rounded-full bg-border",
                                             isDone && "bg-muted-foreground/50",
-                                            isActive && "bg-primary"
+                                            isActive && "bg-primary",
                                         )}
                                     />
                                 );
@@ -420,7 +440,7 @@ export default function GetHelpWizardPage() {
                         </div>
 
                         {/* >= sm labeled stepper */}
-                        <div className="hidden sm:flex sm:items-center sm:gap-2">
+                        <div className="hidden items-center gap-2 sm:flex">
                             {steps.map((s, i) => {
                                 const isActive = i === activeIndex;
                                 const isDone = i < activeIndex;
@@ -429,9 +449,12 @@ export default function GetHelpWizardPage() {
                                         <div
                                             className={cn(
                                                 "grid h-7 w-7 place-items-center rounded-full text-[11px] font-medium",
-                                                isActive && "bg-primary text-primary-foreground",
+                                                isActive &&
+                                                "bg-primary text-primary-foreground",
                                                 isDone && "bg-muted",
-                                                !isActive && !isDone && "bg-background"
+                                                !isActive &&
+                                                !isDone &&
+                                                "bg-background",
                                             )}
                                         >
                                             {i + 1}
@@ -439,12 +462,16 @@ export default function GetHelpWizardPage() {
                                         <span
                                             className={cn(
                                                 "text-xs uppercase tracking-wide",
-                                                isActive ? "text-foreground" : "text-muted-foreground"
+                                                isActive
+                                                    ? "text-foreground"
+                                                    : "text-muted-foreground",
                                             )}
                                         >
                       {s.label}
                     </span>
-                                        {i < steps.length - 1 && <div className="mx-1 h-px w-8 bg-border"/>}
+                                        {i < steps.length - 1 && (
+                                            <div className="mx-1 h-px w-8 bg-border"/>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -458,7 +485,7 @@ export default function GetHelpWizardPage() {
                 <div className="rounded-2xl">
                     <CardHeader className="space-y-1 px-4">
                         <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg sm:text-xl font-extrabold py-2">
+                            <CardTitle className="py-2 text-lg font-extrabold sm:text-xl">
                                 {step === "help" && "What do you need help with?"}
                                 {step === "car" && "Your car details"}
                                 {step === "contact" && "How can we reach you?"}
@@ -466,7 +493,13 @@ export default function GetHelpWizardPage() {
                             </CardTitle>
 
                             {step !== "help" && (
-                                <Button type="button" variant="ghost" size="sm" onClick={onBack} className="gap-1">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={onBack}
+                                    className="gap-1"
+                                >
                                     <ChevronLeft className="h-4 w-4"/>
                                     <span className="hidden sm:inline">Back</span>
                                 </Button>
@@ -474,14 +507,17 @@ export default function GetHelpWizardPage() {
                         </div>
                     </CardHeader>
 
-                    {/* FORM STEPS (wrappers without borders/rings) */}
+                    {/* FORM STEPS */}
                     {step !== "providers" && (
                         <CardContent>
-                            <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+                            <form
+                                className="space-y-8"
+                                onSubmit={(e) => e.preventDefault()}
+                            >
                                 {/* Step 1: Help type */}
                                 {step === "help" && (
                                     <div className="space-y-4">
-                                        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2">
                                             {HELP_OPTIONS.map((opt) => (
                                                 <HelpTile
                                                     key={opt.key}
@@ -490,12 +526,18 @@ export default function GetHelpWizardPage() {
                                                     Icon={opt.Icon}
                                                     hint={opt.hint}
                                                     checked={helpType === opt.key}
-                                                    onChange={(v) => setValue("helpType", v, {shouldValidate: true})}
+                                                    onChange={(v) =>
+                                                        setValue("helpType", v, {
+                                                            shouldValidate: true,
+                                                        })
+                                                    }
                                                 />
                                             ))}
                                         </div>
                                         {errors.helpType && (
-                                            <p className="text-xs text-destructive">{errors.helpType.message}</p>
+                                            <p className="text-xs text-destructive">
+                                                {errors.helpType.message}
+                                            </p>
                                         )}
                                     </div>
                                 )}
@@ -508,7 +550,7 @@ export default function GetHelpWizardPage() {
                                             <Label className="text-base">Car details</Label>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                             <Field label="Make" error={errors.carMake?.message}>
                                                 <Input
                                                     {...register("carMake")}
@@ -544,7 +586,10 @@ export default function GetHelpWizardPage() {
                                                 />
                                             </Field>
                                             <div className="sm:col-span-2">
-                                                <Field label="Plate number" error={errors.plateNumber?.message}>
+                                                <Field
+                                                    label="Plate number"
+                                                    error={errors.plateNumber?.message}
+                                                >
                                                     <Input
                                                         {...register("plateNumber")}
                                                         placeholder="e.g., GR-1234-24"
@@ -562,8 +607,11 @@ export default function GetHelpWizardPage() {
                                 {/* Step 3: Contact + Location */}
                                 {step === "contact" && (
                                     <div className="space-y-6">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <Field label="Full name" error={errors.fullName?.message}>
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <Field
+                                                label="Full name"
+                                                error={errors.fullName?.message}
+                                            >
                                                 <Input
                                                     {...register("fullName")}
                                                     placeholder="Your name"
@@ -574,7 +622,7 @@ export default function GetHelpWizardPage() {
                                             <Field label="Phone" error={errors.phone?.message}>
                                                 <div className="relative">
                                                     <Phone
-                                                        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
+                                                        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
                                                     <Input
                                                         {...register("phone")}
                                                         inputMode="tel"
@@ -586,16 +634,16 @@ export default function GetHelpWizardPage() {
                                             </Field>
                                         </div>
 
-                                        {/* Location capture (no border) */}
-                                        <div className="rounded-xl p-3 bg-muted/30">
+                                        {/* Location capture */}
+                                        <div className="rounded-xl bg-muted/30 p-3">
                                             <div
-                                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                                 <div className="space-y-1">
                                                     <Label className="text-sm">Your location</Label>
                                                     {!loc && !locError && (
                                                         <p className="text-xs text-muted-foreground">
-                                                            Share your current location so nearby providers can find you
-                                                            faster.
+                                                            Share your current location so nearby providers
+                                                            can find you faster.
                                                         </p>
                                                     )}
                                                     {loc && (
@@ -604,8 +652,12 @@ export default function GetHelpWizardPage() {
                                                             <span className="font-medium">
                                 {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
                               </span>
-                                                            {typeof loc.accuracy === "number" && <> •
-                                                                ±{Math.round(loc.accuracy)} m</>}
+                                                            {typeof loc.accuracy === "number" && (
+                                                                <>
+                                                                    {" "}
+                                                                    • ±{Math.round(loc.accuracy)} m
+                                                                </>
+                                                            )}
                                                         </p>
                                                     )}
 
@@ -624,10 +676,14 @@ export default function GetHelpWizardPage() {
                                                     variant={loc ? "secondary" : "default"}
                                                     onClick={requestLocation}
                                                     disabled={locBusy}
-                                                    className="whitespace-nowrap h-10"
+                                                    className="h-10 whitespace-nowrap"
                                                 >
                                                     <Crosshair className="mr-2 h-4 w-4"/>
-                                                    {locBusy ? "Locating..." : loc ? "Refresh location" : "Use my location"}
+                                                    {locBusy
+                                                        ? "Locating..."
+                                                        : loc
+                                                            ? "Refresh location"
+                                                            : "Use my location"}
                                                 </Button>
                                             </div>
                                         </div>
@@ -637,10 +693,10 @@ export default function GetHelpWizardPage() {
                         </CardContent>
                     )}
 
-                    {/* PROVIDERS SCREEN (no borders) */}
+                    {/* PROVIDERS SCREEN */}
                     {step === "providers" && (
                         <CardContent className="space-y-4 px-2">
-                            <div className="rounded-xl p-3 bg-card/60">
+                            <div className="rounded-xl bg-card/60 p-3">
                                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                                     <MapPin className="h-4 w-4"/>
                                     <span>
@@ -651,7 +707,8 @@ export default function GetHelpWizardPage() {
                   </span>
                                     {requestId && (
                                         <span className="ml-auto text-[11px] text-muted-foreground">
-                      Request ID: <span className="font-mono">{requestId}</span>
+                      Request ID:{" "}
+                                            <span className="font-mono">{requestId}</span>
                     </span>
                                     )}
                                 </div>
@@ -666,18 +723,19 @@ export default function GetHelpWizardPage() {
 
                             {!loadingProviders && (providers?.length ?? 0) === 0 && (
                                 <div className="rounded-xl p-6 text-center text-sm text-muted-foreground">
-                                    No providers found nearby at the moment. Please try again in a few minutes.
+                                    No providers found nearby at the moment. Please try again in a
+                                    few minutes.
                                 </div>
                             )}
 
-                            {!loadingProviders && (providers?.length ?? 0) > 0 && (
+                            {!loadingProviders && (providers?.length ?? 0) > 0 && loc && (
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     {providers!.map((p) => (
                                         <ProviderCard
                                             key={p.id}
                                             provider={p}
-                                            smsBody={buildSmsBody(getValues(), loc!)}
-                                            onLockRequest={lockRequestForProvider}  // 👈 pass callback
+                                            smsBody={buildSmsBody(getValues(), loc)}
+                                            onLockRequest={lockRequestForProvider}
                                         />
                                     ))}
                                 </div>
@@ -687,21 +745,29 @@ export default function GetHelpWizardPage() {
                 </div>
             </section>
 
-            {/* Fixed Action Bar (no borders; fully responsive buttons) */}
+            {/* Fixed Action Bar */}
             <div
                 className="fixed inset-x-0 bottom-0 z-30 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-                <div className="mx-auto w-full max-w-2xl px-4 mb-5 py-3 pb-[env(safe-area-inset-bottom)]">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        {/* Primary only – no Back, no Edit Contact */}
+                <div className="mb-5 mx-auto w-full max-w-2xl px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         {step !== "providers" ? (
                             <Button
                                 type="button"
                                 className="h-11 w-full"
-                                disabled={!canNext || isSubmitting || (step === "contact" && loadingProviders)}
+                                disabled={
+                                    !canNext ||
+                                    isSubmitting ||
+                                    (step === "contact" && loadingProviders)
+                                }
                                 onClick={onNext}
-                                title={step === "contact" && !loc ? "Share your location to continue" : undefined}
+                                title={
+                                    step === "contact" && !loc
+                                        ? "Share your location to continue"
+                                        : undefined
+                                }
                             >
-                                {step === "contact" && (isSubmitting || loadingProviders) ? (
+                                {step === "contact" &&
+                                (isSubmitting || loadingProviders) ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
                                         Finding providers…
@@ -725,7 +791,7 @@ export default function GetHelpWizardPage() {
                                         setLoadingProviders,
                                         (p) => setProviders(p),
                                         getValues(),
-                                        loc
+                                        loc,
                                     )
                                 }
                             >
@@ -762,7 +828,9 @@ function Field({
         <div>
             <Label className="text-sm">{label}</Label>
             <div className="mt-1">{children}</div>
-            {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+            {error && (
+                <p className="mt-1 text-xs text-destructive">{error}</p>
+            )}
         </div>
     );
 }
@@ -788,7 +856,7 @@ function HelpTile({
             className={cn(
                 "group relative cursor-pointer rounded-2xl p-4 transition",
                 "bg-card/60 hover:bg-accent/40",
-                "data-[checked=true]:bg-primary/10"
+                "data-[checked=true]:bg-primary/10",
             )}
             data-checked={checked}
             onClick={() => onChange(value)}
@@ -797,7 +865,9 @@ function HelpTile({
                 <div
                     className={cn(
                         "grid h-10 w-10 place-items-center rounded-xl transition",
-                        checked ? "bg-primary text-primary-foreground" : "bg-muted"
+                        checked
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted",
                     )}
                 >
                     <Icon className="h-5 w-5"/>
@@ -817,7 +887,7 @@ function HelpTile({
 function ProviderCard({
                           provider,
                           smsBody,
-                          onLockRequest, // 👈 optional callback to lock request before calling
+                          onLockRequest,
                       }: {
     provider: Provider;
     smsBody: string;
@@ -835,6 +905,8 @@ function ProviderCard({
     const [sendingSms, setSendingSms] = React.useState(false);
     const [smsError, setSmsError] = React.useState<string | null>(null);
 
+    const [servicesOpen, setServicesOpen] = React.useState(true); // 👈 NEW
+
     const handleCallClick = () => {
         setLockError(null);
         setCallDialogOpen(true);
@@ -850,7 +922,6 @@ function ProviderCard({
             }
 
             setCallDialogOpen(false);
-            // place the call only after successful lock
             window.location.href = telHref;
         } catch (e) {
             const msg =
@@ -861,8 +932,6 @@ function ProviderCard({
         } finally {
             setLocking(false);
         }
-
-        // (no dialer here anymore; it happens only on success above)
     };
 
     const handleSendDetailsClick = () => {
@@ -874,6 +943,10 @@ function ProviderCard({
         try {
             setSmsError(null);
             setSendingSms(true);
+
+            if (onLockRequest) {
+                await onLockRequest(provider);
+            }
 
             const res = await fetch("/api/send-sms", {
                 method: "POST",
@@ -890,8 +963,7 @@ function ProviderCard({
             }
 
             setSmsDialogOpen(false);
-
-            // Optional: also open native SMS app as UX confirmation/fallback
+            // Optional: open native app
             // window.location.href = smsHref;
         } catch (e) {
             const msg =
@@ -911,17 +983,19 @@ function ProviderCard({
     return (
         <>
             <div
-                className="group relative rounded-2xl bg-card/60 p-4 shadow-sm ring-1 ring-border/40 transition hover:shadow-md hover:ring-border">
+                className="group relative rounded-2xl bg-card/60 p-4 shadow-sm border border-border/80 ring-1 ring-border/70 transition hover:shadow-md hover:ring-primary/60">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                         {/* Provider Name with Verified Badge */}
                         <div className="flex items-center gap-1">
                             <div className="text-base font-semibold">{provider.name}</div>
-                            <BadgeCheck className="h-4 w-4 text-blue-500 dark:text-blue-400"/>
+                            {provider.is_verified && (
+                                <BadgeCheck className="h-4 w-4 text-blue-500 dark:text-blue-400"/>
+                            )}
                         </div>
 
                         {provider.address_line && (
-                            <p className="mt-1 text-xs text-muted-foreground truncate">
+                            <p className="mt-1 truncate text-xs text-muted-foreground">
                                 {provider.address_line}
                             </p>
                         )}
@@ -930,35 +1004,26 @@ function ProviderCard({
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                             {/* Distance */}
                             <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                  bg-blue-100 border border-blue-300 text-blue-700
-                  dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300"
-                            >
-                <span className="font-semibold">Distance</span>
-                • {provider.distance_km.toFixed(1)} km
+                                className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                <span className="font-semibold">Distance</span>•
+                                {` ${provider.distance_km.toFixed(1)} km`}
               </span>
 
                             {/* Callout Fee */}
                             {provider.min_callout_fee != null && (
                                 <span
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                    bg-emerald-100 border border-emerald-300 text-emerald-700
-                    dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300"
-                                >
+                                    className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                   <span className="font-semibold">Call-out</span>
-                  • GH₵ {provider.min_callout_fee.toFixed(0)}
+                                    {` • GH₵ ${provider.min_callout_fee.toFixed(0)}`}
                 </span>
                             )}
 
                             {/* Coverage Radius */}
                             {provider.coverage_radius_km != null && (
                                 <span
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
-                    bg-purple-100 border border-purple-300 text-purple-700
-                    dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-300"
-                                >
+                                    className="inline-flex items-center gap-1 rounded-full border border-purple-300 bg-purple-100 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                   <span className="font-semibold">Coverage</span>
-                  • {provider.coverage_radius_km} km
+                                    {` • ${provider.coverage_radius_km} km`}
                 </span>
                             )}
 
@@ -972,49 +1037,82 @@ function ProviderCard({
                             )}
                         </div>
 
-                        {/* Services offered – card section */}
+                        {/* Services offered – collapsible */}
                         {provider.services.length > 0 && (
-                            <div className="mt-3 rounded-xl border border-border/60 bg-muted/40 p-3 space-y-2">
-                                <div
-                                    className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <div className="mt-3 space-y-2 rounded-xl border border-border bg-muted/50 p-3">
+                                {/* Header row as toggle */}
+                                <button
+                                    type="button"
+                                    onClick={() => setServicesOpen((v) => !v)}
+                                    className="flex w-full items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-muted-foreground"
+                                >
                   <span className="inline-flex items-center gap-1.5">
                     <Wrench className="h-3.5 w-3.5"/>
-                    <span>Services offered</span>
+                    <span>Services &amp; rates</span>
                   </span>
-                                    <span className="text-[10px] font-medium">
-                    {provider.services.length}{" "}
-                                        {provider.services.length === 1 ? "service" : "services"}
-                  </span>
-                                </div>
 
-                                <div className="flex flex-wrap gap-1.5">
-                                    {visibleServices.map((s) => (
-                                        <span
-                                            key={s.code}
-                                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]
-                        border border-border/60 bg-background/60 text-muted-foreground"
-                                            title={s.name}
-                                        >
-                      <span className="truncate max-w-[9rem]">{s.name}</span>
-                                            {typeof s.price === "number" && (
-                                                <span className="shrink-0 font-medium text-foreground">
-                          GH₵{s.price.toFixed(0)}
-                                                    {s.unit && (
-                                                        <span className="ml-0.5 text-[10px] text-muted-foreground">
-                              /{s.unit}
+                                    <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium">
+                      {provider.services.length}{" "}
+                        {provider.services.length === 1 ? "service" : "services"}
+                    </span>
+                                        <ChevronDown
+                                            className={`h-3 w-3 transition-transform ${
+                                                servicesOpen ? "rotate-180" : ""
+                                            }`}
+                                        />
+                                    </div>
+                                </button>
+
+                                <p className="text-[11px] text-muted-foreground">
+                                    Transparent rate card – prices shown are starting rates per
+                                    service.
+                                </p>
+
+                                {servicesOpen && (
+                                    <>
+                                        <div className="space-y-1.5">
+                                            {visibleServices.map((s) => (
+                                                <div
+                                                    key={s.code}
+                                                    className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-background/60 px-2.5 py-1.5"
+                                                >
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-[#9fe870]"/>
+                                                        <span className="truncate text-xs font-medium">
+                              {s.name}
                             </span>
-                                                    )}
-                        </span>
-                                            )}
-                    </span>
-                                    ))}
+                                                    </div>
 
-                                    {extraCount > 0 && (
-                                        <span className="text-[11px] text-muted-foreground">
-                      +{extraCount} more
-                    </span>
-                                    )}
-                                </div>
+                                                    {typeof s.price === "number" ? (
+                                                        <div className="shrink-0 text-right text-[11px] font-semibold">
+                                                            GH₵{s.price.toFixed(0)}
+                                                            {s.unit && (
+                                                                <span
+                                                                    className="ml-0.5 text-[10px] font-normal text-muted-foreground">
+                                  /{s.unit}
+                                </span>
+                                                            )}
+                                                            <div className="text-[9px] text-muted-foreground">
+                                                                From
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="shrink-0 text-[10px] text-muted-foreground">
+                                                            Call for rate
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {extraCount > 0 && (
+                                            <span className="text-[11px] text-muted-foreground">
+                        +{extraCount} more services available
+                      </span>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -1024,7 +1122,7 @@ function ProviderCard({
                         href={mapsHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] border border-border/60 text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
+                        className="flex items-center gap-1 rounded-md border border-border/60 px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
                         title="Open in Maps"
                     >
                         <MapPin className="h-4 w-4"/>
@@ -1033,26 +1131,24 @@ function ProviderCard({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-4 grid grid-cols-1 xs:grid-cols-2 gap-2">
-                    {/* CALL -> opens dialog first */}
+                <div className="mt-4 grid grid-cols-1 gap-2 xs:grid-cols-2">
                     <Button
                         type="button"
                         variant="outline"
-                        className="w-full h-10 text-sm border-border/70 text-foreground hover:bg-accent/40"
+                        className="h-10 w-full border-border/80 text-sm text-foreground hover:bg-accent/40"
                         onClick={handleCallClick}
                     >
-                        <Phone className="h-4 w-4 mr-1.5"/>
+                        <Phone className="mr-1.5 h-4 w-4"/>
                         Call
                     </Button>
 
-                    {/* SEND DETAILS -> opens dialog, sends SMS via API */}
                     <Button
                         type="button"
                         variant="ghost"
-                        className="w-full h-10 text-sm text-muted-foreground hover:bg-accent/40"
+                        className="h-10 w-full text-sm text-muted-foreground hover:bg-accent/40"
                         onClick={handleSendDetailsClick}
                     >
-                        <MessageCircleIcon className="h-4 w-4"/>
+                        <MessageCircleIcon className="mr-1.5 h-4 w-4"/>
                         Send details
                     </Button>
                 </div>
@@ -1079,15 +1175,16 @@ function ProviderCard({
                         </div>
                     </DialogHeader>
 
-                    {/* Provider summary card */}
                     <div className="mt-4 rounded-xl border border-border/60 bg-muted/40 px-3 py-3 text-xs sm:text-sm">
                         <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
                                 <p className="flex items-center gap-1.5">
-                  <span className="font-medium text-foreground truncate">
+                  <span className="truncate font-medium text-foreground">
                     {provider.name}
                   </span>
-                                    <BadgeCheck className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400"/>
+                                    {provider.is_verified && (
+                                        <BadgeCheck className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400"/>
+                                    )}
                                 </p>
                                 {provider.address_line && (
                                     <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
@@ -1104,7 +1201,6 @@ function ProviderCard({
                             )}
                         </div>
 
-                        {/* Tiny hint row */}
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Wrench className="h-3 w-3"/>
@@ -1113,9 +1209,10 @@ function ProviderCard({
                         </div>
                     </div>
 
-                    {/* What happens text */}
                     <div className="mt-3 space-y-1.5 text-[11px] text-muted-foreground">
-                        <p className="font-medium text-foreground text-xs">What happens next</p>
+                        <p className="text-xs font-medium text-foreground">
+                            What happens next
+                        </p>
                         <ul className="space-y-1">
                             <li>• We lock this provider to your current help request.</li>
                             <li>• You place the call and speak directly with them.</li>
@@ -1141,7 +1238,7 @@ function ProviderCard({
                         </Button>
                         <Button
                             type="button"
-                            className="h-9 text-sm sm:min-w-[150px] flex items-center justify-center gap-1.5"
+                            className="flex h-9 items-center justify-center gap-1.5 text-sm sm:min-w-[150px]"
                             onClick={handleConfirmCall}
                             disabled={locking}
                         >
@@ -1183,7 +1280,7 @@ function ProviderCard({
                     </DialogHeader>
 
                     <div className="mt-4 rounded-xl bg-muted/40 px-3 py-3 text-xs text-muted-foreground">
-                        <p className="font-medium text-foreground mb-1">
+                        <p className="mb-1 font-medium text-foreground">
                             Preview of what we’ll send:
                         </p>
                         <p className="line-clamp-4 whitespace-pre-wrap break-words">
@@ -1209,7 +1306,7 @@ function ProviderCard({
                         </Button>
                         <Button
                             type="button"
-                            className="h-9 text-sm sm:min-w-[150px] flex items-center justify-center gap-1.5"
+                            className="flex h-9 items-center justify-center gap-1.5 text-sm sm:min-w-[150px]"
                             onClick={handleConfirmSendDetails}
                             disabled={sendingSms}
                         >
@@ -1223,29 +1320,29 @@ function ProviderCard({
 }
 
 
-/** Tiny SMS icon using lucide's MessageCircle; add this import at the top:
- *  import { ..., MessageCircle as MessageCircleIcon } from "lucide-react";
- */
-
 function BlockedLocationHelp({onRetry}: { onRetry: () => void }) {
     return (
         <div className="mt-2 rounded-md bg-amber-50 p-3 text-amber-900">
             <div className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4"/>
                 <div className="space-y-1 text-xs">
-                    <div className="font-semibold">Location permission is blocked for this site.</div>
+                    <div className="font-semibold">
+                        Location permission is blocked for this site.
+                    </div>
                     <p>
-                        Enable it in your browser’s <span className="font-medium">Site settings</span>, then
+                        Enable it in your browser’s{" "}
+                        <span className="font-medium">Site settings</span>, then
                         return and tap <span className="font-medium">Try again</span>.
                     </p>
                     <ul className="list-inside list-disc space-y-0.5 text-[11px] opacity-90">
                         <li>
-                            <span className="font-medium">Chrome:</span> Lock icon → Site settings →{" "}
-                            <em>Location</em> → Allow
+                            <span className="font-medium">Chrome:</span> Lock icon →
+                            Site settings → <em>Location</em> → Allow
                         </li>
                         <li>
-                            <span className="font-medium">Safari (iOS):</span> Settings → Privacy &amp; Security →
-                            Location Services → Safari Websites → While Using
+                            <span className="font-medium">Safari (iOS):</span> Settings
+                            → Privacy &amp; Security → Location Services → Safari
+                            Websites → While Using
                         </li>
                     </ul>
                     <div className="pt-1">
@@ -1265,13 +1362,13 @@ function buildSmsBody(values: HelpForm, loc: GeoFix) {
 
     const helpType = values.helpType
         .replace(/_/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalise nicely
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 
     return [
         `Hi, I need roadside assistance for a ${helpType}.`,
         `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) – Plate: ${values.plateNumber}.`,
         `Location: ${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}.`,
         `Maps: ${mapsLink}`,
-        `Name: ${values.fullName}. Phone: ${values.phone}.`
+        `Name: ${values.fullName}. Phone: ${values.phone}.`,
     ].join(" ");
 }

@@ -1,7 +1,9 @@
 // src/components/LoginForm.tsx
 "use client";
+
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ShieldCheck, Loader2 } from "lucide-react";
 import { loginWithPassword } from "@/lib/supaFetch";
 
 export default function LoginForm() {
@@ -22,7 +24,7 @@ export default function LoginForm() {
         try {
             await loginWithPassword(email, password);
             router.replace("/admin");
-        } catch (err: unknown) { // ✅ use unknown instead of any
+        } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);
             } else {
@@ -34,49 +36,104 @@ export default function LoginForm() {
     };
 
     return (
-        <div className="mx-auto my-16 w-full max-w-md rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-            <h1 className="mb-1 text-2xl font-semibold">Sign in</h1>
-            <p className="mb-4 text-sm text-gray-600">Admin access only.</p>
+        <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
+            <div className="w-full max-w-md">
+                {/* Brand / intro */}
+                <div className="mb-6 text-center text-slate-100">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/60 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-slate-700/70 shadow-sm mb-3">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        MotorAmbos Admin
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+                        Sign in to your console
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-400">
+                        Roadside assistance control panel. Admin access only.
+                    </p>
+                </div>
 
-            {err === "not_admin" && (
-                <p className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">
-                    Your account isn’t authorized for admin access.
-                </p>
-            )}
-            {error && (
-                <p className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">
-                    {error}
-                </p>
-            )}
+                {/* Card */}
+                <div className="rounded-2xl bg-slate-950/80 px-5 py-6 sm:px-6 sm:py-7 shadow-xl shadow-black/40 ring-1 ring-slate-800/80 backdrop-blur">
+                    {/* Icon / heading row */}
+                    <div className="mb-5 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-400/40">
+                            <ShieldCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h2 className="text-base sm:text-lg font-semibold text-slate-100">
+                                Admin sign in
+                            </h2>
+                            <p className="text-xs sm:text-sm text-slate-400">
+                                Use your admin email and password to continue.
+                            </p>
+                        </div>
+                    </div>
 
-            <form onSubmit={signIn} className="space-y-3">
-                <label className="block text-sm">
-                    <span className="text-gray-700">Email</span>
-                    <input
-                        className="mt-1 w-full rounded-xl border px-3 py-2"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </label>
-                <label className="block text-sm">
-                    <span className="text-gray-700">Password</span>
-                    <input
-                        className="mt-1 w-full rounded-xl border px-3 py-2"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </label>
-                <button
-                    className="w-full rounded-xl bg-black px-3 py-2 text-white disabled:opacity-50"
-                    disabled={loading}
-                >
-                    {loading ? "Please wait…" : "Sign in"}
-                </button>
-            </form>
+                    {/* Alerts */}
+                    {err === "not_admin" && (
+                        <p className="mb-3 rounded-xl border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs sm:text-sm text-red-100">
+                            This account isn’t authorized for admin access.
+                        </p>
+                    )}
+                    {error && (
+                        <p className="mb-3 rounded-xl border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs sm:text-sm text-red-100">
+                            {error}
+                        </p>
+                    )}
+
+                    {/* Form */}
+                    <form onSubmit={signIn} className="space-y-4">
+                        <div>
+                            <label className="block text-xs sm:text-sm font-medium text-slate-200">
+                                Email
+                            </label>
+                            <input
+                                className="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2.5 text-sm text-slate-100 shadow-inner outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                                type="email"
+                                autoComplete="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="admin@motorambos.com"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs sm:text-sm font-medium text-slate-200">
+                                Password
+                            </label>
+                            <input
+                                className="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2.5 text-sm text-slate-100 shadow-inner outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                                type="password"
+                                autoComplete="current-password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+
+                        <button
+                            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-medium text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:opacity-60 disabled:cursor-not-allowed"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Signing you in…
+                                </>
+                            ) : (
+                                <>Sign in</>
+                            )}
+                        </button>
+                    </form>
+
+                    <p className="mt-4 text-[11px] text-slate-500">
+                        Access is restricted. Contact the MotorAmbos team if you believe you
+                        should have admin permissions.
+                    </p>
+                </div>
+            </div>
         </div>
     );
 }

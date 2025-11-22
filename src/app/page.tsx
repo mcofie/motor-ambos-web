@@ -1,16 +1,13 @@
 import Link from "next/link";
-import Image from "next/image";
 import type {Metadata} from "next";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Sheet, SheetContent, SheetTrigger} from "@/components/ui/sheet"; // Assuming shadcn Sheet
 import {ThemeToggle} from "@/components/ThemeToggle";
-import {AppStoreButtons} from "@/components/AppStoreButtons"; // Your existing component
+import Image from "next/image";
 import {
     Car,
-    ArrowRight,
     Menu,
-    ShieldCheck,
     Zap,
     Wrench,
     Truck,
@@ -20,7 +17,7 @@ import {
     MapPin,
     Smartphone,
     CreditCard,
-    CheckCircle2,
+    CheckCircle2, ShieldCheck, ArrowRight,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -130,13 +127,28 @@ function Navbar() {
 
 function HeroSection() {
     return (
-        <section className="relative overflow-hidden pt-32 pb-20 lg:pt-48 lg:pb-32">
-            {/* Background Effects */}
+        <section className="relative overflow-hidden pt-32 pb-20 lg:pt-48 lg:pb-32 bg-zinc-950">
+
+            {/* --- BACKGROUND IMAGE START --- */}
+            <div className="absolute inset-0 -z-20 h-full w-full">
+                <Image
+                    src="https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1974&auto=format&fit=crop"
+                    alt="Car repair background"
+                    fill
+                    priority
+                    className="object-cover opacity-20 mix-blend-screen"
+                />
+                {/* Gradient overlay to fade image into the dark background */}
+                <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950"/>
+            </div>
+            {/* --- BACKGROUND IMAGE END --- */}
+
+            {/* Existing Background Effects (Lime Glow) */}
             <div
                 className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-lime-500/20 rounded-full blur-[120px] -z-10 opacity-40 pointer-events-none"/>
             <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.03] -z-10"/>
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 text-center">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 text-center relative z-10">
                 <div
                     className="inline-flex items-center gap-2 rounded-full border border-lime-400/20 bg-lime-400/5 px-3 py-1 text-xs font-medium text-lime-400 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <ShieldCheck className="h-3.5 w-3.5"/>
@@ -151,8 +163,9 @@ function HeroSection() {
                 </h1>
 
                 <p className="mx-auto max-w-2xl text-lg text-zinc-400 mb-10 leading-relaxed">
-                    The decentralized network connecting you to the closest trusted mechanics.
-                    From emergency rescue to scheduled maintenance—everything your car needs, on demand.
+                    The decentralized network connecting you to the closest trusted
+                    mechanics. From emergency rescue to scheduled maintenance—everything
+                    your car needs, on demand.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -169,7 +182,7 @@ function HeroSection() {
                         asChild
                         variant="outline"
                         size="lg"
-                        className="w-full sm:w-auto h-12 px-8 text-base border-zinc-800 bg-zinc-900/50 text-white hover:bg-zinc-800 hover:text-white"
+                        className="w-full sm:w-auto h-12 px-8 text-base border-zinc-800 bg-zinc-900/50 text-white hover:bg-zinc-800 hover:text-white backdrop-blur-sm"
                     >
                         <Link href="#services">Explore Services</Link>
                     </Button>
@@ -178,8 +191,9 @@ function HeroSection() {
                 {/* Trust Badge */}
                 <div
                     className="mt-12 flex items-center justify-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                    {/* Add Partner Logos Here or keep purely text for now */}
-                    <span className="text-xs font-medium tracking-widest uppercase text-zinc-500">Trusted by drivers across Ghana</span>
+          <span className="text-xs font-medium tracking-widest uppercase text-zinc-500">
+            Trusted by drivers across Ghana
+          </span>
                 </div>
             </div>
         </section>

@@ -42,7 +42,7 @@ export default function AdminPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <NavBar user={user} />
-            <main className="mx-auto max-w-6xl p-4 md:p-6">
+            <main className="mx-auto w-full p-4 md:p-6">
                 <AdminDashboard />
             </main>
         </div>

@@ -1,7 +1,7 @@
 // src/components/AdminDashboard.tsx
 "use client";
 
-import React from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import {
     getUser,
     logout,
@@ -21,19 +21,20 @@ import {
 import {
     Wrench,
     LifeBuoy,
-    UserCog,
+    User as UserIcon,
     ShieldCheck,
-    CheckCircle2,
-    XCircle,
-    Phone,
-    MapPin,
-    AlertCircle,
     RefreshCw,
     LogOut,
+    Search,
+    Plus,
+    Save,
+    Trash2,
+    Edit2,
+    Loader2,
+    XCircle,
 } from "lucide-react";
 
 /* ---------------- Types ---------------- */
-
 type UUID = string;
 
 export interface ProviderRow {
@@ -51,20 +52,6 @@ export interface ProviderRow {
     updated_at?: string;
     is_verified?: boolean | null;
 }
-
-export type ProviderInsert = {
-    display_name: string;
-    phone_business?: string | null;
-    about?: string | null;
-    address_line?: string | null;
-    is_active: boolean;
-    coverage_radius_km: number;
-    callout_fee: number;
-    lng?: number | null;
-    lat?: number | null;
-    created_at?: string;
-    is_verified?: boolean;
-};
 
 export interface ServiceRow {
     id: UUID;
@@ -98,21 +85,17 @@ interface ProviderRateRow {
     price_unit: string | null;
 }
 
-/* --------------- UI helpers --------------- */
+interface User {
+    id: UUID;
+    email: string;
+}
+
+/* --------------- UI Components --------------- */
 
 const cls = (...arr: Array<string | false | null | undefined>) =>
     arr.filter(Boolean).join(" ");
 
-interface TextFieldProps {
-    label: string;
-    value: string | number;
-    onChange: (v: string) => void;
-    type?: React.HTMLInputTypeAttribute;
-    placeholder?: string;
-    required?: boolean;
-    autoComplete?: string;
-}
-
+// Modern Input Field
 function TextField({
                        label,
                        value,
@@ -120,31 +103,34 @@ function TextField({
                        type = "text",
                        placeholder,
                        required,
-                       autoComplete,
-                   }: TextFieldProps) {
+                       className,
+                   }: {
+    label: string;
+    value: string | number;
+    onChange: (v: string) => void;
+    type?: string;
+    placeholder?: string;
+    required?: boolean;
+    className?: string;
+}) {
     return (
-        <label className="block text-xs sm:text-sm">
-            <span className="font-medium text-slate-100/90">{label}</span>
+        <div className={cls("space-y-1.5", className)}>
+            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
             <input
-                className="mt-1 w-full rounded-xl border border-slate-700/70 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
                 value={value ?? ""}
-                onChange={(e) => onChange((e.target as HTMLInputElement).value)}
+                onChange={(e) => onChange(e.target.value)}
                 type={type}
                 placeholder={placeholder}
                 required={required}
-                autoComplete={autoComplete}
             />
-        </label>
+        </div>
     );
 }
 
-const NumberField: React.FC<
-    Omit<TextFieldProps, "type" | "onChange" | "value"> & {
-    value: number | string;
-    onChange: (v: string) => void;
-}
-> = (p) => <TextField {...p} type="number" />;
-
+// Modern Toggle Switch
 const Toggle = ({
                     label,
                     checked,
@@ -156,166 +142,49 @@ const Toggle = ({
 }) => (
     <button
         type="button"
-        role="switch"
-        aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className="inline-flex items-center gap-2 select-none text-xs sm:text-sm"
+        className="group flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:border-slate-300"
     >
-    <span
-        className={cls(
-            "relative inline-flex h-5 w-9 items-center rounded-full border transition",
-            checked
-                ? "border-emerald-500 bg-emerald-500/15"
-                : "border-slate-600 bg-slate-800",
-        )}
-    >
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span
+            className={cls(
+                "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                checked ? "bg-indigo-600" : "bg-slate-200"
+            )}
+        >
       <span
+          aria-hidden="true"
           className={cls(
-              "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition",
-              checked ? "translate-x-4" : "translate-x-1",
+              "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+              checked ? "translate-x-4" : "translate-x-0"
           )}
       />
     </span>
-        <span className="text-slate-100/90">{label}</span>
     </button>
 );
 
-function Section({
-                     title,
-                     subtitle,
-                     actions,
-                     children,
-                 }: React.PropsWithChildren<{
-    title: string;
-    subtitle?: string;
-    actions?: React.ReactNode;
-}>) {
-    return (
-        <section className="rounded-2xl bg-slate-900/80 p-4 shadow-lg shadow-black/30 ring-1 ring-slate-800/80 backdrop-blur sm:p-5">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div>
-                    <h2 className="text-base font-semibold text-slate-50 sm:text-lg">
-                        {title}
-                    </h2>
-                    {subtitle && (
-                        <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
-                            {subtitle}
-                        </p>
-                    )}
-                </div>
-                <div className="flex items-center gap-2">{actions}</div>
-            </div>
-            {children}
-        </section>
-    );
-}
-
-function Empty({
-                   title = "Nothing here yet",
-                   subtitle,
-               }: {
-    title?: string;
-    subtitle?: string;
-}) {
-    return (
-        <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-slate-500">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/80 text-slate-400">
-                <LifeBuoy className="h-5 w-5" />
-            </div>
-            <p className="mt-1 text-sm font-medium text-slate-200">{title}</p>
-            {subtitle && <p className="text-xs sm:text-sm">{subtitle}</p>}
-        </div>
-    );
-}
-
-function StatusPill({ status }: { status: RequestStatus | string | null }) {
+// Modern Status Badge
+function StatusBadge({status}: { status: string }) {
     const s = (status || "pending") as RequestStatus;
-    const map: Record<
-        RequestStatus,
-        { label: string; className: string; icon?: React.ReactNode }
-    > = {
-        pending: {
-            label: "Pending",
-            className: "bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/40",
-            icon: <AlertCircle className="h-3.5 w-3.5" />,
-        },
-        accepted: {
-            label: "Accepted",
-            className: "bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/40",
-            icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-        },
-        in_progress: {
-            label: "In progress",
-            className:
-                "bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/40",
-            icon: <LifeBuoy className="h-3.5 w-3.5" />,
-        },
-        completed: {
-            label: "Completed",
-            className:
-                "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/40",
-            icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-        },
-        cancelled: {
-            label: "Cancelled",
-            className: "bg-red-500/10 text-red-300 ring-1 ring-red-500/40",
-            icon: <XCircle className="h-3.5 w-3.5" />,
-        },
+    const styles = {
+        pending: "bg-amber-50 text-amber-700 border-amber-200",
+        accepted: "bg-blue-50 text-blue-700 border-blue-200",
+        in_progress: "bg-indigo-50 text-indigo-700 border-indigo-200",
+        completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        cancelled: "bg-red-50 text-red-700 border-red-200",
     };
-
-    const cfg = map[s] ?? map.pending;
 
     return (
         <span
-            className={cls(
-                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
-                cfg.className,
-            )}
-        >
-      {cfg.icon}
-            <span>{cfg.label}</span>
+            className={cls("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors", styles[s] || styles.pending)}>
+      {s.replace('_', ' ')}
     </span>
     );
 }
 
-function Tabs({
-                  tabs,
-                  active,
-                  onChange,
-              }: {
-    tabs: string[];
-    active: string;
-    onChange: (t: string) => void;
-}) {
-    return (
-        <div className="mb-6 inline-flex w-full items-center justify-start rounded-2xl bg-slate-950/70 p-1 shadow-lg shadow-black/30 ring-1 ring-slate-800/80">
-            {tabs.map((t) => {
-                const isActive = active === t;
-                const Icon =
-                    t === "Providers" ? Wrench : t === "Requests" ? LifeBuoy : UserCog;
+/* ---------------- Sub-Panels ---------------- */
 
-                return (
-                    <button
-                        key={t}
-                        onClick={() => onChange(t)}
-                        className={cls(
-                            "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-medium transition sm:text-sm",
-                            isActive
-                                ? "bg-slate-100 text-slate-900 shadow-sm"
-                                : "text-slate-200 hover:bg-slate-900/60",
-                        )}
-                    >
-                        <Icon className={cls("h-4 w-4", isActive && "text-slate-900")} />
-                        <span>{t}</span>
-                    </button>
-                );
-            })}
-        </div>
-    );
-}
-
-/* ---------------- Providers ---------------- */
-
+// Define form state type explicitly to avoid 'any'
 type ProviderFormState = {
     id: UUID | null;
     display_name: string;
@@ -323,15 +192,17 @@ type ProviderFormState = {
     about: string;
     address_line: string;
     is_active: boolean;
-    coverage_radius_km: number | string;
-    callout_fee: number | string;
-    lng: number | string;
-    lat: number | string;
+    coverage_radius_km: number;
+    callout_fee: number;
+    lng: string | number | null;
+    lat: string | number | null;
     is_verified: boolean;
 };
 
+// Providers Panel
+// Providers Panel
 function ProvidersPanel() {
-    const empty: ProviderFormState = {
+    const emptyForm: ProviderFormState = {
         id: null,
         display_name: "",
         phone_business: "",
@@ -342,867 +213,492 @@ function ProvidersPanel() {
         callout_fee: 0,
         lng: "",
         lat: "",
-        is_verified: true,
+        is_verified: false,
     };
 
-    const [form, setForm] = React.useState<ProviderFormState>({ ...empty });
-    const [list, setList] = React.useState<ProviderRow[]>([]);
-    const [q, setQ] = React.useState<string>("");
-    const [saving, setSaving] = React.useState<boolean>(false);
-    const [loading, setLoading] = React.useState<boolean>(false);
-    const [error, setError] = React.useState<string | null>(null);
-    const [ok, setOk] = React.useState<string | null>(null);
+    const [form, setForm] = useState<ProviderFormState>({...emptyForm});
+    const [list, setList] = useState<ProviderRow[]>([]);
+    const [q, setQ] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    const [services, setServices] = React.useState<ServiceRow[]>([]);
-    const [selectedServiceIds, setSelectedServiceIds] = React.useState<UUID[]>(
-        [],
-    );
+    // Services state
+    const [services, setServices] = useState<ServiceRow[]>([]);
+    const [selectedServiceIds, setSelectedServiceIds] = useState<UUID[]>([]);
+    const [serviceRates, setServiceRates] = useState<Record<UUID, { base_price: string; price_unit: string }>>({});
 
-    type ServiceRateForm = { base_price: string; price_unit: string };
-    const [serviceRates, setServiceRates] = React.useState<
-        Record<UUID, ServiceRateForm>
-    >({});
-
-    const toggleService = (id: UUID) =>
-        setSelectedServiceIds((s) =>
-            s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
-        );
-
-    const updateServiceRate = (id: UUID, patch: Partial<ServiceRateForm>) =>
-        setServiceRates((prev) => {
-            const current = prev[id] ?? { base_price: "", price_unit: "" };
-            return {
-                ...prev,
-                [id]: { ...current, ...patch },
-            };
-        });
-
-    const load = React.useCallback(async () => {
+    const fetchProviders = useCallback(async () => {
         setLoading(true);
-        setError(null);
         try {
-            const rows = await listProviders(q);
-            setList(rows as ProviderRow[]);
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            setError(msg);
+            const data = await listProviders(q);
+            setList(data as ProviderRow[]);
+        } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
     }, [q]);
 
-    React.useEffect(() => {
-        (async () => {
-            try {
-                const svcs = await listServices();
-                setServices(svcs as ServiceRow[]);
-            } catch (e) {
-                console.warn("[ProvidersPanel] failed loading services:", e);
-            }
-            load();
-        })();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    useEffect(() => {
+        fetchProviders();
+        listServices().then((res) => setServices(res as ServiceRow[]));
+    }, [fetchProviders]);
 
-    React.useEffect(() => {
-        const t = setTimeout(load, 300);
-        return () => clearTimeout(t);
-    }, [q, load]);
-
-    async function save() {
-        setSaving(true);
-        setError(null);
-        setOk(null);
+    const handleSave = async () => {
         try {
-            const payload: ProviderInsert = {
-                display_name: form.display_name.trim(),
-                phone_business: form.phone_business || null,
-                about: form.about || null,
-                address_line: form.address_line || null,
-                is_active: !!form.is_active,
-                coverage_radius_km: Number(form.coverage_radius_km) || 10,
-                callout_fee: Number(form.callout_fee) || 0,
-                is_verified: !!form.is_verified,
+            const payload = {
+                ...form,
+                coverage_radius_km: Number(form.coverage_radius_km),
+                callout_fee: Number(form.callout_fee),
+                lng: form.lng ? Number(form.lng) : null,
+                lat: form.lat ? Number(form.lat) : null,
             };
 
-            const hasCoords =
-                form.lng !== "" &&
-                form.lat !== "" &&
-                !Number.isNaN(Number(form.lng)) &&
-                !Number.isNaN(Number(form.lat));
+            let providerId = form.id;
 
-            if (hasCoords) {
-                payload.lng = Number(form.lng);
-                payload.lat = Number(form.lat);
-            }
-
-            if (!payload.display_name) throw new Error("Provider name is required");
-
-            let providerId: UUID;
             if (form.id) {
-                const row = (await updateProvider(form.id, {
-                    ...payload,
-                    updated_at: new Date().toISOString(),
-                })) as ProviderRow | null;
-                providerId = row?.id ?? form.id;
-                setOk("Provider updated.");
+                await updateProvider(form.id, payload);
             } else {
-                const row = (await insertProvider(payload)) as ProviderRow | null;
-                if (!row?.id) throw new Error("Insert succeeded but no row returned");
-                providerId = row.id;
-                setOk("Provider created.");
+                const res = await insertProvider(payload);
+                if (res) providerId = res.id;
             }
 
-            await setProviderServices(providerId, selectedServiceIds);
+            // Save services
+            if (providerId) {
+                await setProviderServices(providerId, selectedServiceIds);
 
-            if (services.length > 0) {
-                const ratePayload = services.map((svc) => {
-                    const rate = serviceRates[svc.id];
-                    const selected = selectedServiceIds.includes(svc.id);
-
-                    const base_price =
-                        rate && rate.base_price.trim() !== ""
-                            ? Number(rate.base_price)
-                            : 0;
-
-                    const price_unit =
-                        rate && rate.price_unit.trim() !== ""
-                            ? rate.price_unit.trim()
-                            : "job";
-
-                    return {
-                        service_id: svc.id,
-                        base_price,
-                        price_unit,
+                const rates = services
+                    .filter(s => selectedServiceIds.includes(s.id))
+                    .map(s => ({
+                        service_id: s.id,
+                        base_price: Number(serviceRates[s.id]?.base_price || 0),
+                        price_unit: serviceRates[s.id]?.price_unit || 'job',
+                        // FIX: Explicitly adding the missing property
                         min_callout_fee: null,
-                        is_active: selected,
-                    };
-                });
+                        is_active: true
+                    }));
 
-                await upsertProviderRates(providerId, ratePayload);
+                if (rates.length) await upsertProviderRates(providerId, rates);
             }
 
-            setForm({ ...empty });
-            setSelectedServiceIds([]);
-            setServiceRates({});
-            load();
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            setError(msg);
-        } finally {
-            setSaving(false);
+            setIsSidebarOpen(false);
+            fetchProviders();
+            setForm({...emptyForm});
+        } catch (err) {
+            console.error(err);
+            alert("Failed to save provider");
         }
-    }
+    };
 
-    async function remove(row: ProviderRow) {
-        if (!confirm(`Delete provider “${row.display_name || row.id}”?`)) return;
-        setSaving(true);
-        setError(null);
-        setOk(null);
-        try {
-            await deleteProvider(row.id);
-            setOk("Provider deleted.");
-            load();
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            setError(msg);
-        } finally {
-            setSaving(false);
-        }
-    }
-
-    async function startEdit(row: ProviderRow) {
+    const handleEdit = async (row: ProviderRow) => {
         setForm({
-            id: row.id,
-            display_name: row.display_name || "",
+            ...row,
             phone_business: row.phone_business || "",
             about: row.about || "",
             address_line: row.address_line || "",
-            is_active: !!row.is_active,
-            coverage_radius_km: row.coverage_radius_km ?? 10,
-            callout_fee: Number(row.callout_fee ?? 0),
-            lng: row.lng ?? "",
-            lat: row.lat ?? "",
             is_verified: !!row.is_verified,
+            coverage_radius_km: row.coverage_radius_km ?? 10,
+            callout_fee: row.callout_fee ?? 0,
+            lng: row.lng || "",
+            lat: row.lat || "",
         });
 
-        try {
-            const ids = await getProviderServiceIds(row.id);
-            setSelectedServiceIds(ids as UUID[]);
+        // Load services
+        const ids = await getProviderServiceIds(row.id);
+        setSelectedServiceIds(ids as UUID[]);
 
-            const rateRows = (await listProviderRates(
-                row.id,
-            )) as ProviderRateRow[];
-            const rateState: Record<UUID, ServiceRateForm> = {};
-            rateRows.forEach((r) => {
-                rateState[r.service_id] = {
-                    base_price: r.base_price != null ? String(r.base_price) : "",
-                    price_unit: r.price_unit ?? "",
-                };
-            });
-            setServiceRates(rateState);
+        const rates = await listProviderRates(row.id) as ProviderRateRow[];
+        const rateMap: Record<UUID, { base_price: string; price_unit: string }> = {};
+        rates.forEach(r => {
+            rateMap[r.service_id] = {
+                base_price: String(r.base_price || 0),
+                price_unit: r.price_unit || ''
+            };
+        });
+        setServiceRates(rateMap);
+
+        setIsSidebarOpen(true);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this provider?")) return;
+        try {
+            await deleteProvider(id);
+            fetchProviders();
         } catch (e) {
-            console.warn(
-                "[ProvidersPanel] failed to load provider services/rates:",
-                e,
-            );
-            setSelectedServiceIds([]);
-            setServiceRates({});
+            console.error(e);
+            alert("Failed to delete provider");
         }
-    }
-
-    return (
-        <div className="space-y-6">
-            {/* Form + Services */}
-            <Section
-                title={form.id ? "Edit provider" : "Add provider"}
-                subtitle="Set up details, coverage, verification and services for a roadside provider."
-                actions={
-                    form.id && (
-                        <button
-                            onClick={() => {
-                                setForm({ ...empty });
-                                setSelectedServiceIds([]);
-                                setServiceRates({});
-                            }}
-                            className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800 sm:text-sm"
-                        >
-                            Clear form
-                        </button>
-                    )
-                }
-            >
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    {/* Left: core provider details */}
-                    <div className="space-y-3 lg:col-span-2">
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <TextField
-                                label="Provider name"
-                                value={form.display_name}
-                                onChange={(v) => setForm((s) => ({ ...s, display_name: v }))}
-                                required
-                                placeholder="e.g. Kofi Mobile Auto"
-                            />
-                            <TextField
-                                label="Business phone"
-                                value={form.phone_business}
-                                onChange={(v) =>
-                                    setForm((s) => ({ ...s, phone_business: v }))
-                                }
-                                placeholder="+233…"
-                            />
-                            <TextField
-                                label="Address line"
-                                value={form.address_line}
-                                onChange={(v) =>
-                                    setForm((s) => ({ ...s, address_line: v }))
-                                }
-                                placeholder="e.g. Spintex Road, Accra"
-                            />
-                            <NumberField
-                                label="Coverage radius (km)"
-                                value={form.coverage_radius_km}
-                                onChange={(v) =>
-                                    setForm((s) => ({ ...s, coverage_radius_km: v }))
-                                }
-                            />
-                            <NumberField
-                                label="Callout fee (min)"
-                                value={form.callout_fee}
-                                onChange={(v) => setForm((s) => ({ ...s, callout_fee: v }))}
-                            />
-
-                            {/* Coordinates */}
-                            <NumberField
-                                label="Longitude (optional)"
-                                value={form.lng}
-                                onChange={(v) => setForm((s) => ({ ...s, lng: v }))}
-                            />
-                            <NumberField
-                                label="Latitude (optional)"
-                                value={form.lat}
-                                onChange={(v) => setForm((s) => ({ ...s, lat: v }))}
-                            />
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                            <div className="flex flex-wrap gap-3">
-                                <Toggle
-                                    label="Provider is active"
-                                    checked={form.is_active}
-                                    onChange={(v) =>
-                                        setForm((s) => ({ ...s, is_active: v }))
-                                    }
-                                />
-                                <Toggle
-                                    label="Verified provider"
-                                    checked={form.is_verified}
-                                    onChange={(v) =>
-                                        setForm((s) => ({ ...s, is_verified: v }))
-                                    }
-                                />
-                            </div>
-                            <div className="text-[11px] text-slate-400">
-                                {saving ? "Saving…" : loading ? "Loading…" : "Idle"}
-                            </div>
-                        </div>
-
-                        <label className="block text-xs sm:text-sm">
-                            <span className="font-medium text-slate-100/90">About</span>
-                            <textarea
-                                className="mt-1 w-full rounded-xl border border-slate-700/70 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
-                                rows={3}
-                                value={form.about ?? ""}
-                                onChange={(e) =>
-                                    setForm((s) => ({
-                                        ...s,
-                                        about: (e.target as HTMLTextAreaElement).value,
-                                    }))
-                                }
-                                placeholder="Short description of the provider, specialties, etc."
-                            />
-                        </label>
-                    </div>
-
-                    {/* Right: services checklist + rates */}
-                    <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-3 sm:p-4">
-                        <div className="flex items-center justify-between gap-2">
-                            <p className="flex items-center gap-1.5 text-xs font-medium text-slate-100 sm:text-sm">
-                                <Wrench className="h-4 w-4 text-emerald-400" />
-                                <span>Services &amp; rates</span>
-                            </p>
-                            <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] text-slate-400">
-                {selectedServiceIds.length} selected
-              </span>
-                        </div>
-                        {services.length === 0 ? (
-                            <p className="text-xs text-slate-400">
-                                No services defined yet. Add services in the database first.
-                            </p>
-                        ) : (
-                            <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
-                                {services.map((svc) => {
-                                    const selected = selectedServiceIds.includes(svc.id);
-                                    const rate = serviceRates[svc.id] ?? {
-                                        base_price: "",
-                                        price_unit: "",
-                                    };
-
-                                    return (
-                                        <div
-                                            key={svc.id}
-                                            className={cls(
-                                                "flex items-center justify-between gap-3 rounded-xl border px-3 py-1.5 text-xs sm:text-sm",
-                                                selected
-                                                    ? "border-emerald-500/40 bg-slate-900/90"
-                                                    : "border-slate-800 bg-slate-950/80",
-                                            )}
-                                        >
-                                            <label className="flex min-w-0 items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    className="h-3.5 w-3.5 rounded border-slate-500 text-emerald-400"
-                                                    checked={selected}
-                                                    onChange={() => toggleService(svc.id)}
-                                                />
-                                                <span className="truncate text-slate-100">
-                          {svc.name}
-                        </span>
-                                            </label>
-
-                                            {/* Rate inputs */}
-                                            <div className="flex items-center gap-1.5">
-                                                <input
-                                                    type="number"
-                                                    inputMode="decimal"
-                                                    placeholder="Rate"
-                                                    className="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-50 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/30"
-                                                    value={rate.base_price}
-                                                    onChange={(e) =>
-                                                        updateServiceRate(svc.id, {
-                                                            base_price: (
-                                                                e.target as HTMLInputElement
-                                                            ).value,
-                                                        })
-                                                    }
-                                                />
-                                                <input
-                                                    type="text"
-                                                    placeholder="unit"
-                                                    className="w-16 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-50 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/30"
-                                                    value={rate.price_unit}
-                                                    onChange={(e) =>
-                                                        updateServiceRate(svc.id, {
-                                                            price_unit: (
-                                                                e.target as HTMLInputElement
-                                                            ).value,
-                                                        })
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-end gap-3">
-                    {ok && <p className="text-xs text-emerald-400">{ok}</p>}
-                    {error && <p className="text-xs text-red-400">{error}</p>}
-                    <button
-                        onClick={save}
-                        disabled={saving || !form.display_name.trim()}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-medium text-emerald-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 disabled:opacity-50 sm:text-sm"
-                    >
-                        {saving ? (
-                            <>
-                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                                Saving…
-                            </>
-                        ) : form.id ? (
-                            "Save changes"
-                        ) : (
-                            "Add provider"
-                        )}
-                    </button>
-                </div>
-            </Section>
-
-            {/* Provider list */}
-            <Section
-                title="Providers"
-                subtitle="Search, edit or remove existing providers."
-                actions={
-                    <input
-                        placeholder="Search by name…"
-                        className="w-40 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 sm:w-60 sm:text-sm"
-                        value={q}
-                        onChange={(e) => setQ((e.target as HTMLInputElement).value)}
-                    />
-                }
-            >
-                {loading && (
-                    <p className="py-8 text-center text-sm text-slate-400">Loading…</p>
-                )}
-                {!loading && list.length === 0 && (
-                    <Empty
-                        title="No providers yet"
-                        subtitle="Use the form above to add your first provider."
-                    />
-                )}
-                {!loading && list.length > 0 && (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full text-xs sm:text-sm">
-                            <thead>
-                            <tr className="border-b border-slate-800 bg-slate-950/80 text-left text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                                <th className="px-3 py-2">Name</th>
-                                <th className="px-3 py-2">Phone</th>
-                                <th className="px-3 py-2">Active</th>
-                                <th className="px-3 py-2">Verified</th>
-                                <th className="px-3 py-2">Radius</th>
-                                <th className="px-3 py-2">Callout fee</th>
-                                <th className="px-3 py-2">Address</th>
-                                <th className="px-3 py-2 text-right">Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {list.map((row, idx) => (
-                                <tr
-                                    key={row.id}
-                                    className={cls(
-                                        "border-b border-slate-800/70",
-                                        idx % 2 === 1 && "bg-slate-950/50",
-                                    )}
-                                >
-                                    <td className="px-3 py-2 text-slate-100">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
-                                            <div>
-                                                <div className="font-medium">
-                                                    {row.display_name || "Untitled provider"}
-                                                </div>
-                                                {row.about && (
-                                                    <div className="mt-0.5 line-clamp-1 text-[11px] text-slate-400">
-                                                        {row.about}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-2 text-slate-200">
-                                        {row.phone_business ? (
-                                            <a
-                                                href={`tel:${row.phone_business}`}
-                                                className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-200 hover:underline"
-                                            >
-                                                <Phone className="h-3.5 w-3.5" />
-                                                {row.phone_business}
-                                            </a>
-                                        ) : (
-                                            "—"
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-2">
-                      <span
-                          className={cls(
-                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
-                              row.is_active
-                                  ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/40"
-                                  : "bg-slate-700/60 text-slate-300 ring-1 ring-slate-600",
-                          )}
-                      >
-                        <span className="h-2 w-2 rounded-full bg-current opacity-80" />
-                          {row.is_active ? "Active" : "Inactive"}
-                      </span>
-                                    </td>
-                                    <td className="px-3 py-2">
-                      <span
-                          className={cls(
-                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
-                              row.is_verified
-                                  ? "bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/40"
-                                  : "bg-slate-700/60 text-slate-300 ring-1 ring-slate-600",
-                          )}
-                      >
-                        <ShieldCheck className="h-3.5 w-3.5" />
-                          {row.is_verified ? "Verified" : "Unverified"}
-                      </span>
-                                    </td>
-                                    <td className="px-3 py-2 text-slate-200">
-                                        {row.coverage_radius_km ?? "—"}{" "}
-                                        {row.coverage_radius_km != null && "km"}
-                                    </td>
-                                    <td className="px-3 py-2 text-slate-200">
-                                        {row.callout_fee != null ? `GH₵${row.callout_fee}` : "—"}
-                                    </td>
-                                    <td className="px-3 py-2 text-slate-200">
-                                        {row.address_line || "—"}
-                                    </td>
-                                    <td className="px-3 py-2">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => startEdit(row)}
-                                                className="rounded-xl border border-slate-700 bg-slate-900 px-2.5 py-1 text-[11px] text-slate-100 hover:bg-slate-800"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => remove(row)}
-                                                className="rounded-xl border border-red-500/40 bg-red-950/60 px-2.5 py-1 text-[11px] text-red-100 hover:bg-red-900/80"
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </Section>
-        </div>
-    );
-}
-
-/* ---------------- Requests ---------------- */
-
-function RequestsPanel() {
-    const [list, setList] = React.useState<RequestRow[]>([]);
-    const [loading, setLoading] = React.useState<boolean>(false);
-    const [status, setStatus] = React.useState<string>("pending");
-    const [q, setQ] = React.useState<string>("");
-    const [error, setError] = React.useState<string | null>(null);
-    const [updatingId, setUpdatingId] = React.useState<string | null>(null);
-
-    const load = React.useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const rows = (await listRequests(status || undefined)) as RequestRow[];
-            const qq = q.toLowerCase();
-            setList(
-                qq
-                    ? rows.filter((r) =>
-                        [r.status, r.driver_name, r.id].some((v) =>
-                            String(v || "").toLowerCase().includes(qq),
-                        ),
-                    )
-                    : rows,
-            );
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            setError(msg);
-        } finally {
-            setLoading(false);
-        }
-    }, [status, q]);
-
-    React.useEffect(() => {
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    React.useEffect(() => {
-        const t = setTimeout(load, 250);
-        return () => clearTimeout(t);
-    }, [status, q, load]);
-
-    async function handleStatusChange(id: string, next: RequestStatus) {
-        setUpdatingId(id);
-        setError(null);
-        try {
-            await updateRequestStatus(id, next);
-
-            setList((prev) =>
-                prev.map((r) =>
-                    r.id === id
-                        ? {
-                            ...r,
-                            status: next,
-                        }
-                        : r,
-                ),
-            );
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            setError(msg);
-        } finally {
-            setUpdatingId(null);
-        }
-    }
-
-    return (
-        <div className="space-y-6">
-            <Section
-                title="Requests"
-                subtitle="View incoming roadside requests and manage their lifecycle."
-                actions={
-                    <div className="flex flex-wrap items-center gap-2">
-                        <select
-                            className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 sm:text-sm"
-                            value={status}
-                            onChange={(e) =>
-                                setStatus((e.target as HTMLSelectElement).value)
-                            }
-                        >
-                            <option value="">All statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="in_progress">In progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                        <input
-                            placeholder="Search…"
-                            className="w-32 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 sm:w-48 sm:text-sm"
-                            value={q}
-                            onChange={(e) => setQ((e.target as HTMLInputElement).value)}
-                            onKeyDown={(e) =>
-                                (e as React.KeyboardEvent<HTMLInputElement>).key ===
-                                "Enter" && load()
-                            }
-                        />
-                        <button
-                            onClick={load}
-                            className="inline-flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800 sm:text-sm"
-                        >
-                            <RefreshCw className="h-3.5 w-3.5" />
-                            Refresh
-                        </button>
-                    </div>
-                }
-            >
-                {error && (
-                    <p className="mb-2 text-xs text-red-400 sm:text-sm">{error}</p>
-                )}
-                {loading && (
-                    <p className="py-8 text-center text-sm text-slate-400">Loading…</p>
-                )}
-                {!loading && list.length === 0 && <Empty title="No requests found" />}
-                {!loading && list.length > 0 && (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full text-xs sm:text-sm">
-                            <thead>
-                            <tr className="border-b border-slate-800 bg-slate-950/80 text-left text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                                <th className="px-3 py-2">When</th>
-                                <th className="px-3 py-2">Status</th>
-                                <th className="px-3 py-2">Driver</th>
-                                <th className="px-3 py-2">Phone</th>
-                                <th className="px-3 py-2">Provider</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {list.map((r) => (
-                                <tr key={r.id} className="border-t border-slate-800/70">
-                                    <td className="px-3 py-2 text-slate-200">
-                                        {new Date(r.created_at).toLocaleString()}
-                                    </td>
-
-                                    {/* Status with pill + select */}
-                                    <td className="px-3 py-2">
-                                        <div className="flex items-center gap-2">
-                                            <StatusPill status={r.status as RequestStatus} />
-                                            <select
-                                                className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 sm:text-xs"
-                                                value={r.status ?? "pending"}
-                                                onChange={(e) =>
-                                                    handleStatusChange(
-                                                        r.id,
-                                                        e.target.value as RequestStatus,
-                                                    )
-                                                }
-                                                disabled={updatingId === r.id}
-                                            >
-                                                <option value="pending">Pending</option>
-                                                <option value="accepted">Accepted</option>
-                                                <option value="in_progress">In progress</option>
-                                                <option value="completed">Completed</option>
-                                                <option value="cancelled">Cancelled</option>
-                                            </select>
-                                        </div>
-                                    </td>
-
-                                    {/* Driver */}
-                                    <td className="px-3 py-2 text-slate-200">
-                                        {r.driver_name || "—"}
-                                    </td>
-
-                                    {/* Phone */}
-                                    <td className="px-3 py-2 text-slate-200">
-                                        {r.driver_phone ? (
-                                            <a
-                                                href={`tel:${r.driver_phone}`}
-                                                className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-200 hover:underline"
-                                            >
-                                                <Phone className="h-3.5 w-3.5" />
-                                                {r.driver_phone}
-                                            </a>
-                                        ) : (
-                                            "—"
-                                        )}
-                                    </td>
-
-                                    {/* Provider */}
-                                    <td className="px-3 py-2 text-slate-200">
-                                        {r.provider_id ? (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/80 px-2 py-0.5 text-[11px] text-slate-300">
-                          <MapPin className="h-3.5 w-3.5" />
-                                                {r.provider_id}
-                        </span>
-                                        ) : (
-                                            "—"
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </Section>
-        </div>
-    );
-}
-
-/* ---------------- Account ---------------- */
-
-interface SupaUser {
-    id: UUID;
-    email: string;
-}
-
-function AccountPanel() {
-    const [user, setUser] = React.useState<SupaUser | null>(null);
-
-    React.useEffect(() => {
-        (async () => {
-            const u = (await getUser().catch(() => null)) as
-                | { id: UUID; email: string }
-                | null;
-            setUser(u ?? null);
-        })();
-    }, []);
-
-    const signOut = () => {
-        logout();
-        window.location.href = "/login";
     };
 
     return (
-        <Section
-            title="Account"
-            subtitle="Signed in as a MotorAmbos admin user."
-            actions={
-                <button
-                    onClick={signOut}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800 sm:text-sm"
-                >
-                    <LogOut className="h-3.5 w-3.5" />
-                    Sign out
-                </button>
-            }
-        >
-            {user ? (
-                <div className="space-y-2 text-xs text-slate-100 sm:text-sm">
-                    <div className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-1.5 text-[11px] text-emerald-300 ring-1 ring-emerald-500/40">
-                        <ShieldCheck className="h-4 w-4" />
-                        <span>Admin session active</span>
+        <div className="flex h-[calc(100vh-8rem)] gap-6">
+            {/* List View */}
+            <div
+                className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/50">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"/>
+                        <input
+                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                            placeholder="Search providers..."
+                            value={q}
+                            onChange={e => setQ(e.target.value)}
+                        />
                     </div>
-                    <p className="pt-1">
-                        <span className="text-slate-400">User ID:</span> {user.id}
-                    </p>
-                    <p>
-                        <span className="text-slate-400">Email:</span> {user.email}
-                    </p>
-                    <p className="mt-2 text-slate-400">
-                        Ensure this dashboard is protected behind admin-only auth &amp; RLS.
-                    </p>
+                    <button
+                        onClick={() => {
+                            setForm(emptyForm);
+                            setIsSidebarOpen(true);
+                        }}
+                        className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                        <Plus className="h-4 w-4"/>
+                        Add Provider
+                    </button>
                 </div>
-            ) : (
-                <p className="text-sm text-slate-400">Loading user…</p>
+
+                <div className="flex-1 overflow-auto relative">
+                    {loading && (
+                        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                            <Loader2 className="h-8 w-8 animate-spin text-indigo-600"/>
+                        </div>
+                    )}
+                    <table className="w-full text-left text-sm">
+                        <thead
+                            className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200 sticky top-0 z-10">
+                        <tr>
+                            <th className="px-6 py-3">Provider</th>
+                            <th className="px-6 py-3">Status</th>
+                            <th className="px-6 py-3">Location</th>
+                            <th className="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                        {list.map(row => (
+                            <tr key={row.id} className="hover:bg-slate-50/80 transition-colors group">
+                                <td className="px-6 py-4">
+                                    <div className="font-medium text-slate-900">{row.display_name}</div>
+                                    <div className="text-xs text-slate-500">{row.phone_business || 'No phone'}</div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                        <span
+                                            className={cls("h-2 w-2 rounded-full", row.is_active ? "bg-emerald-500" : "bg-slate-300")}/>
+                                        <span className="text-slate-600">{row.is_active ? 'Active' : 'Inactive'}</span>
+                                        {row.is_verified && <ShieldCheck className="h-4 w-4 text-blue-500 ml-1"/>}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-slate-600 truncate max-w-[200px]">
+                                    {row.address_line || '—'}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <div
+                                        className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleEdit(row)}
+                                                className="p-2 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
+                                                title="Edit">
+                                            <Edit2 className="h-4 w-4"/>
+                                        </button>
+                                        <button onClick={() => handleDelete(row.id)}
+                                                className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                                                title="Delete">
+                                            <Trash2 className="h-4 w-4"/>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                    {list.length === 0 && !loading && (
+                        <div className="p-12 text-center text-slate-500">No providers found.</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Edit/Create Sidebar (Slide-over) */}
+            {isSidebarOpen && (
+                <div
+                    className="w-96 bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-right duration-300 fixed right-6 top-24 bottom-6 z-50 md:relative md:top-0 md:bottom-0 md:right-0 md:z-0">
+                    <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <h3 className="font-semibold text-slate-900">{form.id ? 'Edit Provider' : 'New Provider'}</h3>
+                        <button onClick={() => setIsSidebarOpen(false)}
+                                className="p-1 hover:bg-slate-200 rounded text-slate-500"><XCircle className="h-5 w-5"/>
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Basic Info</h4>
+                            <TextField label="Name" value={form.display_name}
+                                       onChange={v => setForm({...form, display_name: v})} required/>
+                            <TextField label="Phone" value={form.phone_business}
+                                       onChange={v => setForm({...form, phone_business: v})}/>
+                            <TextField label="Address" value={form.address_line}
+                                       onChange={v => setForm({...form, address_line: v})}/>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Operations</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <TextField
+                                        type="number"
+                                        label="Radius (km)"
+                                        value={form.coverage_radius_km}
+                                        // Fix: Convert string 'v' to Number()
+                                        onChange={v => setForm({...form, coverage_radius_km: Number(v)})}
+                                    />
+                                    <TextField
+                                        type="number"
+                                        label="Callout Fee"
+                                        value={form.callout_fee}
+                                        // Fix: Convert string 'v' to Number()
+                                        onChange={v => setForm({...form, callout_fee: Number(v)})}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Toggle label="Active" checked={form.is_active}
+                                        onChange={v => setForm({...form, is_active: v})}/>
+                                <Toggle label="Verified" checked={form.is_verified}
+                                        onChange={v => setForm({...form, is_verified: v})}/>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Services</h4>
+                            <div className="space-y-2">
+                                {services.map(svc => {
+                                    const isSelected = selectedServiceIds.includes(svc.id);
+                                    return (
+                                        <div key={svc.id}
+                                             className={cls("p-3 rounded-lg border transition-all", isSelected ? "border-indigo-200 bg-indigo-50" : "border-slate-100 bg-white")}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <input type="checkbox" checked={isSelected} onChange={() => {
+                                                    setSelectedServiceIds(prev => isSelected ? prev.filter(id => id !== svc.id) : [...prev, svc.id]);
+                                                }}
+                                                       className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"/>
+                                                <span className="text-sm font-medium text-slate-900">{svc.name}</span>
+                                            </div>
+                                            {isSelected && (
+                                                <div className="flex gap-2 pl-6">
+                                                    <input
+                                                        placeholder="Price"
+                                                        className="w-20 text-xs p-1 rounded border border-slate-200"
+                                                        value={serviceRates[svc.id]?.base_price || ''}
+                                                        onChange={e => setServiceRates(prev => ({
+                                                            ...prev,
+                                                            [svc.id]: {...prev[svc.id], base_price: e.target.value}
+                                                        }))}
+                                                    />
+                                                    <input
+                                                        placeholder="Unit"
+                                                        className="w-16 text-xs p-1 rounded border border-slate-200"
+                                                        value={serviceRates[svc.id]?.price_unit || ''}
+                                                        onChange={e => setServiceRates(prev => ({
+                                                            ...prev,
+                                                            [svc.id]: {...prev[svc.id], price_unit: e.target.value}
+                                                        }))}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4 border-t border-slate-100 bg-slate-50">
+                        <button onClick={handleSave}
+                                className="w-full flex justify-center items-center gap-2 bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+                            <Save className="h-4 w-4"/> Save Provider
+                        </button>
+                    </div>
+                </div>
             )}
-        </Section>
+        </div>
     );
 }
 
-/* ---------------- Admin Dashboard ---------------- */
+// Requests Panel
+function RequestsPanel() {
+    const [list, setList] = useState<RequestRow[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<string>("all");
 
-export default function AdminDashboard() {
-    const [tab, setTab] = React.useState<"Providers" | "Requests" | "Account">(
-        "Providers",
-    );
+    const fetchRequests = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await listRequests(statusFilter === 'all' ? undefined : statusFilter);
+            setList(data as RequestRow[]);
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }, [statusFilter]);
+
+    useEffect(() => {
+        fetchRequests();
+    }, [fetchRequests]);
+
+    const updateStatus = async (id: UUID, status: RequestStatus) => {
+        await updateRequestStatus(id, status);
+        fetchRequests();
+    }
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-            <div className="mx-auto max-w-6xl px-4 py-6 text-slate-50 sm:px-6 sm:py-8">
-                <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-slate-700/80">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                            MotorAmbos Admin Console
+        <div
+            className="flex flex-col h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex gap-4 items-center bg-slate-50/50">
+                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
+                    {['all', 'pending', 'in_progress', 'completed'].map(s => (
+                        <button
+                            key={s}
+                            onClick={() => setStatusFilter(s)}
+                            className={cls(
+                                "px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize",
+                                statusFilter === s ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-600 hover:bg-slate-50"
+                            )}
+                        >
+                            {s.replace('_', ' ')}
+                        </button>
+                    ))}
+                </div>
+                <button onClick={fetchRequests} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                    <RefreshCw className="h-4 w-4"/></button>
+            </div>
+
+            <div className="flex-1 overflow-auto relative">
+                {loading && (
+                    <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-indigo-600"/>
+                    </div>
+                )}
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200 sticky top-0">
+                    <tr>
+                        <th className="px-6 py-3">Time</th>
+                        <th className="px-6 py-3">Status</th>
+                        <th className="px-6 py-3">Customer</th>
+                        <th className="px-6 py-3">Provider</th>
+                        <th className="px-6 py-3 text-right">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                    {list.map(r => (
+                        <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="px-6 py-4 text-slate-500 text-xs">
+                                {new Date(r.created_at).toLocaleString()}
+                            </td>
+                            <td className="px-6 py-4">
+                                <StatusBadge status={r.status || 'pending'}/>
+                            </td>
+                            <td className="px-6 py-4">
+                                <div className="font-medium text-slate-900">{r.driver_name || 'Unknown'}</div>
+                                <div className="text-xs text-slate-500">{r.driver_phone}</div>
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 text-xs font-mono">
+                                {r.provider_id?.slice(0, 8) || '—'}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                                <select
+                                    className="bg-white border border-slate-200 text-xs rounded-md py-1 pl-2 pr-6 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                    value={r.status || 'pending'}
+                                    onChange={(e) => updateStatus(r.id, e.target.value as RequestStatus)}
+                                >
+                                    <option value="pending">Pending</option>
+                                    <option value="accepted">Accepted</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+
+/* ---------------- Main Dashboard Shell ---------------- */
+
+export default function AdminDashboard() {
+    const [activeTab, setActiveTab] = useState<"providers" | "requests">("providers");
+    const [user, setUser] = useState<User | null>(null);
+
+    useEffect(() => {
+        getUser().then((u) => setUser(u as User)).catch(() => window.location.href = '/login');
+    }, []);
+
+    return (
+        <div className="flex h-screen w-full bg-slate-50 text-slate-900 font-sans">
+
+            {/* Sidebar */}
+            <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm z-10">
+                <div className="h-16 flex items-center px-6 border-b border-slate-100">
+                    <div
+                        className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold mr-3">M
+                    </div>
+                    <span className="font-bold text-lg tracking-tight text-slate-900">MotorAmbos</span>
+                </div>
+
+                <nav className="flex-1 p-4 space-y-1">
+                    <button
+                        onClick={() => setActiveTab("providers")}
+                        className={cls("w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors", activeTab === 'providers' ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50")}
+                    >
+                        <Wrench className="h-4 w-4"/> Providers
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("requests")}
+                        className={cls("w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors", activeTab === 'requests' ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50")}
+                    >
+                        <LifeBuoy className="h-4 w-4"/> Requests
+                    </button>
+                </nav>
+
+                <div className="p-4 border-t border-slate-100">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div
+                            className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                            <UserIcon className="h-4 w-4"/>
                         </div>
-                        <h1 className="text-xl font-semibold text-slate-50 sm:text-2xl">
-                            Command centre for roadside assistance
-                        </h1>
-                        <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
-                            Manage providers, review incoming requests, and stay in control of
-                            your MotorAmbos network.
-                        </p>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">Admin</p>
+                            <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                        </div>
+                    </div>
+                    <button onClick={() => logout()}
+                            className="w-full flex items-center justify-center gap-2 text-xs font-medium text-red-600 hover:bg-red-50 py-2 rounded-lg transition-colors">
+                        <LogOut className="h-3 w-3"/> Sign out
+                    </button>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col h-screen overflow-hidden">
+                <header
+                    className="h-16 bg-white/80 backdrop-blur-sm border-b border-slate-200 flex items-center justify-between px-8">
+                    <h1 className="text-lg font-semibold text-slate-800 capitalize">{activeTab}</h1>
+                    <div className="flex items-center gap-4">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span className="text-xs font-medium text-slate-500">System Operational</span>
                     </div>
                 </header>
 
-                <Tabs
-                    tabs={["Providers", "Requests", "Account"]}
-                    active={tab}
-                    onChange={(t) => setTab(t as "Providers" | "Requests" | "Account")}
-                />
+                <div className="flex-1 overflow-hidden p-6">
+                    {activeTab === "providers" && <ProvidersPanel/>}
+                    {activeTab === "requests" && <RequestsPanel/>}
+                </div>
+            </main>
 
-                {tab === "Providers" && <ProvidersPanel />}
-                {tab === "Requests" && <RequestsPanel />}
-                {tab === "Account" && <AccountPanel />}
-            </div>
         </div>
     );
 }

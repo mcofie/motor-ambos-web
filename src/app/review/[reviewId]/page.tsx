@@ -2,15 +2,16 @@
 "use client";
 
 import * as React from "react";
-import {useState, useEffect} from "react";
-import {useParams, useSearchParams} from "next/navigation";
-import {Wrench, Star} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Wrench, Star, CheckCircle, ChevronLeft, ArrowRight, Loader2 } from "lucide-react";
 
-import {Button} from "@/components/ui/button";
-import {CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Label} from "@/components/ui/label";
-import {Textarea} from "@/components/ui/textarea";
-import {cn} from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+
+// Assuming these imports exist based on your snippet
 import {
     submitProviderReview,
     getRequestReviewContext,
@@ -19,8 +20,8 @@ import {
 type StepKey = "rating" | "review";
 
 const steps: Array<{ key: StepKey; label: string }> = [
-    {key: "rating", label: "Rating"},
-    {key: "review", label: "Review"},
+    { key: "rating", label: "Rating" },
+    { key: "review", label: "Review" },
 ];
 
 const RATING_LABELS: Record<number, string> = {
@@ -31,9 +32,13 @@ const RATING_LABELS: Record<number, string> = {
     5: "Excellent",
 };
 
-type RequestReviewContext = Awaited<
-    ReturnType<typeof getRequestReviewContext>
->;
+// Updated type definition to allow null | undefined | string
+type RequestReviewContext = {
+    provider_name?: string | null;
+    provider_phone?: string | null;
+    service_name?: string | null;
+    service_code?: string | null;
+} | null;
 
 export default function ReviewPage() {
     const params = useParams<{ reviewId: string }>();
@@ -54,10 +59,12 @@ export default function ReviewPage() {
     const [context, setContext] = useState<RequestReviewContext>(null);
     const [ctxLoading, setCtxLoading] = useState<boolean>(true);
 
+    // Calculate progress
     const activeIndex = Math.max(
         0,
         steps.findIndex((s) => s.key === step)
     );
+    const progressPercent = ((activeIndex + 1) / steps.length) * 100;
 
     const canNext =
         step === "rating"
@@ -80,6 +87,7 @@ export default function ReviewPage() {
                 setCtxLoading(true);
                 const ctx = await getRequestReviewContext(requestId);
                 if (!cancelled) {
+                    // The error was here because ctx properties could be null
                     setContext(ctx);
                 }
             } catch (e) {
@@ -142,22 +150,14 @@ export default function ReviewPage() {
     // Handle missing / bad reviewId up-front
     if (!requestId || typeof requestId !== "string") {
         return (
-            <main className="min-h-screen bg-background text-foreground">
-                <section
-                    className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center px-4 text-center">
-                    <div className="space-y-3">
-                        <div
-                            className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-                            <Wrench className="h-3.5 w-3.5"/>
-                            Motor Ambos
-                        </div>
-                        <h1 className="text-xl font-semibold">Invalid review link</h1>
-                        <p className="text-sm text-muted-foreground">
-                            We couldn&apos;t find the request connected to this review link.
-                            Please check the link you received or request a new one.
-                        </p>
-                    </div>
-                </section>
+            <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
+                <div className="h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center mb-4">
+                    <Wrench className="h-8 w-8 text-slate-400" />
+                </div>
+                <h1 className="text-2xl font-bold text-slate-900 mb-2">Invalid Link</h1>
+                <p className="text-slate-500 max-w-md text-sm">
+                    We couldn&apos;t find the request connected to this review link. It may have expired or is incorrect.
+                </p>
             </main>
         );
     }
@@ -173,250 +173,182 @@ export default function ReviewPage() {
         "Motor Ambos help request";
 
     return (
-        <main className="min-h-screen bg-background text-foreground">
-            {/* Top Bar */}
-            <header
-                className="sticky top-0 z-20 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="mx-auto w-full max-w-2xl px-4 py-3">
-                    <div className="flex items-center justify-between">
-                        <div className="inline-flex items-center gap-2 text-base font-semibold sm:text-lg">
-                            <Wrench className="h-5 w-5"/>
-                            Motor Ambos
-                        </div>
-                        <div className="text-[10px] text-muted-foreground sm:text-xs">
-                            Rate your experience
+        <main className="min-h-screen bg-slate-50 font-sans text-slate-900">
+            {/* Top Navigation Bar */}
+            <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+                <div className="mx-auto max-w-lg px-4 h-14 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        {!submitted && step !== "rating" && (
+                            <button
+                                onClick={onBack}
+                                className="mr-1 -ml-2 p-2 rounded-full hover:bg-slate-100 text-slate-600"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </button>
+                        )}
+                        <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight text-slate-900">
+                Motor Ambos
+              </span>
+                            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                 {submitted ? 'Feedback Sent' : 'Rate Experience'}
+              </span>
                         </div>
                     </div>
 
-                    {/* Stepper */}
-                    <div className="mt-3 flex items-center justify-between sm:justify-start sm:gap-2">
-                        {/* Mobile dots */}
-                        <div className="flex items-center gap-1 sm:hidden">
-                            {steps.map((s, i) => {
-                                const isActive = i === activeIndex;
-                                const isDone = i < activeIndex;
-                                return (
-                                    <span
-                                        key={s.key}
-                                        className={cn(
-                                            "h-2 w-2 rounded-full bg-border",
-                                            isDone && "bg-muted-foreground/50",
-                                            isActive && "bg-primary"
-                                        )}
-                                    />
-                                );
-                            })}
+                    {!submitted && (
+                        <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-slate-900 transition-all duration-500 ease-out"
+                                style={{ width: `${progressPercent}%` }}
+                            />
                         </div>
-
-                        {/* >= sm labeled stepper */}
-                        <div className="hidden items-center gap-2 sm:flex">
-                            {steps.map((s, i) => {
-                                const isActive = i === activeIndex;
-                                const isDone = i < activeIndex;
-                                return (
-                                    <div key={s.key} className="flex items-center gap-2">
-                                        <div
-                                            className={cn(
-                                                "grid h-7 w-7 place-items-center rounded-full text-[11px] font-medium",
-                                                isActive && "bg-primary text-primary-foreground",
-                                                isDone && "bg-muted",
-                                                !isActive && !isDone && "bg-background"
-                                            )}
-                                        >
-                                            {i + 1}
-                                        </div>
-                                        <span
-                                            className={cn(
-                                                "text-xs uppercase tracking-wide",
-                                                isActive ? "text-foreground" : "text-muted-foreground"
-                                            )}
-                                        >
-                      {s.label}
-                    </span>
-                                        {i < steps.length - 1 && (
-                                            <div className="mx-1 h-px w-8 bg-border"/>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    )}
                 </div>
             </header>
 
-            {/* Content */}
-            <section className="mx-auto w-full max-w-2xl px-4 py-6 pb-36 sm:pb-32">
-                <div className="rounded-2xl">
-                    <CardHeader className="space-y-1 px-4">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="py-2 text-lg font-extrabold sm:text-xl">
-                                {submitted
-                                    ? "Thanks for your feedback"
-                                    : step === "rating"
-                                        ? "How was your experience?"
-                                        : "Tell us a bit more"}
-                            </CardTitle>
+            {/* Main Content Area */}
+            <div className="mx-auto w-full max-w-lg px-4 py-8 pb-32">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-                            {!submitted && step !== "rating" && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onBack}
-                                    className="gap-1"
-                                >
-                                    <span className="hidden sm:inline">Back</span>
-                                </Button>
-                            )}
-                        </div>
-
-                        {/* Context line: provider + service */}
-                        {!submitted && (
-                            <p className="mt-1 text-xs text-muted-foreground">
+                    {/* Header Text */}
+                    {!submitted && (
+                        <div className="mb-8 text-center space-y-2">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                                {step === "rating" ? "How did it go?" : "Any details to share?"}
+                            </h1>
+                            <p className="text-sm text-slate-500 max-w-xs mx-auto">
                                 {ctxLoading
-                                    ? "Loading your request details…"
+                                    ? "Loading request details..."
                                     : context
-                                        ? (
-                                            <>
-                                                You’re rating{" "}
-                                                <span className="font-medium">{providerLabel}</span>{" "}
-                                                for{" "}
-                                                <span className="font-medium">{serviceLabel}</span>.
-                                            </>
-                                        )
-                                        : "You’re rating a recent Motor Ambos help request."}
+                                        ? <span>Rating <strong>{providerLabel}</strong> for <strong>{serviceLabel}</strong></span>
+                                        : "Your feedback helps us improve the Motor Ambos network."}
                             </p>
-                        )}
-                    </CardHeader>
+                        </div>
+                    )}
 
-                    <CardContent>
-                        {!submitted && step === "rating" && (
-                            <div className="space-y-6">
-                                <div>
-                                    <Label className="text-sm">Overall rating</Label>
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        Tap a star to rate your recent Motor Ambos experience.
-                                    </p>
-                                </div>
+                    {/* STEP 1: RATING */}
+                    {!submitted && step === "rating" && (
+                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-6">
+                            <div className="flex items-center gap-2">
+                                {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
+                                    const active =
+                                        hoverRating !== null
+                                            ? star <= hoverRating
+                                            : star <= (rating ?? 0);
 
-                                <div className="flex items-center gap-2">
-                                    {Array.from({length: 5}, (_, i) => i + 1).map((star) => {
-                                        const active =
-                                            hoverRating !== null
-                                                ? star <= hoverRating
-                                                : star <= (rating ?? 0);
-
-                                        return (
-                                            <button
-                                                key={star}
-                                                type="button"
-                                                className="group"
-                                                onMouseEnter={() => setHoverRating(star)}
-                                                onMouseLeave={() => setHoverRating(null)}
-                                                onClick={() => setRating(star)}
-                                            >
-                                                <Star
-                                                    className={cn(
-                                                        "h-8 w-8 transition",
-                                                        active
-                                                            ? "fill-yellow-400 text-yellow-400 drop-shadow-sm"
-                                                            : "text-muted-foreground/40 group-hover:text-yellow-300"
-                                                    )}
-                                                />
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="min-h-[1.5rem] text-sm text-muted-foreground">
-                                    {rating ? (
-                                        <span
-                                            className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs">
-                      <span className="font-medium">
-                        {rating} / 5 – {RATING_LABELS[rating]}
-                      </span>
-                    </span>
-                                    ) : (
-                                        <span className="text-xs">
-                      No rating selected yet. Tap a star above.
-                    </span>
-                                    )}
-                                </div>
+                                    return (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            className="group relative p-1 transition-transform active:scale-95"
+                                            onMouseEnter={() => setHoverRating(star)}
+                                            onMouseLeave={() => setHoverRating(null)}
+                                            onClick={() => setRating(star)}
+                                        >
+                                            <Star
+                                                className={cn(
+                                                    "h-10 w-10 transition-all duration-200",
+                                                    active
+                                                        ? "fill-yellow-400 text-yellow-400 scale-110"
+                                                        : "text-slate-200 group-hover:text-yellow-200"
+                                                )}
+                                                strokeWidth={active ? 0 : 1.5}
+                                            />
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        )}
 
-                        {!submitted && step === "review" && (
-                            <div className="space-y-5">
-                                <div className="space-y-2">
-                                    <Label className="text-sm">Written review</Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Tell us what happened, what went well, and what we could
-                                        improve.
-                                    </p>
-                                    <Textarea
-                                        rows={6}
-                                        value={review}
-                                        onChange={(e) => setReview(e.target.value)}
-                                        placeholder="Example: The mechanic arrived quickly, was very friendly, and fixed my car on the roadside..."
-                                        className="resize-none text-sm"
-                                    />
-                                    <p className="mt-1 text-[11px] text-muted-foreground">
-                                        Minimum 6 characters. Please don’t share sensitive personal
-                                        information.
-                                    </p>
-                                </div>
-
-                                {errorMsg && (
-                                    <p className="text-xs font-medium text-red-500">{errorMsg}</p>
+                            <div className="min-h-[2rem] flex items-center justify-center">
+                                {rating ? (
+                                    <span className="inline-flex items-center rounded-full bg-slate-900 px-4 py-1.5 text-xs font-bold text-white shadow-md transition-all animate-in zoom-in duration-300">
+                                {rating} / 5 – {RATING_LABELS[rating]}
+                            </span>
+                                ) : (
+                                    <span className="text-xs text-slate-400 font-medium">
+                                Tap a star to select
+                             </span>
                                 )}
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        {submitted && (
-                            <div className="space-y-4 py-4 text-center">
-                                <div
-                                    className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                                    <Star className="h-6 w-6 fill-emerald-500 text-emerald-500"/>
+                    {/* STEP 2: REVIEW */}
+                    {!submitted && step === "review" && (
+                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Written Review</Label>
+                                <Textarea
+                                    rows={6}
+                                    value={review}
+                                    onChange={(e) => setReview(e.target.value)}
+                                    placeholder="The mechanic arrived quickly and was very professional..."
+                                    className="resize-none text-base bg-slate-50 border-slate-200 rounded-xl focus-visible:ring-slate-900 min-h-[160px]"
+                                    autoFocus
+                                />
+                                <div className="flex justify-between items-center px-1">
+                                    <p className="text-[10px] text-slate-400">
+                                        Min 6 chars. Don&apos;t share private info.
+                                    </p>
+                                    <span className={cn("text-[10px] font-medium", review.length > 5 ? "text-emerald-600" : "text-slate-300")}>
+                                {review.length} / 6
+                             </span>
                                 </div>
-                                <h2 className="text-lg font-semibold">
-                                    Thanks for your feedback!
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Your review helps us make Motor Ambos better for the next
-                                    driver who needs help.
+                            </div>
+
+                            {errorMsg && (
+                                <div className="p-3 rounded-xl bg-red-50 text-red-600 text-xs font-medium border border-red-100">
+                                    {errorMsg}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* SUCCESS STATE */}
+                    {submitted && (
+                        <div className="bg-white p-10 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-6 mt-8">
+                            <div className="h-20 w-20 bg-emerald-50 rounded-full flex items-center justify-center animate-in zoom-in duration-500">
+                                <CheckCircle className="h-10 w-10 text-emerald-500" />
+                            </div>
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-bold text-slate-900">Thank you!</h2>
+                                <p className="text-slate-500 text-sm max-w-xs mx-auto leading-relaxed">
+                                    Your feedback helps us maintain high standards for the Motor Ambos network.
                                 </p>
                             </div>
-                        )}
-
-                        {!submitted && step !== "review" && errorMsg && (
-                            <p className="mt-3 text-xs font-medium text-red-500">
-                                {errorMsg}
-                            </p>
-                        )}
-                    </CardContent>
-                </div>
-            </section>
-
-            {/* Fixed Action Bar */}
-            {!submitted && (
-                <div
-                    className="fixed inset-x-0 bottom-0 z-30 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-                    <div className="mx-auto mb-5 w-full max-w-2xl px-4 py-3 pb-[env(safe-area-inset-bottom)]">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <Button
-                                type="button"
-                                className="h-11 w-full"
-                                disabled={!canNext || submitting}
-                                onClick={handlePrimary}
-                            >
-                                {step === "rating" && "Next"}
-                                {step === "review" &&
-                                    (submitting ? "Submitting…" : "Submit review")}
+                            <Button variant="outline" className="mt-2 rounded-xl border-slate-200 text-slate-600" onClick={() => window.close()}>
+                                Close Window
                             </Button>
                         </div>
+                    )}
+
+                </div>
+            </div>
+
+            {/* Sticky Footer Action Bar */}
+            {!submitted && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-30 pb-[env(safe-area-inset-bottom)]">
+                    <div className="mx-auto max-w-lg">
+                        <Button
+                            type="button"
+                            disabled={!canNext || submitting}
+                            onClick={handlePrimary}
+                            className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all active:scale-95"
+                        >
+                            {submitting ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <span className="flex items-center gap-2">
+                            {step === "rating" ? "Next Step" : "Submit Review"}
+                                    <ArrowRight className="h-4 w-4" />
+                        </span>
+                            )}
+                        </Button>
                     </div>
                 </div>
             )}
+
         </main>
     );
 }

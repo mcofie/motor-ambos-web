@@ -1,25 +1,28 @@
-// src/app/help/page.tsx
 "use client";
 
 import * as React from "react";
-import {useMemo, useState} from "react";
+import {useMemo, useState, useEffect} from "react";
 import {z} from "zod";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 
 import {Button} from "@/components/ui/button";
-import {CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {Separator} from "@/components/ui/separator";
+// Removed unused Input/Label imports here to use custom ModernInput,
+// or we can use them inside ModernInput.
+// I will remove them from here and keep the custom implementation below
+// to preserve the specific styling you liked.
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import {cn} from "@/lib/utils";
 import {
     Car,
-    Wrench,
     ArrowRight,
     ChevronLeft,
-    Crosshair,
     AlertTriangle,
     BatteryCharging,
     Disc,
@@ -30,20 +33,17 @@ import {
     Star,
     Loader2,
     BadgeCheck,
-    MessageCircle as MessageCircleIcon, ChevronDown,
+    MessageCircle,
+    ChevronDown,
+    Navigation,
+    LocateFixed,
 } from "lucide-react";
-import {createRequest, findProvidersNear,} from "@/lib/supaFetch";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+
+// Mock or Real imports
+import {createRequest, findProvidersNear} from "@/lib/supaFetch";
 
 /* ───────────────────────────────
-   Types & schema for the wizard
+   Types & Logic
    ─────────────────────────────── */
 
 type JsonObject = Record<string, unknown>;
@@ -72,17 +72,18 @@ const HelpSchema = z.object({
     carModel: z.string().min(1, "Car model is required"),
     carYear: z
         .string()
-        .min(4, "Enter year e.g. 2019")
-        .max(4, "Use 4 digits")
-        .regex(/^\d{4}$/, "Year must be 4 digits"),
-    carColor: z.string().min(2, "Car color is required"),
-    plateNumber: z.string().min(2, "Plate number is required"),
-    fullName: z.string().min(2, "Your name is required"),
+        .min(4, "4 digits")
+        .max(4, "4 digits")
+        .regex(/^\d{4}$/, "4 digits"),
+    carColor: z.string().min(2, "Required"),
+    plateNumber: z.string().min(2, "Required"),
+    fullName: z.string().min(2, "Required"),
     phone: z
         .string()
-        .min(7, "Phone is required")
-        .regex(/^[0-9+\-\s()]{7,}$/, "Enter a valid phone"),
+        .min(7, "Invalid phone")
+        .regex(/^[0-9+\-\s()]{7,}$/, "Invalid format"),
 });
+
 type HelpForm = z.infer<typeof HelpSchema>;
 type StepKey = "help" | "car" | "contact" | "providers";
 
@@ -119,22 +120,50 @@ const HELP_OPTIONS: Array<{
     label: string;
     Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     hint: string;
+    colorClass: string;
 }> = [
     {
         key: "battery",
         label: "Battery",
         Icon: BatteryCharging,
-        hint: "Jumpstart or replace",
+        hint: "Jumpstart / Replace",
+        colorClass: "text-orange-500 bg-orange-50 border-orange-100",
     },
-    {key: "tire", label: "Tyres", Icon: Disc, hint: "Flat, puncture, swap"},
+    {
+        key: "tire",
+        label: "Flat Tyre",
+        Icon: Disc,
+        hint: "Change / Pump",
+        colorClass: "text-slate-500 bg-slate-50 border-slate-100",
+    },
     {
         key: "oil",
         label: "Engine Oil",
         Icon: Droplets,
-        hint: "Top-up or change",
+        hint: "Top-up / Leak",
+        colorClass: "text-amber-600 bg-amber-50 border-amber-100",
     },
-    {key: "tow", label: "Towing", Icon: Truck, hint: "Short or long haul"},
-    {key: "rescue", label: "Rescue", Icon: Truck, hint: "General rescue"},
+    {
+        key: "tow",
+        label: "Towing",
+        Icon: Truck,
+        hint: "Move Vehicle",
+        colorClass: "text-blue-600 bg-blue-50 border-blue-100",
+    },
+    {
+        key: "rescue",
+        label: "Rescue",
+        Icon: AlertTriangle,
+        hint: "Stuck / Accident",
+        colorClass: "text-red-600 bg-red-50 border-red-100",
+    },
+    {
+        key: "fuel",
+        label: "Fuel",
+        Icon: Droplets,
+        hint: "Out of gas",
+        colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    },
 ];
 
 /* Geo helpers */
@@ -142,7 +171,8 @@ const GEO_ERROR_BLOCKED = "GEO_BLOCKED" as const;
 type PermState = "granted" | "prompt" | "denied" | "unknown";
 
 async function checkGeoPermission(): Promise<PermState> {
-    if (!("permissions" in navigator)) return "unknown";
+    if (typeof navigator === "undefined" || !("permissions" in navigator))
+        return "unknown";
     try {
         const status = await navigator.permissions.query({
             name: "geolocation" as PermissionName,
@@ -154,9 +184,9 @@ async function checkGeoPermission(): Promise<PermState> {
 }
 
 function getLocationOnce(): Promise<GeolocationPosition> {
-    if (!("geolocation" in navigator)) {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
         return Promise.reject(
-            new Error("Geolocation is not supported by your browser."),
+            new Error("Geolocation is not supported by your browser.")
         );
     }
     return new Promise((resolve, reject) => {
@@ -169,7 +199,7 @@ function getLocationOnce(): Promise<GeolocationPosition> {
 }
 
 /* ───────────────────────────────
-   Page
+   Main Component
    ─────────────────────────────── */
 export default function GetHelpWizardPage() {
     const [step, setStep] = useState<StepKey>("help");
@@ -182,9 +212,6 @@ export default function GetHelpWizardPage() {
     // Providers
     const [loadingProviders, setLoadingProviders] = useState(false);
     const [providers, setProviders] = useState<Provider[] | null>(null);
-
-    // Request id (displayed on Providers step)
-    const [requestId, setRequestId] = useState<string | null>(null);
 
     const form = useForm<HelpForm>({
         resolver: zodResolver(HelpSchema),
@@ -204,11 +231,11 @@ export default function GetHelpWizardPage() {
     const {
         register,
         setValue,
-        watch,
         handleSubmit,
         trigger,
         getValues,
         formState: {isSubmitting, errors},
+        watch,
     } = form;
 
     /* validation snapshots */
@@ -223,19 +250,19 @@ export default function GetHelpWizardPage() {
 
     const carSectionValid = useMemo(() => {
         return (
-            carMake.trim().length >= 2 &&
-            carModel.trim().length >= 1 &&
+            carMake?.trim().length >= 2 &&
+            carModel?.trim().length >= 1 &&
             /^\d{4}$/.test(carYear) &&
-            carColor.trim().length >= 2 &&
-            plateNumber.trim().length >= 2
+            carColor?.trim().length >= 2 &&
+            plateNumber?.trim().length >= 2
         );
     }, [carMake, carModel, carYear, carColor, plateNumber]);
 
     const contactSectionValid = useMemo(() => {
-        return fullName.trim().length >= 2 && /^[0-9+\-\s()]{7,}$/.test(phone);
+        return fullName?.trim().length >= 2 && /^[0-9+\-\s()]{7,}$/.test(phone);
     }, [fullName, phone]);
 
-    // Lock a request for a specific provider (used by both Call & SMS flows)
+    // Logic
     async function lockRequestForProvider(provider: Provider) {
         if (!loc) {
             setLocError("Please share your location so nearby providers can find you.");
@@ -243,10 +270,9 @@ export default function GetHelpWizardPage() {
         }
 
         const values = getValues();
-
         const details = `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}`;
 
-        const requestRow = await createRequest({
+        await createRequest({
             helpType: values.helpType,
             driver_name: values.fullName,
             driver_phone: values.phone,
@@ -258,10 +284,9 @@ export default function GetHelpWizardPage() {
             status: "pending",
         });
 
-        setRequestId(requestRow?.id ?? null);
+        // Removed unused requestId state
     }
 
-    /* geolocation */
     async function requestLocation() {
         setLocBusy(true);
         setLocError(null);
@@ -284,10 +309,8 @@ export default function GetHelpWizardPage() {
             let msg = "Failed to get your location.";
             if (isGeoErrorLike(e)) {
                 if (e.code === 1) msg = "You denied the location request.";
-                else if (e.code === 2)
-                    msg = "Location unavailable. Try moving to improve signal.";
-                else if (e.code === 3)
-                    msg = "Location request timed out. Try again.";
+                else if (e.code === 2) msg = "Location unavailable.";
+                else if (e.code === 3) msg = "Location request timed out.";
                 if (e.message && typeof e.message === "string") msg = e.message;
             } else {
                 const m = extractErrorMessage(e);
@@ -300,10 +323,9 @@ export default function GetHelpWizardPage() {
         }
     }
 
-    /* submit -> fetch providers (request locking happens on call/SMS) */
     async function onSubmit(values: HelpForm) {
         if (!loc) {
-            setLocError("Please share your location so nearby providers can find you.");
+            setLocError("Please share location.");
             return;
         }
 
@@ -311,29 +333,27 @@ export default function GetHelpWizardPage() {
         setProviders(null);
 
         try {
-            // Get nearby providers
             const list = await findProvidersNear(values.helpType, loc.lat, loc.lng);
-            list.sort((a, b) =>
+            list.sort((a: Provider, b: Provider) =>
                 a.distance_km === b.distance_km
                     ? (b.rating ?? 0) - (a.rating ?? 0)
-                    : a.distance_km - b.distance_km,
+                    : a.distance_km - b.distance_km
             );
             setProviders(list);
             setStep("providers");
         } catch {
-            setProviders([]); // empty state
+            setProviders([]);
             setStep("providers");
         } finally {
             setLoadingProviders(false);
         }
     }
 
-    /* Refresh providers on button click (Providers step) */
     async function refreshSearchAgain(
         setLoading: (b: boolean) => void,
         setProvidersList: (p: Provider[]) => void,
         values: HelpForm,
-        currentLoc: GeoFix | null,
+        currentLoc: GeoFix | null
     ) {
         if (!currentLoc) return;
         setLoading(true);
@@ -341,12 +361,12 @@ export default function GetHelpWizardPage() {
             const list = await findProvidersNear(
                 values.helpType,
                 currentLoc.lat,
-                currentLoc.lng,
+                currentLoc.lng
             );
-            list.sort((a, b) =>
+            list.sort((a: Provider, b: Provider) =>
                 a.distance_km === b.distance_km
                     ? (b.rating ?? 0) - (a.rating ?? 0)
-                    : a.distance_km - b.distance_km,
+                    : a.distance_km - b.distance_km
             );
             setProvidersList(list);
         } finally {
@@ -354,7 +374,6 @@ export default function GetHelpWizardPage() {
         }
     }
 
-    /* action bar */
     const canNext =
         step === "help"
             ? !!helpType
@@ -367,6 +386,7 @@ export default function GetHelpWizardPage() {
     async function onNext() {
         if (step === "help") {
             setStep("car");
+            if (typeof window !== "undefined") window.scrollTo(0, 0);
             return;
         }
         if (step === "car") {
@@ -377,7 +397,10 @@ export default function GetHelpWizardPage() {
                 "carColor",
                 "plateNumber",
             ]);
-            if (ok) setStep("contact");
+            if (ok) {
+                setStep("contact");
+                if (typeof window !== "undefined") window.scrollTo(0, 0);
+            }
             return;
         }
         if (step === "contact") {
@@ -387,350 +410,306 @@ export default function GetHelpWizardPage() {
     }
 
     function onBack() {
-        if (step === "car") return setStep("help");
-        if (step === "contact") return setStep("car");
-        if (step === "providers") return setStep("contact");
+        if (step === "car") setStep("help");
+        if (step === "contact") setStep("car");
+        if (step === "providers") setStep("contact");
+        if (typeof window !== "undefined") window.scrollTo(0, 0);
     }
 
-    const steps: Array<{ key: StepKey; label: string }> = [
-        {key: "help", label: "Help"},
-        {key: "car", label: "Car"},
-        {key: "contact", label: "Contact"},
-        {key: "providers", label: "Providers"},
-    ];
-    const activeIndex = Math.max(
-        0,
-        steps.findIndex((s) => s.key === step),
-    );
+    // Progress Calculation
+    const stepsOrder: StepKey[] = ["help", "car", "contact", "providers"];
+    const activeIndex = stepsOrder.indexOf(step);
+    const progressPercent = ((activeIndex + 1) / stepsOrder.length) * 100;
 
     return (
-        <main className="min-h-screen bg-background text-foreground">
-            {/* Top Bar */}
-            <header
-                className="sticky top-0 z-20 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="mx-auto w-full max-w-2xl px-4 py-3">
-                    <div className="flex items-center justify-between">
-                        <div className="inline-flex items-center gap-2 text-base font-semibold sm:text-lg">
-                            <Wrench className="h-5 w-5"/>
-                            Motor Ambos
-                        </div>
-                        <div className="text-[10px] text-muted-foreground sm:text-xs">
-                            Roadside Request
+        <main className="min-h-screen bg-slate-50 font-sans text-slate-900">
+            {/* Top Navigation Bar */}
+            <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+                <div className="mx-auto max-w-lg px-4 h-14 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        {step !== "help" && (
+                            <button
+                                onClick={onBack}
+                                className="mr-1 -ml-2 p-2 rounded-full hover:bg-slate-100 text-slate-600"
+                            >
+                                <ChevronLeft className="h-5 w-5"/>
+                            </button>
+                        )}
+                        <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight text-slate-900">
+                Motor Ambos
+              </span>
+                            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                {step === "help" && "Step 1: Request"}
+                                {step === "car" && "Step 2: Vehicle"}
+                                {step === "contact" && "Step 3: Location"}
+                                {step === "providers" && "Nearby Help"}
+              </span>
                         </div>
                     </div>
-
-                    {/* Stepper */}
-                    <div className="mt-3 flex items-center justify-between sm:gap-2 sm:justify-start">
-                        {/* Mobile dots */}
-                        <div className="flex items-center gap-1 sm:hidden">
-                            {steps.map((s, i) => {
-                                const isActive = i === activeIndex;
-                                const isDone = i < activeIndex;
-                                return (
-                                    <span
-                                        key={s.key}
-                                        className={cn(
-                                            "h-2 w-2 rounded-full bg-border",
-                                            isDone && "bg-muted-foreground/50",
-                                            isActive && "bg-primary",
-                                        )}
-                                    />
-                                );
-                            })}
-                        </div>
-
-                        {/* >= sm labeled stepper */}
-                        <div className="hidden items-center gap-2 sm:flex">
-                            {steps.map((s, i) => {
-                                const isActive = i === activeIndex;
-                                const isDone = i < activeIndex;
-                                return (
-                                    <div key={s.key} className="flex items-center gap-2">
-                                        <div
-                                            className={cn(
-                                                "grid h-7 w-7 place-items-center rounded-full text-[11px] font-medium",
-                                                isActive &&
-                                                "bg-primary text-primary-foreground",
-                                                isDone && "bg-muted",
-                                                !isActive &&
-                                                !isDone &&
-                                                "bg-background",
-                                            )}
-                                        >
-                                            {i + 1}
-                                        </div>
-                                        <span
-                                            className={cn(
-                                                "text-xs uppercase tracking-wide",
-                                                isActive
-                                                    ? "text-foreground"
-                                                    : "text-muted-foreground",
-                                            )}
-                                        >
-                      {s.label}
-                    </span>
-                                        {i < steps.length - 1 && (
-                                            <div className="mx-1 h-px w-8 bg-border"/>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                    <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-slate-900 transition-all duration-500 ease-out"
+                            style={{width: `${progressPercent}%`}}
+                        />
                     </div>
                 </div>
             </header>
 
-            {/* Content */}
-            <section className="mx-auto w-full max-w-2xl px-4 py-6 pb-36 sm:pb-32">
-                <div className="rounded-2xl">
-                    <CardHeader className="space-y-1 px-4">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="py-2 text-lg font-extrabold sm:text-xl">
-                                {step === "help" && "What do you need help with?"}
-                                {step === "car" && "Your car details"}
-                                {step === "contact" && "How can we reach you?"}
-                                {step === "providers" && "Nearby providers"}
-                            </CardTitle>
+            {/* Main Content Area */}
+            <div className="mx-auto w-full max-w-lg px-4 py-6 pb-32">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* STEP 1: HELP TYPE */}
+                    {step === "help" && (
+                        <div className="space-y-6">
+                            <div className="space-y-2 text-center mb-8">
+                                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                                    How can we help?
+                                </h1>
+                                <p className="text-sm text-slate-500">
+                                    Select the service you need right now.
+                                </p>
+                            </div>
 
-                            {step !== "help" && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onBack}
-                                    className="gap-1"
-                                >
-                                    <ChevronLeft className="h-4 w-4"/>
-                                    <span className="hidden sm:inline">Back</span>
-                                </Button>
-                            )}
-                        </div>
-                    </CardHeader>
-
-                    {/* FORM STEPS */}
-                    {step !== "providers" && (
-                        <CardContent>
-                            <form
-                                className="space-y-8"
-                                onSubmit={(e) => e.preventDefault()}
-                            >
-                                {/* Step 1: Help type */}
-                                {step === "help" && (
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2">
-                                            {HELP_OPTIONS.map((opt) => (
-                                                <HelpTile
-                                                    key={opt.key}
-                                                    value={opt.key}
-                                                    label={opt.label}
-                                                    Icon={opt.Icon}
-                                                    hint={opt.hint}
-                                                    checked={helpType === opt.key}
-                                                    onChange={(v) =>
-                                                        setValue("helpType", v, {
-                                                            shouldValidate: true,
-                                                        })
-                                                    }
-                                                />
-                                            ))}
-                                        </div>
-                                        {errors.helpType && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.helpType.message}
-                                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                                {HELP_OPTIONS.map((opt) => (
+                                    <div
+                                        key={opt.key}
+                                        onClick={() => setValue("helpType", opt.key, {shouldValidate: true})}
+                                        className={cn(
+                                            "cursor-pointer relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 p-4 text-center transition-all duration-200 active:scale-95",
+                                            helpType === opt.key
+                                                ? "border-slate-900 bg-slate-900 text-white shadow-lg"
+                                                : "border-transparent bg-white text-slate-600 shadow-sm hover:bg-slate-100/50 hover:border-slate-200"
                                         )}
-                                    </div>
-                                )}
-
-                                {/* Step 2: Car details */}
-                                {step === "car" && (
-                                    <div className="space-y-5">
-                                        <div className="flex items-center gap-2">
-                                            <Car className="h-4 w-4 text-muted-foreground"/>
-                                            <Label className="text-base">Car details</Label>
+                                    >
+                                        <div
+                                            className={cn(
+                                                "rounded-xl p-3 transition-colors",
+                                                helpType === opt.key
+                                                    ? "bg-white/10 text-white"
+                                                    : opt.colorClass
+                                            )}
+                                        >
+                                            <opt.Icon className="h-6 w-6"/>
                                         </div>
-
-                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            <Field label="Make" error={errors.carMake?.message}>
-                                                <Input
-                                                    {...register("carMake")}
-                                                    placeholder="e.g., Toyota"
-                                                    className="h-11 text-base"
-                                                    autoComplete="off"
-                                                />
-                                            </Field>
-                                            <Field label="Model" error={errors.carModel?.message}>
-                                                <Input
-                                                    {...register("carModel")}
-                                                    placeholder="e.g., Corolla"
-                                                    className="h-11 text-base"
-                                                    autoComplete="off"
-                                                />
-                                            </Field>
-                                            <Field label="Year" error={errors.carYear?.message}>
-                                                <Input
-                                                    inputMode="numeric"
-                                                    maxLength={4}
-                                                    {...register("carYear")}
-                                                    placeholder="e.g., 2018"
-                                                    className="h-11 text-base"
-                                                    autoComplete="off"
-                                                />
-                                            </Field>
-                                            <Field label="Color" error={errors.carColor?.message}>
-                                                <Input
-                                                    {...register("carColor")}
-                                                    placeholder="e.g., Silver"
-                                                    className="h-11 text-base"
-                                                    autoComplete="off"
-                                                />
-                                            </Field>
-                                            <div className="sm:col-span-2">
-                                                <Field
-                                                    label="Plate number"
-                                                    error={errors.plateNumber?.message}
-                                                >
-                                                    <Input
-                                                        {...register("plateNumber")}
-                                                        placeholder="e.g., GR-1234-24"
-                                                        className="h-11 text-base"
-                                                        autoComplete="off"
-                                                    />
-                                                </Field>
-                                            </div>
-                                        </div>
-
-                                        <Separator/>
-                                    </div>
-                                )}
-
-                                {/* Step 3: Contact + Location */}
-                                {step === "contact" && (
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            <Field
-                                                label="Full name"
-                                                error={errors.fullName?.message}
+                                        <div className="space-y-0.5">
+                                            <span className="block text-sm font-bold">{opt.label}</span>
+                                            <span
+                                                className={cn(
+                                                    "block text-[10px] opacity-80",
+                                                    helpType === opt.key ? "text-slate-300" : "text-slate-400"
+                                                )}
                                             >
-                                                <Input
-                                                    {...register("fullName")}
-                                                    placeholder="Your name"
-                                                    className="h-11 text-base"
-                                                    autoComplete="name"
-                                                />
-                                            </Field>
-                                            <Field label="Phone" error={errors.phone?.message}>
-                                                <div className="relative">
-                                                    <Phone
-                                                        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
-                                                    <Input
-                                                        {...register("phone")}
-                                                        inputMode="tel"
-                                                        placeholder="+233 55 123 4567"
-                                                        className="h-11 pl-9 text-base"
-                                                        autoComplete="tel"
-                                                    />
-                                                </div>
-                                            </Field>
-                                        </div>
-
-                                        {/* Location capture */}
-                                        <div className="rounded-xl bg-muted/30 p-3">
-                                            <div
-                                                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                <div className="space-y-1">
-                                                    <Label className="text-sm">Your location</Label>
-                                                    {!loc && !locError && (
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Share your current location so nearby providers
-                                                            can find you faster.
-                                                        </p>
-                                                    )}
-                                                    {loc && (
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Captured:{" "}
-                                                            <span className="font-medium">
-                                {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
-                              </span>
-                                                            {typeof loc.accuracy === "number" && (
-                                                                <>
-                                                                    {" "}
-                                                                    • ±{Math.round(loc.accuracy)} m
-                                                                </>
-                                                            )}
-                                                        </p>
-                                                    )}
-
-                                                    {locError === GEO_ERROR_BLOCKED ? (
-                                                        <BlockedLocationHelp onRetry={requestLocation}/>
-                                                    ) : locError ? (
-                                                        <p className="flex items-center gap-1 text-xs text-destructive">
-                                                            <AlertTriangle className="h-3.5 w-3.5"/>
-                                                            {locError}
-                                                        </p>
-                                                    ) : null}
-                                                </div>
-
-                                                <Button
-                                                    type="button"
-                                                    variant={loc ? "secondary" : "default"}
-                                                    onClick={requestLocation}
-                                                    disabled={locBusy}
-                                                    className="h-10 whitespace-nowrap"
-                                                >
-                                                    <Crosshair className="mr-2 h-4 w-4"/>
-                                                    {locBusy
-                                                        ? "Locating..."
-                                                        : loc
-                                                            ? "Refresh location"
-                                                            : "Use my location"}
-                                                </Button>
-                                            </div>
+                        {opt.hint}
+                      </span>
                                         </div>
                                     </div>
-                                )}
-                            </form>
-                        </CardContent>
+                                ))}
+                            </div>
+                        </div>
                     )}
 
-                    {/* PROVIDERS SCREEN */}
-                    {step === "providers" && (
-                        <CardContent className="space-y-4 px-2">
-                            <div className="rounded-xl bg-card/60 p-3">
-                                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                                    <MapPin className="h-4 w-4"/>
-                                    <span>
-                    Showing results near{" "}
-                                        <strong>
-                      {loc?.lat.toFixed(5)}, {loc?.lng.toFixed(5)}
-                    </strong>
-                  </span>
-                                    {requestId && (
-                                        <span className="ml-auto text-[11px] text-muted-foreground">
-                      Request ID:{" "}
-                                            <span className="font-mono">{requestId}</span>
+                    {/* STEP 2: CAR DETAILS */}
+                    {step === "car" && (
+                        <div className="space-y-6">
+                            <div className="space-y-2 mb-6">
+                                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                                    Vehicle Details
+                                </h1>
+                                <p className="text-sm text-slate-500">
+                                    Help the provider identify your car.
+                                </p>
+                            </div>
+
+                            <div className="space-y-4 bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <ModernInput
+                                        label="Make"
+                                        placeholder="Toyota"
+                                        {...register("carMake")}
+                                        error={errors.carMake?.message}
+                                    />
+                                    <ModernInput
+                                        label="Model"
+                                        placeholder="Corolla"
+                                        {...register("carModel")}
+                                        error={errors.carModel?.message}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <ModernInput
+                                        label="Year"
+                                        placeholder="2019"
+                                        inputMode="numeric"
+                                        maxLength={4}
+                                        {...register("carYear")}
+                                        error={errors.carYear?.message}
+                                    />
+                                    <ModernInput
+                                        label="Color"
+                                        placeholder="Silver"
+                                        {...register("carColor")}
+                                        error={errors.carColor?.message}
+                                    />
+                                </div>
+                                <ModernInput
+                                    label="License Plate"
+                                    placeholder="GR-5522-23"
+                                    className="uppercase"
+                                    {...register("plateNumber")}
+                                    error={errors.plateNumber?.message}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* STEP 3: CONTACT & LOCATION */}
+                    {step === "contact" && (
+                        <div className="space-y-6">
+                            <div className="space-y-2 mb-6">
+                                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                                    Contact & Location
+                                </h1>
+                                <p className="text-sm text-slate-500">
+                                    Where should we send help?
+                                </p>
+                            </div>
+
+                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                                <ModernInput
+                                    label="Your Name"
+                                    placeholder="John Doe"
+                                    {...register("fullName")}
+                                    error={errors.fullName?.message}
+                                />
+                                <ModernInput
+                                    label="Phone Number"
+                                    placeholder="054 123 4567"
+                                    inputMode="tel"
+                                    {...register("phone")}
+                                    error={errors.phone?.message}
+                                    icon={<Phone className="h-4 w-4 text-slate-400"/>}
+                                />
+                            </div>
+
+                            {/* Location Card */}
+                            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-5 shadow-lg text-white">
+                                <div
+                                    className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-2xl"></div>
+
+                                <div className="flex items-center justify-between mb-4 relative z-10">
+                                    <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+                                        <MapPin className="h-4 w-4 text-sky-400"/>
+                                        <span>Current Location</span>
+                                    </div>
+                                    {loc && (
+                                        <span
+                                            className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase rounded-full border border-emerald-500/30">
+                      Acquired
                     </span>
                                     )}
+                                </div>
+
+                                <div className="space-y-4 relative z-10">
+                                    {loc ? (
+                                        <div
+                                            className="p-3 bg-white/10 rounded-xl border border-white/5 backdrop-blur-sm">
+                                            <div
+                                                className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Coordinates
+                                            </div>
+                                            <div className="font-mono text-lg tracking-tight">
+                                                {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 mt-1">
+                                                Accuracy: ±{Math.round(loc.accuracy || 0)}m
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-slate-300 leading-relaxed">
+                                            We need your location to match you with the nearest mechanics.
+                                        </div>
+                                    )}
+
+                                    {locError && locError !== GEO_ERROR_BLOCKED && (
+                                        <div
+                                            className="flex items-start gap-2 text-red-300 text-xs bg-red-950/30 p-2 rounded-lg border border-red-500/20">
+                                            <AlertTriangle className="h-4 w-4 shrink-0"/>
+                                            <span>{locError}</span>
+                                        </div>
+                                    )}
+
+                                    {locError === GEO_ERROR_BLOCKED && (
+                                        <BlockedLocationHelp onRetry={requestLocation}/>
+                                    )}
+
+                                    <Button
+                                        type="button"
+                                        onClick={requestLocation}
+                                        disabled={locBusy}
+                                        className="w-full h-12 bg-white text-slate-900 hover:bg-slate-200 font-bold rounded-xl transition-all active:scale-95"
+                                    >
+                                        {locBusy ? (
+                                            <Loader2 className="h-5 w-5 animate-spin"/>
+                                        ) : loc ? (
+                                            <>
+                                                <LocateFixed className="mr-2 h-4 w-4"/> Update Location
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Navigation className="mr-2 h-4 w-4"/> Share Location
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* STEP 4: PROVIDERS */}
+                    {step === "providers" && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between px-1">
+                                <h2 className="text-lg font-bold text-slate-900">Nearby Help</h2>
+                                <div className="flex items-center gap-1 text-xs text-slate-500">
+                                    <span>Within 15km</span>
+                                    <div className="h-1 w-1 rounded-full bg-slate-300"></div>
+                                    <span>{loc?.lat.toFixed(2)}, {loc?.lng.toFixed(2)}</span>
                                 </div>
                             </div>
 
                             {loadingProviders && (
-                                <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                    Fetching nearby providers…
+                                <div
+                                    className="py-20 flex flex-col items-center justify-center text-slate-500 space-y-4">
+                                    <div className="relative">
+                                        <div
+                                            className="h-12 w-12 rounded-full border-4 border-slate-100 border-t-slate-900 animate-spin"></div>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <Car className="h-4 w-4 text-slate-900"/>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm font-medium">Scanning network...</p>
                                 </div>
                             )}
 
                             {!loadingProviders && (providers?.length ?? 0) === 0 && (
-                                <div className="rounded-xl p-6 text-center text-sm text-muted-foreground">
-                                    No providers found nearby at the moment. Please try again in a
-                                    few minutes.
+                                <div
+                                    className="py-16 text-center px-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                                    <div
+                                        className="mx-auto h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                        <MapPin className="h-8 w-8 text-slate-300"/>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">No providers nearby</h3>
+                                    <p className="text-sm text-slate-500 mb-6">We couldn&apos;t find any active partners
+                                        in your immediate area right now.</p>
+                                    <Button variant="outline" onClick={() => setStep("contact")}>Change
+                                        Location</Button>
                                 </div>
                             )}
 
-                            {!loadingProviders && (providers?.length ?? 0) > 0 && loc && (
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {providers!.map((p) => (
+                            {!loadingProviders && providers && providers.length > 0 && loc && (
+                                <div className="space-y-4">
+                                    {providers.map((p) => (
                                         <ProviderCard
                                             key={p.id}
                                             provider={p}
@@ -740,72 +719,54 @@ export default function GetHelpWizardPage() {
                                     ))}
                                 </div>
                             )}
-                        </CardContent>
+                        </div>
                     )}
                 </div>
-            </section>
+            </div>
 
-            {/* Fixed Action Bar */}
+            {/* Bottom Floating Action Bar */}
             <div
-                className="fixed inset-x-0 bottom-0 z-30 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-                <div className="mb-5 mx-auto w-full max-w-2xl px-4 py-3 pb-[env(safe-area-inset-bottom)]">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        {step !== "providers" ? (
-                            <Button
-                                type="button"
-                                className="h-11 w-full"
-                                disabled={
-                                    !canNext ||
-                                    isSubmitting ||
-                                    (step === "contact" && loadingProviders)
-                                }
-                                onClick={onNext}
-                                title={
-                                    step === "contact" && !loc
-                                        ? "Share your location to continue"
-                                        : undefined
-                                }
-                            >
-                                {step === "contact" &&
-                                (isSubmitting || loadingProviders) ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                        Finding providers…
-                                    </>
-                                ) : (
-                                    <>
-                                        {step === "help" && "Next"}
-                                        {step === "car" && "Next"}
-                                        {step === "contact" && "Confirm & Request"}
-                                        <ArrowRight className="ml-2 h-4 w-4"/>
-                                    </>
-                                )}
-                            </Button>
-                        ) : (
-                            <Button
-                                type="button"
-                                className="h-11 w-full"
-                                disabled={loadingProviders}
-                                onClick={() =>
-                                    refreshSearchAgain(
-                                        setLoadingProviders,
-                                        (p) => setProviders(p),
-                                        getValues(),
-                                        loc,
-                                    )
-                                }
-                            >
-                                {loadingProviders ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                        Refreshing results…
-                                    </>
-                                ) : (
-                                    "Refresh results"
-                                )}
-                            </Button>
-                        )}
-                    </div>
+                className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-40">
+                <div className="mx-auto max-w-lg">
+                    {step !== "providers" ? (
+                        <Button
+                            type="button"
+                            disabled={!canNext || isSubmitting || (step === "contact" && loadingProviders)}
+                            onClick={onNext}
+                            className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100"
+                        >
+                            {step === "contact" && (isSubmitting || loadingProviders) ? (
+                                <Loader2 className="h-5 w-5 animate-spin"/>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                  {step === "help" && "Continue to Vehicle"}
+                                    {step === "car" && "Continue to Location"}
+                                    {step === "contact" && "Find Providers"}
+                                    <ArrowRight className="h-5 w-5"/>
+                </span>
+                            )}
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="outline"
+                            disabled={loadingProviders}
+                            onClick={() =>
+                                refreshSearchAgain(
+                                    setLoadingProviders,
+                                    (p) => setProviders(p),
+                                    getValues(),
+                                    loc
+                                )
+                            }
+                            className="w-full h-12 rounded-xl border-slate-200 text-slate-600"
+                        >
+                            {loadingProviders ? (
+                                <Loader2 className="h-4 w-4 animate-spin"/>
+                            ) : (
+                                "Refresh Results"
+                            )}
+                        </Button>
+                    )}
                 </div>
             </div>
         </main>
@@ -813,76 +774,39 @@ export default function GetHelpWizardPage() {
 }
 
 /* ───────────────────────────────
-   UI bits
+   Sub-Components (Refined)
    ─────────────────────────────── */
-function Field({
-                   label,
-                   error,
-                   children,
-               }: {
-    label: string;
-    error?: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div>
-            <Label className="text-sm">{label}</Label>
-            <div className="mt-1">{children}</div>
-            {error && (
-                <p className="mt-1 text-xs text-destructive">{error}</p>
-            )}
-        </div>
-    );
-}
 
-function HelpTile({
-                      value,
-                      label,
-                      hint,
-                      Icon,
-                      checked,
-                      onChange,
-                  }: {
-    value: "battery" | "tire" | "oil" | "tow" | "rescue" | "fuel";
-    label: string;
-    hint: string;
-    Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-    checked: boolean;
-    onChange: (v: HelpForm["helpType"]) => void;
-}) {
-    return (
-        <Label
-            htmlFor={`help-${value}`}
-            className={cn(
-                "group relative cursor-pointer rounded-2xl p-4 transition",
-                "bg-card/60 hover:bg-accent/40",
-                "data-[checked=true]:bg-primary/10",
-            )}
-            data-checked={checked}
-            onClick={() => onChange(value)}
-        >
-            <div className="flex items-center gap-3">
-                <div
-                    className={cn(
-                        "grid h-10 w-10 place-items-center rounded-xl transition",
-                        checked
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted",
-                    )}
-                >
-                    <Icon className="h-5 w-5"/>
+// Modern Input Wrapper
+const ModernInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input"> & {
+    label: string,
+    error?: string,
+    icon?: React.ReactNode
+}>(
+    ({label, error, icon, className, ...props}, ref) => {
+        return (
+            <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-1">{label}</label>
+                <div className="relative group">
+                    <input
+                        ref={ref}
+                        className={cn(
+                            "flex h-12 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:border-slate-900 focus-visible:bg-white disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
+                            icon && "pl-10",
+                            error && "border-red-300 bg-red-50 focus-visible:border-red-500",
+                            className
+                        )}
+                        {...props}
+                    />
+                    {icon && <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">{icon}</div>}
                 </div>
-                <div className="flex-1">
-                    <div className="font-medium">{label}</div>
-                    <div className="text-xs text-muted-foreground">{hint}</div>
-                </div>
-                <RadioGroup className="hidden">
-                    <RadioGroupItem id={`help-${value}`} value={value}/>
-                </RadioGroup>
+                {error && <p className="text-[11px] font-medium text-red-500 ml-1">{error}</p>}
             </div>
-        </Label>
-    );
-}
+        )
+    }
+)
+ModernInput.displayName = "ModernInput"
+
 
 function ProviderCard({
                           provider,
@@ -894,481 +818,197 @@ function ProviderCard({
     onLockRequest?: (provider: Provider) => Promise<void> | void;
 }) {
     const telHref = `tel:${provider.phone}`;
-    const smsHref = `sms:${provider.phone}?&body=${encodeURIComponent(smsBody)}`;
     const mapsHref = `https://maps.google.com/?q=${provider.lat},${provider.lng}`;
 
-    const [callDialogOpen, setCallDialogOpen] = React.useState(false);
-    const [locking, setLocking] = React.useState(false);
-    const [lockError, setLockError] = React.useState<string | null>(null);
+    const [callDialogOpen, setCallDialogOpen] = useState(false);
+    const [smsDialogOpen, setSmsDialogOpen] = useState(false);
+    const [locking, setLocking] = useState(false);
+    const [lockError, setLockError] = useState<string | null>(null);
+    const [sendingSms, setSendingSms] = useState(false);
+    const [smsError, setSmsError] = useState<string | null>(null);
+    const [showServices, setShowServices] = useState(false);
 
-    const [smsDialogOpen, setSmsDialogOpen] = React.useState(false);
-    const [sendingSms, setSendingSms] = React.useState(false);
-    const [smsError, setSmsError] = React.useState<string | null>(null);
-
-    const [servicesOpen, setServicesOpen] = React.useState(true); // 👈 NEW
-
-    const handleCallClick = () => {
-        setLockError(null);
-        setCallDialogOpen(true);
-    };
-
-    const handleConfirmCall = async () => {
+    const handleCall = async () => {
         try {
-            setLockError(null);
             setLocking(true);
-
-            if (onLockRequest) {
-                await onLockRequest(provider);
-            }
-
-            setCallDialogOpen(false);
+            if (onLockRequest) await onLockRequest(provider);
             window.location.href = telHref;
-        } catch (e) {
-            const msg =
-                e instanceof Error
-                    ? e.message
-                    : "Something went wrong while locking the request.";
+            setCallDialogOpen(false);
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : "Error";
             setLockError(msg);
         } finally {
             setLocking(false);
         }
     };
 
-    const handleSendDetailsClick = () => {
-        setSmsError(null);
-        setSmsDialogOpen(true);
-    };
-
-    const handleConfirmSendDetails = async () => {
+    const handleSms = async () => {
         try {
-            setSmsError(null);
             setSendingSms(true);
-
-            if (onLockRequest) {
-                await onLockRequest(provider);
-            }
+            if (onLockRequest) await onLockRequest(provider);
 
             const res = await fetch("/api/send-sms", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    to: provider.phone,
-                    content: smsBody,
-                }),
+                body: JSON.stringify({to: provider.phone, content: smsBody}),
             });
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => null);
-                throw new Error(data?.error || "Failed to send SMS");
-            }
-
+            if (!res.ok) throw new Error("Failed");
             setSmsDialogOpen(false);
-            // Optional: open native app
-            // window.location.href = smsHref;
-        } catch (e) {
-            const msg =
-                e instanceof Error ? e.message : "Something went wrong sending SMS.";
-            setSmsError(msg);
+        } catch (e: unknown) {
+            // e is unused here, which caused a warning. We can log it or just set standard msg.
+            setSmsError("Failed to send SMS");
         } finally {
             setSendingSms(false);
         }
-    };
-
-    const visibleServices = provider.services.slice(0, 4);
-    const extraCount =
-        provider.services.length > visibleServices.length
-            ? provider.services.length - visibleServices.length
-            : 0;
+    }
 
     return (
         <>
             <div
-                className="group relative rounded-2xl bg-card/60 p-4 shadow-sm border border-border/80 ring-1 ring-border/70 transition hover:shadow-md hover:ring-primary/60">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                        {/* Provider Name with Verified Badge */}
-                        <div className="flex items-center gap-1">
-                            <div className="text-base font-semibold">{provider.name}</div>
-                            {provider.is_verified && (
-                                <BadgeCheck className="h-4 w-4 text-blue-500 dark:text-blue-400"/>
-                            )}
+                className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 transition-all active:scale-[0.99]">
+                {/* Header */}
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                        <div
+                            className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 text-lg font-bold">
+                            {provider.name.charAt(0)}
                         </div>
-
-                        {provider.address_line && (
-                            <p className="mt-1 truncate text-xs text-muted-foreground">
-                                {provider.address_line}
-                            </p>
-                        )}
-
-                        {/* Meta chips */}
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                            {/* Distance */}
-                            <span
-                                className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                <span className="font-semibold">Distance</span>•
-                                {` ${provider.distance_km.toFixed(1)} km`}
-              </span>
-
-                            {/* Callout Fee */}
-                            {provider.min_callout_fee != null && (
-                                <span
-                                    className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                  <span className="font-semibold">Call-out</span>
-                                    {` • GH₵ ${provider.min_callout_fee.toFixed(0)}`}
-                </span>
-                            )}
-
-                            {/* Coverage Radius */}
-                            {provider.coverage_radius_km != null && (
-                                <span
-                                    className="inline-flex items-center gap-1 rounded-full border border-purple-300 bg-purple-100 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                  <span className="font-semibold">Coverage</span>
-                                    {` • ${provider.coverage_radius_km} km`}
-                </span>
-                            )}
-
-                            {/* Rating */}
-                            {typeof provider.rating === "number" && (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Star className="h-3.5 w-3.5 text-yellow-500"/>
-                                    {provider.rating.toFixed(1)}
-                                    {provider.jobs ? ` (${provider.jobs})` : ""}
-                </span>
-                            )}
-                        </div>
-
-                        {/* Services offered – collapsible */}
-                        {provider.services.length > 0 && (
-                            <div className="mt-3 space-y-2 rounded-xl border border-border bg-muted/50 p-3">
-                                {/* Header row as toggle */}
-                                <button
-                                    type="button"
-                                    onClick={() => setServicesOpen((v) => !v)}
-                                    className="flex w-full items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-muted-foreground"
-                                >
-                  <span className="inline-flex items-center gap-1.5">
-                    <Wrench className="h-3.5 w-3.5"/>
-                    <span>Services &amp; rates</span>
-                  </span>
-
-                                    <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium">
-                      {provider.services.length}{" "}
-                        {provider.services.length === 1 ? "service" : "services"}
-                    </span>
-                                        <ChevronDown
-                                            className={`h-3 w-3 transition-transform ${
-                                                servicesOpen ? "rotate-180" : ""
-                                            }`}
-                                        />
-                                    </div>
-                                </button>
-
-                                <p className="text-[11px] text-muted-foreground">
-                                    Transparent rate card – prices shown are starting rates per
-                                    service.
-                                </p>
-
-                                {servicesOpen && (
-                                    <>
-                                        <div className="space-y-1.5">
-                                            {visibleServices.map((s) => (
-                                                <div
-                                                    key={s.code}
-                                                    className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-background/60 px-2.5 py-1.5"
-                                                >
-                                                    <div className="flex items-center gap-2 min-w-0">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-[#9fe870]"/>
-                                                        <span className="truncate text-xs font-medium">
-                              {s.name}
-                            </span>
-                                                    </div>
-
-                                                    {typeof s.price === "number" ? (
-                                                        <div className="shrink-0 text-right text-[11px] font-semibold">
-                                                            GH₵{s.price.toFixed(0)}
-                                                            {s.unit && (
-                                                                <span
-                                                                    className="ml-0.5 text-[10px] font-normal text-muted-foreground">
-                                  /{s.unit}
-                                </span>
-                                                            )}
-                                                            <div className="text-[9px] text-muted-foreground">
-                                                                From
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="shrink-0 text-[10px] text-muted-foreground">
-                                                            Call for rate
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {extraCount > 0 && (
-                                            <span className="text-[11px] text-muted-foreground">
-                        +{extraCount} more services available
-                      </span>
-                                        )}
-                                    </>
-                                )}
+                        <div>
+                            <h3 className="font-bold text-slate-900 text-base flex items-center gap-1">
+                                {provider.name}
+                                {provider.is_verified && <BadgeCheck className="h-4 w-4 text-sky-500 fill-sky-500/10"/>}
+                            </h3>
+                            <div className="flex items-center gap-3 text-xs font-medium text-slate-500 mt-0.5">
+                   <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+                      <Star className="h-3 w-3 fill-current"/> {provider.rating?.toFixed(1) || "New"}
+                   </span>
+                                <span>•</span>
+                                <span>{provider.distance_km.toFixed(1)} km away</span>
                             </div>
-                        )}
+                        </div>
                     </div>
-
-                    {/* Map Button */}
-                    <a
-                        href={mapsHref}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 rounded-md border border-border/60 px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
-                        title="Open in Maps"
-                    >
-                        <MapPin className="h-4 w-4"/>
-                        <span className="hidden sm:inline">Map</span>
+                    <a href={mapsHref} target="_blank"
+                       className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:bg-sky-50 hover:text-sky-600 transition-colors">
+                        <MapPin className="h-5 w-5"/>
                     </a>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="mt-4 grid grid-cols-1 gap-2 xs:grid-cols-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 w-full border-border/80 text-sm text-foreground hover:bg-accent/40"
-                        onClick={handleCallClick}
-                    >
-                        <Phone className="mr-1.5 h-4 w-4"/>
-                        Call
-                    </Button>
-
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-10 w-full text-sm text-muted-foreground hover:bg-accent/40"
-                        onClick={handleSendDetailsClick}
-                    >
-                        <MessageCircleIcon className="mr-1.5 h-4 w-4"/>
-                        Send details
-                    </Button>
-                </div>
-            </div>
-
-            {/* Call lock dialog */}
-            <Dialog open={callDialogOpen} onOpenChange={setCallDialogOpen}>
-                <DialogContent className="sm:max-w-md rounded-2xl border border-border/60">
-                    <DialogHeader>
-                        <div className="flex items-center gap-2">
-                            <div
-                                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                <Phone className="h-4 w-4"/>
-                            </div>
-                            <div>
-                                <DialogTitle className="text-base sm:text-lg">
-                                    Lock this request before calling
-                                </DialogTitle>
-                                <DialogDescription className="mt-1 text-xs sm:text-sm">
-                                    We’ll save this provider against your request so we can track
-                                    your help and keep your history tidy.
-                                </DialogDescription>
-                            </div>
-                        </div>
-                    </DialogHeader>
-
-                    <div className="mt-4 rounded-xl border border-border/60 bg-muted/40 px-3 py-3 text-xs sm:text-sm">
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                                <p className="flex items-center gap-1.5">
-                  <span className="truncate font-medium text-foreground">
-                    {provider.name}
-                  </span>
-                                    {provider.is_verified && (
-                                        <BadgeCheck className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400"/>
-                                    )}
-                                </p>
-                                {provider.address_line && (
-                                    <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                                        {provider.address_line}
-                                    </p>
-                                )}
-                            </div>
-
-                            {provider.distance_km != null && (
-                                <span
-                                    className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                  {provider.distance_km.toFixed(1)} km away
-                </span>
-                            )}
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <Wrench className="h-3 w-3"/>
-                <span>We’ll attach this mechanic to your request.</span>
+                {/* Info Chips */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                    {provider.min_callout_fee != null && (
+                        <span
+                            className="text-[10px] font-bold uppercase tracking-wide bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-100">
+                  Fee: GH₵{provider.min_callout_fee}
               </span>
-                        </div>
-                    </div>
-
-                    <div className="mt-3 space-y-1.5 text-[11px] text-muted-foreground">
-                        <p className="text-xs font-medium text-foreground">
-                            What happens next
-                        </p>
-                        <ul className="space-y-1">
-                            <li>• We lock this provider to your current help request.</li>
-                            <li>• You place the call and speak directly with them.</li>
-                            <li>• Your request stays in your history for follow-up.</li>
-                        </ul>
-                    </div>
-
-                    {lockError && (
-                        <p className="mt-3 rounded-md bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
-                            {lockError}
-                        </p>
                     )}
+                    {provider.coverage_radius_km != null && (
+                        <span
+                            className="text-[10px] font-bold uppercase tracking-wide bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-100">
+                  Range: {provider.coverage_radius_km}km
+              </span>
+                    )}
+                </div>
 
-                    <DialogFooter className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-9 text-sm sm:min-w-[96px]"
-                            onClick={() => setCallDialogOpen(false)}
-                            disabled={locking}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="button"
-                            className="flex h-9 items-center justify-center gap-1.5 text-sm sm:min-w-[150px]"
-                            onClick={handleConfirmCall}
-                            disabled={locking}
-                        >
-                            {locking ? (
-                                <>Locking…</>
-                            ) : (
-                                <>
-                                    Lock request &amp; call
-                                    <Phone className="h-4 w-4"/>
-                                </>
-                            )}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                {/* Services Toggle */}
+                {provider.services.length > 0 && (
+                    <div className="mb-5">
+                        <button onClick={() => setShowServices(!showServices)}
+                                className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors w-full py-1">
+                            <span
+                                className="flex-1 text-left">{showServices ? 'Hide' : 'View'} {provider.services.length} services & pricing</span>
+                            <ChevronDown className={cn("h-4 w-4 transition-transform", showServices && "rotate-180")}/>
+                        </button>
 
-            {/* Send details dialog */}
-            <Dialog open={smsDialogOpen} onOpenChange={setSmsDialogOpen}>
-                <DialogContent className="sm:max-w-md rounded-2xl border border-border/60">
-                    <DialogHeader>
-                        <div className="flex items-center gap-2">
-                            <div
-                                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                <MessageCircleIcon className="h-4 w-4"/>
+                        {showServices && (
+                            <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                                {provider.services.map(s => (
+                                    <div key={s.code}
+                                         className="flex justify-between items-center text-xs p-2.5 rounded-xl bg-slate-50/50 border border-slate-100">
+                                        <span className="font-medium text-slate-700">{s.name}</span>
+                                        <span className="font-bold text-slate-900">
+                                {s.price ? `GH₵${s.price}` : 'N/A'}
+                            </span>
+                                    </div>
+                                ))}
                             </div>
-                            <div>
-                                <DialogTitle className="text-base sm:text-lg">
-                                    Send your details to this provider
-                                </DialogTitle>
-                                <DialogDescription className="mt-1 text-xs sm:text-sm">
-                                    We’ll send your car details and location to{" "}
-                                    <span className="font-medium text-foreground">
-                    {provider.name}
-                  </span>{" "}
-                                    via SMS.
-                                </DialogDescription>
-                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Actions */}
+                <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => setCallDialogOpen(true)}
+                            className="h-12 rounded-xl border-2 border-slate-100 font-bold text-slate-700 text-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                        <Phone className="h-4 w-4"/> Call
+                    </button>
+                    <button onClick={() => setSmsDialogOpen(true)}
+                            className="h-12 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition-colors shadow-md flex items-center justify-center gap-2">
+                        <MessageCircle className="h-4 w-4"/> Send Info
+                    </button>
+                </div>
+
+                {/* Modals nested here for simplicity */}
+                <Dialog open={callDialogOpen} onOpenChange={setCallDialogOpen}>
+                    <DialogContent className="rounded-3xl">
+                        <DialogHeader>
+                            <DialogTitle>Call Provider?</DialogTitle>
+                            <DialogDescription>We will log this request so you can track it.</DialogDescription>
+                        </DialogHeader>
+                        {lockError && <p className="text-red-500 text-sm">{lockError}</p>}
+                        <div className="flex gap-2 mt-4">
+                            <Button variant="ghost" onClick={() => setCallDialogOpen(false)}
+                                    className="flex-1 rounded-xl">Cancel</Button>
+                            <Button onClick={handleCall} disabled={locking} className="flex-1 rounded-xl bg-slate-900">
+                                {locking ? <Loader2 className="h-4 w-4 animate-spin"/> : "Call Now"}
+                            </Button>
                         </div>
-                    </DialogHeader>
+                    </DialogContent>
+                </Dialog>
 
-                    <div className="mt-4 rounded-xl bg-muted/40 px-3 py-3 text-xs text-muted-foreground">
-                        <p className="mb-1 font-medium text-foreground">
-                            Preview of what we’ll send:
-                        </p>
-                        <p className="line-clamp-4 whitespace-pre-wrap break-words">
+                <Dialog open={smsDialogOpen} onOpenChange={setSmsDialogOpen}>
+                    <DialogContent className="rounded-3xl">
+                        <DialogHeader>
+                            <DialogTitle>Send Details via SMS</DialogTitle>
+                            <DialogDescription>Send your location and car info to {provider.name}.</DialogDescription>
+                        </DialogHeader>
+                        <div
+                            className="bg-slate-50 p-3 rounded-xl text-xs text-slate-500 font-mono border border-slate-100 my-2">
                             {smsBody}
-                        </p>
-                    </div>
+                        </div>
+                        {smsError && <p className="text-red-500 text-sm">{smsError}</p>}
+                        <div className="flex gap-2 mt-4">
+                            <Button variant="ghost" onClick={() => setSmsDialogOpen(false)}
+                                    className="flex-1 rounded-xl">Cancel</Button>
+                            <Button onClick={handleSms} disabled={sendingSms}
+                                    className="flex-1 rounded-xl bg-slate-900">
+                                {sendingSms ? <Loader2 className="h-4 w-4 animate-spin"/> : "Send SMS"}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
-                    {smsError && (
-                        <p className="mt-3 rounded-md bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
-                            {smsError}
-                        </p>
-                    )}
-
-                    <DialogFooter className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-9 text-sm sm:min-w-[96px]"
-                            onClick={() => setSmsDialogOpen(false)}
-                            disabled={sendingSms}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="button"
-                            className="flex h-9 items-center justify-center gap-1.5 text-sm sm:min-w-[150px]"
-                            onClick={handleConfirmSendDetails}
-                            disabled={sendingSms}
-                        >
-                            {sendingSms ? "Sending…" : "Send SMS"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            </div>
         </>
-    );
+    )
 }
-
 
 function BlockedLocationHelp({onRetry}: { onRetry: () => void }) {
     return (
-        <div className="mt-2 rounded-md bg-amber-50 p-3 text-amber-900">
-            <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4"/>
-                <div className="space-y-1 text-xs">
-                    <div className="font-semibold">
-                        Location permission is blocked for this site.
-                    </div>
-                    <p>
-                        Enable it in your browser’s{" "}
-                        <span className="font-medium">Site settings</span>, then
-                        return and tap <span className="font-medium">Try again</span>.
-                    </p>
-                    <ul className="list-inside list-disc space-y-0.5 text-[11px] opacity-90">
-                        <li>
-                            <span className="font-medium">Chrome:</span> Lock icon →
-                            Site settings → <em>Location</em> → Allow
-                        </li>
-                        <li>
-                            <span className="font-medium">Safari (iOS):</span> Settings
-                            → Privacy &amp; Security → Location Services → Safari
-                            Websites → While Using
-                        </li>
-                    </ul>
-                    <div className="pt-1">
-                        <Button type="button" size="sm" onClick={onRetry}>
-                            Try again
-                        </Button>
-                    </div>
-                </div>
+        <div className="mt-4 p-4 bg-amber-50 text-amber-900 rounded-2xl border border-amber-100 text-sm space-y-2">
+            <div className="font-bold flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4"/> Location Blocked
             </div>
+            <p>Please enable location services in your browser settings to find nearby help.</p>
+            <Button size="sm" onClick={onRetry} variant="outline"
+                    className="bg-white border-amber-200 text-amber-900 hover:bg-amber-100 w-full mt-2">Retry</Button>
         </div>
-    );
+    )
 }
 
 /* helpers */
 function buildSmsBody(values: HelpForm, loc: GeoFix) {
     const mapsLink = `https://maps.google.com/?q=${loc.lat},${loc.lng}`;
-
-    const helpType = values.helpType
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-
-    return [
-        `Hi, I need roadside assistance for a ${helpType}.`,
-        `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) – Plate: ${values.plateNumber}.`,
-        `Location: ${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}.`,
-        `Maps: ${mapsLink}`,
-        `Name: ${values.fullName}. Phone: ${values.phone}.`,
-    ].join(" ");
+    const helpType = values.helpType.replace(/_/g, " ").toUpperCase();
+    return `Need ${helpType} help. Car: ${values.carMake} ${values.carModel} (${values.plateNumber}). Loc: ${mapsLink} ${values.phone}`;
 }

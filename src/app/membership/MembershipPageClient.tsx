@@ -1,25 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import {useEffect, useMemo, useState} from "react";
+import {useSearchParams} from "next/navigation";
 import {
     Card,
     CardContent,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import {Badge} from "@/components/ui/badge";
+import {Separator} from "@/components/ui/separator";
 import {
     Car,
     ShieldCheck,
     CalendarClock,
-    Clock,
-    QrCode,
     MapPin,
     Wrench,
+    AlertCircle,
+    Search,
+    CheckCircle2,
+    Activity,
+    CarFront,
 } from "lucide-react";
-import { fetchMembershipByNumber } from "@/lib/supaFetch";
+import {fetchMembershipByNumber} from "@/lib/supaFetch";
 
 /* ───────── Types ───────── */
 
@@ -153,7 +156,6 @@ export function MembershipPageClient() {
                 setError(null);
 
                 if (!membershipNumber) {
-                    setError("No membership number in URL.");
                     setLoading(false);
                     return;
                 }
@@ -197,7 +199,7 @@ export function MembershipPageClient() {
 
     const primaryVehicle = useMemo(() => {
         if (!m || !m.vehicles.length) {
-            return { plate: "—", model: "No vehicle on file" };
+            return {plate: "—", model: "No vehicle on file"};
         }
         return m.vehicles.find((v) => v.primary) ?? m.vehicles[0];
     }, [m]);
@@ -216,314 +218,188 @@ export function MembershipPageClient() {
                 ? "Paused"
                 : "Expired";
 
-    /* ───────── Internal loading (data fetch), separate from Suspense ───────── */
-
+    /* ───────── Loading ───────── */
     if (loading) {
         return (
-            <div className="min-h-screen bg-background text-foreground">
-                <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-8">
-                    <div className="space-y-3">
-                        <div className="h-5 w-40 rounded-full bg-muted animate-pulse" />
-                        <div className="h-7 w-56 rounded-full bg-muted animate-pulse" />
-                        <div className="h-4 w-64 rounded-full bg-muted animate-pulse" />
+            <div className="min-h-screen bg-zinc-50 text-zinc-900 flex items-center justify-center p-4">
+                <div className="w-full max-w-sm space-y-6">
+                    <div className="space-y-2 text-center">
+                        <div className="mx-auto h-12 w-12 rounded-full bg-zinc-200 animate-pulse"/>
+                        <div className="h-6 w-48 rounded-full bg-zinc-200 animate-pulse mx-auto"/>
                     </div>
-
-                    <div className="relative mx-auto mt-2 max-w-sm">
-                        <div className="absolute inset-0 translate-y-3 rounded-3xl bg-muted/60 blur-2xl" />
-                        <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card px-4 py-4 shadow-sm">
-                            <div className="space-y-4 animate-pulse">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="space-y-2">
-                                        <div className="h-5 w-28 rounded-full bg-muted" />
-                                        <div className="h-4 w-32 rounded-full bg-muted" />
-                                        <div className="h-3 w-40 rounded-full bg-muted" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="h-5 w-20 rounded-full bg-muted" />
-                                        <div className="h-4 w-24 rounded-full bg-muted" />
-                                        <div className="h-3 w-24 rounded-full bg-muted" />
-                                    </div>
-                                </div>
-
-                                <div className="h-px bg-muted" />
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <div className="h-3 w-20 rounded-full bg-muted" />
-                                        <div className="h-4 w-24 rounded-full bg-muted" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="h-3 w-20 rounded-full bg-muted" />
-                                        <div className="h-4 w-24 rounded-full bg-muted" />
-                                    </div>
-                                </div>
-
-                                <div className="h-px bg-muted" />
-
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="space-y-2">
-                                        <div className="h-3 w-24 rounded-full bg-muted" />
-                                        <div className="h-4 w-28 rounded-full bg-muted" />
-                                    </div>
-                                    <div className="h-12 w-12 rounded-xl bg-muted" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </main>
+                    <div className="h-56 w-full rounded-3xl bg-zinc-200 animate-pulse"/>
+                </div>
             </div>
         );
     }
 
-    /* ───────── Error / empty ───────── */
-
-    if (error || !m) {
+    /* ───────── Error / Empty ───────── */
+    if (!membershipNumber || error || !m) {
         return (
-            <div className="min-h-screen bg-background text-foreground">
-                <main className="mx-auto flex w-full max-w-lg flex-col gap-4 px-4 py-8">
-                    <header className="space-y-2">
-                        <h1 className="text-xl font-semibold">Membership lookup</h1>
-
-                        {membershipNumber ? (
-                            <p className="text-sm text-muted-foreground">
-                                We couldn&apos;t find an active membership for{" "}
-                                <span className="font-mono">{membershipNumber}</span>.
-                            </p>
+            <div className="min-h-screen bg-zinc-50 text-zinc-900 flex items-center justify-center p-4">
+                <main className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
+                    <div
+                        className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200">
+                        {error ? (
+                            <AlertCircle className="h-8 w-8 text-zinc-400"/>
                         ) : (
-                            <p className="text-sm text-muted-foreground">
-                                Add{" "}
-                                <code className="rounded bg-muted px-1 text-xs">
-                                    ?m=MBR-2048-001
-                                </code>{" "}
-                                to the URL to view a membership card.
-                            </p>
+                            <Search className="h-8 w-8 text-zinc-400"/>
                         )}
-                    </header>
+                    </div>
 
-                    {error && (
-                        <p className="text-sm text-destructive">
-                            {error}
+                    <div className="space-y-2">
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            {error ? "Membership Not Found" : "Membership Lookup"}
+                        </h1>
+                        <p className="text-sm text-zinc-500">
+                            {error
+                                ? error
+                                : "Please use the unique link provided in your welcome email to view your digital membership card."}
                         </p>
+                    </div>
+
+                    {!membershipNumber && (
+                        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-100/50 p-4">
+                            <p className="text-xs text-zinc-500">
+                                Example URL: <br/>
+                                <code className="bg-zinc-200 px-1 py-0.5 rounded">
+                                    /membership?m=MBR-2048-001
+                                </code>
+                            </p>
+                        </div>
                     )}
                 </main>
             </div>
         );
     }
 
-    /* ───────── Main view ───────── */
-
+    /* ───────── Main View ───────── */
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-8">
+        <div className="min-h-screen bg-zinc-50 text-zinc-900 selection:bg-[#9fe870]/30 selection:text-black">
+            <main className="mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-10">
+
                 {/* Header */}
-                <header className="space-y-2">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#9fe870]/50 bg-[#9fe870]/10 px-3 py-1 text-xs font-medium text-foreground">
-                        <ShieldCheck className="h-3.5 w-3.5 text-[#9fe870]" />
-                        <span className="text-[11px] font-semibold tracking-wide">
-              MotorAmbos Membership
-            </span>
+                <header className="space-y-2 text-center sm:text-left">
+                    <div
+                        className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 shadow-sm">
+                        <ShieldCheck className="h-3.5 w-3.5 text-[#9fe870]"/>
+                        <span>Verified Membership</span>
                     </div>
-
-                    <h1 className="text-xl font-semibold">Your membership card</h1>
-
-                    <p className="text-sm text-muted-foreground">
-                        Show this card to providers for quick verification when you need help.
-                    </p>
+                    <h1 className="text-3xl font-bold tracking-tight">Digital Card</h1>
                 </header>
 
-                {/* Card */}
-                <section>
-                    <div className="relative mx-auto max-w-sm">
-                        {/* Smaller shadow */}
-                        <div className="absolute inset-0 translate-y-2 rounded-3xl bg-black/20 blur-2xl dark:bg-black/40" />
-
+                {/* ──── THE CARD (Dark Mode) ──── */}
+                <section className="group relative perspective-1000">
+                    <div
+                        className="relative mx-auto w-full max-w-md aspect-[1.58/1] rotate-1 transition-transform duration-500 hover:rotate-0">
                         <div
-                            className="relative overflow-hidden rounded-3xl border border-[#9fe870]/40 px-4 py-4 text-white shadow-lg"
-                            style={{
-                                background:
-                                    "linear-gradient(145deg, #050505 0%, #111111 55%, #050505 100%)",
-                            }}
-                        >
-                            {/* Light scribble + blobs but smaller */}
-                            <svg
-                                className="pointer-events-none absolute inset-0 opacity-50"
-                                width="100%"
-                                height="100%"
-                                viewBox="0 0 320 200"
-                                fill="none"
-                            >
-                                <path
-                                    d="M-10 145 C60 50 220 50 330 145"
-                                    stroke="#9fe870"
-                                    strokeWidth="10"
-                                    strokeLinecap="round"
-                                    opacity="0.4"
-                                />
-                            </svg>
-                            <div className="pointer-events-none absolute -left-12 -top-16 h-32 w-32 rounded-full bg-[#9fe870]/20 blur-3xl" />
-                            <div className="pointer-events-none absolute -bottom-16 right-0 h-32 w-32 rounded-full bg-[#9fe870]/18 blur-3xl" />
-
-                            <div className="relative flex flex-col gap-4">
-                                {/* Top row */}
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="space-y-1.5">
-                                        <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-2.5 py-1 text-[10px] font-medium ring-1 ring-white/10">
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#9fe870] text-[11px] font-semibold text-black">
-                        MA
-                      </span>
-                                            <span className="text-[#9fe870]">MotorAmbos</span>
-                                        </div>
-                                        <h2 className="text-lg font-semibold tracking-tight text-[#9fe870]">
-                                            Membership • {m.tier}
-                                        </h2>
-                                        <p className="text-xs text-white/80">{m.memberName}</p>
-                                    </div>
-
-                                    <div className="flex flex-col items-end gap-1.5 text-right">
-                                        <Badge className="border-none bg-[#9fe870]/15 px-2 py-1 text-[10px] font-medium text-[#9fe870] backdrop-blur">
-                      <span
-                          className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${statusColor}`}
-                      />
-                                            {statusLabel}
-                                        </Badge>
-                                        <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-[10px] text-white/90 ring-1 ring-white/10">
-                                            <Car className="h-3 w-3 text-[#9fe870]" />
-                                            <span>{primaryVehicle.plate}</span>
-                                        </div>
-                                        <p className="max-w-[150px] text-[10px] text-white/70">
-                                            {primaryVehicle.model}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <Separator className="border-white/20" />
-
-                                {/* Dates */}
-                                <div className="grid grid-cols-2 gap-3 text-xs">
-                                    <div className="space-y-1">
-                                        <p className="flex items-center gap-1 text-[11px] text-white/70">
-                                            <CalendarClock className="h-3 w-3 text-[#9fe870]" />
-                                            Member since
-                                        </p>
-                                        <p className="font-medium text-white">
-                                            {formatDate(m.memberSince)}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="flex items-center gap-1 text-[11px] text-white/70">
-                                            <Clock className="h-3 w-3 text-[#9fe870]" />
-                                            Renewal
-                                        </p>
-                                        <p className="font-medium text-white">
-                                            {formatDate(m.renewalDate)}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <Separator className="border-white/20" />
-
-                                {/* Bottom row */}
-                                <div className="flex items-end justify-between gap-3">
-                                    <div className="space-y-0.5">
-                                        <p className="text-[10px] uppercase tracking-[0.16em] text-white/60">
-                                            Membership No.
-                                        </p>
-                                        <p className="font-mono text-xs tracking-[0.16em] text-[#9fe870]">
-                                            {m.membershipNumber}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 p-1.5 ring-1 ring-white/15">
-                                            <QrCode className="h-6 w-6 text-[#9fe870]" />
-                                        </div>
-                                        <div className="space-y-0.5 text-[10px] text-white/80">
-                                            <p className="font-medium leading-tight">Tap / scan at the scene</p>
-                                            <p className="text-[9px] text-white/60 leading-tight">
-                                                For fast provider verification &amp; job start.
-                                            </p>
-                                        </div>
-                                    </div>
+                            className="absolute inset-0 translate-y-4 rounded-2xl bg-[#9fe870]/20 blur-3xl opacity-50"/>
+                        <div
+                            className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-800 to-black border border-zinc-700 shadow-2xl flex flex-col justify-between p-6 text-white overflow-hidden">
+                            <div className="flex justify-between items-start z-10">
+                                <Car className="text-[#9fe870] h-8 w-8"/>
+                                <div className="text-right">
+                                    <span className="font-mono text-[10px] text-zinc-500 block tracking-widest">MEMBER ID</span>
+                                    <span
+                                        className="font-mono text-xs text-zinc-300 tracking-wider">{m.membershipNumber}</span>
                                 </div>
                             </div>
+                            <div className="z-10">
+                                <div className="text-lg font-bold tracking-wider mb-1 uppercase truncate">
+                                    {m.memberName}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className={`h-2 w-2 rounded-full ${statusColor} animate-pulse`}/>
+                                    <span className="text-xs text-zinc-400 font-mono uppercase">{statusLabel}</span>
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-end z-10">
+                                <span
+                                    className="text-[10px] bg-[#9fe870] text-black px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+                                    {m.tier} PLAN
+                                </span>
+                                <div className="h-8 w-12 bg-zinc-700 rounded-md opacity-50"/>
+                            </div>
+                            <div
+                                className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-2xl pointer-events-none"/>
                         </div>
-
-                        <p className="mt-3 text-[11px] text-muted-foreground">
-                            This is a view-only digital card. Keep this page handy when you request
-                            assistance.
-                        </p>
                     </div>
+                    <p className="mt-8 text-center text-xs text-zinc-400">
+                        Show this card to your provider upon arrival.
+                    </p>
                 </section>
 
-                {/* Details card */}
-                <section>
-                    <Card className="border-border bg-card">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center justify-between text-sm font-semibold">
-                                <span>Membership details</span>
-                                <span className="text-[11px] text-muted-foreground">
-                  ID · {m.id}
-                </span>
-                            </CardTitle>
-                        </CardHeader>
+                {/* ──── DETAILS SECTION (Light Mode / Clean) ──── */}
+                <section className="grid gap-4">
 
-                        <CardContent className="space-y-4 text-sm">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="mb-1 text-xs text-muted-foreground">
-                                        Primary vehicle
-                                    </p>
-                                    <p className="font-medium">{primaryVehicle.model}</p>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        Plate: {primaryVehicle.plate}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="mb-1 text-xs text-muted-foreground">Status</p>
-                                    <div className="inline-flex items-center gap-1">
-                                        <span className={`h-2 w-2 rounded-full ${statusColor}`} />
-                                        <span className="text-sm">{statusLabel}</span>
-                                    </div>
-                                </div>
+                    {/* Primary Vehicle Info */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                            <div
+                                className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500">
+                                <CarFront className="h-4 w-4"/>
                             </div>
-
-                            <Separator className="border-border" />
-
-                            <div className="grid gap-3 text-xs md:grid-cols-2">
-                                <div>
-                                    <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                        <MapPin className="h-3 w-3" />
-                                        Typical area
-                                    </p>
-                                    <p>Accra · Spintex / Airport (example)</p>
-                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                        Used for dispatch &amp; ETA estimates.
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                        <Wrench className="h-3 w-3" />
-                                        Included services
-                                    </p>
-                                    <ul className="space-y-1 text-[11px]">
-                                        <li className="flex items-center gap-2">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#9fe870]" />
-                                            Priority roadside dispatch within coverage radius
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#9fe870]" />
-                                            Tyre change, jump-start &amp; basic diagnostics
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#9fe870]" />
-                                            Up to 10km towing (Plus / Pro)
-                                        </li>
-                                    </ul>
-                                </div>
+                            <p className="text-xs text-zinc-500 font-medium">Vehicle</p>
+                            <p className="font-bold text-sm text-zinc-900 truncate">{primaryVehicle.model}</p>
+                        </div>
+                        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                            <div
+                                className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500">
+                                <div className="font-mono text-[10px] font-bold">GH</div>
                             </div>
-                        </CardContent>
-                    </Card>
+                            <p className="text-xs text-zinc-500 font-medium">License Plate</p>
+                            <p className="font-bold text-sm text-zinc-900 font-mono">{primaryVehicle.plate}</p>
+                        </div>
+                    </div>
+
+                    {/* Coverage & Status */}
+                    <div
+                        className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div
+                                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#9fe870]/10 text-[#8ad35b]">
+                                <Activity className="h-5 w-5"/>
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-zinc-900">Status: {statusLabel}</p>
+                                <p className="text-xs text-zinc-500">Renew: {formatDate(m.renewalDate)}</p>
+                            </div>
+                        </div>
+                        <div className="h-2 w-2 rounded-full bg-[#9fe870] animate-pulse"/>
+                    </div>
+
+                    {/* Benefits List */}
+                    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+                        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-zinc-900">
+                            <Wrench className="h-4 w-4 text-zinc-400"/>
+                            Included Benefits
+                        </h3>
+                        <ul className="space-y-3">
+                            {[
+                                "Priority roadside dispatch",
+                                "Battery jump-start & diagnostics",
+                                "Flat tyre change service",
+                                "Fuel delivery coordination",
+                                "Towing within coverage radius"
+                            ].map((benefit, i) => (
+                                <li key={i} className="flex items-start gap-3 text-xs text-zinc-600">
+                                    <CheckCircle2 className="h-4 w-4 text-[#9fe870] shrink-0"/>
+                                    <span>{benefit}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Footer Meta */}
+                    <div
+                        className="flex items-center justify-between px-2 text-[10px] text-zinc-400 uppercase tracking-wider">
+                        <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3"/>
+                            <span>Accra, Ghana</span>
+                        </div>
+                        <span>Member since {formatDate(m.memberSince)}</span>
+                    </div>
+
                 </section>
             </main>
         </div>

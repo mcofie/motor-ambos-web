@@ -52,8 +52,8 @@ type ProviderRow = {
     location?: GeoJSONPoint | null;
     lat?: number | null;
     lng?: number | null;
-    created_at?: string;    // 👈 add this
-    updated_at?: string;    // 👈 and this
+    created_at?: string;
+    updated_at?: string;
 };
 
 type ServiceRow = {
@@ -66,19 +66,17 @@ type ServiceIdRow = { id: string };
 
 type ProviderServiceRow = { service_id: string };
 
-
 type RequestsListRow = {
     id: string;
     created_at: string;
     status: string;
     driver_name: string | null;
-    driver_phone?: string | null;   // 👈 add
+    driver_phone?: string | null;
     provider_id: string | null;
-    details?: string | null;        // 👈 add
-    address_line?: string | null;   // 👈 add
+    details?: string | null;
+    address_line?: string | null;
     location: unknown;
 };
-
 
 type RequestRow = {
     id: string;
@@ -160,6 +158,64 @@ type AuthErrorResponse = {
     message?: string;
 };
 
+/* ─────────────────────────────────────────
+   Membership types (Admin)
+────────────────────────────────────────── */
+
+export type MembershipPlanRow = {
+    id: string;
+    code: string;
+    name: string;
+    description?: string | null;
+    currency: string;
+    price_monthly?: number | null;
+    price_yearly?: number | null;
+    included_callouts_per_year: number;
+    free_tow_radius_km: number;
+    discount_percent_on_services: number;
+    max_vehicles: number;
+    priority_support: boolean;
+    is_active: boolean;
+};
+
+export type MemberWithMembershipRow = {
+    member_id: string;
+    full_name: string | null;
+    phone: string;
+    email: string | null;
+    membership_tier: string | null;
+    membership_number: string | null;
+    membership_expiry_date: string | null;
+    membership_is_active: boolean | null;
+};
+
+export type UpsertMemberMembershipParams = {
+    member_id?: string | null;
+    full_name: string;
+    phone: string;
+    email?: string | null;
+    plan_id: string;
+    /**
+     * Optional override for the *card number*.
+     * If omitted/undefined, we send "" and let the DB auto-generate
+     * a card number inside upsert_member_membership().
+     */
+    membership_number?: string | null;
+    /**
+     * Expiry as ISO string (timestamptz compatible).
+     */
+    expiry_date: string;
+};
+
+export type UpsertMemberMembershipResult = {
+    member_id: string;
+    membership_id: string;
+};
+
+/* ─────────────────────────────────────────
+   Provider Rates helper
+────────────────────────────────────────── */
+
 export async function listProviderRates(providerId: string): Promise<ProviderRateRow[]> {
     const res = await fetch(
         `${URL}/rest/v1/provider_rates?provider_id=eq.${providerId}`,
@@ -185,8 +241,8 @@ export async function upsertProviderRates(
     const rows = payload.map((p) => ({
         provider_id: providerId,
         service_id: p.service_id,
-        base_price: p.base_price,                       // keep whatever you decided for base_price
-        price_unit: p.price_unit ?? "job",              // 👈 ensure NOT NULL
+        base_price: p.base_price,
+        price_unit: p.price_unit ?? "job",
         min_callout_fee: p.min_callout_fee ?? null,
         is_active: p.is_active,
     }));
@@ -202,7 +258,6 @@ export async function upsertProviderRates(
 
     await throwIfNotOk(res);
 }
-
 
 /* ─────────────────────────────────────────
    Utility helpers
@@ -245,7 +300,8 @@ function anonHeaders(): HeadersInit {
 
 // ADMIN — For Dashboard
 function authHeaders(): HeadersInit {
-    const token = typeof window !== "undefined" ? localStorage.getItem("sb-access") : null;
+    const token =
+        typeof window !== "undefined" ? localStorage.getItem("sb-access") : null;
     return {
         apikey: ANON,
         Authorization: `Bearer ${token ?? ANON}`,
@@ -383,11 +439,12 @@ export type InsertProviderParams = {
     callout_fee: number;
     lat?: number | null;
     lng?: number | null;
-    is_verified?: boolean; // 👈 NEW
+    is_verified?: boolean;
 };
 
-
-export async function insertProvider(p: InsertProviderParams): Promise<ProviderRow | null> {
+export async function insertProvider(
+    p: InsertProviderParams
+): Promise<ProviderRow | null> {
     const payload: Record<string, unknown> = {
         display_name: p.display_name,
         phone_business: p.phone_business ?? null,
@@ -396,7 +453,7 @@ export async function insertProvider(p: InsertProviderParams): Promise<ProviderR
         is_active: p.is_active,
         coverage_radius_km: p.coverage_radius_km,
         callout_fee: p.callout_fee,
-        is_verified: p.is_verified ?? false, // 👈 NEW
+        is_verified: p.is_verified ?? false,
     };
 
     if (typeof p.lat === "number" && typeof p.lng === "number") {
@@ -425,7 +482,7 @@ export type UpdateProviderPatch = Partial<{
     lat: number | null;
     lng: number | null;
     updated_at: string;
-    is_verified: boolean; // 👈 NEW
+    is_verified: boolean;
 }>;
 
 export async function updateProvider(
@@ -459,7 +516,9 @@ export async function deleteProvider(id: string): Promise<void> {
    Provider Services
 ────────────────────────────────────────── */
 
-export async function getProviderServiceIds(providerId: string): Promise<string[]> {
+export async function getProviderServiceIds(
+    providerId: string
+): Promise<string[]> {
     const res = await fetch(
         `${URL}/rest/v1/provider_services?select=service_id&provider_id=eq.${providerId}`,
         {headers: authHeaders()}
@@ -517,6 +576,102 @@ export async function setProviderServices(
 }
 
 /* ─────────────────────────────────────────
+   Membership (Admin Dashboard)
+────────────────────────────────────────── */
+
+/**
+ * List all active membership plans for the dashboard.
+ */
+export async function listMembershipPlans(): Promise<MembershipPlanRow[]> {
+    const params = new URLSearchParams();
+    params.set(
+        "select",
+        [
+            "id",
+            "code",
+            "name",
+            "description",
+            "currency",
+            "price_monthly",
+            "price_yearly",
+            "included_callouts_per_year",
+            "free_tow_radius_km",
+            "discount_percent_on_services",
+            "max_vehicles",
+            "priority_support",
+            "is_active",
+        ].join(",")
+    );
+    params.set("order", "price_monthly.asc,nulls.last");
+
+    const res = await fetch(
+        `${URL}/rest/v1/membership_plans?${params.toString()}`,
+        {
+            headers: authHeaders(),
+        }
+    );
+
+    await throwIfNotOk(res);
+    return (await readJSONSafe<MembershipPlanRow[]>(res)) ?? [];
+}
+
+/**
+ * Use RPC motorambos.list_members_with_memberships()
+ * to get members + their latest membership snapshot.
+ */
+export async function listMembersWithMemberships(): Promise<MemberWithMembershipRow[]> {
+    const res = await fetch(
+        `${URL}/rest/v1/rpc/list_members_with_memberships`,
+        {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({}), // no-arg RPC => empty JSON body
+        }
+    );
+
+    await throwIfNotOk(res);
+    return (await readJSONSafe<MemberWithMembershipRow[]>(res)) ?? [];
+}
+
+/**
+ * Call motorambos.upsert_member_membership().
+ *
+ * Note: we send `p_tier` as:
+ *  - params.membership_number if provided (explicit override)
+ *  - "" (empty string) if not, to trigger DB-side auto-generation
+ *    of the membership card number.
+ */
+export async function upsertMemberMembership(params: {
+    member_id?: string | null;
+    phone: string;
+    email?: string | null;
+    full_name?: string | null;
+    plan_id: string;
+    tier: string;
+    expiry_date?: string | null; // ISO string or null
+}): Promise<void> {
+    const res = await fetch(`${URL}/rest/v1/rpc/upsert_member_membership`, {
+        method: "POST",
+        headers: {
+            ...authHeaders(),
+            "Content-Type": "application/json",
+            Prefer: "return=representation",
+        },
+        body: JSON.stringify({
+            p_member_id: params.member_id ?? null,
+            p_phone: params.phone,
+            p_email: params.email ?? null,
+            p_full_name: params.full_name ?? null,
+            p_plan_id: params.plan_id,
+            p_tier: params.tier,
+            p_expiry_date: params.expiry_date ?? null,
+        }),
+    });
+
+    await throwIfNotOk(res);
+}
+
+/* ─────────────────────────────────────────
    HELP FLOW — Anon Only
 ────────────────────────────────────────── */
 
@@ -556,6 +711,9 @@ export async function createRequest(payload: {
     return rows[0] ?? null;
 }
 
+/**
+ * Public lookup for a membership card (driver side).
+ */
 export async function fetchMembershipByNumber<T = unknown>(
     membershipNumber: string
 ): Promise<T | null> {
@@ -592,6 +750,10 @@ export async function fetchMembershipByNumber<T = unknown>(
     return json;
 }
 
+/* ─────────────────────────────────────────
+   Provider search RPC (public help flow)
+────────────────────────────────────────── */
+
 function mapRpcProvider(r: RpcProviderRow): Provider {
     const [lngGeo, latGeo] = r.location?.coordinates ?? [];
     return {
@@ -613,7 +775,7 @@ function mapRpcProvider(r: RpcProviderRow): Provider {
             })) ?? [],
         lat: r.lat ?? latGeo ?? 0,
         lng: r.lng ?? lngGeo ?? 0,
-        is_verified: r.is_verified ?? false
+        is_verified: r.is_verified ?? false,
     };
 }
 
@@ -654,10 +816,10 @@ export async function listRequests(status?: string): Promise<RequestsListRow[]> 
             "created_at",
             "status",
             "driver_name",
-            "driver_phone",   // 👈 added
+            "driver_phone",
             "provider_id",
-            "details",        // 👈 added
-            "address_line",   // 👈 added
+            "details",
+            "address_line",
             "location",
         ].join(",")
     );
@@ -702,11 +864,9 @@ export async function submitProviderReview(params: {
         const message: string | undefined = body?.message;
 
         if (message?.includes("already submitted a review")) {
-            // Surface a friendly error in the UI
             throw new Error("You’ve already reviewed this request. Thank you!");
         }
 
-        // fallback for other errors
         throw new Error(message || `HTTP ${res.status}`);
     }
 }
@@ -746,6 +906,9 @@ export async function getRequestReviewContext(
     return rows[0] ?? null;
 }
 
+/* ─────────────────────────────────────────
+   Request status update (Admin)
+────────────────────────────────────────── */
 
 type RequestStatus =
     | "pending"

@@ -2,7 +2,7 @@
 "use client";
 
 import React, {useState, useEffect, useCallback} from "react";
-import {Toaster, toast} from 'sonner';
+import {Toaster, toast} from "sonner";
 import {
     getUser,
     logout,
@@ -17,6 +17,11 @@ import {
     updateRequestStatus,
     listProviderRates,
     upsertProviderRates,
+    listMembershipPlans,
+    listMembersWithMemberships,
+    upsertMemberMembership,
+    type MembershipPlanRow,
+    type MemberWithMembershipRow,
 } from "@/lib/supaFetch";
 
 import {
@@ -38,7 +43,8 @@ import {
     LayoutGrid,
     MapPin,
     TrendingUp,
-    AlertCircle
+    AlertCircle,
+    Users,
 } from "lucide-react";
 
 /* ---------------- Types ---------------- */
@@ -106,6 +112,16 @@ type ProviderFormState = {
     is_verified: boolean;
 };
 
+type MembershipFormState = {
+    member_id: UUID | null;
+    full_name: string;
+    email: string;
+    phone: string;
+    plan_id: string;
+    tier: string;
+    expiry_date: string; // yyyy-mm-dd
+};
+
 /* --------------- UI Helpers --------------- */
 
 const cls = (...arr: Array<string | false | null | undefined>) => arr.filter(Boolean).join(" ");
@@ -131,7 +147,7 @@ function TextField({
                        placeholder,
                        required,
                        className,
-                       icon: Icon
+                       icon: Icon,
                    }: TextFieldProps) {
     return (
         <div className={cls("space-y-1.5", className)}>
@@ -195,7 +211,7 @@ function StatusBadge({status}: { status: string }) {
                 styles[s] || styles.pending
             )}
         >
-      {s.replace('_', ' ')}
+      {s.replace("_", " ")}
     </span>
     );
 }
@@ -204,7 +220,7 @@ function StatCard({
                       title,
                       value,
                       icon: Icon,
-                      color
+                      color,
                   }: {
     title: string;
     value: string | number;
@@ -224,7 +240,7 @@ function StatCard({
     );
 }
 
-/* ---------------- Sub-Panels ---------------- */
+/* ---------------- Providers Panel ---------------- */
 
 function ProvidersPanel() {
     const emptyForm: ProviderFormState = {
@@ -292,25 +308,27 @@ function ProvidersPanel() {
             if (providerId) {
                 await setProviderServices(providerId, selectedServiceIds);
                 const rates = services
-                    .filter(s => selectedServiceIds.includes(s.id))
-                    .map(s => ({
+                    .filter((s) => selectedServiceIds.includes(s.id))
+                    .map((s) => ({
                         service_id: s.id,
                         base_price: Number(serviceRates[s.id]?.base_price || 0),
-                        price_unit: serviceRates[s.id]?.price_unit || 'job',
+                        price_unit: serviceRates[s.id]?.price_unit || "job",
                         min_callout_fee: null,
-                        is_active: true
+                        is_active: true,
                     }));
                 if (rates.length) await upsertProviderRates(providerId, rates);
             }
             setIsSidebarOpen(false);
             fetchProviders();
             setForm({...emptyForm});
+            setSelectedServiceIds([]);
+            setServiceRates({});
         };
 
         toast.promise(promise, {
-            loading: 'Saving provider...',
-            success: 'Provider saved successfully',
-            error: 'Failed to save provider',
+            loading: "Saving provider...",
+            success: "Provider saved successfully",
+            error: "Failed to save provider",
         });
     };
 
@@ -327,16 +345,15 @@ function ProvidersPanel() {
             lat: row.lat || "",
         });
 
-        // Load services
         const ids = await getProviderServiceIds(row.id);
         setSelectedServiceIds(ids as UUID[]);
 
-        const rates = await listProviderRates(row.id) as ProviderRateRow[];
+        const rates = (await listProviderRates(row.id)) as ProviderRateRow[];
         const rateMap: Record<UUID, { base_price: string; price_unit: string }> = {};
-        rates.forEach(r => {
+        rates.forEach((r) => {
             rateMap[r.service_id] = {
                 base_price: String(r.base_price || 0),
-                price_unit: r.price_unit || ''
+                price_unit: r.price_unit || "",
             };
         });
         setServiceRates(rateMap);
@@ -356,14 +373,14 @@ function ProvidersPanel() {
                         console.error(error);
                         toast.error("Could not delete provider");
                     }
-                }
+                },
             },
-        })
+        });
     };
 
     // Derived Stats
-    const activeProviders = list.filter(p => p.is_active).length;
-    const totalVerified = list.filter(p => p.is_verified).length;
+    const activeProviders = list.filter((p) => p.is_active).length;
+    const totalVerified = list.filter((p) => p.is_verified).length;
 
     return (
         <div className="flex flex-col h-[calc(100vh-8rem)] gap-4">
@@ -379,10 +396,10 @@ function ProvidersPanel() {
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-white">
                     <div className="flex gap-2">
                         <button
-                            onClick={() => setViewMode('list')}
+                            onClick={() => setViewMode("list")}
                             className={cls(
                                 "p-2 rounded-lg transition-colors border",
-                                viewMode === 'list'
+                                viewMode === "list"
                                     ? "bg-slate-100 border-slate-200 text-slate-900"
                                     : "border-transparent text-slate-500 hover:bg-slate-50"
                             )}
@@ -390,10 +407,10 @@ function ProvidersPanel() {
                             <ListIcon className="w-4 h-4"/>
                         </button>
                         <button
-                            onClick={() => setViewMode('map')}
+                            onClick={() => setViewMode("map")}
                             className={cls(
                                 "p-2 rounded-lg transition-colors border",
-                                viewMode === 'map'
+                                viewMode === "map"
                                     ? "bg-slate-100 border-slate-200 text-slate-900"
                                     : "border-transparent text-slate-500 hover:bg-slate-50"
                             )}
@@ -408,12 +425,14 @@ function ProvidersPanel() {
                             className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             placeholder="Search providers..."
                             value={q}
-                            onChange={e => setQ(e.target.value)}
+                            onChange={(e) => setQ(e.target.value)}
                         />
                     </div>
                     <button
                         onClick={() => {
                             setForm(emptyForm);
+                            setSelectedServiceIds([]);
+                            setServiceRates({});
                             setIsSidebarOpen(true);
                         }}
                         className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
@@ -432,7 +451,7 @@ function ProvidersPanel() {
                         </div>
                     )}
 
-                    {viewMode === 'map' ? (
+                    {viewMode === "map" ? (
                         <div className="h-full w-full flex flex-col items-center justify-center text-slate-400 gap-2">
                             <MapPin className="w-12 h-12 opacity-20"/>
                             <p className="text-sm">Map Integration needed (Leaflet/Mapbox)</p>
@@ -451,7 +470,7 @@ function ProvidersPanel() {
                                 </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white">
-                                {list.map(row => (
+                                {list.map((row) => (
                                     <tr key={row.id} className="hover:bg-indigo-50/30 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -466,24 +485,23 @@ function ProvidersPanel() {
                                                             <ShieldCheck className="h-3 w-3 text-blue-500"/>}
                                                     </div>
                                                     <div
-                                                        className="text-xs text-slate-500">{row.phone_business || 'No phone'}</div>
+                                                        className="text-xs text-slate-500">{row.phone_business || "No phone"}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <span
-                                                    className={cls(
-                                                        "h-2 w-2 rounded-full",
-                                                        row.is_active
-                                                            ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                                                            : "bg-slate-300"
-                                                    )}
-                                                />
-                                                <span
-                                                    className="text-slate-600 text-xs font-medium">
-                                                    {row.is_active ? 'Active' : 'Offline'}
-                                                </span>
+                          <span
+                              className={cls(
+                                  "h-2 w-2 rounded-full",
+                                  row.is_active
+                                      ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                                      : "bg-slate-300"
+                              )}
+                          />
+                                                <span className="text-slate-600 text-xs font-medium">
+                            {row.is_active ? "Active" : "Offline"}
+                          </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600 text-xs">
@@ -532,7 +550,7 @@ function ProvidersPanel() {
                 </div>
             </div>
 
-            {/* Modern Slide Over Sheet */}
+            {/* Slide Over Sheet */}
             {isSidebarOpen && (
                 <>
                     <div
@@ -540,12 +558,11 @@ function ProvidersPanel() {
                         onClick={() => setIsSidebarOpen(false)}
                     />
                     <div
-                        className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col"
-                    >
+                        className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
                         <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
                             <div>
                                 <h3 className="font-bold text-lg text-slate-900">
-                                    {form.id ? 'Edit Provider' : 'New Provider'}
+                                    {form.id ? "Edit Provider" : "New Provider"}
                                 </h3>
                                 <p className="text-xs text-slate-500">Manage service details and coverage</p>
                             </div>
@@ -565,30 +582,30 @@ function ProvidersPanel() {
                                 <TextField
                                     label="Display Name"
                                     value={form.display_name}
-                                    onChange={v => setForm({...form, display_name: v})}
+                                    onChange={(v) => setForm({...form, display_name: v})}
                                     required
                                 />
                                 <TextField
                                     label="Phone Number"
                                     value={form.phone_business}
-                                    onChange={v => setForm({...form, phone_business: v})}
+                                    onChange={(v) => setForm({...form, phone_business: v})}
                                 />
                                 <TextField
                                     label="Physical Address"
                                     value={form.address_line}
-                                    onChange={v => setForm({...form, address_line: v})}
+                                    onChange={(v) => setForm({...form, address_line: v})}
                                 />
                                 <div className="grid grid-cols-2 gap-4">
                                     <TextField
                                         label="Lat"
-                                        value={form.lat || ''}
-                                        onChange={v => setForm({...form, lat: v})}
+                                        value={form.lat || ""}
+                                        onChange={(v) => setForm({...form, lat: v})}
                                         className="font-mono text-xs"
                                     />
                                     <TextField
                                         label="Lng"
-                                        value={form.lng || ''}
-                                        onChange={v => setForm({...form, lng: v})}
+                                        value={form.lng || ""}
+                                        onChange={(v) => setForm({...form, lng: v})}
                                         className="font-mono text-xs"
                                     />
                                 </div>
@@ -603,25 +620,25 @@ function ProvidersPanel() {
                                         type="number"
                                         label="Radius (km)"
                                         value={form.coverage_radius_km}
-                                        onChange={v => setForm({...form, coverage_radius_km: Number(v)})}
+                                        onChange={(v) => setForm({...form, coverage_radius_km: Number(v)})}
                                     />
                                     <TextField
                                         type="number"
                                         label="Callout Fee"
                                         value={form.callout_fee}
-                                        onChange={v => setForm({...form, callout_fee: Number(v)})}
+                                        onChange={(v) => setForm({...form, callout_fee: Number(v)})}
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 pt-2">
                                     <Toggle
                                         label="Active Status"
                                         checked={form.is_active}
-                                        onChange={v => setForm({...form, is_active: v})}
+                                        onChange={(v) => setForm({...form, is_active: v})}
                                     />
                                     <Toggle
                                         label="Verified"
                                         checked={form.is_verified}
-                                        onChange={v => setForm({...form, is_verified: v})}
+                                        onChange={(v) => setForm({...form, is_verified: v})}
                                     />
                                 </div>
                             </section>
@@ -631,7 +648,7 @@ function ProvidersPanel() {
                                     <ListIcon className="w-3 h-3"/> Services
                                 </h4>
                                 <div className="grid grid-cols-1 gap-2">
-                                    {services.map(svc => {
+                                    {services.map((svc) => {
                                         const isSelected = selectedServiceIds.includes(svc.id);
                                         return (
                                             <div
@@ -648,38 +665,32 @@ function ProvidersPanel() {
                                                         type="checkbox"
                                                         checked={isSelected}
                                                         onChange={() =>
-                                                            setSelectedServiceIds(prev =>
-                                                                isSelected
-                                                                    ? prev.filter(id => id !== svc.id)
-                                                                    : [...prev, svc.id]
+                                                            setSelectedServiceIds((prev) =>
+                                                                isSelected ? prev.filter((id) => id !== svc.id) : [...prev, svc.id]
                                                             )
                                                         }
                                                         className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                     />
-                                                    <span className="text-sm font-medium text-slate-900">
-                                                        {svc.name}
-                                                    </span>
+                                                    <span
+                                                        className="text-sm font-medium text-slate-900">{svc.name}</span>
                                                 </div>
                                                 {isSelected && (
                                                     <div
-                                                        className="flex gap-2 pl-7 animate-in slide-in-from-top-1 fade-in duration-200"
-                                                    >
+                                                        className="flex gap-2 pl-7 animate-in slide-in-from-top-1 fade-in duration-200">
                                                         <div className="relative flex-1">
                                                             <span
-                                                                className="absolute left-2 top-1.5 text-xs text-slate-400">
-                                                                GHS
-                                                            </span>
+                                                                className="absolute left-2 top-1.5 text-xs text-slate-400">GHS</span>
                                                             <input
                                                                 placeholder="0.00"
                                                                 className="w-full pl-8 text-xs py-1.5 rounded border border-slate-200"
-                                                                value={serviceRates[svc.id]?.base_price || ''}
-                                                                onChange={e =>
-                                                                    setServiceRates(prev => ({
+                                                                value={serviceRates[svc.id]?.base_price || ""}
+                                                                onChange={(e) =>
+                                                                    setServiceRates((prev) => ({
                                                                         ...prev,
                                                                         [svc.id]: {
                                                                             ...prev[svc.id],
-                                                                            base_price: e.target.value
-                                                                        }
+                                                                            base_price: e.target.value,
+                                                                        },
                                                                     }))
                                                                 }
                                                             />
@@ -687,14 +698,14 @@ function ProvidersPanel() {
                                                         <input
                                                             placeholder="Unit (e.g., trip)"
                                                             className="w-24 text-xs px-2 py-1.5 rounded border border-slate-200"
-                                                            value={serviceRates[svc.id]?.price_unit || ''}
-                                                            onChange={e =>
-                                                                setServiceRates(prev => ({
+                                                            value={serviceRates[svc.id]?.price_unit || ""}
+                                                            onChange={(e) =>
+                                                                setServiceRates((prev) => ({
                                                                     ...prev,
                                                                     [svc.id]: {
                                                                         ...prev[svc.id],
-                                                                        price_unit: e.target.value
-                                                                    }
+                                                                        price_unit: e.target.value,
+                                                                    },
                                                                 }))
                                                             }
                                                         />
@@ -728,7 +739,8 @@ function ProvidersPanel() {
     );
 }
 
-// Requests Panel
+/* ---------------- Requests Panel ---------------- */
+
 function RequestsPanel() {
     const [list, setList] = useState<RequestRow[]>([]);
     const [loading, setLoading] = useState(false);
@@ -737,7 +749,7 @@ function RequestsPanel() {
     const fetchRequests = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await listRequests(statusFilter === 'all' ? undefined : statusFilter);
+            const data = await listRequests(statusFilter === "all" ? undefined : statusFilter);
             setList(data as RequestRow[]);
         } catch (err) {
             console.error(err);
@@ -750,18 +762,17 @@ function RequestsPanel() {
         fetchRequests();
     }, [fetchRequests]);
 
-    const updateStatus = async (id: UUID, status: RequestStatus) => {
+    const updateStatusLocal = async (id: UUID, status: RequestStatus) => {
         toast.promise(updateRequestStatus(id, status), {
-            loading: 'Updating status...',
-            success: 'Status updated',
-            error: 'Failed to update'
+            loading: "Updating status...",
+            success: "Status updated",
+            error: "Failed to update",
         });
         fetchRequests();
-    }
+    };
 
-    // Derived stats
-    const pendingCount = list.filter(r => r.status === 'pending').length;
-    const inProgressCount = list.filter(r => r.status === 'in_progress').length;
+    const pendingCount = list.filter((r) => r.status === "pending").length;
+    const inProgressCount = list.filter((r) => r.status === "in_progress").length;
 
     return (
         <div className="flex flex-col h-[calc(100vh-8rem)] gap-4">
@@ -775,7 +786,7 @@ function RequestsPanel() {
             <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100 flex gap-4 items-center bg-white">
                     <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-lg">
-                        {['all', 'pending', 'in_progress', 'completed'].map(s => (
+                        {["all", "pending", "in_progress", "completed"].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
@@ -786,11 +797,11 @@ function RequestsPanel() {
                                         : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                 )}
                             >
-                                {s.replace('_', ' ')}
+                                {s.replace("_", " ")}
                             </button>
                         ))}
                     </div>
-                    <div className="flex-1"></div>
+                    <div className="flex-1"/>
                     <button
                         onClick={fetchRequests}
                         className="p-2 text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-indigo-50 rounded-lg"
@@ -818,29 +829,28 @@ function RequestsPanel() {
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
-                        {list.map(r => (
+                        {list.map((r) => (
                             <tr key={r.id} className="hover:bg-indigo-50/30 transition-colors">
                                 <td className="px-6 py-4 text-slate-500 text-xs whitespace-nowrap">
                                     {new Date(r.created_at).toLocaleString([], {
-                                        dateStyle: 'short',
-                                        timeStyle: 'short'
+                                        dateStyle: "short",
+                                        timeStyle: "short",
                                     })}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <StatusBadge status={r.status || 'pending'}/>
+                                    <StatusBadge status={r.status || "pending"}/>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="font-medium text-slate-900">{r.driver_name || 'Unknown User'}</div>
-                                    <div className="text-xs text-slate-500 flex items-center gap-1">
-                                        {r.driver_phone}
-                                    </div>
+                                    <div className="font-medium text-slate-900">{r.driver_name || "Unknown User"}</div>
+                                    <div
+                                        className="text-xs text-slate-500 flex items-center gap-1">{r.driver_phone}</div>
                                 </td>
                                 <td className="px-6 py-4 text-slate-600 text-xs">
                                     {r.provider_id ? (
                                         <span
                                             className="bg-slate-100 px-2 py-1 rounded border border-slate-200 font-mono">
-                                            {r.provider_id.slice(0, 8)}...
-                                        </span>
+                        {r.provider_id.slice(0, 8)}...
+                      </span>
                                     ) : (
                                         <span className="text-slate-400 italic">Unassigned</span>
                                     )}
@@ -848,8 +858,8 @@ function RequestsPanel() {
                                 <td className="px-6 py-4 text-right">
                                     <select
                                         className="bg-white border border-slate-200 text-xs rounded-lg py-1.5 pl-2 pr-8 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer hover:border-slate-300"
-                                        value={r.status || 'pending'}
-                                        onChange={(e) => updateStatus(r.id, e.target.value as RequestStatus)}
+                                        value={r.status || "pending"}
+                                        onChange={(e) => updateStatusLocal(r.id, e.target.value as RequestStatus)}
                                     >
                                         <option value="pending">Pending</option>
                                         <option value="accepted">Accepted</option>
@@ -874,18 +884,366 @@ function RequestsPanel() {
     );
 }
 
+/* ---------------- Memberships Panel ---------------- */
+
+function MembershipsPanel() {
+    const [plans, setPlans] = useState<MembershipPlanRow[]>([]);
+    const [members, setMembers] = useState<MemberWithMembershipRow[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [q, setQ] = useState("");
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [form, setForm] = useState<MembershipFormState>({
+        member_id: null,
+        full_name: "",
+        email: "",
+        phone: "",
+        plan_id: "",
+        tier: "",
+        expiry_date: "",
+    });
+
+    const filteredMembers = members.filter((m) => {
+        if (!q.trim()) return true;
+        const hay = `${m.full_name ?? ""} ${m.phone ?? ""} ${m.plan_name ?? ""} ${m.plan_code ?? ""}`.toLowerCase();
+        return hay.includes(q.toLowerCase());
+    });
+
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [plansRes, membersRes] = await Promise.all([
+                listMembershipPlans(),
+                listMembersWithMemberships(),
+            ]);
+            setPlans(plansRes);
+            setMembers(membersRes);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to load memberships");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const newMembership = () => {
+        const today = new Date();
+        const nextYear = new Date(today);
+        nextYear.setFullYear(today.getFullYear() + 1);
+        const defaultExpiry = nextYear.toISOString().slice(0, 10);
+
+        setForm({
+            member_id: null,
+            full_name: "",
+            email: "",
+            phone: "",
+            plan_id: plans[0]?.id ?? "",
+            tier: plans[0]?.code ?? "",
+            expiry_date: defaultExpiry,
+        });
+        setIsSidebarOpen(true);
+    };
+
+    const editMembership = (m: MemberWithMembershipRow) => {
+        setForm({
+            member_id: m.member_id,
+            full_name: m.full_name ?? "",
+            email: m.email ?? "",
+            phone: m.phone ?? "",
+            plan_id:
+                plans.find((p) => p.code === m.plan_code)?.id ??
+                plans[0]?.id ??
+                "",
+            tier: m.tier ?? m.plan_code ?? "",
+            expiry_date: m.expiry_date ? m.expiry_date.slice(0, 10) : "",
+        });
+        setIsSidebarOpen(true);
+    };
+
+    const handleSave = async () => {
+        const payload = {
+            member_id: form.member_id,
+            full_name: form.full_name.trim(),
+            email: form.email.trim() || null,
+            phone: form.phone.trim(),
+            plan_id: form.plan_id,
+            tier: form.tier.trim() || "STANDARD",
+            expiry_date: form.expiry_date,
+        };
+
+        const promise = async () => {
+            await upsertMemberMembership(payload);
+            setIsSidebarOpen(false);
+            await fetchData();
+        };
+
+        toast.promise(promise, {
+            loading: "Saving membership...",
+            success: "Membership saved",
+            error: "Failed to save membership",
+        });
+    };
+
+    const totalMembers = members.length;
+    const activeMembers = members.filter((m) => m.is_active).length;
+    const activePlans = plans.filter((p) => p.is_active).length;
+
+    return (
+        <div className="flex flex-col h-[calc(100vh-8rem)] gap-4">
+            {/* Stats Row */}
+            <div className="grid grid-cols-3 gap-4">
+                <StatCard title="Total Members" value={totalMembers} icon={Users} color="bg-indigo-500"/>
+                <StatCard title="Active Memberships" value={activeMembers} icon={ShieldCheck} color="bg-emerald-500"/>
+                <StatCard title="Active Plans" value={activePlans} icon={LayoutGrid} color="bg-slate-500"/>
+            </div>
+
+            <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                {/* Toolbar */}
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-white">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"/>
+                        <input
+                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                            placeholder="Search members by name, phone, or plan..."
+                            value={q}
+                            onChange={(e) => setQ(e.target.value)}
+                        />
+                    </div>
+                    <button
+                        onClick={newMembership}
+                        className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+                    >
+                        <Plus className="h-4 w-4"/>
+                        <span className="hidden sm:inline">Add Membership</span>
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-auto relative bg-slate-50/50">
+                    {loading && (
+                        <div
+                            className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
+                            <Loader2 className="h-8 w-8 animate-spin text-indigo-600"/>
+                        </div>
+                    )}
+
+                    <table className="w-full text-left text-sm">
+                        <thead
+                            className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200 sticky top-0 z-10">
+                        <tr>
+                            <th className="px-6 py-3">Member</th>
+                            <th className="px-6 py-3">Contact</th>
+                            <th className="px-6 py-3">Plan</th>
+                            <th className="px-6 py-3">Status</th>
+                            <th className="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                        {filteredMembers.map((m) => {
+                            const expired = m.expiry_date ? new Date(m.expiry_date) < new Date() : false;
+                            return (
+                                <tr key={m.member_id} className="hover:bg-indigo-50/30 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="font-medium text-slate-900">
+                                            {m.full_name || "Unnamed Member"}
+                                        </div>
+                                        <div className="text-xs text-slate-400">
+                                            #{m.membership_id || "—"}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-600">
+                                        <div>{m.phone}</div>
+                                        <div className="text-slate-400">{m.email}</div>
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-600">
+                                        <div className="font-medium">
+                                            {m.plan_name || "No plan"}
+                                        </div>
+                                        <div className="text-slate-400 uppercase text-[10px]">
+                                            {m.tier || m.plan_code || "—"}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-600">
+                                        {m.expiry_date ? (
+                                            <div className="flex flex-col gap-0.5">
+                          <span
+                              className={cls(
+                                  "inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide",
+                                  expired
+                                      ? "bg-red-50 text-red-700 border-red-200"
+                                      : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              )}
+                          >
+                            {expired ? "Expired" : "Active"}
+                          </span>
+                                                <span className="text-slate-400">
+                            Expires {new Date(m.expiry_date).toLocaleDateString()}
+                          </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-slate-400 italic">No expiry set</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button
+                                            onClick={() => editMembership(m)}
+                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200"
+                                        >
+                                            <Edit2 className="w-3 h-3"/>
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        </tbody>
+                    </table>
+
+                    {filteredMembers.length === 0 && !loading && (
+                        <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                            <Users className="h-10 w-10 mb-2 opacity-20"/>
+                            <p>No members found</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Slide-over form */}
+            {isSidebarOpen && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 transition-opacity"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                    <div
+                        className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] bg-white shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+                        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
+                            <div>
+                                <h3 className="font-bold text-lg text-slate-900">
+                                    {form.member_id ? "Edit Membership" : "New Membership"}
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Link a member to a plan and set expiry.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setIsSidebarOpen(false)}
+                                className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+                            >
+                                <X className="h-5 w-5"/>
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            <section className="space-y-4">
+                                <h4 className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-wider border-b border-indigo-100 pb-2">
+                                    <UserIcon className="w-3 h-3"/> Member Info
+                                </h4>
+                                <TextField
+                                    label="Full Name"
+                                    value={form.full_name}
+                                    onChange={(v) => setForm({...form, full_name: v})}
+                                    required
+                                />
+                                <TextField
+                                    label="Phone"
+                                    value={form.phone}
+                                    onChange={(v) => setForm({...form, phone: v})}
+                                    required
+                                />
+                                <TextField
+                                    label="Email"
+                                    value={form.email}
+                                    onChange={(v) => setForm({...form, email: v})}
+                                    type="email"
+                                    placeholder="optional"
+                                />
+                            </section>
+
+                            <section className="space-y-4">
+                                <h4 className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-wider border-b border-indigo-100 pb-2">
+                                    <ShieldCheck className="w-3 h-3"/> Plan
+                                </h4>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label
+                                            className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                            Plan
+                                        </label>
+                                        <select
+                                            className="mt-1 w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                            value={form.plan_id}
+                                            onChange={(e) =>
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    plan_id: e.target.value,
+                                                    // if tier empty, default to plan code
+                                                    tier:
+                                                        prev.tier ||
+                                                        plans.find((p) => p.id === e.target.value)?.code ||
+                                                        prev.tier,
+                                                }))
+                                            }
+                                        >
+                                            <option value="">Select a plan</option>
+                                            {plans.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.name} ({p.code})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <TextField
+                                        label="Tier Label"
+                                        value={form.tier}
+                                        onChange={(v) => setForm({...form, tier: v})}
+                                        placeholder="e.g. PLUS, GOLD"
+                                    />
+                                    <TextField
+                                        label="Expiry Date"
+                                        value={form.expiry_date}
+                                        onChange={(v) => setForm({...form, expiry_date: v})}
+                                        type="date"
+                                        required
+                                    />
+                                </div>
+                            </section>
+                        </div>
+
+                        <div className="p-5 border-t border-slate-100 bg-slate-50 flex gap-3">
+                            <button
+                                onClick={() => setIsSidebarOpen(false)}
+                                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="flex-1 flex justify-center items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-all shadow-sm active:scale-95"
+                            >
+                                <Save className="h-4 w-4"/> Save Membership
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
 
 /* ---------------- Main Dashboard Shell ---------------- */
 
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState<"providers" | "requests">("providers");
+    const [activeTab, setActiveTab] = useState<"providers" | "requests" | "memberships">("providers");
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         getUser()
             .then((u) => setUser(u as User))
             .catch(() => {
-                window.location.href = '/login';
+                window.location.href = "/login";
             });
     }, []);
 
@@ -902,8 +1260,8 @@ export default function AdminDashboard() {
                         M
                     </div>
                     <span className="font-bold text-lg tracking-tight text-white hidden lg:block">
-                        MotorAmbos
-                    </span>
+            MotorAmbos
+          </span>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
@@ -911,7 +1269,7 @@ export default function AdminDashboard() {
                         onClick={() => setActiveTab("providers")}
                         className={cls(
                             "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                            activeTab === 'providers'
+                            activeTab === "providers"
                                 ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50"
                                 : "text-slate-400 hover:bg-slate-800 hover:text-white"
                         )}
@@ -923,13 +1281,25 @@ export default function AdminDashboard() {
                         onClick={() => setActiveTab("requests")}
                         className={cls(
                             "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                            activeTab === 'requests'
+                            activeTab === "requests"
                                 ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50"
                                 : "text-slate-400 hover:bg-slate-800 hover:text-white"
                         )}
                     >
                         <LifeBuoy className="h-5 w-5"/>
                         <span className="hidden lg:block">Requests</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("memberships")}
+                        className={cls(
+                            "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                            activeTab === "memberships"
+                                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50"
+                                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                        )}
+                    >
+                        <Users className="h-5 w-5"/>
+                        <span className="hidden lg:block">Memberships</span>
                     </button>
                 </nav>
 
@@ -963,16 +1333,18 @@ export default function AdminDashboard() {
                             {activeTab}
                         </h1>
                         <p className="text-xs text-slate-500">
-                            Manage your {activeTab} database
+                            {activeTab === "providers" && "Manage your provider network"}
+                            {activeTab === "requests" && "Monitor and update roadside requests"}
+                            {activeTab === "memberships" && "Manage MotorAmbos membership plans and members"}
                         </p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div
                             className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100">
-                            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"/>
                             <span className="text-xs font-medium text-emerald-700">
-                                System Operational
-                            </span>
+                System Operational
+              </span>
                         </div>
                     </div>
                 </header>
@@ -980,6 +1352,7 @@ export default function AdminDashboard() {
                 <div className="flex-1 overflow-hidden p-6 bg-slate-50">
                     {activeTab === "providers" && <ProvidersPanel/>}
                     {activeTab === "requests" && <RequestsPanel/>}
+                    {activeTab === "memberships" && <MembershipsPanel/>}
                 </div>
             </main>
         </div>

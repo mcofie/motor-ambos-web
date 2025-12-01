@@ -594,18 +594,18 @@ export default function GetHelpWizardPage() {
                             </div>
 
                             {/* Location Card */}
-                            <div className="relative overflow-hidden bg-foreground rounded-3xl p-5 shadow-lg text-background">
+                            <div className="relative overflow-hidden bg-card rounded-3xl p-5 shadow-sm border border-border text-card-foreground">
                                 <div
-                                    className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-background/10 blur-2xl"></div>
+                                    className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl"></div>
 
                                 <div className="flex items-center justify-between mb-4 relative z-10">
-                                    <div className="flex items-center gap-2 text-background/80 text-sm font-medium">
+                                    <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
                                         <MapPin className="h-4 w-4 text-primary" />
                                         <span>Current Location</span>
                                     </div>
                                     {loc && (
                                         <span
-                                            className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase rounded-full border border-primary/30">
+                                            className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded-full border border-primary/20">
                                             Acquired
                                         </span>
                                     )}
@@ -614,26 +614,26 @@ export default function GetHelpWizardPage() {
                                 <div className="space-y-4 relative z-10">
                                     {loc ? (
                                         <div
-                                            className="p-3 bg-background/10 rounded-xl border border-background/5 backdrop-blur-sm">
+                                            className="p-3 bg-muted rounded-xl border border-border">
                                             <div
-                                                className="text-xs text-background/60 uppercase tracking-wider font-bold mb-1">Coordinates
+                                                className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Coordinates
                                             </div>
-                                            <div className="font-mono text-lg tracking-tight">
+                                            <div className="font-mono text-lg tracking-tight text-foreground">
                                                 {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
                                             </div>
-                                            <div className="text-[10px] text-background/60 mt-1">
+                                            <div className="text-[10px] text-muted-foreground mt-1">
                                                 Accuracy: ±{Math.round(loc.accuracy || 0)}m
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-background/80 leading-relaxed">
+                                        <div className="text-sm text-muted-foreground leading-relaxed">
                                             We need your location to match you with the nearest mechanics.
                                         </div>
                                     )}
 
                                     {locError && locError !== GEO_ERROR_BLOCKED && (
                                         <div
-                                            className="flex items-start gap-2 text-red-300 text-xs bg-red-950/30 p-2 rounded-lg border border-red-500/20">
+                                            className="flex items-start gap-2 text-red-600 dark:text-red-400 text-xs bg-red-50 dark:bg-red-950/30 p-2 rounded-lg border border-red-100 dark:border-red-900/50">
                                             <AlertTriangle className="h-4 w-4 shrink-0" />
                                             <span>{locError}</span>
                                         </div>
@@ -647,7 +647,7 @@ export default function GetHelpWizardPage() {
                                         type="button"
                                         onClick={requestLocation}
                                         disabled={locBusy}
-                                        className="w-full h-12 bg-background text-foreground hover:bg-muted font-bold rounded-xl transition-all active:scale-95"
+                                        className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-bold rounded-xl transition-all active:scale-95"
                                     >
                                         {locBusy ? (
                                             <Loader2 className="h-5 w-5 animate-spin" />
@@ -866,21 +866,21 @@ function ProviderCard({
     return (
         <>
             <div
-                className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 transition-all active:scale-[0.99]">
+                className="bg-card rounded-3xl p-5 shadow-sm border border-border transition-all active:scale-[0.99]">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
                         <div
-                            className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 text-lg font-bold">
+                            className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground text-lg font-bold">
                             {provider.name.charAt(0)}
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-900 text-base flex items-center gap-1">
+                            <h3 className="font-bold text-card-foreground text-base flex items-center gap-1">
                                 {provider.name}
-                                {provider.is_verified && <BadgeCheck className="h-4 w-4 text-sky-500 fill-sky-500/10" />}
+                                {provider.is_verified && <BadgeCheck className="h-4 w-4 text-primary fill-primary/10" />}
                             </h3>
-                            <div className="flex items-center gap-3 text-xs font-medium text-slate-500 mt-0.5">
-                                <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+                            <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground mt-0.5">
+                                <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md">
                                     <Star className="h-3 w-3 fill-current" /> {provider.rating?.toFixed(1) || "New"}
                                 </span>
                                 <span>•</span>
@@ -889,7 +889,7 @@ function ProviderCard({
                         </div>
                     </div>
                     <a href={mapsHref} target="_blank"
-                        className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:bg-sky-50 hover:text-sky-600 transition-colors">
+                        className="p-2.5 bg-muted rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
                         <MapPin className="h-5 w-5" />
                     </a>
                 </div>
@@ -898,13 +898,13 @@ function ProviderCard({
                 <div className="flex flex-wrap gap-2 mb-4">
                     {provider.min_callout_fee != null && (
                         <span
-                            className="text-[10px] font-bold uppercase tracking-wide bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-100">
+                            className="text-[10px] font-bold uppercase tracking-wide bg-muted text-muted-foreground px-2.5 py-1 rounded-lg border border-border">
                             Fee: GH₵{provider.min_callout_fee}
                         </span>
                     )}
                     {provider.coverage_radius_km != null && (
                         <span
-                            className="text-[10px] font-bold uppercase tracking-wide bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-100">
+                            className="text-[10px] font-bold uppercase tracking-wide bg-muted text-muted-foreground px-2.5 py-1 rounded-lg border border-border">
                             Range: {provider.coverage_radius_km}km
                         </span>
                     )}
@@ -914,7 +914,7 @@ function ProviderCard({
                 {provider.services.length > 0 && (
                     <div className="mb-5">
                         <button onClick={() => setShowServices(!showServices)}
-                            className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors w-full py-1">
+                            className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-1">
                             <span
                                 className="flex-1 text-left">{showServices ? 'Hide' : 'View'} {provider.services.length} services & pricing</span>
                             <ChevronDown className={cn("h-4 w-4 transition-transform", showServices && "rotate-180")} />
@@ -924,9 +924,9 @@ function ProviderCard({
                             <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
                                 {provider.services.map(s => (
                                     <div key={s.code}
-                                        className="flex justify-between items-center text-xs p-2.5 rounded-xl bg-slate-50/50 border border-slate-100">
-                                        <span className="font-medium text-slate-700">{s.name}</span>
-                                        <span className="font-bold text-slate-900">
+                                        className="flex justify-between items-center text-xs p-2.5 rounded-xl bg-muted/50 border border-border">
+                                        <span className="font-medium text-foreground">{s.name}</span>
+                                        <span className="font-bold text-foreground">
                                             {s.price ? `GH₵${s.price}` : 'N/A'}
                                         </span>
                                     </div>
@@ -939,27 +939,27 @@ function ProviderCard({
                 {/* Actions */}
                 <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCallDialogOpen(true)}
-                        className="h-12 rounded-xl border-2 border-slate-100 font-bold text-slate-700 text-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                        className="h-12 rounded-xl border-2 border-border font-bold text-foreground text-sm hover:bg-muted transition-colors flex items-center justify-center gap-2">
                         <Phone className="h-4 w-4" /> Call
                     </button>
                     <button onClick={() => setSmsDialogOpen(true)}
-                        className="h-12 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition-colors shadow-md flex items-center justify-center gap-2">
+                        className="h-12 rounded-xl bg-foreground font-bold text-background text-sm hover:bg-foreground/90 transition-colors shadow-md flex items-center justify-center gap-2">
                         <MessageCircle className="h-4 w-4" /> Send Info
                     </button>
                 </div>
 
                 {/* Modals nested here for simplicity */}
                 <Dialog open={callDialogOpen} onOpenChange={setCallDialogOpen}>
-                    <DialogContent className="rounded-3xl">
+                    <DialogContent className="rounded-3xl bg-card text-card-foreground border-border">
                         <DialogHeader>
-                            <DialogTitle>Call Provider?</DialogTitle>
-                            <DialogDescription>We will log this request so you can track it.</DialogDescription>
+                            <DialogTitle className="text-foreground">Call Provider?</DialogTitle>
+                            <DialogDescription className="text-muted-foreground">We will log this request so you can track it.</DialogDescription>
                         </DialogHeader>
                         {lockError && <p className="text-red-500 text-sm">{lockError}</p>}
                         <div className="flex gap-2 mt-4">
                             <Button variant="ghost" onClick={() => setCallDialogOpen(false)}
-                                className="flex-1 rounded-xl">Cancel</Button>
-                            <Button onClick={handleCall} disabled={locking} className="flex-1 rounded-xl bg-slate-900">
+                                className="flex-1 rounded-xl text-foreground hover:bg-muted">Cancel</Button>
+                            <Button onClick={handleCall} disabled={locking} className="flex-1 rounded-xl bg-foreground text-background hover:bg-foreground/90">
                                 {locking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Call Now"}
                             </Button>
                         </div>
@@ -967,21 +967,21 @@ function ProviderCard({
                 </Dialog>
 
                 <Dialog open={smsDialogOpen} onOpenChange={setSmsDialogOpen}>
-                    <DialogContent className="rounded-3xl">
+                    <DialogContent className="rounded-3xl bg-card text-card-foreground border-border">
                         <DialogHeader>
-                            <DialogTitle>Send Details via SMS</DialogTitle>
-                            <DialogDescription>Send your location and car info to {provider.name}.</DialogDescription>
+                            <DialogTitle className="text-foreground">Send Details via SMS</DialogTitle>
+                            <DialogDescription className="text-muted-foreground">Send your location and car info to {provider.name}.</DialogDescription>
                         </DialogHeader>
                         <div
-                            className="bg-slate-50 p-3 rounded-xl text-xs text-slate-500 font-mono border border-slate-100 my-2">
+                            className="bg-muted p-3 rounded-xl text-xs text-muted-foreground font-mono border border-border my-2">
                             {smsBody}
                         </div>
                         {smsError && <p className="text-red-500 text-sm">{smsError}</p>}
                         <div className="flex gap-2 mt-4">
                             <Button variant="ghost" onClick={() => setSmsDialogOpen(false)}
-                                className="flex-1 rounded-xl">Cancel</Button>
+                                className="flex-1 rounded-xl text-foreground hover:bg-muted">Cancel</Button>
                             <Button onClick={handleSms} disabled={sendingSms}
-                                className="flex-1 rounded-xl bg-slate-900">
+                                className="flex-1 rounded-xl bg-foreground text-background hover:bg-foreground/90">
                                 {sendingSms ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send SMS"}
                             </Button>
                         </div>

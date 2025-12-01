@@ -36,7 +36,14 @@ export async function middleware(req: NextRequest) {
     // 3. Check for admin role if accessing /admin
     if (req.nextUrl.pathname.startsWith('/admin')) {
         const { data: { user } } = await supabase.auth.getUser();
-        const email = user?.email;
+
+        if (!user) {
+            const redirect = new URL("/login", req.url);
+            redirect.searchParams.set("next", req.nextUrl.pathname);
+            return NextResponse.redirect(redirect);
+        }
+
+        const email = user.email;
 
         // Simple check: is email in admin list?
         // In production, you'd probably check a `profiles.role` or similar.

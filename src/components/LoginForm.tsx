@@ -2,9 +2,9 @@
 "use client";
 
 import React from "react";
-import {useRouter, useSearchParams} from "next/navigation";
-import {ShieldCheck, Loader2} from "lucide-react";
-import {loginWithPassword} from "@/lib/supaFetch";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ShieldCheck, Loader2 } from "lucide-react";
+import { loginWithPassword } from "@/lib/supaFetch";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -29,7 +29,12 @@ export default function LoginForm() {
             router.refresh();
 
             // 2. Then navigate
-            router.replace("/admin");
+            const next = params?.get("next");
+            if (next && next.startsWith("/")) {
+                router.replace(next);
+            } else {
+                router.replace("/admin");
+            }
             // note: we intentionally do NOT setLoading(false) here, since we're navigating away
 
         } catch (err: unknown) {
@@ -51,7 +56,7 @@ export default function LoginForm() {
                 <div className="mb-6 text-center text-slate-100">
                     <div
                         className="inline-flex items-center gap-2 rounded-full bg-slate-900/60 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-slate-700/70 shadow-sm mb-3">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"/>
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                         MotorAmbos Admin
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
@@ -69,7 +74,7 @@ export default function LoginForm() {
                     <div className="mb-5 flex items-center gap-3">
                         <div
                             className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-400/40">
-                            <ShieldCheck className="h-5 w-5"/>
+                            <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div>
                             <h2 className="text-base sm:text-lg font-semibold text-slate-100">
@@ -131,7 +136,7 @@ export default function LoginForm() {
                         >
                             {loading ? (
                                 <>
-                                    <Loader2 className="h-4 w-4 animate-spin"/>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
                                     Signing you in…
                                 </>
                             ) : (

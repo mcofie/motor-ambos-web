@@ -40,7 +40,7 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background text-foreground">
             <NavBar user={user} />
             <main className="mx-auto w-full p-4 md:p-6">
                 <AdminDashboard />

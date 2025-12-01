@@ -605,7 +605,7 @@ export async function listMembershipPlans(): Promise<MembershipPlanRow[]> {
             "is_active",
         ].join(",")
     );
-    params.set("order", "price_monthly.asc,nulls.last");
+    params.set("order", "price_monthly.asc.nullslast");
 
     const res = await fetch(
         `${URL}/rest/v1/membership_plans?${params.toString()}`,

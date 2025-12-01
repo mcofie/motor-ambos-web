@@ -22,6 +22,14 @@ const anta = Anta({
     display: 'swap',
 })
 
+export const metadata = {
+    title: {
+        default: "Motor Ambos — The Modern Roadside Network",
+        template: "%s | Motor Ambos",
+    },
+    description: "On-demand car care and roadside assistance. Fuel, wash, oil, tyres, battery — delivered to your location.",
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en" className={`${inter.variable} ${poppins.variable} ${anta.variable}`}>

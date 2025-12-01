@@ -8,11 +8,8 @@ import { AppShowcaseSection } from "@/components/landing/AppShowcaseSection";
 import { CTAStrip } from "@/components/landing/CTAStrip";
 import { Footer } from "@/components/landing/Footer";
 
-export const metadata: Metadata = {
-    title: "Motor Ambos — The Modern Roadside Network",
-    description:
-        "On-demand car care and roadside assistance. Fuel, wash, oil, tyres, battery — delivered to your location.",
-};
+import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+import { FAQSection } from "@/components/landing/FAQSection";
 
 export default function LandingPage() {
     return (
@@ -24,7 +21,9 @@ export default function LandingPage() {
                 <ServicesSection />
                 <MembershipSection />
                 <WhyUsSection />
+                <TestimonialsSection />
                 <AppShowcaseSection />
+                <FAQSection />
                 <CTAStrip />
             </main>
 

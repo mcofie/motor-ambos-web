@@ -58,6 +58,11 @@ function MembershipFallback() {
     );
 }
 
+export const metadata = {
+    title: "Membership",
+    description: "Join the Motor Ambos Club for priority response, discounted fees, and free annual checks.",
+};
+
 export default function MembershipPage() {
     return (
         <Suspense fallback={<MembershipFallback />}>

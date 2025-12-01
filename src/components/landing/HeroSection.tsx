@@ -33,16 +33,16 @@ export function HeroSection() {
                     <span>Verified Providers • Transparent Pricing</span>
                 </div>
 
-                <h1 className="mx-auto max-w-4xl text-5xl font-extrabold tracking-tight text-[#9ae600] dark:text-foreground sm:text-7xl lg:leading-[1.1] mb-6">
+                <h1 className="mx-auto max-w-4xl text-5xl font-extrabold tracking-tight text-foreground sm:text-7xl lg:leading-[1.1] mb-6">
                     Car trouble? <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500">
+                    <span className="text-primary">
                         Help is minutes away.
                     </span>
                 </h1>
 
                 <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-10 leading-relaxed">
                     The decentralized network connecting you to the closest trusted
-                    mechanics. From emergency rescue to scheduled maintenance—everything
+                    mechanics in Ghana. From emergency rescue to scheduled maintenance—everything
                     your car needs, on demand.
                 </p>
 

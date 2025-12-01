@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import {useMemo, useState, useEffect} from "react";
-import {z} from "zod";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
+import { useState, Suspense, useMemo } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 // Removed unused Input/Label imports here to use custom ModernInput,
 // or we can use them inside ModernInput.
 // I will remove them from here and keep the custom implementation below
@@ -18,7 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {cn} from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
     Car,
     ArrowRight,
@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 
 // Mock or Real imports
-import {createRequest, findProvidersNear} from "@/lib/supaFetch";
+import { createRequest, findProvidersNear } from "@/lib/supaFetch";
 
 /* ───────────────────────────────
    Types & Logic
@@ -122,49 +122,49 @@ const HELP_OPTIONS: Array<{
     hint: string;
     colorClass: string;
 }> = [
-    {
-        key: "battery",
-        label: "Battery",
-        Icon: BatteryCharging,
-        hint: "Jumpstart / Replace",
-        colorClass: "text-orange-500 bg-orange-50 border-orange-100",
-    },
-    {
-        key: "tire",
-        label: "Flat Tyre",
-        Icon: Disc,
-        hint: "Change / Pump",
-        colorClass: "text-slate-500 bg-slate-50 border-slate-100",
-    },
-    {
-        key: "oil",
-        label: "Engine Oil",
-        Icon: Droplets,
-        hint: "Top-up / Leak",
-        colorClass: "text-amber-600 bg-amber-50 border-amber-100",
-    },
-    {
-        key: "tow",
-        label: "Towing",
-        Icon: Truck,
-        hint: "Move Vehicle",
-        colorClass: "text-blue-600 bg-blue-50 border-blue-100",
-    },
-    {
-        key: "rescue",
-        label: "Rescue",
-        Icon: AlertTriangle,
-        hint: "Stuck / Accident",
-        colorClass: "text-red-600 bg-red-50 border-red-100",
-    },
-    {
-        key: "fuel",
-        label: "Fuel",
-        Icon: Droplets,
-        hint: "Out of gas",
-        colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100",
-    },
-];
+        {
+            key: "battery",
+            label: "Battery",
+            Icon: BatteryCharging,
+            hint: "Jumpstart / Replace",
+            colorClass: "text-orange-500 bg-orange-50 border-orange-100",
+        },
+        {
+            key: "tire",
+            label: "Flat Tyre",
+            Icon: Disc,
+            hint: "Change / Pump",
+            colorClass: "text-slate-500 bg-slate-50 border-slate-100",
+        },
+        {
+            key: "oil",
+            label: "Engine Oil",
+            Icon: Droplets,
+            hint: "Top-up / Leak",
+            colorClass: "text-amber-600 bg-amber-50 border-amber-100",
+        },
+        {
+            key: "tow",
+            label: "Towing",
+            Icon: Truck,
+            hint: "Move Vehicle",
+            colorClass: "text-blue-600 bg-blue-50 border-blue-100",
+        },
+        {
+            key: "rescue",
+            label: "Rescue",
+            Icon: AlertTriangle,
+            hint: "Stuck / Accident",
+            colorClass: "text-red-600 bg-red-50 border-red-100",
+        },
+        {
+            key: "fuel",
+            label: "Fuel",
+            Icon: Droplets,
+            hint: "Out of gas",
+            colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100",
+        },
+    ];
 
 /* Geo helpers */
 const GEO_ERROR_BLOCKED = "GEO_BLOCKED" as const;
@@ -234,7 +234,7 @@ export default function GetHelpWizardPage() {
         handleSubmit,
         trigger,
         getValues,
-        formState: {isSubmitting, errors},
+        formState: { isSubmitting, errors },
         watch,
     } = form;
 
@@ -270,7 +270,7 @@ export default function GetHelpWizardPage() {
         }
 
         const values = getValues();
-        const details = `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber}`;
+        const details = `Car: ${values.carMake} ${values.carModel} ${values.carYear} (${values.carColor}) • Plate: ${values.plateNumber} `;
 
         await createRequest({
             helpType: values.helpType,
@@ -422,35 +422,35 @@ export default function GetHelpWizardPage() {
     const progressPercent = ((activeIndex + 1) / stepsOrder.length) * 100;
 
     return (
-        <main className="min-h-screen bg-slate-50 font-sans text-slate-900">
+        <main className="min-h-screen bg-background font-sans text-foreground">
             {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+            <header className="sticky top-0 z-30 w-full bg-background/80 backdrop-blur-xl border-b border-border">
                 <div className="mx-auto max-w-lg px-4 h-14 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {step !== "help" && (
                             <button
                                 onClick={onBack}
-                                className="mr-1 -ml-2 p-2 rounded-full hover:bg-slate-100 text-slate-600"
+                                className="mr-1 -ml-2 p-2 rounded-full hover:bg-muted text-muted-foreground"
                             >
-                                <ChevronLeft className="h-5 w-5"/>
+                                <ChevronLeft className="h-5 w-5" />
                             </button>
                         )}
                         <div className="flex flex-col">
-              <span className="text-sm font-bold tracking-tight text-slate-900">
-                Motor Ambos
-              </span>
-                            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
-                {step === "help" && "Step 1: Request"}
+                            <span className="text-sm font-bold tracking-tight text-foreground">
+                                Motor Ambos
+                            </span>
+                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                                {step === "help" && "Step 1: Request"}
                                 {step === "car" && "Step 2: Vehicle"}
                                 {step === "contact" && "Step 3: Location"}
                                 {step === "providers" && "Nearby Help"}
-              </span>
+                            </span>
                         </div>
                     </div>
-                    <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-slate-900 transition-all duration-500 ease-out"
-                            style={{width: `${progressPercent}%`}}
+                            className="h-full bg-foreground transition-all duration-500 ease-out"
+                            style={{ width: `${progressPercent}% ` }}
                         />
                     </div>
                 </div>
@@ -463,10 +463,10 @@ export default function GetHelpWizardPage() {
                     {step === "help" && (
                         <div className="space-y-6">
                             <div className="space-y-2 text-center mb-8">
-                                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
                                     How can we help?
                                 </h1>
-                                <p className="text-sm text-slate-500">
+                                <p className="text-sm text-muted-foreground">
                                     Select the service you need right now.
                                 </p>
                             </div>
@@ -475,34 +475,34 @@ export default function GetHelpWizardPage() {
                                 {HELP_OPTIONS.map((opt) => (
                                     <div
                                         key={opt.key}
-                                        onClick={() => setValue("helpType", opt.key, {shouldValidate: true})}
+                                        onClick={() => setValue("helpType", opt.key, { shouldValidate: true })}
                                         className={cn(
                                             "cursor-pointer relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 p-4 text-center transition-all duration-200 active:scale-95",
                                             helpType === opt.key
-                                                ? "border-slate-900 bg-slate-900 text-white shadow-lg"
-                                                : "border-transparent bg-white text-slate-600 shadow-sm hover:bg-slate-100/50 hover:border-slate-200"
+                                                ? "border-foreground bg-foreground text-background shadow-lg"
+                                                : "border-transparent bg-card text-muted-foreground shadow-sm hover:bg-muted/50 hover:border-border"
                                         )}
                                     >
                                         <div
                                             className={cn(
                                                 "rounded-xl p-3 transition-colors",
                                                 helpType === opt.key
-                                                    ? "bg-white/10 text-white"
+                                                    ? "bg-background/10 text-background"
                                                     : opt.colorClass
                                             )}
                                         >
-                                            <opt.Icon className="h-6 w-6"/>
+                                            <opt.Icon className="h-6 w-6" />
                                         </div>
                                         <div className="space-y-0.5">
                                             <span className="block text-sm font-bold">{opt.label}</span>
                                             <span
                                                 className={cn(
                                                     "block text-[10px] opacity-80",
-                                                    helpType === opt.key ? "text-slate-300" : "text-slate-400"
+                                                    helpType === opt.key ? "text-background/70" : "text-muted-foreground"
                                                 )}
                                             >
-                        {opt.hint}
-                      </span>
+                                                {opt.hint}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
@@ -514,15 +514,15 @@ export default function GetHelpWizardPage() {
                     {step === "car" && (
                         <div className="space-y-6">
                             <div className="space-y-2 mb-6">
-                                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
                                     Vehicle Details
                                 </h1>
-                                <p className="text-sm text-slate-500">
+                                <p className="text-sm text-muted-foreground">
                                     Help the provider identify your car.
                                 </p>
                             </div>
 
-                            <div className="space-y-4 bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                            <div className="space-y-4 bg-card p-5 rounded-3xl shadow-sm border border-border">
                                 <div className="grid grid-cols-2 gap-4">
                                     <ModernInput
                                         label="Make"
@@ -568,15 +568,15 @@ export default function GetHelpWizardPage() {
                     {step === "contact" && (
                         <div className="space-y-6">
                             <div className="space-y-2 mb-6">
-                                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
                                     Contact & Location
                                 </h1>
-                                <p className="text-sm text-slate-500">
+                                <p className="text-sm text-muted-foreground">
                                     Where should we send help?
                                 </p>
                             </div>
 
-                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                            <div className="bg-card p-5 rounded-3xl shadow-sm border border-border space-y-4">
                                 <ModernInput
                                     label="Your Name"
                                     placeholder="John Doe"
@@ -589,44 +589,44 @@ export default function GetHelpWizardPage() {
                                     inputMode="tel"
                                     {...register("phone")}
                                     error={errors.phone?.message}
-                                    icon={<Phone className="h-4 w-4 text-slate-400"/>}
+                                    icon={<Phone className="h-4 w-4 text-muted-foreground" />}
                                 />
                             </div>
 
                             {/* Location Card */}
-                            <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-5 shadow-lg text-white">
+                            <div className="relative overflow-hidden bg-foreground rounded-3xl p-5 shadow-lg text-background">
                                 <div
-                                    className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-2xl"></div>
+                                    className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-background/10 blur-2xl"></div>
 
                                 <div className="flex items-center justify-between mb-4 relative z-10">
-                                    <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
-                                        <MapPin className="h-4 w-4 text-sky-400"/>
+                                    <div className="flex items-center gap-2 text-background/80 text-sm font-medium">
+                                        <MapPin className="h-4 w-4 text-primary" />
                                         <span>Current Location</span>
                                     </div>
                                     {loc && (
                                         <span
-                                            className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase rounded-full border border-emerald-500/30">
-                      Acquired
-                    </span>
+                                            className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase rounded-full border border-primary/30">
+                                            Acquired
+                                        </span>
                                     )}
                                 </div>
 
                                 <div className="space-y-4 relative z-10">
                                     {loc ? (
                                         <div
-                                            className="p-3 bg-white/10 rounded-xl border border-white/5 backdrop-blur-sm">
+                                            className="p-3 bg-background/10 rounded-xl border border-background/5 backdrop-blur-sm">
                                             <div
-                                                className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Coordinates
+                                                className="text-xs text-background/60 uppercase tracking-wider font-bold mb-1">Coordinates
                                             </div>
                                             <div className="font-mono text-lg tracking-tight">
                                                 {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
                                             </div>
-                                            <div className="text-[10px] text-slate-400 mt-1">
+                                            <div className="text-[10px] text-background/60 mt-1">
                                                 Accuracy: ±{Math.round(loc.accuracy || 0)}m
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-slate-300 leading-relaxed">
+                                        <div className="text-sm text-background/80 leading-relaxed">
                                             We need your location to match you with the nearest mechanics.
                                         </div>
                                     )}
@@ -634,30 +634,30 @@ export default function GetHelpWizardPage() {
                                     {locError && locError !== GEO_ERROR_BLOCKED && (
                                         <div
                                             className="flex items-start gap-2 text-red-300 text-xs bg-red-950/30 p-2 rounded-lg border border-red-500/20">
-                                            <AlertTriangle className="h-4 w-4 shrink-0"/>
+                                            <AlertTriangle className="h-4 w-4 shrink-0" />
                                             <span>{locError}</span>
                                         </div>
                                     )}
 
                                     {locError === GEO_ERROR_BLOCKED && (
-                                        <BlockedLocationHelp onRetry={requestLocation}/>
+                                        <BlockedLocationHelp onRetry={requestLocation} />
                                     )}
 
                                     <Button
                                         type="button"
                                         onClick={requestLocation}
                                         disabled={locBusy}
-                                        className="w-full h-12 bg-white text-slate-900 hover:bg-slate-200 font-bold rounded-xl transition-all active:scale-95"
+                                        className="w-full h-12 bg-background text-foreground hover:bg-muted font-bold rounded-xl transition-all active:scale-95"
                                     >
                                         {locBusy ? (
-                                            <Loader2 className="h-5 w-5 animate-spin"/>
+                                            <Loader2 className="h-5 w-5 animate-spin" />
                                         ) : loc ? (
                                             <>
-                                                <LocateFixed className="mr-2 h-4 w-4"/> Update Location
+                                                <LocateFixed className="mr-2 h-4 w-4" /> Update Location
                                             </>
                                         ) : (
                                             <>
-                                                <Navigation className="mr-2 h-4 w-4"/> Share Location
+                                                <Navigation className="mr-2 h-4 w-4" /> Share Location
                                             </>
                                         )}
                                     </Button>
@@ -670,22 +670,22 @@ export default function GetHelpWizardPage() {
                     {step === "providers" && (
                         <div className="space-y-4">
                             <div className="flex items-center justify-between px-1">
-                                <h2 className="text-lg font-bold text-slate-900">Nearby Help</h2>
-                                <div className="flex items-center gap-1 text-xs text-slate-500">
+                                <h2 className="text-lg font-bold text-foreground">Nearby Help</h2>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <span>Within 15km</span>
-                                    <div className="h-1 w-1 rounded-full bg-slate-300"></div>
+                                    <div className="h-1 w-1 rounded-full bg-muted-foreground"></div>
                                     <span>{loc?.lat.toFixed(2)}, {loc?.lng.toFixed(2)}</span>
                                 </div>
                             </div>
 
                             {loadingProviders && (
                                 <div
-                                    className="py-20 flex flex-col items-center justify-center text-slate-500 space-y-4">
+                                    className="py-20 flex flex-col items-center justify-center text-muted-foreground space-y-4">
                                     <div className="relative">
                                         <div
-                                            className="h-12 w-12 rounded-full border-4 border-slate-100 border-t-slate-900 animate-spin"></div>
+                                            className="h-12 w-12 rounded-full border-4 border-muted border-t-foreground animate-spin"></div>
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <Car className="h-4 w-4 text-slate-900"/>
+                                            <Car className="h-4 w-4 text-foreground" />
                                         </div>
                                     </div>
                                     <p className="text-sm font-medium">Scanning network...</p>
@@ -694,13 +694,13 @@ export default function GetHelpWizardPage() {
 
                             {!loadingProviders && (providers?.length ?? 0) === 0 && (
                                 <div
-                                    className="py-16 text-center px-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                                    className="py-16 text-center px-6 bg-card rounded-3xl border border-border shadow-sm">
                                     <div
-                                        className="mx-auto h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                        <MapPin className="h-8 w-8 text-slate-300"/>
+                                        className="mx-auto h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                        <MapPin className="h-8 w-8 text-muted-foreground" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-slate-900 mb-2">No providers nearby</h3>
-                                    <p className="text-sm text-slate-500 mb-6">We couldn&apos;t find any active partners
+                                    <h3 className="text-lg font-bold text-foreground mb-2">No providers nearby</h3>
+                                    <p className="text-sm text-muted-foreground mb-6">We couldn&apos;t find any active partners
                                         in your immediate area right now.</p>
                                     <Button variant="outline" onClick={() => setStep("contact")}>Change
                                         Location</Button>
@@ -726,24 +726,24 @@ export default function GetHelpWizardPage() {
 
             {/* Bottom Floating Action Bar */}
             <div
-                className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-40">
+                className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border z-40">
                 <div className="mx-auto max-w-lg">
                     {step !== "providers" ? (
                         <Button
                             type="button"
                             disabled={!canNext || isSubmitting || (step === "contact" && loadingProviders)}
                             onClick={onNext}
-                            className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100"
+                            className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-foreground/10 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100"
                         >
                             {step === "contact" && (isSubmitting || loadingProviders) ? (
-                                <Loader2 className="h-5 w-5 animate-spin"/>
+                                <Loader2 className="h-5 w-5 animate-spin" />
                             ) : (
                                 <span className="flex items-center gap-2">
-                  {step === "help" && "Continue to Vehicle"}
+                                    {step === "help" && "Continue to Vehicle"}
                                     {step === "car" && "Continue to Location"}
                                     {step === "contact" && "Find Providers"}
-                                    <ArrowRight className="h-5 w-5"/>
-                </span>
+                                    <ArrowRight className="h-5 w-5" />
+                                </span>
                             )}
                         </Button>
                     ) : (
@@ -758,10 +758,10 @@ export default function GetHelpWizardPage() {
                                     loc
                                 )
                             }
-                            className="w-full h-12 rounded-xl border-slate-200 text-slate-600"
+                            className="w-full h-12 rounded-xl border-border text-muted-foreground"
                         >
                             {loadingProviders ? (
-                                <Loader2 className="h-4 w-4 animate-spin"/>
+                                <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                                 "Refresh Results"
                             )}
@@ -783,17 +783,17 @@ const ModernInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"inp
     error?: string,
     icon?: React.ReactNode
 }>(
-    ({label, error, icon, className, ...props}, ref) => {
+    ({ label, error, icon, className, ...props }, ref) => {
         return (
             <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-1">{label}</label>
+                <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground ml-1">{label}</label>
                 <div className="relative group">
                     <input
                         ref={ref}
                         className={cn(
-                            "flex h-12 w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:border-slate-900 focus-visible:bg-white disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
+                            "flex h-12 w-full rounded-xl border-2 border-input bg-background px-4 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:bg-card disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
                             icon && "pl-10",
-                            error && "border-red-300 bg-red-50 focus-visible:border-red-500",
+                            error && "border-destructive bg-destructive/10 focus-visible:border-destructive",
                             className
                         )}
                         {...props}
@@ -809,15 +809,15 @@ ModernInput.displayName = "ModernInput"
 
 
 function ProviderCard({
-                          provider,
-                          smsBody,
-                          onLockRequest,
-                      }: {
+    provider,
+    smsBody,
+    onLockRequest,
+}: {
     provider: Provider;
     smsBody: string;
     onLockRequest?: (provider: Provider) => Promise<void> | void;
 }) {
-    const telHref = `tel:${provider.phone}`;
+    const telHref = `tel:${provider.phone} `;
     const mapsHref = `https://maps.google.com/?q=${provider.lat},${provider.lng}`;
 
     const [callDialogOpen, setCallDialogOpen] = useState(false);
@@ -849,8 +849,8 @@ function ProviderCard({
 
             const res = await fetch("/api/send-sms", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({to: provider.phone, content: smsBody}),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ to: provider.phone, content: smsBody }),
             });
 
             if (!res.ok) throw new Error("Failed");
@@ -877,20 +877,20 @@ function ProviderCard({
                         <div>
                             <h3 className="font-bold text-slate-900 text-base flex items-center gap-1">
                                 {provider.name}
-                                {provider.is_verified && <BadgeCheck className="h-4 w-4 text-sky-500 fill-sky-500/10"/>}
+                                {provider.is_verified && <BadgeCheck className="h-4 w-4 text-sky-500 fill-sky-500/10" />}
                             </h3>
                             <div className="flex items-center gap-3 text-xs font-medium text-slate-500 mt-0.5">
-                   <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">
-                      <Star className="h-3 w-3 fill-current"/> {provider.rating?.toFixed(1) || "New"}
-                   </span>
+                                <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+                                    <Star className="h-3 w-3 fill-current" /> {provider.rating?.toFixed(1) || "New"}
+                                </span>
                                 <span>•</span>
                                 <span>{provider.distance_km.toFixed(1)} km away</span>
                             </div>
                         </div>
                     </div>
                     <a href={mapsHref} target="_blank"
-                       className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:bg-sky-50 hover:text-sky-600 transition-colors">
-                        <MapPin className="h-5 w-5"/>
+                        className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:bg-sky-50 hover:text-sky-600 transition-colors">
+                        <MapPin className="h-5 w-5" />
                     </a>
                 </div>
 
@@ -899,14 +899,14 @@ function ProviderCard({
                     {provider.min_callout_fee != null && (
                         <span
                             className="text-[10px] font-bold uppercase tracking-wide bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-100">
-                  Fee: GH₵{provider.min_callout_fee}
-              </span>
+                            Fee: GH₵{provider.min_callout_fee}
+                        </span>
                     )}
                     {provider.coverage_radius_km != null && (
                         <span
                             className="text-[10px] font-bold uppercase tracking-wide bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-100">
-                  Range: {provider.coverage_radius_km}km
-              </span>
+                            Range: {provider.coverage_radius_km}km
+                        </span>
                     )}
                 </div>
 
@@ -914,21 +914,21 @@ function ProviderCard({
                 {provider.services.length > 0 && (
                     <div className="mb-5">
                         <button onClick={() => setShowServices(!showServices)}
-                                className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors w-full py-1">
+                            className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors w-full py-1">
                             <span
                                 className="flex-1 text-left">{showServices ? 'Hide' : 'View'} {provider.services.length} services & pricing</span>
-                            <ChevronDown className={cn("h-4 w-4 transition-transform", showServices && "rotate-180")}/>
+                            <ChevronDown className={cn("h-4 w-4 transition-transform", showServices && "rotate-180")} />
                         </button>
 
                         {showServices && (
                             <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
                                 {provider.services.map(s => (
                                     <div key={s.code}
-                                         className="flex justify-between items-center text-xs p-2.5 rounded-xl bg-slate-50/50 border border-slate-100">
+                                        className="flex justify-between items-center text-xs p-2.5 rounded-xl bg-slate-50/50 border border-slate-100">
                                         <span className="font-medium text-slate-700">{s.name}</span>
                                         <span className="font-bold text-slate-900">
-                                {s.price ? `GH₵${s.price}` : 'N/A'}
-                            </span>
+                                            {s.price ? `GH₵${s.price}` : 'N/A'}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -939,12 +939,12 @@ function ProviderCard({
                 {/* Actions */}
                 <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCallDialogOpen(true)}
-                            className="h-12 rounded-xl border-2 border-slate-100 font-bold text-slate-700 text-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                        <Phone className="h-4 w-4"/> Call
+                        className="h-12 rounded-xl border-2 border-slate-100 font-bold text-slate-700 text-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                        <Phone className="h-4 w-4" /> Call
                     </button>
                     <button onClick={() => setSmsDialogOpen(true)}
-                            className="h-12 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition-colors shadow-md flex items-center justify-center gap-2">
-                        <MessageCircle className="h-4 w-4"/> Send Info
+                        className="h-12 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition-colors shadow-md flex items-center justify-center gap-2">
+                        <MessageCircle className="h-4 w-4" /> Send Info
                     </button>
                 </div>
 
@@ -958,9 +958,9 @@ function ProviderCard({
                         {lockError && <p className="text-red-500 text-sm">{lockError}</p>}
                         <div className="flex gap-2 mt-4">
                             <Button variant="ghost" onClick={() => setCallDialogOpen(false)}
-                                    className="flex-1 rounded-xl">Cancel</Button>
+                                className="flex-1 rounded-xl">Cancel</Button>
                             <Button onClick={handleCall} disabled={locking} className="flex-1 rounded-xl bg-slate-900">
-                                {locking ? <Loader2 className="h-4 w-4 animate-spin"/> : "Call Now"}
+                                {locking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Call Now"}
                             </Button>
                         </div>
                     </DialogContent>
@@ -979,10 +979,10 @@ function ProviderCard({
                         {smsError && <p className="text-red-500 text-sm">{smsError}</p>}
                         <div className="flex gap-2 mt-4">
                             <Button variant="ghost" onClick={() => setSmsDialogOpen(false)}
-                                    className="flex-1 rounded-xl">Cancel</Button>
+                                className="flex-1 rounded-xl">Cancel</Button>
                             <Button onClick={handleSms} disabled={sendingSms}
-                                    className="flex-1 rounded-xl bg-slate-900">
-                                {sendingSms ? <Loader2 className="h-4 w-4 animate-spin"/> : "Send SMS"}
+                                className="flex-1 rounded-xl bg-slate-900">
+                                {sendingSms ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send SMS"}
                             </Button>
                         </div>
                     </DialogContent>
@@ -993,15 +993,15 @@ function ProviderCard({
     )
 }
 
-function BlockedLocationHelp({onRetry}: { onRetry: () => void }) {
+function BlockedLocationHelp({ onRetry }: { onRetry: () => void }) {
     return (
         <div className="mt-4 p-4 bg-amber-50 text-amber-900 rounded-2xl border border-amber-100 text-sm space-y-2">
             <div className="font-bold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4"/> Location Blocked
+                <AlertTriangle className="h-4 w-4" /> Location Blocked
             </div>
             <p>Please enable location services in your browser settings to find nearby help.</p>
             <Button size="sm" onClick={onRetry} variant="outline"
-                    className="bg-white border-amber-200 text-amber-900 hover:bg-amber-100 w-full mt-2">Retry</Button>
+                className="bg-white border-amber-200 text-amber-900 hover:bg-amber-100 w-full mt-2">Retry</Button>
         </div>
     )
 }

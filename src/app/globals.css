@@ -49,41 +49,40 @@
 :root {
     --radius: 0.625rem;
 
-    /* Neutrals (OKLCH for clean contrast) */
+    /* Neutrals (High contrast) */
     --background: #ffffff;
-    --foreground: oklch(0.141 0.005 285.823);
+    --foreground: #000000;
 
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.141 0.005 285.823);
+    --card: #ffffff;
+    --card-foreground: #000000;
 
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.141 0.005 285.823);
+    --popover: #ffffff;
+    --popover-foreground: #000000;
 
     /* === Brand accents === */
-    /* Primary: fluorescent/neon green */
-    /* HSL triplet so Tailwind’s hsl(var(--primary)) works nicely */
-    --primary: #9fe870;
-    --primary-foreground: 0 0% 0%; /* black on neon */
+    /* Primary: Black for readability on white */
+    --primary: #000000;
+    --primary-foreground: #ffffff;
 
-    /* Accent: black surface with yellow text */
-    --accent: #58a6ff; /* near-black */
-    --accent-foreground: 48 100% 50%; /* vivid yellow */
+    /* Accent: Subtle gray for hover */
+    --accent: #f4f4f5;
+    --accent-foreground: #000000;
 
-    /* Secondary band: also black/yellow for CTA strips if desired */
-    --secondary: #c2c3c3;
-    --secondary-foreground: 48 100% 50%;
+    /* Secondary: Black for strong contrast */
+    --secondary: #000000;
+    --secondary-foreground: #ffffff;
 
     /* Muted & UI neutrals */
-    --muted: oklch(0.967 0.001 286.375);
-    --muted-foreground: oklch(0.552 0.016 285.938);
+    --muted: #f4f4f5;
+    --muted-foreground: #52525b;
 
     --destructive: oklch(0.577 0.245 27.325);
 
-    --border: oklch(0.92 0.004 286.32);
-    --input: oklch(0.92 0.004 286.32);
+    --border: #e4e4e7;
+    --input: #e4e4e7;
 
-    /* Focus ring leans neon */
-    --ring: 110 100% 54%;
+    /* Focus ring */
+    --ring: #9ae600;
 
     /* Charts (keep your existing palette) */
     --chart-1: oklch(0.646 0.222 41.116);
@@ -93,49 +92,49 @@
     --chart-5: oklch(0.769 0.188 70.08);
 
     /* Sidebar tokens */
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-primary: 110 100% 54%; /* neon in sidebar too */
-    --sidebar-primary-foreground: 0 0% 0%; /* black on neon */
-    --sidebar-accent: 0 0% 6%; /* black */
-    --sidebar-accent-foreground: 48 100% 50%; /* yellow */
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: 110 100% 54%;
+    --sidebar: #f4f4f5;
+    --sidebar-foreground: #000000;
+    --sidebar-primary: #9ae600;
+    --sidebar-primary-foreground: #000000;
+    --sidebar-accent: #e4e4e7;
+    --sidebar-accent-foreground: #000000;
+    --sidebar-border: #e4e4e7;
+    --sidebar-ring: #9ae600;
 }
 
 /* ---------- Dark theme ---------- */
 .dark {
-    /* Dark neutrals */
-    --background: oklch(0.141 0.005 285.823);
-    --foreground: oklch(0.985 0 0);
+    /* Dark neutrals (Pure Black) */
+    --background: #000000;
+    --foreground: #ffffff;
 
-    --card: oklch(0.21 0.006 285.885);
-    --card-foreground: oklch(0.985 0 0);
+    --card: #000000;
+    --card-foreground: #ffffff;
 
-    --popover: oklch(0.21 0.006 285.885);
-    --popover-foreground: oklch(0.985 0 0);
+    --popover: #000000;
+    --popover-foreground: #ffffff;
 
-    /* Neon primary pops a bit more on dark */
-    --primary: 96.5 72.3% 67.5%;
-    --primary-foreground: 0 0% 10%;
+    /* Primary: Lime (#9ae600) */
+    --primary: #9ae600;
+    --primary-foreground: #000000;
 
-    /* Accent stays black & yellow */
-    --accent: 0 0% 8%;
-    --accent-foreground: 50 100% 52%;
+    /* Accent: Dark gray */
+    --accent: #27272a;
+    --accent-foreground: #ffffff;
 
-    /* Secondary band mirrors accent scheme */
-    --secondary: 0 0% 8%;
-    --secondary-foreground: 50 100% 52%;
+    /* Secondary: White for strong contrast */
+    --secondary: #ffffff;
+    --secondary-foreground: #000000;
 
     /* Muted & UI */
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
 
     --destructive: oklch(0.704 0.191 22.216);
 
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: 110 100% 60%;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #9ae600;
 
     /* Charts (unchanged) */
     --chart-1: oklch(0.488 0.243 264.376);
@@ -145,14 +144,14 @@
     --chart-5: oklch(0.645 0.246 16.439);
 
     /* Sidebar */
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: 110 100% 60%;
-    --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 8%;
-    --sidebar-accent-foreground: 50 100% 52%;
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: 110 100% 60%;
+    --sidebar: #000000;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #9ae600;
+    --sidebar-primary-foreground: #000000;
+    --sidebar-accent: #27272a;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #27272a;
+    --sidebar-ring: #9ae600;
 }
 
 /* ---------- Base layer ---------- */

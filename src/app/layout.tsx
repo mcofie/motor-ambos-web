@@ -1,5 +1,6 @@
 import './globals.css'
-import {Inter, Poppins, Anta} from 'next/font/google'
+import { ThemeProvider } from "@/components/ThemeProvider"
+import { Inter, Poppins, Anta } from 'next/font/google'
 
 const inter = Inter({
     subsets: ['latin'],
@@ -21,13 +22,20 @@ const anta = Anta({
     display: 'swap',
 })
 
-export default function RootLayout({children}: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en" className={`${inter.variable} ${poppins.variable} ${anta.variable}`}>
-        {/* Use your default text font here (Inter) */}
-        <body className="font-sans antialiased">
-        {children}
-        </body>
+            {/* Use your default text font here (Inter) */}
+            <body className="font-sans antialiased">
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    {children}
+                </ThemeProvider>
+            </body>
         </html>
     )
 }

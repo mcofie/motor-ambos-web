@@ -150,12 +150,12 @@ export default function ReviewPage() {
     // Handle missing / bad reviewId up-front
     if (!requestId || typeof requestId !== "string") {
         return (
-            <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
-                <div className="h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center mb-4">
-                    <Wrench className="h-8 w-8 text-slate-400" />
+            <main className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <Wrench className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900 mb-2">Invalid Link</h1>
-                <p className="text-slate-500 max-w-md text-sm">
+                <h1 className="text-2xl font-bold text-foreground mb-2">Invalid Link</h1>
+                <p className="text-muted-foreground max-w-md text-sm">
                     We couldn&apos;t find the request connected to this review link. It may have expired or is incorrect.
                 </p>
             </main>
@@ -173,33 +173,33 @@ export default function ReviewPage() {
         "Motor Ambos help request";
 
     return (
-        <main className="min-h-screen bg-slate-50 font-sans text-slate-900">
+        <main className="min-h-screen bg-background font-sans text-foreground">
             {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+            <header className="sticky top-0 z-30 w-full bg-background/80 backdrop-blur-xl border-b border-border">
                 <div className="mx-auto max-w-lg px-4 h-14 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {!submitted && step !== "rating" && (
                             <button
                                 onClick={onBack}
-                                className="mr-1 -ml-2 p-2 rounded-full hover:bg-slate-100 text-slate-600"
+                                className="mr-1 -ml-2 p-2 rounded-full hover:bg-muted text-muted-foreground"
                             >
                                 <ChevronLeft className="h-5 w-5" />
                             </button>
                         )}
                         <div className="flex flex-col">
-              <span className="text-sm font-bold tracking-tight text-slate-900">
-                Motor Ambos
-              </span>
-                            <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
-                 {submitted ? 'Feedback Sent' : 'Rate Experience'}
-              </span>
+                            <span className="text-sm font-bold tracking-tight text-foreground">
+                                Motor Ambos
+                            </span>
+                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                                {submitted ? 'Feedback Sent' : 'Rate Experience'}
+                            </span>
                         </div>
                     </div>
 
                     {!submitted && (
-                        <div className="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-slate-900 transition-all duration-500 ease-out"
+                                className="h-full bg-foreground transition-all duration-500 ease-out"
                                 style={{ width: `${progressPercent}%` }}
                             />
                         </div>
@@ -214,10 +214,10 @@ export default function ReviewPage() {
                     {/* Header Text */}
                     {!submitted && (
                         <div className="mb-8 text-center space-y-2">
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground">
                                 {step === "rating" ? "How did it go?" : "Any details to share?"}
                             </h1>
-                            <p className="text-sm text-slate-500 max-w-xs mx-auto">
+                            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                                 {ctxLoading
                                     ? "Loading request details..."
                                     : context
@@ -229,7 +229,7 @@ export default function ReviewPage() {
 
                     {/* STEP 1: RATING */}
                     {!submitted && step === "rating" && (
-                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-6">
+                        <div className="bg-card p-8 rounded-3xl shadow-sm border border-border flex flex-col items-center gap-6">
                             <div className="flex items-center gap-2">
                                 {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
                                     const active =
@@ -251,7 +251,7 @@ export default function ReviewPage() {
                                                     "h-10 w-10 transition-all duration-200",
                                                     active
                                                         ? "fill-yellow-400 text-yellow-400 scale-110"
-                                                        : "text-slate-200 group-hover:text-yellow-200"
+                                                        : "text-muted-foreground/30 group-hover:text-yellow-200"
                                                 )}
                                                 strokeWidth={active ? 0 : 1.5}
                                             />
@@ -262,13 +262,13 @@ export default function ReviewPage() {
 
                             <div className="min-h-[2rem] flex items-center justify-center">
                                 {rating ? (
-                                    <span className="inline-flex items-center rounded-full bg-slate-900 px-4 py-1.5 text-xs font-bold text-white shadow-md transition-all animate-in zoom-in duration-300">
-                                {rating} / 5 – {RATING_LABELS[rating]}
-                            </span>
+                                    <span className="inline-flex items-center rounded-full bg-foreground px-4 py-1.5 text-xs font-bold text-background shadow-md transition-all animate-in zoom-in duration-300">
+                                        {rating} / 5 – {RATING_LABELS[rating]}
+                                    </span>
                                 ) : (
-                                    <span className="text-xs text-slate-400 font-medium">
-                                Tap a star to select
-                             </span>
+                                    <span className="text-xs text-muted-foreground font-medium">
+                                        Tap a star to select
+                                    </span>
                                 )}
                             </div>
                         </div>
@@ -276,29 +276,29 @@ export default function ReviewPage() {
 
                     {/* STEP 2: REVIEW */}
                     {!submitted && step === "review" && (
-                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                        <div className="bg-card p-6 rounded-3xl shadow-sm border border-border space-y-4">
                             <div className="space-y-1.5">
-                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Written Review</Label>
+                                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Written Review</Label>
                                 <Textarea
                                     rows={6}
                                     value={review}
                                     onChange={(e) => setReview(e.target.value)}
                                     placeholder="The mechanic arrived quickly and was very professional..."
-                                    className="resize-none text-base bg-slate-50 border-slate-200 rounded-xl focus-visible:ring-slate-900 min-h-[160px]"
+                                    className="resize-none text-base bg-background border-input rounded-xl focus-visible:ring-ring min-h-[160px]"
                                     autoFocus
                                 />
                                 <div className="flex justify-between items-center px-1">
-                                    <p className="text-[10px] text-slate-400">
+                                    <p className="text-[10px] text-muted-foreground">
                                         Min 6 chars. Don&apos;t share private info.
                                     </p>
-                                    <span className={cn("text-[10px] font-medium", review.length > 5 ? "text-emerald-600" : "text-slate-300")}>
-                                {review.length} / 6
-                             </span>
+                                    <span className={cn("text-[10px] font-medium", review.length > 5 ? "text-emerald-600" : "text-muted-foreground")}>
+                                        {review.length} / 6
+                                    </span>
                                 </div>
                             </div>
 
                             {errorMsg && (
-                                <div className="p-3 rounded-xl bg-red-50 text-red-600 text-xs font-medium border border-red-100">
+                                <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20">
                                     {errorMsg}
                                 </div>
                             )}
@@ -307,17 +307,17 @@ export default function ReviewPage() {
 
                     {/* SUCCESS STATE */}
                     {submitted && (
-                        <div className="bg-white p-10 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-6 mt-8">
-                            <div className="h-20 w-20 bg-emerald-50 rounded-full flex items-center justify-center animate-in zoom-in duration-500">
+                        <div className="bg-card p-10 rounded-3xl shadow-sm border border-border flex flex-col items-center text-center gap-6 mt-8">
+                            <div className="h-20 w-20 bg-emerald-500/10 rounded-full flex items-center justify-center animate-in zoom-in duration-500">
                                 <CheckCircle className="h-10 w-10 text-emerald-500" />
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-bold text-slate-900">Thank you!</h2>
-                                <p className="text-slate-500 text-sm max-w-xs mx-auto leading-relaxed">
+                                <h2 className="text-2xl font-bold text-foreground">Thank you!</h2>
+                                <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
                                     Your feedback helps us maintain high standards for the Motor Ambos network.
                                 </p>
                             </div>
-                            <Button variant="outline" className="mt-2 rounded-xl border-slate-200 text-slate-600" onClick={() => window.close()}>
+                            <Button variant="outline" className="mt-2 rounded-xl border-border text-muted-foreground" onClick={() => window.close()}>
                                 Close Window
                             </Button>
                         </div>
@@ -328,21 +328,21 @@ export default function ReviewPage() {
 
             {/* Sticky Footer Action Bar */}
             {!submitted && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-30 pb-[env(safe-area-inset-bottom)]">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border z-30 pb-[env(safe-area-inset-bottom)]">
                     <div className="mx-auto max-w-lg">
                         <Button
                             type="button"
                             disabled={!canNext || submitting}
                             onClick={handlePrimary}
-                            className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all active:scale-95"
+                            className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-foreground/10 transition-all active:scale-95"
                         >
                             {submitting ? (
                                 <Loader2 className="h-5 w-5 animate-spin" />
                             ) : (
                                 <span className="flex items-center gap-2">
-                            {step === "rating" ? "Next Step" : "Submit Review"}
+                                    {step === "rating" ? "Next Step" : "Submit Review"}
                                     <ArrowRight className="h-4 w-4" />
-                        </span>
+                                </span>
                             )}
                         </Button>
                     </div>

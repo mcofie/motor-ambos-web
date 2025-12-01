@@ -27,23 +27,35 @@ export async function middleware(req: NextRequest) {
         }
     );
 
-    // Try to get a session quickly (no hanging in the client)
-    const { data: { session }, error } = await supabase.auth.getSession();
+    // Try to get a user quickly (no hanging in the client)
+    const { error } = await supabase.auth.getUser();
+    if (error) {
+        // console.error("Auth error:", error);
+    }
 
-    // Not signed in → to /login
-    if (!session?.user) {
+    // 3. Check for admin role if accessing /admin
+    if (req.nextUrl.pathname.startsWith('/admin')) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const email = user?.email;
+
+        // Simple check: is email in admin list?
+        // In production, you'd probably check a `profiles.role` or similar.
+        const admins = ['maxwellcofie@gmail.com', 'admin@motorambos.com'];
+        if (!email || !admins.includes(email)) {
+            return NextResponse.redirect(new URL('/', req.url));
+        }
+    }
+
+    // If not an admin path, or if admin check passed, proceed.
+    // If no user session, redirect to login (this part is implicitly handled by the admin check for /admin,
+    // but for other paths, we might still want a general auth check if this middleware was broader).
+    // For now, assuming the admin check is the primary gate for /admin.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user && req.nextUrl.pathname !== '/login') { // Only redirect if not already on login page
         const redirect = new URL("/login", req.url);
         redirect.searchParams.set("next", req.nextUrl.pathname);
         return NextResponse.redirect(redirect);
     }
-
-    // Admin check (email-based)
-    const email = session.user.email?.toLowerCase() ?? "";
-    // if (!isAdminEmail(email)) {
-    //     const redirect = new URL("/login", req.url);
-    //     redirect.searchParams.set("err", "not_admin");
-    //     return NextResponse.redirect(redirect);
-    // }
 
     // Allowed
     return res;

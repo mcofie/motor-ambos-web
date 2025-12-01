@@ -187,6 +187,9 @@ export type MemberWithMembershipRow = {
     membership_number: string | null;
     membership_expiry_date: string | null;
     membership_is_active: boolean | null;
+    plan_name?: string | null;
+    plan_code?: string | null;
+    tier?: string | null;
 };
 
 export type UpsertMemberMembershipParams = {
@@ -219,7 +222,7 @@ export type UpsertMemberMembershipResult = {
 export async function listProviderRates(providerId: string): Promise<ProviderRateRow[]> {
     const res = await fetch(
         `${URL}/rest/v1/provider_rates?provider_id=eq.${providerId}`,
-        {headers: authHeaders()}
+        { headers: authHeaders() }
     );
 
     await throwIfNotOk(res);
@@ -251,7 +254,7 @@ export async function upsertProviderRates(
         `${URL}/rest/v1/provider_rates?on_conflict=provider_id,service_id`,
         {
             method: "POST",
-            headers: {...authHeaders(), Prefer: "resolution=merge-duplicates"},
+            headers: { ...authHeaders(), Prefer: "resolution=merge-duplicates" },
             body: JSON.stringify(rows),
         }
     );
@@ -322,8 +325,8 @@ export async function loginWithPassword(
 ): Promise<AuthSuccessResponse> {
     const res = await fetch(`${URL}/auth/v1/token?grant_type=password`, {
         method: "POST",
-        headers: {apikey: ANON, "Content-Type": "application/json"},
-        body: JSON.stringify({email, password}),
+        headers: { apikey: ANON, "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
     });
 
     const json = (await res.json()) as AuthSuccessResponse & AuthErrorResponse;
@@ -350,7 +353,7 @@ export async function getUser(): Promise<SupabaseUserPayload> {
     if (!token) return null;
 
     const res = await fetch(`${URL}/auth/v1/user`, {
-        headers: {apikey: ANON, Authorization: `Bearer ${token}`},
+        headers: { apikey: ANON, Authorization: `Bearer ${token}` },
     });
 
     if (!res.ok) return null;
@@ -377,7 +380,7 @@ export async function lookupServiceIdByCode(
 ): Promise<string> {
     const res = await fetch(
         `${URL}/rest/v1/services?select=id&code=eq.${code}&limit=1`,
-        {headers: anonHeaders()}
+        { headers: anonHeaders() }
     );
 
     await throwIfNotOk(res);
@@ -423,7 +426,7 @@ export async function listProviders(q?: string): Promise<ProviderRow[]> {
     return rows.map((r) => {
         if ((!r.lat || !r.lng) && r.location?.coordinates) {
             const [lng, lat] = r.location.coordinates;
-            return {...r, lat, lng};
+            return { ...r, lat, lng };
         }
         return r;
     });
@@ -462,7 +465,7 @@ export async function insertProvider(
 
     const res = await fetch(`${URL}/rest/v1/providers`, {
         method: "POST",
-        headers: {...authHeaders(), Prefer: "return=representation"},
+        headers: { ...authHeaders(), Prefer: "return=representation" },
         body: JSON.stringify(payload),
     });
 
@@ -489,13 +492,13 @@ export async function updateProvider(
     id: string,
     patch: UpdateProviderPatch
 ): Promise<ProviderRow | null> {
-    const clean: Record<string, unknown> = {...patch};
+    const clean: Record<string, unknown> = { ...patch };
     delete clean.lat;
     delete clean.lng;
 
     const res = await fetch(`${URL}/rest/v1/providers?id=eq.${id}`, {
         method: "PATCH",
-        headers: {...authHeaders(), Prefer: "return=representation"},
+        headers: { ...authHeaders(), Prefer: "return=representation" },
         body: JSON.stringify(clean),
     });
 
@@ -521,7 +524,7 @@ export async function getProviderServiceIds(
 ): Promise<string[]> {
     const res = await fetch(
         `${URL}/rest/v1/provider_services?select=service_id&provider_id=eq.${providerId}`,
-        {headers: authHeaders()}
+        { headers: authHeaders() }
     );
 
     await throwIfNotOk(res);
@@ -556,23 +559,23 @@ export async function setProviderServices(
         )}`;
         const res = await fetch(url, {
             method: "DELETE",
-            headers: {...authHeaders(), Prefer: "return=minimal"},
+            headers: { ...authHeaders(), Prefer: "return=minimal" },
         });
         await throwIfNotOk(res);
     }
 
     // INSERT added services
     if (toAdd.length) {
-        const payload = toAdd.map((service_id) => ({provider_id: providerId, service_id}));
+        const payload = toAdd.map((service_id) => ({ provider_id: providerId, service_id }));
         const res = await fetch(`${URL}/rest/v1/provider_services`, {
             method: "POST",
-            headers: {...authHeaders(), Prefer: "return=minimal"},
+            headers: { ...authHeaders(), Prefer: "return=minimal" },
             body: JSON.stringify(payload),
         });
         await throwIfNotOk(res);
     }
 
-    return {added: toAdd.length, removed: toRemove.length};
+    return { added: toAdd.length, removed: toRemove.length };
 }
 
 /* ─────────────────────────────────────────
@@ -702,7 +705,7 @@ export async function createRequest(payload: {
 
     const res = await fetch(`${URL}/rest/v1/requests`, {
         method: "POST",
-        headers: {...anonHeaders(), Prefer: "return=representation"},
+        headers: { ...anonHeaders(), Prefer: "return=representation" },
         body: JSON.stringify(body),
     });
 
@@ -732,7 +735,7 @@ export async function fetchMembershipByNumber<T = unknown>(
             Prefer: "return=representation",
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({in_membership_number: trimmed}),
+        body: JSON.stringify({ in_membership_number: trimmed }),
         cache: "no-store",
     });
 
@@ -923,8 +926,8 @@ export async function updateRequestStatus(
 ): Promise<void> {
     const res = await fetch(`${URL}/rest/v1/requests?id=eq.${id}`, {
         method: "PATCH",
-        headers: {...authHeaders(), Prefer: "return=minimal"},
-        body: JSON.stringify({status}),
+        headers: { ...authHeaders(), Prefer: "return=minimal" },
+        body: JSON.stringify({ status }),
     });
 
     await throwIfNotOk(res);

@@ -1,54 +1,24 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import {Button} from "@/components/ui/button";
-import {Moon, Sun} from "lucide-react";
+import * as React from "react"
+import { Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
 
-type Theme = "light" | "dark";
-
-function applyTheme(t: Theme) {
-    const root = document.documentElement;
-    if (t === "dark") root.classList.add("dark");
-    else root.classList.remove("dark");
-}
+import { Button } from "@/components/ui/button"
 
 export function ThemeToggle() {
-    const [mounted, setMounted] = React.useState(false);
-    const [theme, setTheme] = React.useState<Theme>("light");
-
-    // Hydration-safe initial theme
-    React.useEffect(() => {
-        setMounted(true);
-        const saved = (localStorage.getItem("theme") as Theme | null) ?? null;
-        const prefersDark =
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-        const initial: Theme = saved ?? (prefersDark ? "dark" : "light");
-        setTheme(initial);
-        applyTheme(initial);
-    }, []);
-
-    const toggle = () => {
-        const next: Theme = theme === "dark" ? "light" : "dark";
-        setTheme(next);
-        localStorage.setItem("theme", next);
-        applyTheme(next);
-    };
-
-    // Avoid mismatched icons before mount
-    const isDark = mounted ? theme === "dark" : false;
+    const { setTheme, theme } = useTheme()
 
     return (
         <Button
-            type="button"
             variant="ghost"
             size="icon"
-            aria-label="Toggle theme"
-            onClick={toggle}
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             className="rounded-full"
         >
-            {isDark ? <Sun className="h-5 w-5"/> : <Moon className="h-5 w-5"/>}
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
         </Button>
-    );
+    )
 }

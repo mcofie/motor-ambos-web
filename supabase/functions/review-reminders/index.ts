@@ -1,4 +1,5 @@
 // supabase/functions/review-reminders/index.ts
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck  // <-- Important: prevent Next/tsc from trying to type-check Deno URL imports
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";

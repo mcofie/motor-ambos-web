@@ -1,19 +1,10 @@
 "use client";
 
-import {useEffect, useMemo, useState} from "react";
-import {useSearchParams} from "next/navigation";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {Badge} from "@/components/ui/badge";
-import {Separator} from "@/components/ui/separator";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
     Car,
     ShieldCheck,
-    CalendarClock,
     MapPin,
     Wrench,
     AlertCircle,
@@ -22,7 +13,7 @@ import {
     Activity,
     CarFront,
 } from "lucide-react";
-import {fetchMembershipByNumber} from "@/lib/supaFetch";
+import { fetchMembershipByNumber } from "@/lib/supaFetch";
 
 /* ───────── Types ───────── */
 
@@ -199,7 +190,7 @@ export function MembershipPageClient() {
 
     const primaryVehicle = useMemo(() => {
         if (!m || !m.vehicles.length) {
-            return {plate: "—", model: "No vehicle on file"};
+            return { plate: "—", model: "No vehicle on file" };
         }
         return m.vehicles.find((v) => v.primary) ?? m.vehicles[0];
     }, [m]);
@@ -221,13 +212,13 @@ export function MembershipPageClient() {
     /* ───────── Loading ───────── */
     if (loading) {
         return (
-            <div className="min-h-screen bg-zinc-50 text-zinc-900 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
                 <div className="w-full max-w-sm space-y-6">
                     <div className="space-y-2 text-center">
-                        <div className="mx-auto h-12 w-12 rounded-full bg-zinc-200 animate-pulse"/>
-                        <div className="h-6 w-48 rounded-full bg-zinc-200 animate-pulse mx-auto"/>
+                        <div className="mx-auto h-12 w-12 rounded-full bg-muted animate-pulse" />
+                        <div className="h-6 w-48 rounded-full bg-muted animate-pulse mx-auto" />
                     </div>
-                    <div className="h-56 w-full rounded-3xl bg-zinc-200 animate-pulse"/>
+                    <div className="h-56 w-full rounded-3xl bg-muted animate-pulse" />
                 </div>
             </div>
         );
@@ -236,14 +227,14 @@ export function MembershipPageClient() {
     /* ───────── Error / Empty ───────── */
     if (!membershipNumber || error || !m) {
         return (
-            <div className="min-h-screen bg-zinc-50 text-zinc-900 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
                 <main className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
                     <div
-                        className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200">
+                        className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted border border-border">
                         {error ? (
-                            <AlertCircle className="h-8 w-8 text-zinc-400"/>
+                            <AlertCircle className="h-8 w-8 text-muted-foreground" />
                         ) : (
-                            <Search className="h-8 w-8 text-zinc-400"/>
+                            <Search className="h-8 w-8 text-muted-foreground" />
                         )}
                     </div>
 
@@ -251,7 +242,7 @@ export function MembershipPageClient() {
                         <h1 className="text-2xl font-bold tracking-tight">
                             {error ? "Membership Not Found" : "Membership Lookup"}
                         </h1>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-muted-foreground">
                             {error
                                 ? error
                                 : "Please use the unique link provided in your welcome email to view your digital membership card."}
@@ -259,10 +250,10 @@ export function MembershipPageClient() {
                     </div>
 
                     {!membershipNumber && (
-                        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-100/50 p-4">
-                            <p className="text-xs text-zinc-500">
-                                Example URL: <br/>
-                                <code className="bg-zinc-200 px-1 py-0.5 rounded">
+                        <div className="rounded-lg border border-dashed border-border bg-muted/50 p-4">
+                            <p className="text-xs text-muted-foreground">
+                                Example URL: <br />
+                                <code className="bg-muted px-1 py-0.5 rounded">
                                     /membership?m=MBR-2048-001
                                 </code>
                             </p>
@@ -275,14 +266,14 @@ export function MembershipPageClient() {
 
     /* ───────── Main View ───────── */
     return (
-        <div className="min-h-screen bg-zinc-50 text-zinc-900 selection:bg-[#9fe870]/30 selection:text-black">
+        <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-foreground">
             <main className="mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-10">
 
                 {/* Header */}
                 <header className="space-y-2 text-center sm:text-left">
                     <div
-                        className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 shadow-sm">
-                        <ShieldCheck className="h-3.5 w-3.5 text-[#9fe870]"/>
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                        <ShieldCheck className="h-3.5 w-3.5 text-primary" />
                         <span>Verified Membership</span>
                     </div>
                     <h1 className="text-3xl font-bold tracking-tight">Digital Card</h1>
@@ -293,15 +284,15 @@ export function MembershipPageClient() {
                     <div
                         className="relative mx-auto w-full max-w-md aspect-[1.58/1] rotate-1 transition-transform duration-500 hover:rotate-0">
                         <div
-                            className="absolute inset-0 translate-y-4 rounded-2xl bg-[#9fe870]/20 blur-3xl opacity-50"/>
+                            className="absolute inset-0 translate-y-4 rounded-2xl bg-primary/20 blur-3xl opacity-50" />
                         <div
-                            className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-800 to-black border border-zinc-700 shadow-2xl flex flex-col justify-between p-6 text-white overflow-hidden">
+                            className="absolute inset-0 rounded-2xl bg-gradient-to-br from-card to-background border border-border shadow-2xl flex flex-col justify-between p-6 text-foreground overflow-hidden">
                             <div className="flex justify-between items-start z-10">
-                                <Car className="text-[#9fe870] h-8 w-8"/>
+                                <Car className="text-primary h-8 w-8" />
                                 <div className="text-right">
-                                    <span className="font-mono text-[10px] text-zinc-500 block tracking-widest">MEMBER ID</span>
+                                    <span className="font-mono text-[10px] text-muted-foreground block tracking-widest">MEMBER ID</span>
                                     <span
-                                        className="font-mono text-xs text-zinc-300 tracking-wider">{m.membershipNumber}</span>
+                                        className="font-mono text-xs text-muted-foreground tracking-wider">{m.membershipNumber}</span>
                                 </div>
                             </div>
                             <div className="z-10">
@@ -309,22 +300,22 @@ export function MembershipPageClient() {
                                     {m.memberName}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className={`h-2 w-2 rounded-full ${statusColor} animate-pulse`}/>
-                                    <span className="text-xs text-zinc-400 font-mono uppercase">{statusLabel}</span>
+                                    <div className={`h-2 w-2 rounded-full ${statusColor} animate-pulse`} />
+                                    <span className="text-xs text-muted-foreground font-mono uppercase">{statusLabel}</span>
                                 </div>
                             </div>
                             <div className="flex justify-between items-end z-10">
                                 <span
-                                    className="text-[10px] bg-[#9fe870] text-black px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+                                    className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded font-bold uppercase tracking-wide">
                                     {m.tier} PLAN
                                 </span>
-                                <div className="h-8 w-12 bg-zinc-700 rounded-md opacity-50"/>
+                                <div className="h-8 w-12 bg-muted rounded-md opacity-50" />
                             </div>
                             <div
-                                className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-2xl pointer-events-none"/>
+                                className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-2xl pointer-events-none" />
                         </div>
                     </div>
-                    <p className="mt-8 text-center text-xs text-zinc-400">
+                    <p className="mt-8 text-center text-xs text-muted-foreground">
                         Show this card to your provider upon arrival.
                     </p>
                 </section>
@@ -334,44 +325,44 @@ export function MembershipPageClient() {
 
                     {/* Primary Vehicle Info */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                             <div
-                                className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500">
-                                <CarFront className="h-4 w-4"/>
+                                className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                                <CarFront className="h-4 w-4" />
                             </div>
-                            <p className="text-xs text-zinc-500 font-medium">Vehicle</p>
-                            <p className="font-bold text-sm text-zinc-900 truncate">{primaryVehicle.model}</p>
+                            <p className="text-xs text-muted-foreground font-medium">Vehicle</p>
+                            <p className="font-bold text-sm text-foreground truncate">{primaryVehicle.model}</p>
                         </div>
-                        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                             <div
-                                className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500">
+                                className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
                                 <div className="font-mono text-[10px] font-bold">GH</div>
                             </div>
-                            <p className="text-xs text-zinc-500 font-medium">License Plate</p>
-                            <p className="font-bold text-sm text-zinc-900 font-mono">{primaryVehicle.plate}</p>
+                            <p className="text-xs text-muted-foreground font-medium">License Plate</p>
+                            <p className="font-bold text-sm text-foreground font-mono">{primaryVehicle.plate}</p>
                         </div>
                     </div>
 
                     {/* Coverage & Status */}
                     <div
-                        className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm flex items-center justify-between">
+                        className="rounded-2xl border border-border bg-card p-4 shadow-sm flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div
-                                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#9fe870]/10 text-[#8ad35b]">
-                                <Activity className="h-5 w-5"/>
+                                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <Activity className="h-5 w-5" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-zinc-900">Status: {statusLabel}</p>
-                                <p className="text-xs text-zinc-500">Renew: {formatDate(m.renewalDate)}</p>
+                                <p className="text-sm font-bold text-foreground">Status: {statusLabel}</p>
+                                <p className="text-xs text-muted-foreground">Renew: {formatDate(m.renewalDate)}</p>
                             </div>
                         </div>
-                        <div className="h-2 w-2 rounded-full bg-[#9fe870] animate-pulse"/>
+                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                     </div>
 
                     {/* Benefits List */}
-                    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-                        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-zinc-900">
-                            <Wrench className="h-4 w-4 text-zinc-400"/>
+                    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-foreground">
+                            <Wrench className="h-4 w-4 text-muted-foreground" />
                             Included Benefits
                         </h3>
                         <ul className="space-y-3">
@@ -382,8 +373,8 @@ export function MembershipPageClient() {
                                 "Fuel delivery coordination",
                                 "Towing within coverage radius"
                             ].map((benefit, i) => (
-                                <li key={i} className="flex items-start gap-3 text-xs text-zinc-600">
-                                    <CheckCircle2 className="h-4 w-4 text-[#9fe870] shrink-0"/>
+                                <li key={i} className="flex items-start gap-3 text-xs text-muted-foreground">
+                                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                                     <span>{benefit}</span>
                                 </li>
                             ))}
@@ -392,9 +383,9 @@ export function MembershipPageClient() {
 
                     {/* Footer Meta */}
                     <div
-                        className="flex items-center justify-between px-2 text-[10px] text-zinc-400 uppercase tracking-wider">
+                        className="flex items-center justify-between px-2 text-[10px] text-muted-foreground uppercase tracking-wider">
                         <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3"/>
+                            <MapPin className="h-3 w-3" />
                             <span>Accra, Ghana</span>
                         </div>
                         <span>Member since {formatDate(m.memberSince)}</span>

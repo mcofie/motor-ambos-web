@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    source: "/(.*)",
+    source: "./(.*)",
     headers: [
         {
             key: "Content-Security-Policy",

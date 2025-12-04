@@ -303,8 +303,26 @@ function anonHeaders(): HeadersInit {
 
 // ADMIN — For Dashboard
 function authHeaders(): HeadersInit {
-    const token =
-        typeof window !== "undefined" ? localStorage.getItem("sb-access") : null;
+    let token = typeof window !== "undefined" ? localStorage.getItem("sb-access") : null;
+
+    // Fallback: try to find standard Supabase token
+    if (!token && typeof window !== "undefined") {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith("sb-") && key?.endsWith("-auth-token")) {
+                try {
+                    const session = JSON.parse(localStorage.getItem(key)!);
+                    if (session.access_token) {
+                        token = session.access_token;
+                        break;
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+    }
+
     return {
         apikey: ANON,
         Authorization: `Bearer ${token ?? ANON}`,
@@ -443,6 +461,7 @@ export type InsertProviderParams = {
     lat?: number | null;
     lng?: number | null;
     is_verified?: boolean;
+    owner_id?: string | null;
 };
 
 export async function insertProvider(
@@ -457,6 +476,7 @@ export async function insertProvider(
         coverage_radius_km: p.coverage_radius_km,
         callout_fee: p.callout_fee,
         is_verified: p.is_verified ?? false,
+        owner_id: p.owner_id ?? null,
     };
 
     if (typeof p.lat === "number" && typeof p.lng === "number") {

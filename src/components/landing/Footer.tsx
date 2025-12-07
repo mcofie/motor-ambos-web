@@ -31,17 +31,17 @@ export function Footer() {
                     <div>
                         <h4 className="font-bold text-foreground mb-4">Company</h4>
                         <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li><Link href="#" className="hover:text-primary">About Us</Link></li>
-                            <li><Link href="#" className="hover:text-primary">Careers</Link></li>
-                            <li><Link href="#" className="hover:text-primary">For Mechanics</Link></li>
+                            <li><Link href="/about-us" className="hover:text-primary">About Us</Link></li>
+                            <li><Link href="/for-mechanics" className="hover:text-primary">For Mechanics</Link></li>
+                            <li><Link href="/resources" className="hover:text-primary">Resources</Link></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="font-bold text-foreground mb-4">Legal</h4>
                         <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li><Link href="#" className="hover:text-primary">Privacy Policy</Link></li>
-                            <li><Link href="#" className="hover:text-primary">Terms of Service</Link></li>
+                            <li><Link href="/privacy-policy" className="hover:text-primary">Privacy Policy</Link></li>
+                            <li><Link href="/terms-of-service" className="hover:text-primary">Terms of Service</Link></li>
                         </ul>
                     </div>
                 </div>

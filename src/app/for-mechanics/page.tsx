@@ -60,7 +60,7 @@ export default function ForMechanicsPage() {
                                 </div>
                                 <h3 className="text-xl font-bold mb-3">Hyperspeed Response</h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
-                                    <strong>15-20 Minutes.</strong> That's the target. By connecting drivers to the nearest active provider, we eliminate long wait times and cross-town travel.
+                                    <strong>15-20 Minutes.</strong> That&apos;s the target. By connecting drivers to the nearest active provider, we eliminate long wait times and cross-town travel.
                                 </p>
                             </div>
 
@@ -82,7 +82,7 @@ export default function ForMechanicsPage() {
                                 </div>
                                 <h3 className="text-xl font-bold mb-3">Zero-Friction Calls</h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
-                                    We cut out the middleman. When a driver needs help, they call <strong>you</strong> directly. It's your business, your client, your reputation.
+                                    We cut out the middleman. When a driver needs help, they call <strong>you</strong> directly. It&apos;s your business, your client, your reputation.
                                 </p>
                             </div>
 
@@ -93,7 +93,7 @@ export default function ForMechanicsPage() {
                                 </div>
                                 <h3 className="text-xl font-bold mb-3">Fair Competition</h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
-                                    The map doesn't lie. Drivers choose you effectively based on your proximity and rating. provide great service, and the network rewards you.
+                                    The map doesn&apos;t lie. Drivers choose you effectively based on your proximity and rating. provide great service, and the network rewards you.
                                 </p>
                             </div>
                         </div>

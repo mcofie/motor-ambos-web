@@ -14,7 +14,7 @@ export default function PrivacyPolicyPage() {
                     <section className="mb-8">
                         <h2 className="text-xl font-semibold mb-3">1. Introduction</h2>
                         <p className="mb-4">
-                            Welcome to Motor Ambos ("we," "our," or "us"). We are committed to protecting your privacy and ensuring your personal information is handled in a safe and responsible manner. This Privacy Policy explains how we collect, use, disclosure, and safeguard your information when you visit our website and use our services.
+                            Welcome to Motor Ambos (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting your privacy and ensuring your personal information is handled in a safe and responsible manner. This Privacy Policy explains how we collect, use, disclosure, and safeguard your information when you visit our website and use our services.
                         </p>
                     </section>
 

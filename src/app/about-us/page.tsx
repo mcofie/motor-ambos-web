@@ -114,7 +114,7 @@ export default function AboutUsPage() {
 
                             <div className="prose prose-lg dark:prose-invert prose-neutral max-w-none text-left md:text-center leading-relaxed text-muted-foreground">
                                 <p className="mb-6">
-                                    It started with a simple, frustrating reality: getting help on the road shouldn't be a gamble. In many parts of the continent, a breakdown means uncertainty—uncertainty about who to call, how much it will cost, and if the repair will actually hold.
+                                    It started with a simple, frustrating reality: getting help on the road shouldn&apos;t be a gamble. In many parts of the continent, a breakdown means uncertainty—uncertainty about who to call, how much it will cost, and if the repair will actually hold.
                                 </p>
                                 <p className="mb-6">
                                     Motor Ambos was built to bridge this gap. We leverage technology to bring transparency and efficiency to a fragmented industry. Whether you need a battery jump, a tire change, fuel delivery, or a tow, our platform connects you instantly to the nearest available, verified provider.

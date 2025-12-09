@@ -7,11 +7,12 @@ import { AdminLayout } from "./admin/AdminLayout";
 import { ProvidersView } from "./admin/views/ProvidersView";
 import { RequestsView } from "./admin/views/RequestsView";
 import { MembershipsView } from "./admin/views/MembershipsView";
+import { OverviewView } from "./admin/views/OverviewView";
 import { User } from "./admin/types";
 
 export default function AdminDashboard() {
     const [user, setUser] = useState<User | null>(null);
-    const [activeTab, setActiveTab] = useState<"providers" | "requests" | "memberships">("providers");
+    const [activeTab, setActiveTab] = useState<"overview" | "providers" | "requests" | "memberships">("overview");
 
     useEffect(() => {
         getUser().then((u) => {
@@ -38,6 +39,7 @@ export default function AdminDashboard() {
                 user={user}
                 onLogout={handleLogout}
             >
+                {activeTab === "overview" && <OverviewView />}
                 {activeTab === "providers" && <ProvidersView />}
                 {activeTab === "requests" && <RequestsView />}
                 {activeTab === "memberships" && <MembershipsView />}

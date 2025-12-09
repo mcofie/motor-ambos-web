@@ -41,8 +41,8 @@ export default function AdminPage() {
 
     return (
         <div className="min-h-screen bg-background text-foreground">
-            <NavBar user={user} />
-            <main className="mx-auto w-full p-4 md:p-6">
+            {/* NavBar removed for full-screen admin experience */}
+            <main className="w-full h-screen overflow-hidden">
                 <AdminDashboard />
             </main>
         </div>

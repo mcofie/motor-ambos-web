@@ -3,8 +3,8 @@ import { Wrench, LifeBuoy, Users, LogOut, LayoutDashboard } from "lucide-react";
 import { cls } from "./ui/AdminUI";
 
 interface AdminSidebarProps {
-    activeTab: "providers" | "requests" | "memberships";
-    setActiveTab: (tab: "providers" | "requests" | "memberships") => void;
+    activeTab: "overview" | "providers" | "requests" | "memberships";
+    setActiveTab: (tab: "overview" | "providers" | "requests" | "memberships") => void;
     onLogout: () => void;
 }
 
@@ -35,6 +35,12 @@ export function AdminSidebar({ activeTab, setActiveTab, onLogout }: AdminSidebar
                 <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-4 hidden lg:block">
                     Menu
                 </div>
+                <NavButton
+                    active={activeTab === "overview"}
+                    onClick={() => setActiveTab("overview")}
+                    icon={LayoutDashboard}
+                    label="Overview"
+                />
                 <NavButton
                     active={activeTab === "providers"}
                     onClick={() => setActiveTab("providers")}

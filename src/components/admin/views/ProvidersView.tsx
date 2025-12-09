@@ -10,7 +10,9 @@ import {
     getProviderServiceIds,
     listProviderRates,
     upsertProviderRates,
+    listRequests,
 } from "@/lib/supaFetch";
+import { getSupabaseBrowser } from "@/lib/supabaseBrowser";
 import {
     Wrench,
     TrendingUp,
@@ -32,6 +34,7 @@ import {
     ServiceRow,
     UUID,
     ProviderRateRow,
+    RequestRow,
 } from "../types";
 import {
     cls,
@@ -39,6 +42,7 @@ import {
     Toggle,
     StatCard,
 } from "../ui/AdminUI";
+import ProviderMap from "./ProviderMap";
 
 type ProviderFormState = {
     id: UUID | null;
@@ -75,6 +79,7 @@ export function ProvidersView() {
     const [loading, setLoading] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [viewMode, setViewMode] = useState<"list" | "map">("list");
+    const [activeRequests, setActiveRequests] = useState<RequestRow[]>([]);
 
     // Services state
     const [services, setServices] = useState<ServiceRow[]>([]);
@@ -84,11 +89,17 @@ export function ProvidersView() {
     const fetchProviders = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await listProviders(q);
-            setList(data as ProviderRow[]);
+            const [providersData, requestsData] = await Promise.all([
+                listProviders(q),
+                listRequests() // Fetch all requests to filter active ones
+            ]);
+            setList(providersData as ProviderRow[]);
+            // Filter for map relevant requests (pending/in_progress)
+            const allRequests = requestsData as RequestRow[];
+            setActiveRequests(allRequests.filter(r => r.status === 'pending' || r.status === 'in_progress' || r.status === 'accepted'));
         } catch (err) {
             console.error(err);
-            toast.error("Failed to load providers");
+            toast.error("Failed to load data");
         } finally {
             setLoading(false);
         }
@@ -97,6 +108,22 @@ export function ProvidersView() {
     useEffect(() => {
         fetchProviders();
         listServices().then((res) => setServices(res as ServiceRow[]));
+
+        const supabase = getSupabaseBrowser();
+        const channel = supabase
+            .channel('admin-dashboard-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => {
+                fetchProviders();
+                toast.info("Request data updated");
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, () => {
+                fetchProviders();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [fetchProviders]);
 
     const handleSave = async () => {
@@ -264,10 +291,8 @@ export function ProvidersView() {
                     )}
 
                     {viewMode === "map" ? (
-                        <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground gap-2">
-                            <MapPin className="w-12 h-12 opacity-20" />
-                            <p className="text-sm">Map Integration needed (Leaflet/Mapbox)</p>
-                            <p className="text-xs">Showing {list.length} provider locations</p>
+                        <div className="h-full w-full p-4 min-h-[500px]">
+                            <ProviderMap providers={list} requests={activeRequests} onEdit={handleEdit} />
                         </div>
                     ) : (
                         <>

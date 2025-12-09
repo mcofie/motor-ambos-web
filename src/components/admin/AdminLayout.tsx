@@ -5,8 +5,8 @@ import { Bell, Search } from "lucide-react";
 
 interface AdminLayoutProps {
     children: React.ReactNode;
-    activeTab: "providers" | "requests" | "memberships";
-    setActiveTab: (tab: "providers" | "requests" | "memberships") => void;
+    activeTab: "overview" | "providers" | "requests" | "memberships";
+    setActiveTab: (tab: "overview" | "providers" | "requests" | "memberships") => void;
     user: User | null;
     onLogout: () => void;
 }
@@ -62,8 +62,8 @@ export function AdminLayout({ children, activeTab, setActiveTab, user, onLogout 
                 </header>
 
                 {/* Content */}
-                <div className="flex-1 overflow-auto p-8 bg-slate-50 dark:bg-slate-950">
-                    <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex-1 overflow-hidden relative bg-slate-50 dark:bg-slate-950">
+                    <div className="w-full h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-700">
                         {children}
                     </div>
                 </div>

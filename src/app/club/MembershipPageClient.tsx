@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
     Car,
     ShieldCheck,
@@ -129,30 +130,36 @@ function mapApiToMembership(api: MembershipApi): Membership {
 }
 
 /* ───────── Client Component ───────── */
+import { Navbar } from "@/components/landing/Navbar";
+import { Footer } from "@/components/landing/Footer";
+import { MembershipPlans } from "@/components/landing/MembershipPlans";
 
 export function MembershipPageClient() {
     const searchParams = useSearchParams();
-    const membershipNumber = searchParams.get("m") || "";
+    const membershipNumberParam = searchParams.get("m") || "";
 
     const [membership, setMembership] = useState<Membership | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!!membershipNumberParam);
     const [error, setError] = useState<string | null>(null);
+
+    // If there is an ID in the URL, we definitely want to try loading it.
+    // If NOT, we show the Plans page by default.
 
     useEffect(() => {
         let cancelled = false;
 
         async function load() {
+            if (!membershipNumberParam) {
+                setLoading(false);
+                return;
+            }
+
             try {
                 setLoading(true);
                 setError(null);
 
-                if (!membershipNumber) {
-                    setLoading(false);
-                    return;
-                }
-
                 const apiData = await fetchMembershipByNumber<MembershipApi>(
-                    membershipNumber
+                    membershipNumberParam
                 );
 
                 if (!apiData) {
@@ -184,7 +191,7 @@ export function MembershipPageClient() {
         return () => {
             cancelled = true;
         };
-    }, [membershipNumber]);
+    }, [membershipNumberParam]);
 
     const m = membership;
 
@@ -224,59 +231,80 @@ export function MembershipPageClient() {
         );
     }
 
-    /* ───────── Error / Empty ───────── */
-    if (!membershipNumber || error || !m) {
+    /* ───────── MARKETING VIEW (Default if no ID) ───────── */
+    if (!membershipNumberParam) {
         return (
-            <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
-                <main className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
-                    <div
-                        className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted border border-border">
-                        {error ? (
-                            <AlertCircle className="h-8 w-8 text-muted-foreground" />
-                        ) : (
-                            <Search className="h-8 w-8 text-muted-foreground" />
-                        )}
-                    </div>
+            <>
+                <Navbar />
+                <MembershipPlans />
+                <Footer />
+            </>
+        );
+    }
 
-                    <div className="space-y-2">
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            {error ? "Membership Not Found" : "Membership Lookup"}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {error
-                                ? error
-                                : "Please use the unique link provided in your welcome email to view your digital membership card."}
-                        </p>
-                    </div>
+    /* ───────── Error / Empty (Lookup View) ───────── */
+    if (error || !m) {
+        return (
+            <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+                <Navbar />
+                <main className="flex-grow flex items-center justify-center p-4">
+                    <div className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
+                        <div
+                            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted border border-border">
+                            {error ? (
+                                <AlertCircle className="h-8 w-8 text-muted-foreground" />
+                            ) : (
+                                <Search className="h-8 w-8 text-muted-foreground" />
+                            )}
+                        </div>
 
-                    {!membershipNumber && (
-                        <div className="rounded-lg border border-dashed border-border bg-muted/50 p-4">
-                            <p className="text-xs text-muted-foreground">
-                                Example URL: <br />
-                                <code className="bg-muted px-1 py-0.5 rounded">
-                                    /membership?m=MBR-2048-001
-                                </code>
+                        <div className="space-y-2">
+                            <h1 className="text-2xl font-bold tracking-tight">
+                                {error ? "Membership Not Found" : "Membership Lookup"}
+                            </h1>
+                            <p className="text-sm text-muted-foreground">
+                                {error
+                                    ? error
+                                    : "Please use the unique link provided in your welcome email to view your digital membership card."}
                             </p>
                         </div>
-                    )}
+
+                        <div className="pt-4">
+                            <Link
+                                href="/club/lookup"
+                                className="text-sm text-primary hover:underline font-medium"
+                            >
+                                &larr; Try Again
+                            </Link>
+                        </div>
+                    </div>
                 </main>
+                <Footer />
             </div>
         );
     }
 
-    /* ───────── Main View ───────── */
+    /* ───────── Main View (Digital Card) ───────── */
     return (
-        <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-foreground">
-            <main className="mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-10">
+        <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-foreground flex flex-col font-sans">
+            {/* Optional: Add Navbar here if you want navigation on the card page too, 
+                but usually digital cards are standalone. Keeping it clean as established. */}
+
+            <main className="flex-grow mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-10">
 
                 {/* Header */}
-                <header className="space-y-2 text-center sm:text-left">
-                    <div
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-                        <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                        <span>Verified Membership</span>
+                <header className="space-y-2 text-center sm:text-left flex justify-between items-start">
+                    <div>
+                        <div
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm mb-2">
+                            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                            <span>Verified Membership</span>
+                        </div>
+                        <h1 className="text-3xl font-bold tracking-tight">Digital Card</h1>
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight">Digital Card</h1>
+                    <Link href="/" className="text-xs font-medium text-muted-foreground hover:text-primary">
+                        Home
+                    </Link>
                 </header>
 
                 {/* ──── THE CARD (Dark Mode) ──── */}

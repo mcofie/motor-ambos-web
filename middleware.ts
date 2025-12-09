@@ -47,7 +47,7 @@ export async function middleware(req: NextRequest) {
 
         // Simple check: is email in admin list?
         // In production, you'd probably check a `profiles.role` or similar.
-        const admins = ['maxwellcofie@gmail.com', 'admin@motorambos.com'];
+        const admins = ['maxcofie@gmail.com', 'admin@motorambos.com'];
         if (!email || !admins.includes(email)) {
             return NextResponse.redirect(new URL('/', req.url));
         }

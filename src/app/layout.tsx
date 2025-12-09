@@ -1,5 +1,8 @@
 import './globals.css'
 import { ThemeProvider } from "@/components/ThemeProvider"
+import { CSPostHogProvider } from "@/components/PostHogProvider"
+import PostHogPageView from "@/components/PostHogPageView"
+import { Suspense } from "react"
 import { Inter, Poppins, Anta } from 'next/font/google'
 
 const inter = Inter({
@@ -41,7 +44,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     enableSystem
                     disableTransitionOnChange
                 >
-                    {children}
+                    <CSPostHogProvider>
+                        <Suspense fallback={null}>
+                            <PostHogPageView />
+                        </Suspense>
+                        {children}
+                    </CSPostHogProvider>
                 </ThemeProvider>
             </body>
         </html>

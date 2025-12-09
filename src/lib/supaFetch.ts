@@ -341,27 +341,45 @@ export async function loginWithPassword(
     email: string,
     password: string
 ): Promise<AuthSuccessResponse> {
-    const res = await fetch(`${URL}/auth/v1/token?grant_type=password`, {
-        method: "POST",
-        headers: { apikey: ANON, "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+    // Use the Supabase client for proper session/cookie management
+    const { getSupabaseBrowser } = await import("./supabaseBrowser");
+    const supabase = getSupabaseBrowser();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
     });
 
-    const json = (await res.json()) as AuthSuccessResponse & AuthErrorResponse;
-
-    if (!res.ok) {
-        throw new Error(json.error_description || json.message || "Login failed");
+    if (error) {
+        throw new Error(error.message || "Login failed");
     }
 
-    if (typeof window !== "undefined") {
-        localStorage.setItem("sb-access", json.access_token);
+    if (!data.session) {
+        throw new Error("No session returned from login");
     }
 
-    return json;
+    // Keep backward compatibility for REST API calls that use localStorage
+    if (typeof window !== "undefined" && data.session.access_token) {
+        localStorage.setItem("sb-access", data.session.access_token);
+    }
+
+    return {
+        access_token: data.session.access_token,
+        token_type: data.session.token_type,
+        expires_in: data.session.expires_in ?? 3600,
+        user: data.user ? { id: data.user.id, email: data.user.email } : null,
+    };
 }
 
-export function logout(): void {
+export async function logout(): Promise<void> {
     if (typeof window === "undefined") return;
+
+    // Sign out via Supabase client to clear cookies/session
+    const { getSupabaseBrowser } = await import("./supabaseBrowser");
+    const supabase = getSupabaseBrowser();
+    await supabase.auth.signOut();
+
+    // Also clear localStorage token for backward compatibility
     localStorage.removeItem("sb-access");
 }
 

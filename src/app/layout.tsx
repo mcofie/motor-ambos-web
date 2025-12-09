@@ -32,7 +32,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en" className={`${inter.variable} ${poppins.variable} ${anta.variable}`}>
+        <html lang="en" suppressHydrationWarning className={`${inter.variable} ${poppins.variable} ${anta.variable}`}>
             {/* Use your default text font here (Inter) */}
             <body className="font-sans antialiased">
                 <ThemeProvider

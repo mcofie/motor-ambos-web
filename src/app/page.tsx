@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { GloveboxExplorer } from "@/components/landing/GloveboxExplorer";
 import { ServicesSection } from "@/components/landing/ServicesSection";
 import { MembershipSection } from "@/components/landing/MembershipSection";
 import { WhyUsSection } from "@/components/landing/WhyUsSection";
@@ -20,6 +21,7 @@ export default function LandingPage() {
 
             <main className="flex flex-col">
                 <HeroSection />
+                <GloveboxExplorer />
                 <ServicesSection />
                 <RoadsideSection />
                 <MembershipSection />

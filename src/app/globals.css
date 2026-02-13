@@ -105,15 +105,15 @@
 
 /* ---------- Dark theme ---------- */
 .dark {
-    /* Dark neutrals (Forest Green Background) */
-    --background: #163300;
+    /* Dark neutrals (Midnight Green Background) */
+    --background: #0D1F00;
     --foreground: #ffffff;
 
-    --card: #1a3b00;
-    /* Slightly lighter forest green */
+    --card: #122800;
+    /* Elevated deep forest green */
     --card-foreground: #ffffff;
 
-    --popover: #163300;
+    --popover: #0D1F00;
     --popover-foreground: #ffffff;
 
     /* Primary: Bright Green (#9FE870) */
@@ -146,7 +146,7 @@
     --chart-5: oklch(0.645 0.246 16.439);
 
     /* Sidebar */
-    --sidebar: #163300;
+    --sidebar: #0D1F00;
     --sidebar-foreground: #ffffff;
     --sidebar-primary: #9FE870;
     --sidebar-primary-foreground: #163300;
@@ -164,5 +164,30 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    .glass-premium {
+        @apply bg-background/40 backdrop-blur-xl border border-white/10;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .service-pulse {
+        @apply relative flex h-2 w-2;
+    }
+
+    .service-pulse::after {
+        content: '';
+        @apply absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75;
+    }
+
+    .service-pulse::before {
+        content: '';
+        @apply relative inline-flex h-2 w-2 rounded-full bg-primary;
+    }
+
+    .perspective-2000 {
+        perspective: 2000px;
     }
 }

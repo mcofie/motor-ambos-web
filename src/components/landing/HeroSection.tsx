@@ -63,18 +63,26 @@ export function HeroSection() {
 
                             {/* Floating Card Overlay (Mini version) */}
                             <div className="absolute bottom-8 left-8 right-8 flex flex-wrap gap-4 justify-between items-end pointer-events-none sm:flex hidden">
-                                <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-2xl flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                                <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-left-4 duration-700">
+                                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center relative">
                                         <Zap className="h-5 w-5 text-primary-foreground fill-primary-foreground" />
+                                        <div className="absolute -top-1 -right-1">
+                                            <span className="service-pulse" />
+                                        </div>
                                     </div>
                                     <div>
-                                        <div className="text-[10px] text-white/60 font-bold uppercase tracking-widest">NFC Security</div>
+                                        <div className="text-[10px] text-white/60 font-bold uppercase tracking-widest flex items-center gap-2">
+                                            NFC Security
+                                        </div>
                                         <div className="text-white font-bold">Active Passport</div>
                                     </div>
                                 </div>
-                                <div className="bg-[#9FE870] p-4 rounded-2xl shadow-2xl flex items-center gap-4 text-[#163300]">
+                                <div className="bg-[#9FE870] p-4 rounded-2xl shadow-2xl flex items-center gap-4 text-[#163300] animate-in slide-in-from-right-4 duration-700">
                                     <div className="flex flex-col">
-                                        <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">Resale Boost</div>
+                                        <div className="text-[10px] font-bold uppercase tracking-widest opacity-70 flex items-center gap-2">
+                                            Resale Boost
+                                            <span className="service-pulse scale-75" />
+                                        </div>
                                         <div className="text-xl font-black font-display">+15%</div>
                                     </div>
                                 </div>

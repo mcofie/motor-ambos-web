@@ -117,7 +117,10 @@ export default function BusinessPage() {
                                         </div>
 
                                         <div className="pt-8 space-y-4">
-                                            <h3 className="text-3xl font-bold text-white tracking-tight">Verified <br /> Compliance</h3>
+                                            <h3 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                                                Verified Compliance
+                                                <span className="service-pulse" />
+                                            </h3>
                                             <div className="flex gap-2">
                                                 <span className="px-3 py-1 bg-[#9FE870]/20 text-[#9FE870] rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#9FE870]/30">Insurance OK</span>
                                                 <span className="px-3 py-1 bg-[#9FE870]/20 text-[#9FE870] rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#9FE870]/30">Roadworthy OK</span>

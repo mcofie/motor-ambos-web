@@ -27,10 +27,10 @@ const anta = Anta({
 
 export const metadata = {
     title: {
-        default: "Motor Ambos — The Modern Roadside Network",
+        default: "Motor Ambos — The Digital Passport for Your Car",
         template: "%s | Motor Ambos",
     },
-    description: "On-demand car care and roadside assistance. Fuel, wash, oil, tyres, battery — delivered to your location.",
+    description: "The Operating System for car ownership in Ghana. Manage compliance, track verified maintenance history, and protect your vehicle's resale value.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

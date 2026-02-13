@@ -16,8 +16,9 @@ import { Car, Menu } from "lucide-react";
 export function Navbar() {
     const navLinks = [
         { href: "#services", label: "Services" },
+        { href: "/business", label: "For Business" },
+        { href: "/for-mechanics", label: "For Mechanics" },
         { href: "#membership", label: "Membership" },
-        { href: "#why", label: "Why Us" },
     ];
 
     return (
@@ -40,18 +41,18 @@ export function Navbar() {
                         <Link
                             key={link.href}
                             href={link.href}
-                            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                            className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors tracking-tight"
                         >
                             {link.label}
                         </Link>
                     ))}
-                    <div className="h-4 w-px bg-border" />
+                    <div className="h-4 w-px bg-border/60" />
                     <ThemeToggle />
                     <Button
                         asChild
-                        className="bg-lime-400 text-zinc-950 hover:bg-lime-500 font-semibold"
+                        className="bg-primary text-primary-foreground hover:scale-105 transition-transform font-bold rounded-full px-6"
                     >
-                        <Link href="/providers/join">Join Network</Link>
+                        <Link href="/club">Go Premium</Link>
                     </Button>
                 </nav>
 
@@ -65,7 +66,7 @@ export function Navbar() {
                                 <span className="sr-only">Toggle menu</span>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="bg-background border-l-border text-foreground w-[300px] sm:w-[400px]">
+                        <SheetContent side="right" className="bg-background/95 backdrop-blur-xl border-l-border text-foreground w-[300px] sm:w-[400px]">
                             <SheetHeader className="text-left border-b border-border/10 pb-6 mb-6">
                                 <SheetTitle asChild>
                                     <Link href="/" className="flex items-center gap-2 group w-fit">
@@ -87,15 +88,15 @@ export function Navbar() {
                                     <Link
                                         key={link.href}
                                         href={link.href}
-                                        className="flex items-center justify-between text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 px-4 py-3 rounded-md transition-all"
+                                        className="flex items-center justify-between text-base font-bold text-muted-foreground hover:text-foreground hover:bg-muted/50 px-4 py-3 rounded-xl transition-all"
                                     >
                                         {link.label}
                                     </Link>
                                 ))}
-                                <div className="h-px bg-border/50 my-4" />
-                                <Button asChild size="lg" className="w-full bg-lime-400 text-zinc-950 hover:bg-lime-500 font-bold shadow-sm">
-                                    <Link href="/providers/join">
-                                        Join Network
+                                <div className="h-px bg-border/50 my-6" />
+                                <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-lg shadow-primary/10">
+                                    <Link href="/club">
+                                        Go Premium
                                     </Link>
                                 </Button>
                             </div>

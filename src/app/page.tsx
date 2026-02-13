@@ -11,6 +11,8 @@ import { Footer } from "@/components/landing/Footer";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 
+import { RoadsideSection } from "@/components/landing/RoadsideSection";
+
 export default function LandingPage() {
     return (
         <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
@@ -19,6 +21,7 @@ export default function LandingPage() {
             <main className="flex flex-col">
                 <HeroSection />
                 <ServicesSection />
+                <RoadsideSection />
                 <MembershipSection />
                 <WhyUsSection />
                 <TestimonialsSection />

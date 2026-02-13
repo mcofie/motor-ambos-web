@@ -1,42 +1,42 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Truck, Disc, Droplet, BatteryCharging, Wrench, ArrowRight } from "lucide-react";
+import { CreditCard, ClipboardList, ShieldCheck, Wrench, AlertCircle, ArrowRight } from "lucide-react";
 
 export function ServicesSection() {
     const services = [
         {
-            title: "Roadside Rescue",
-            desc: "Towing, winching, and emergency coordination.",
-            icon: Truck,
+            title: "NFC Smart Card",
+            desc: "The 'Digital Glovebox' that stays with your car. Tap to access everything.",
+            icon: CreditCard,
             colSpan: "md:col-span-2",
             bg: "bg-zinc-900",
         },
         {
-            title: "Tyre Service",
-            desc: "Puncture repair & replacements.",
-            icon: Disc,
+            title: "Digital Service Log",
+            desc: "A permanent, verified history of all repairs and maintenance.",
+            icon: ClipboardList,
             colSpan: "md:col-span-1",
             bg: "bg-zinc-900",
         },
         {
-            title: "Engine Health",
-            desc: "Oil changes & diagnostics.",
-            icon: Droplet,
+            title: "Bureaucracy Concierge",
+            desc: "We handle Roadworthy, Insurance, and DVLA compliance for you.",
+            icon: ShieldCheck,
             colSpan: "md:col-span-1",
             bg: "bg-zinc-900",
         },
         {
-            title: "Battery Jump",
-            desc: "Testing and jumpstarts.",
-            icon: BatteryCharging,
-            colSpan: "md:col-span-1",
-            bg: "bg-zinc-900",
-        },
-        {
-            title: "General Repair",
-            desc: "Mobile mechanic services.",
+            title: "Parts Authenticator",
+            desc: "Order and verify genuine spare parts directly to your mechanic.",
             icon: Wrench,
+            colSpan: "md:col-span-1",
+            bg: "bg-zinc-900",
+        },
+        {
+            title: "Emergency ICE Beacon",
+            desc: "Passive safety feature for first responders to access critical info.",
+            icon: AlertCircle,
             colSpan: "md:col-span-1",
             bg: "bg-zinc-900",
         },

@@ -7,20 +7,24 @@ import { cn } from "@/lib/utils";
 export function FAQSection() {
     const faqs = [
         {
-            question: "How quickly can a mechanic arrive?",
-            answer: "Our average response time is under 30 minutes in Accra. The app will show you the exact ETA of your assigned provider.",
+            question: "What is the Digital Passport?",
+            answer: "It's an NFC-enabled Smart Card that stays with your car. It acts as a 'digital glovebox,' storing your vehicle's entire service history, documents, and emergency info.",
         },
         {
-            question: "Do I need a membership to use Motor Ambos?",
-            answer: "No! You can request on-demand assistance anytime. However, members enjoy discounted rates, priority dispatch, and free annual checkups.",
+            question: "Do mechanics need the Motor Ambos app?",
+            answer: "No. Mechanics simply tap your card with their phone to open a secure web interface where they can log service or send you a digital invoice instantly.",
         },
         {
-            question: "How are prices determined?",
-            answer: "We use standard rate cards for common services (like battery jumps or tyre changes). For repairs, you'll get a verified quote before work begins.",
+            question: "How does the Bureaucracy Concierge work?",
+            answer: "We monitor your Roadworthy and Insurance expiry dates. When it's time to renew, we handle the paperwork and DVLA processing for you, saving you from long queues.",
         },
         {
-            question: "Is my vehicle covered anywhere in Ghana?",
-            answer: "We currently operate primarily in Greater Accra, with expanding coverage in Kumasi and Takoradi. Check the app for the latest coverage map.",
+            question: "Can the card help in an emergency?",
+            answer: "Yes. The card features an ICE (In Case of Emergency) beacon. First responders can tap it to see critical medical data and emergency contacts, even if they don't have internet data.",
+        },
+        {
+            question: "Does the card increase my car's resale value?",
+            answer: "Absolutely. Verified service history and genuine parts certification build trust with buyers, often allowing 'Ghana Used' cars to sell for 15-20% more than unverified ones.",
         },
     ];
 

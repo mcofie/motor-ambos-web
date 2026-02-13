@@ -15,16 +15,16 @@ export function Footer() {
                             <span className="font-bold text-foreground">Motor Ambos</span>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Decentralised network of verified mechanics & car-care providers built for African roads.
+                            The Operating System for car ownership in Ghana. Verified data, genuine parts, and simplified compliance.
                         </p>
                     </div>
 
                     <div>
                         <h4 className="font-bold text-foreground mb-4">Product</h4>
                         <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li><Link href="/roadside-assistance" className="hover:text-primary">Roadside Assistance</Link></li>
-                            <li><Link href="/mobile-mechanics" className="hover:text-primary">Mobile Mechanics</Link></li>
-                            <li><Link href="/club" className="hover:text-primary">Membership</Link></li>
+                            <li><Link href="/digital-passport" className="hover:text-primary">Digital Passport</Link></li>
+                            <li><Link href="/concierge" className="hover:text-primary">DVLA Concierge</Link></li>
+                            <li><Link href="/club" className="hover:text-primary">Ambos Club</Link></li>
                         </ul>
                     </div>
 

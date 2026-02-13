@@ -22,10 +22,11 @@ export default function MobileMechanicsPage() {
                         <div className="max-w-3xl">
                             <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
                                 Expert Repairs, <br />
-                                <span className="text-primary">At Your Doorstep.</span>
+                                <span className="text-primary">Verified History.</span>
                             </h1>
                             <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl">
-                                Skip the repair shop waiting room. Our certified mobile mechanics come to your home or office to service your vehicle.
+                                Skip the repair shop waiting room. Our certified mobile mechanics come to you,
+                                and every job is officially logged to your vehicle's <strong>Digital Passport</strong>.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Button asChild size="lg" className="h-14 px-8 text-lg font-bold">
@@ -64,9 +65,10 @@ export default function MobileMechanicsPage() {
                                 <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 text-primary">
                                     <CheckCircle className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Transparent Pricing</h3>
+                                <h3 className="text-xl font-bold mb-3">Verified History</h3>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    Get a quote upfront before you book. No surprise fees or upselling. You know exactly what you're paying for.
+                                    Every repair and part replacement is recorded on your vehicle's NFC Smart Card,
+                                    securing its reliability and boosting its future resale value.
                                 </p>
                             </div>
                         </div>

@@ -4,21 +4,21 @@ import { ShieldCheck, MapPin, CreditCard, Smartphone, Zap, Truck } from "lucide-
 
 export function WhyUsSection() {
     const features = [
-        { icon: ShieldCheck, title: "Verified Network", text: "We vet every provider. See prices and ratings upfront." },
-        { icon: MapPin, title: "Smart Matching", text: "We rank providers by distance, availability, and rating." },
-        { icon: CreditCard, title: "Clear Pricing", text: "Transparent callout fees. Receipts stored digitally." },
-        { icon: Smartphone, title: "Seamless App", text: "Book in taps, track your provider live, and chat instantly." },
-        { icon: Zap, title: "Fast Response", text: "Our algorithm prioritizes the closest active unit to you." },
-        { icon: Truck, title: "All Vehicles", text: "From motorbikes to SUVs, we have the right gear for the job." },
+        { icon: ShieldCheck, title: "Resale Value", text: "Verified service records can increase your car's resale value by up to 20%." },
+        { icon: Smartphone, title: "Digital Glovebox", text: "All your documents and maintenance logs in one NFC-powered smart card." },
+        { icon: Zap, title: "DVLA Concierge", text: "No more queues. We handle your roadworthy and insurance renewals automatically." },
+        { icon: CreditCard, title: "Parts Guarantee", text: "Every part ordered through our platform is verified for authenticity." },
+        { icon: MapPin, title: "ICE Safety", text: "Instant access to emergency info for first responders, even without data." },
+        { icon: Truck, title: "Fleet Management", text: "Enterprise-grade tools for corporate fleets and HR departments." },
     ];
 
     return (
         <section id="why" className="py-24 bg-background relative">
             <div className="mx-auto max-w-7xl px-4 sm:px-6">
                 <div className="text-center max-w-2xl mx-auto mb-16">
-                    <h2 className="text-3xl font-bold text-foreground mb-4">Why Motor Ambos?</h2>
+                    <h2 className="text-3xl font-bold text-foreground mb-4">The Motor Ambos Advantage</h2>
                     <p className="text-muted-foreground">
-                        We are building the operating system for African roadside assistance.
+                        We're building the infrastructure for a more transparent and valuable car market in Ghana.
                     </p>
                 </div>
 

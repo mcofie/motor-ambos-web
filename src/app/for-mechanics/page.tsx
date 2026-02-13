@@ -22,78 +22,79 @@ export default function ForMechanicsPage() {
                     <div className="container mx-auto px-4 max-w-6xl text-center relative z-10">
                         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <Zap className="h-3.5 w-3.5" />
-                            <span>Join the Decentralized Network</span>
+                            <span>No-App Web Interface for Professionals</span>
                         </div>
 
                         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
-                            Are You the Best <br />
-                            <span className="text-primary">Mechanic in Town?</span>
+                            Empower Your Shop <br />
+                            <span className="text-primary">Without an App.</span>
                         </h1>
 
                         <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-10">
-                            Join Motor Ambos, the decentralized network that connects you directly to drivers who need help. Get paid instantly, grow your business, and be the hero on the road.
+                            Join the Motor Ambos network. Just tap a customer's NFC Smart Card to log service,
+                            send professional digital invoices, and build a verified reputation—all from your browser.
                         </p>
 
                         <div className="flex justify-center gap-4">
                             <Button asChild size="lg" className="h-12 px-8 text-base font-bold bg-primary text-primary-foreground hover:bg-primary/90">
-                                <Link href="/providers/join">Register as a Provider</Link>
+                                <Link href="/providers/join">Register Your Garage</Link>
                             </Button>
                         </div>
                     </div>
                 </section>
 
-                {/* The Network Effect Section */}
+                {/* The Mechanic's Edge Section */}
                 <section className="py-24 bg-muted/30">
                     <div className="container mx-auto px-4 max-w-6xl">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl font-bold mb-4">The Network Effect</h2>
+                            <h2 className="text-3xl font-bold mb-4">The Digital Tool for Growth</h2>
                             <p className="text-muted-foreground max-w-2xl mx-auto">
-                                Traditional dispatching is slow and inefficient. Our decentralized model is built for speed, transparency, and fairness.
+                                Focus on fixing cars, not chasing paperwork. Our platform provides the tools you need to look professional and stay organized.
                             </p>
                         </div>
 
                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {/* Feature 1: Hyper-Local */}
+                            {/* Feature 1: Tap to Log */}
                             <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-14 w-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-500 group-hover:scale-110 transition-transform">
-                                    <Clock className="h-7 w-7" />
+                                <div className="h-14 w-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+                                    <Zap className="h-7 w-7" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Hyperspeed Response</h3>
+                                <h3 className="text-xl font-bold mb-3">Tap to Log</h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
-                                    <strong>15-20 Minutes.</strong> That&apos;s the target. By connecting drivers to the nearest active provider, we eliminate long wait times and cross-town travel.
+                                    Simply tap the customer's <strong>NFC Card</strong> with your phone. A secure browser page opens instantly where you can log the service in seconds.
                                 </p>
                             </div>
 
-                            {/* Feature 2: Radical Transparency */}
+                            {/* Feature 2: Digital Invoicing */}
                             <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-14 w-14 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6 text-green-500 group-hover:scale-110 transition-transform">
+                                <div className="h-14 w-14 bg-secondary/20 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
                                     <Eye className="h-7 w-7" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Radical Transparency</h3>
+                                <h3 className="text-xl font-bold mb-3">Professional Invoices</h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
-                                    No hidden fees. Drivers see your <strong>live distance</strong> and your <strong>call-out fee</strong> before they even call. Trust is built before you arrive.
+                                    Send detailed, professional <strong>Digital Invoices</strong> to your customers via SMS or WhatsApp. No more messy paper receipts.
                                 </p>
                             </div>
 
-                            {/* Feature 3: Zero Friction */}
+                            {/* Feature 3: Verified Reputation */}
                             <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-14 w-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 text-purple-500 group-hover:scale-110 transition-transform">
-                                    <Phone className="h-7 w-7" />
-                                </div>
-                                <h3 className="text-xl font-bold mb-3">Zero-Friction Calls</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    We cut out the middleman. When a driver needs help, they call <strong>you</strong> directly. It&apos;s your business, your client, your reputation.
-                                </p>
-                            </div>
-
-                            {/* Feature 4: Meritocracy */}
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-14 w-14 bg-orange-500/10 rounded-2xl flex items-center justify-center mb-6 text-orange-500 group-hover:scale-110 transition-transform">
+                                <div className="h-14 w-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
                                     <TrendingUp className="h-7 w-7" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Fair Competition</h3>
+                                <h3 className="text-xl font-bold mb-3">Verified History</h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
-                                    The map doesn&apos;t lie. Drivers choose you effectively based on your proximity and rating. provide great service, and the network rewards you.
+                                    Every job you log adds to the car's <strong>Permanent Data Log</strong>. Customers value your work more when it's officially recorded.
+                                </p>
+                            </div>
+
+                            {/* Feature 4: Genuine Parts */}
+                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
+                                <div className="h-14 w-14 bg-secondary/20 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+                                    <Clock className="h-7 w-7" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-3">Auth Parts Sourcing</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    Access our <strong>Verified Parts Network</strong>. Order genuine spares directly to your shop, ensuring quality for every repair.
                                 </p>
                             </div>
                         </div>
@@ -103,12 +104,12 @@ export default function ForMechanicsPage() {
                 {/* Call to Action */}
                 <section className="py-24">
                     <div className="container mx-auto px-4 max-w-4xl text-center">
-                        <h2 className="text-3xl font-bold mb-6">Ready to Join the Future of Car Care?</h2>
+                        <h2 className="text-3xl font-bold mb-6">Elevate Your Garage Today</h2>
                         <p className="text-lg text-muted-foreground mb-8">
-                            Be part of the network that is changing how Africa moves. Sign up today and start earning.
+                            Join the standard for car care in Ghana. No app installation required for you or your staff.
                         </p>
                         <Button asChild size="lg" className="h-14 px-10 text-lg font-bold">
-                            <Link href="/providers/join">Apply Now</Link>
+                            <Link href="/providers/join">Claim Your Digital Shop</Link>
                         </Button>
                     </div>
                 </section>

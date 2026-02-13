@@ -11,17 +11,17 @@ export function AppShowcaseSection() {
 
                     <div className="md:w-1/2 pb-12 md:pb-20 z-10 relative">
                         <h2 className="text-3xl md:text-5xl font-extrabold mb-6 tracking-tight">
-                            The workshop <br /> in your pocket.
+                            Complete Control <br /> in Your Pocket.
                         </h2>
                         <p className="text-primary-foreground/90 font-medium text-lg mb-8 max-w-md">
-                            Download the Motor Ambos app to manage your garage, track requests, and pay securely.
+                            Download the Motor Ambos app to view your verified service history, track spending,
+                            and schedule your next renewal in seconds.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3">
-                            {/* Mock App Store Buttons */}
-                            <Button className="bg-[#9ae600] text-black hover:bg-[#9ae600]/90 h-12 px-6 rounded-xl dark:bg-black dark:text-white dark:hover:bg-black/80">
+                            <Button className="bg-[#9FE870] text-[#163300] hover:bg-[#9FE870]/90 h-12 px-8 rounded-xl font-bold">
                                 Download on iOS
                             </Button>
-                            <Button className="bg-[#9ae600] text-black hover:bg-[#9ae600]/90 h-12 px-6 rounded-xl dark:bg-transparent dark:border-2 dark:border-black dark:text-black dark:hover:bg-black/10">
+                            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 h-12 px-8 rounded-xl font-bold bg-transparent">
                                 Get it on Android
                             </Button>
                         </div>
@@ -42,8 +42,9 @@ export function AppShowcaseSection() {
                             </div>
 
                             {/* Center Phone (Main) */}
-                            <div className="relative z-20 scale-100 shadow-2xl">
-                                <div className="w-64 h-[500px] bg-foreground rounded-[3rem] border-[8px] border-foreground shadow-2xl relative overflow-hidden">
+                            <div className="relative z-20 scale-100 shadow-2xl -rotate-2 hover:rotate-0 transition-transform duration-500 cursor-pointer group">
+                                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="w-64 h-[500px] bg-foreground rounded-[3rem] border-[8px] border-foreground shadow-2xl relative overflow-hidden group-hover:shadow-primary/20 transition-all">
                                     <Image
                                         src="/images/screenshot.PNG"
                                         alt="App Screen Main"

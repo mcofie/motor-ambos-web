@@ -22,10 +22,10 @@ export function MembershipSection() {
                             </h2>
                             <ul className="space-y-4 text-[#9ae600]/80 dark:text-muted-foreground">
                                 {[
-                                    "Priority response for breakdowns",
-                                    "Discounted callout fees",
-                                    "Free annual vehicle health check",
-                                    "Concierge repair coordination"
+                                    "Priority service for all repairs",
+                                    "Automated DVLA & Insurance renewals",
+                                    "Free towing and emergency rescue",
+                                    "Verified 'CarFax' style health reports"
                                 ].map((item, i) => (
                                     <li key={i} className="flex items-center gap-3">
                                         <CheckCircle2 className="h-5 w-5 text-[#9ae600] dark:text-primary shrink-0" />

@@ -54,6 +54,9 @@ type ProviderRow = {
     lng?: number | null;
     created_at?: string;
     updated_at?: string;
+    provider_type?: string | null;
+    logo_url?: string | null;
+    operating_hours?: Record<string, unknown> | null;
 };
 
 type ServiceRow = {
@@ -335,21 +338,26 @@ function anonHeaders(): HeadersInit {
 
 // ADMIN — For Dashboard
 function authHeaders(): HeadersInit {
-    let token = typeof window !== "undefined" ? localStorage.getItem("sb-access") : null;
+    let token: string | null = null;
 
-    // Fallback: try to find standard Supabase token
-    if (!token && typeof window !== "undefined") {
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith("sb-") && key?.endsWith("-auth-token")) {
-                try {
-                    const session = JSON.parse(localStorage.getItem(key)!);
-                    if (session.access_token) {
-                        token = session.access_token;
-                        break;
+    if (typeof window !== "undefined") {
+        // Primary: use localStorage which is kept in sync by getUser()
+        token = localStorage.getItem("sb-access");
+
+        // Fallback: try to find standard Supabase token from cookie-based storage
+        if (!token) {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key?.startsWith("sb-") && key?.endsWith("-auth-token")) {
+                    try {
+                        const session = JSON.parse(localStorage.getItem(key)!);
+                        if (session.access_token) {
+                            token = session.access_token;
+                            break;
+                        }
+                    } catch (e) {
+                        // ignore
                     }
-                } catch (e) {
-                    // ignore
                 }
             }
         }
@@ -417,15 +425,23 @@ export async function logout(): Promise<void> {
 
 export async function getUser(): Promise<SupabaseUserPayload> {
     if (typeof window === "undefined") return null;
-    const token = localStorage.getItem("sb-access");
-    if (!token) return null;
 
-    const res = await fetch(`${URL}/auth/v1/user`, {
-        headers: { apikey: ANON, Authorization: `Bearer ${token}` },
-    });
+    // Use the Supabase browser client for proper session management
+    // This handles auto-refresh of expired tokens automatically
+    const { getSupabaseBrowser } = await import("./supabaseBrowser");
+    const supabase = getSupabaseBrowser();
 
-    if (!res.ok) return null;
-    return (await res.json()) as SupabaseUserPayload;
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (error || !user) return null;
+
+    // Keep localStorage in sync for authHeaders() backward compat
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+        localStorage.setItem("sb-access", session.access_token);
+    }
+
+    return user as SupabaseUserPayload;
 }
 
 /* ─────────────────────────────────────────
@@ -477,6 +493,10 @@ export async function listProviders(q?: string): Promise<ProviderRow[]> {
             "location",
             "lat",
             "lng",
+            "provider_type",
+            "logo_url",
+            "operating_hours",
+            "created_at",
         ].join(",")
     );
     params.set("order", "created_at.desc");
@@ -512,6 +532,9 @@ export type InsertProviderParams = {
     lng?: number | null;
     is_verified?: boolean;
     owner_id?: string | null;
+    provider_type?: string | null;
+    logo_url?: string | null;
+    operating_hours?: Record<string, unknown> | null;
 };
 
 export async function insertProvider(
@@ -527,6 +550,9 @@ export async function insertProvider(
         callout_fee: p.callout_fee,
         is_verified: p.is_verified ?? false,
         owner_id: p.owner_id ?? null,
+        provider_type: p.provider_type ?? null,
+        logo_url: p.logo_url ?? null,
+        operating_hours: p.operating_hours ?? null,
     };
 
     if (typeof p.lat === "number" && typeof p.lng === "number") {
@@ -556,6 +582,9 @@ export type UpdateProviderPatch = Partial<{
     lng: number | null;
     updated_at: string;
     is_verified: boolean;
+    provider_type: string | null;
+    logo_url: string | null;
+    operating_hours: Record<string, unknown> | null;
 }>;
 
 export async function updateProvider(
@@ -584,6 +613,52 @@ export async function deleteProvider(id: string): Promise<void> {
     });
     await throwIfNotOk(res);
 }
+
+export async function bulkUpdateProviders(
+    ids: string[],
+    patch: Record<string, unknown>
+): Promise<void> {
+    const inList = `(${ids.map((s) => `"${s}"`).join(",")})`;
+    const res = await fetch(
+        `${URL}/rest/v1/providers?id=in.${encodeURIComponent(inList)}`,
+        {
+            method: "PATCH",
+            headers: { ...authHeaders(), Prefer: "return=minimal" },
+            body: JSON.stringify(patch),
+        }
+    );
+    await throwIfNotOk(res);
+}
+
+export async function listRequestsByProvider(
+    providerId: string
+): Promise<RequestsListRow[]> {
+    const params = new URLSearchParams();
+    params.set(
+        "select",
+        [
+            "id",
+            "created_at",
+            "status",
+            "driver_name",
+            "driver_phone",
+            "provider_id",
+            "details",
+            "address_line",
+            "location",
+        ].join(",")
+    );
+    params.set("provider_id", `eq.${providerId}`);
+    params.set("order", "created_at.desc");
+
+    const res = await fetch(`${URL}/rest/v1/requests?${params.toString()}`, {
+        headers: authHeaders(),
+    });
+
+    await throwIfNotOk(res);
+    return (await readJSONSafe<RequestsListRow[]>(res)) ?? [];
+}
+
 
 /* ─────────────────────────────────────────
    Provider Services

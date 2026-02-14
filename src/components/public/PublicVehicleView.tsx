@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface PublicVehicleViewProps {
     nfcId: string;
@@ -239,7 +240,7 @@ export function PublicVehicleView({ nfcId, initialData }: PublicVehicleViewProps
 
 
                 {/* TABS Navigation */}
-                <div className="flex p-1 bg-secondary/20 rounded-xl overflow-hidden backdrop-blur-md sticky top-20 z-30 shadow-lg border border-white/5">
+                <div className="flex p-1 bg-secondary/20 rounded-xl overflow-hidden backdrop-blur-md shadow-lg border border-white/5">
                     {(['general', 'docs', 'history'] as const).map((t) => (
                         <button
                             key={t}
@@ -456,6 +457,10 @@ export function PublicVehicleView({ nfcId, initialData }: PublicVehicleViewProps
                             Serial: {vehicle.nfc_serial_number}
                         </p>
                     )}
+
+                    <div className="flex justify-center pt-4">
+                        <ThemeToggle />
+                    </div>
                 </div>
             </div>
 

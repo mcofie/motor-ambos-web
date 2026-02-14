@@ -35,7 +35,6 @@ export default function AdminDashboard() {
             <Toaster position="top-right" />
             <AdminLayout
                 activeTab={activeTab}
-                setActiveTab={setActiveTab}
                 user={user}
                 onLogout={handleLogout}
             >

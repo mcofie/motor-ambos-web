@@ -180,6 +180,7 @@ export type MembershipPlanRow = {
 
 export type MemberWithMembershipRow = {
     member_id: string;
+    auth_user_id?: string | null;
     full_name: string | null;
     phone: string;
     email: string | null;
@@ -190,7 +191,38 @@ export type MemberWithMembershipRow = {
     plan_name?: string | null;
     plan_code?: string | null;
     tier?: string | null;
+    membership_id?: string | null;
 };
+
+export type VehicleRow = {
+    id: string;
+    user_id: string;
+    name?: string | null;
+    make?: string | null;
+    model?: string | null;
+    year?: string | null;
+    plate?: string | null;
+    is_primary: boolean;
+    insurance_url?: string | null;
+    roadworthy_url?: string | null;
+    nfc_card_id?: string | null;
+    nfc_serial_number?: string | null;
+    created_at?: string;
+};
+
+export type ServiceHistoryRow = {
+    id: string;
+    vehicle_id: string;
+    service_date: string;
+    description: string;
+    provider_name?: string | null;
+    mileage?: number | null;
+    cost?: number | null;
+    is_verified: boolean;
+    document_url?: string | null;
+    created_at?: string;
+};
+
 
 export type UpsertMemberMembershipParams = {
     member_id?: string | null;
@@ -656,22 +688,73 @@ export async function listMembershipPlans(): Promise<MembershipPlanRow[]> {
     return (await readJSONSafe<MembershipPlanRow[]>(res)) ?? [];
 }
 
+export async function listMembers(): Promise<MemberWithMembershipRow[]> {
+    const res = await fetch(
+        `${URL}/rest/v1/members?select=*`,
+        { headers: authHeaders() }
+    );
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe<any[]>(res)) ?? [];
+    // Map to the expected row type for the UI
+    return rows.map(r => ({
+        member_id: r.id,
+        auth_user_id: r.auth_user_id,
+        full_name: r.full_name,
+        phone: r.phone,
+        email: r.email,
+        membership_tier: null,
+        membership_number: null,
+        membership_expiry_date: null,
+        membership_is_active: null,
+    }));
+}
+export async function getMemberById(id: string): Promise<MemberWithMembershipRow | null> {
+    const res = await fetch(
+        `${URL}/rest/v1/members?id=eq.${id}&select=*`,
+        { headers: authHeaders() }
+    );
+    await throwIfNotOk(res);
+    const rows = (await readJSONSafe<any[]>(res)) ?? [];
+    if (rows.length === 0) return null;
+    const r = rows[0];
+    return {
+        member_id: r.id,
+        auth_user_id: r.auth_user_id,
+        full_name: r.full_name,
+        phone: r.phone,
+        email: r.email,
+        membership_tier: null,
+        membership_number: null,
+        membership_expiry_date: null,
+        membership_is_active: null,
+    };
+}
+
 /**
  * Use RPC motorambos.list_members_with_memberships()
  * to get members + their latest membership snapshot.
  */
 export async function listMembersWithMemberships(): Promise<MemberWithMembershipRow[]> {
-    const res = await fetch(
-        `${URL}/rest/v1/rpc/list_members_with_memberships`,
-        {
-            method: "POST",
-            headers: authHeaders(),
-            body: JSON.stringify({}), // no-arg RPC => empty JSON body
-        }
-    );
+    try {
+        const res = await fetch(
+            `${URL}/rest/v1/rpc/list_members_with_memberships`,
+            {
+                method: "POST",
+                headers: authHeaders(),
+                body: JSON.stringify({}),
+            }
+        );
 
-    await throwIfNotOk(res);
-    return (await readJSONSafe<MemberWithMembershipRow[]>(res)) ?? [];
+        if (!res.ok) {
+            console.warn("RPC list_members_with_memberships failed, falling back to listMembers");
+            return listMembers();
+        }
+
+        return (await readJSONSafe<MemberWithMembershipRow[]>(res)) ?? [];
+    } catch (e) {
+        console.error("Error in listMembersWithMemberships, falling back", e);
+        return listMembers();
+    }
 }
 
 /**
@@ -711,6 +794,165 @@ export async function upsertMemberMembership(params: {
 
     await throwIfNotOk(res);
 }
+
+/* ─────────────────────────────────────────
+   Membership Vehicles & Service History
+   ────────────────────────────────────────── */
+
+export async function listMemberVehicles(authUserUserId: string): Promise<VehicleRow[]> {
+    const res = await fetch(
+        `${URL}/rest/v1/vehicles?user_id=eq.${authUserUserId}&select=*`,
+        { headers: authHeaders() }
+    );
+    await throwIfNotOk(res);
+    return (await readJSONSafe<VehicleRow[]>(res)) ?? [];
+}
+
+export async function listAllVehicles(): Promise<VehicleRow[]> {
+    const res = await fetch(
+        `${URL}/rest/v1/vehicles?select=*`,
+        { headers: authHeaders() }
+    );
+    await throwIfNotOk(res);
+    return (await readJSONSafe<VehicleRow[]>(res)) ?? [];
+}
+export async function getVehicleById(id: string): Promise<VehicleRow | null> {
+    const res = await fetch(
+        `${URL}/rest/v1/vehicles?id=eq.${id}&select=*`,
+        { headers: authHeaders() }
+    );
+    await throwIfNotOk(res);
+    const data = (await readJSONSafe<VehicleRow[]>(res)) ?? [];
+    return data.length > 0 ? data[0] : null;
+}
+
+export async function updateVehicle(id: string, payload: Partial<VehicleRow>): Promise<void> {
+    const res = await fetch(`${URL}/rest/v1/vehicles?id=eq.${id}`, {
+        method: "PATCH",
+        headers: {
+            ...authHeaders(),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+    await throwIfNotOk(res);
+}
+
+/**
+ * Link a physical NFC Smart Card to a vehicle.
+ * Generates a Base62 public token and stores both the physical serial and the public ID.
+ * Returns the generated public passport ID (e.g. "k7R2pM9q").
+ */
+export async function linkSmartCardToVehicle(
+    vehicleId: string,
+    serialNumber: string
+): Promise<string> {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let publicId = "";
+    for (let i = 0; i < 8; i++) {
+        publicId += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const res = await fetch(`${URL}/rest/v1/vehicles?id=eq.${vehicleId}`, {
+        method: "PATCH",
+        headers: {
+            ...authHeaders(),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            nfc_card_id: publicId,
+            nfc_serial_number: serialNumber,
+        }),
+    });
+    await throwIfNotOk(res);
+    return publicId;
+}
+
+
+/* ─────────────────────────────────────────
+   Public Vehicle Lookup (for NFC Tag profiles)
+────────────────────────────────────────── */
+
+export async function getPublicVehicle(nfcId: string): Promise<VehicleRow | null> {
+    const res = await fetch(
+        `${URL}/rest/v1/vehicles?nfc_card_id=eq.${nfcId}&select=*`,
+        {
+            headers: {
+                apikey: ANON,
+                Authorization: `Bearer ${ANON}`,
+                "Accept-Profile": "motorambos",
+            }
+        }
+    );
+    if (!res.ok) return null;
+    const data = (await readJSONSafe<VehicleRow[]>(res)) ?? [];
+    return data.length > 0 ? data[0] : null;
+}
+
+export async function getPublicServiceHistory(vehicleId: string): Promise<ServiceHistoryRow[]> {
+    const res = await fetch(
+        `${URL}/rest/v1/service_history?vehicle_id=eq.${vehicleId}&select=*&order=service_date.desc`,
+        {
+            headers: {
+                apikey: ANON,
+                Authorization: `Bearer ${ANON}`,
+                "Accept-Profile": "motorambos",
+            }
+        }
+    );
+    if (!res.ok) return [];
+    return (await readJSONSafe<ServiceHistoryRow[]>(res)) ?? [];
+}
+
+export async function getPublicMemberByUserId(userId: string): Promise<MemberWithMembershipRow | null> {
+    const res = await fetch(
+        `${URL}/rest/v1/members?auth_user_id=eq.${userId}&select=*`,
+        {
+            headers: {
+                apikey: ANON,
+                Authorization: `Bearer ${ANON}`,
+                "Accept-Profile": "motorambos",
+            }
+        }
+    );
+    if (!res.ok) return null;
+    const data = (await readJSONSafe<any[]>(res)) ?? [];
+    if (data.length === 0) return null;
+    const r = data[0];
+    return {
+        member_id: r.id,
+        auth_user_id: r.auth_user_id,
+        full_name: r.full_name,
+        phone: r.phone,
+        email: r.email,
+        membership_tier: null,
+        membership_number: null,
+        membership_expiry_date: null,
+        membership_is_active: null,
+    };
+}
+
+export async function listServiceHistory(vehicleId: string): Promise<ServiceHistoryRow[]> {
+    const res = await fetch(
+        `${URL}/rest/v1/service_history?vehicle_id=eq.${vehicleId}&select=*&order=service_date.desc`,
+        { headers: authHeaders() }
+    );
+    await throwIfNotOk(res);
+    return (await readJSONSafe<ServiceHistoryRow[]>(res)) ?? [];
+}
+
+export async function upsertServiceHistory(row: Partial<ServiceHistoryRow>): Promise<void> {
+    const res = await fetch(`${URL}/rest/v1/service_history`, {
+        method: "POST",
+        headers: {
+            ...authHeaders(),
+            "Prefer": "resolution=merge-duplicates"
+        },
+        body: JSON.stringify(row)
+    });
+    await throwIfNotOk(res);
+}
+
 
 /* ─────────────────────────────────────────
    HELP FLOW — Anon Only

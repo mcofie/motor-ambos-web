@@ -22,14 +22,20 @@ import {
     Activity,
     Calendar,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    Car
 } from "lucide-react";
 import { listProviders, listRequests } from "@/lib/supaFetch";
 import { getSupabaseBrowser } from "@/lib/supabaseBrowser";
 import { StatCard } from "../ui/AdminUI";
 import { ProviderRow, RequestRow } from "../types";
 
-const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];
+const STATUS_COLORS: Record<string, string> = {
+    "Completed": "#10b981", // emerald-500
+    "In Progress": "#3b82f6", // blue-500
+    "Pending": "#f59e0b", // amber-500
+    "Cancelled": "#ef4444", // red-500
+};
 
 export function OverviewView() {
     const [providers, setProviders] = useState<ProviderRow[]>([]);
@@ -117,7 +123,7 @@ export function OverviewView() {
                 <StatCard
                     title="Active Fleet"
                     value={activeProviders}
-                    icon={Users}
+                    icon={Car}
                     color="bg-blue-500"
                 />
                 <StatCard
@@ -162,14 +168,16 @@ export function OverviewView() {
                                     yAxisId="left"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fill: '#64748b', fontSize: 12 }}
+                                    tick={{ fill: '#64748b', fontSize: 10 }}
+                                    label={{ value: 'Requests', angle: -90, position: 'insideLeft', offset: 0, fill: '#64748b', fontSize: 10, fontWeight: 500 }}
                                 />
                                 <YAxis
                                     yAxisId="right"
                                     orientation="right"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fill: '#64748b', fontSize: 12 }}
+                                    tick={{ fill: '#64748b', fontSize: 10 }}
+                                    label={{ value: 'Revenue (GHS)', angle: 90, position: 'insideRight', offset: 0, fill: '#64748b', fontSize: 10, fontWeight: 500 }}
                                 />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -215,7 +223,7 @@ export function OverviewView() {
                                     dataKey="value"
                                 >
                                     {requestStatusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || "#cbd5e1"} />
                                     ))}
                                 </Pie>
                                 <Tooltip />
@@ -229,9 +237,9 @@ export function OverviewView() {
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                        {requestStatusData.map((entry, index) => (
+                        {requestStatusData.map((entry) => (
                             <div key={entry.name} className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[entry.name] || "#cbd5e1" }} />
                                 <span>{entry.name}: <span className="font-semibold text-foreground">{entry.value}</span></span>
                             </div>
                         ))}

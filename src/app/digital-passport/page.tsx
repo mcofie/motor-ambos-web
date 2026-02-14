@@ -43,6 +43,9 @@ export default function DigitalPassportPage() {
                             <Button asChild size="lg" className="h-12 px-8 text-base font-bold bg-primary text-primary-foreground hover:bg-primary/90">
                                 <Link href="/order-card">Order Your Card</Link>
                             </Button>
+                            <Button asChild size="lg" variant="outline" className="h-12 px-8 text-base font-bold">
+                                <Link href="/link-card">Link Your Card</Link>
+                            </Button>
                         </div>
                     </div>
                 </section>

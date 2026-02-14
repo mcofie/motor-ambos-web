@@ -1,9 +1,13 @@
+"use client";
+
+import Link from "next/link";
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
     listMembershipPlans,
     listMembersWithMemberships,
     upsertMemberMembership,
+    listAllVehicles,
     MembershipPlanRow,
     MemberWithMembershipRow,
 } from "@/lib/supaFetch";
@@ -18,7 +22,15 @@ import {
     X,
     User as UserIcon,
     Save,
+    Car,
+    ArrowRight,
+    FileText,
+    History,
+    CheckCircle2,
 } from "lucide-react";
+import { listMemberVehicles, VehicleRow } from "@/lib/supaFetch";
+import { DigitalGlovebox } from "./DigitalGlovebox";
+
 import {
     UUID,
 } from "../types";
@@ -53,6 +65,11 @@ export function MembershipsView() {
         tier: "",
         expiry_date: "",
     });
+    const [selectedMembership, setSelectedMembership] = useState<{ id: string, name: string, auth_user_id?: string | null } | null>(null);
+    const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
+    const [allVehicles, setAllVehicles] = useState<VehicleRow[]>([]);
+    const [isGloveboxOpen, setIsGloveboxOpen] = useState(false);
+
 
     const filteredMembers = members.filter((m) => {
         if (!q.trim()) return true;
@@ -63,12 +80,14 @@ export function MembershipsView() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [plansRes, membersRes] = await Promise.all([
+            const [plansRes, membersRes, vehiclesRes] = await Promise.all([
                 listMembershipPlans(),
                 listMembersWithMemberships(),
+                listAllVehicles(),
             ]);
             setPlans(plansRes);
             setMembers(membersRes);
+            setAllVehicles(vehiclesRes);
         } catch (err) {
             console.error(err);
             toast.error("Failed to load memberships");
@@ -114,6 +133,27 @@ export function MembershipsView() {
         });
         setIsSidebarOpen(true);
     };
+
+    const openGlovebox = async (m: MemberWithMembershipRow) => {
+        if (!m.auth_user_id) {
+            toast.error("This member has no digital account linked (auth_user_id is missing)");
+            return;
+        }
+        setSelectedMembership({
+            id: m.membership_id || m.member_id, // Use member_id as fallback id
+            name: m.full_name || "Member",
+            auth_user_id: m.auth_user_id
+        });
+        setIsGloveboxOpen(true);
+        try {
+            const vels = await listMemberVehicles(m.auth_user_id);
+            setVehicles(vels);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to load vehicles");
+        }
+    };
+
 
     const handleSave = async () => {
         const payload = {
@@ -189,21 +229,29 @@ export function MembershipsView() {
                                 <th className="px-6 py-3">Contact</th>
                                 <th className="px-6 py-3">Plan</th>
                                 <th className="px-6 py-3">Status</th>
+                                <th className="px-6 py-3">Fleet</th>
                                 <th className="px-6 py-3 text-right">Actions</th>
+
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border bg-card">
                             {filteredMembers.map((m) => {
                                 const expired = m.membership_expiry_date ? new Date(m.membership_expiry_date) < new Date() : false;
                                 return (
-                                    <tr key={m.member_id} className="hover:bg-muted/50 transition-colors">
+                                    <tr key={m.member_id} className="hover:bg-muted/50 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div className="font-medium text-foreground">
-                                                {m.full_name || "Unnamed Member"}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                #{m.membership_number || "—"}
-                                            </div>
+                                            <Link
+                                                href={`/admin/memberships/${m.member_id}`}
+                                                className="group/name block"
+                                            >
+                                                <div className="font-medium text-foreground group-hover/name:text-primary transition-colors flex items-center gap-1.5">
+                                                    {m.full_name || "Unnamed Member"}
+                                                    <ArrowRight className="h-3 w-3 opacity-0 group-hover/name:opacity-100 transition-all -translate-x-1 group-hover/name:translate-x-0" />
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    #{m.membership_number || "—"}
+                                                </div>
+                                            </Link>
                                         </td>
                                         <td className="px-6 py-4 text-xs text-muted-foreground">
                                             <div>{m.phone}</div>
@@ -238,7 +286,43 @@ export function MembershipsView() {
                                                 <span className="text-muted-foreground/50 italic">No expiry set</span>
                                             )}
                                         </td>
+                                        <td className="px-6 py-4">
+                                            {m.auth_user_id ? (() => {
+                                                const memberVehicles = allVehicles.filter(v => v.user_id === m.auth_user_id);
+                                                return (
+                                                    <div className="flex flex-col gap-2">
+                                                        {memberVehicles.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {memberVehicles.map(v => (
+                                                                    <div key={v.id} className="flex flex-col bg-slate-100 dark:bg-white/5 rounded px-2 py-1 border border-slate-200 dark:border-white/5">
+                                                                        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                                                                            {v.year} {v.make} {v.model}
+                                                                        </span>
+                                                                        <span className="text-[9px] font-mono text-slate-500 uppercase">{v.plate}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-muted-foreground/50 italic font-medium">No vehicles</span>
+                                                        )}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                openGlovebox(m);
+                                                            }}
+                                                            className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors uppercase tracking-wider"
+                                                        >
+                                                            <Car className="h-3 w-3" />
+                                                            Manage Glovebox
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })() : (
+                                                <span className="text-xs text-muted-foreground/30 italic">No auth link</span>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 text-right">
+
                                             <button
                                                 onClick={() => editMembership(m)}
                                                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hover:border-secondary transition-colors"
@@ -381,6 +465,17 @@ export function MembershipsView() {
                     </div>
                 </>
             )}
+
+            {/* Digital Glovebox Overlay */}
+            {isGloveboxOpen && selectedMembership && (
+                <DigitalGlovebox
+                    membershipId={selectedMembership.id}
+                    memberName={selectedMembership.name}
+                    vehicles={vehicles}
+                    onClose={() => setIsGloveboxOpen(false)}
+                />
+            )}
         </div>
+
     );
 }

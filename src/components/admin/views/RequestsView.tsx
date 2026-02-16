@@ -37,12 +37,13 @@ export function RequestsView() {
     const [selectedRequest, setSelectedRequest] = useState<RequestRow | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    const fetchRequests = useCallback(async () => {
+    const fetchRequests = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         try {
-            const data = await listRequests(statusFilter === "all" ? undefined : statusFilter);
+            const data = await listRequests(statusFilter === "all" ? undefined : statusFilter, signal);
             setList(data as RequestRow[]);
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
             console.error(err);
         } finally {
             setLoading(false);
@@ -50,7 +51,9 @@ export function RequestsView() {
     }, [statusFilter]);
 
     useEffect(() => {
-        fetchRequests();
+        const controller = new AbortController();
+        fetchRequests(controller.signal);
+        return () => controller.abort();
     }, [fetchRequests]);
 
     const updateStatusLocal = async (id: UUID, status: RequestStatus) => {
@@ -94,7 +97,7 @@ export function RequestsView() {
                     </div>
                     <div className="flex-1" />
                     <button
-                        onClick={fetchRequests}
+                        onClick={() => fetchRequests()}
                         className="p-2 text-muted-foreground hover:text-primary transition-colors bg-muted/30 hover:bg-primary/10 rounded-lg"
                     >
                         <RefreshCw className="h-4 w-4" />

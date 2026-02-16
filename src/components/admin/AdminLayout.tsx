@@ -5,7 +5,7 @@ import { Bell, Search } from "lucide-react";
 
 interface AdminLayoutProps {
     children: React.ReactNode;
-    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc";
+    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations";
     user: User | null;
     onLogout: () => void;
 }

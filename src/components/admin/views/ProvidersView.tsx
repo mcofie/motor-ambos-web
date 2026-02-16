@@ -15,6 +15,7 @@ import {
     listProviderRates,
     upsertProviderRates,
     listRequests,
+    uploadProviderAsset,
 } from "@/lib/supaFetch";
 import { getSupabaseBrowser } from "@/lib/supabaseBrowser";
 import {
@@ -55,6 +56,7 @@ import {
     Star,
     Briefcase,
     ArrowUpDown,
+    Upload,
 } from "lucide-react";
 import {
     ProviderRow,
@@ -83,14 +85,18 @@ export const PROVIDER_TYPES: {
     color: string;
     bg: string;
 }[] = [
-        { value: "mechanic", label: "Mechanic Shop", icon: Wrench, color: "text-blue-500", bg: "bg-blue-500/10" },
-        { value: "car_wash", label: "Car Wash", icon: Droplets, color: "text-cyan-500", bg: "bg-cyan-500/10" },
+        { value: "mechanic", label: "Mechanic (General)", icon: Wrench, color: "text-blue-500", bg: "bg-blue-500/10" },
+        { value: "mechanic_engine", label: "Mechanic (Engine)", icon: Wrench, color: "text-blue-600", bg: "bg-blue-600/10" },
+        { value: "mechanic_electrical", label: "Mechanic (Electrical)", icon: Zap, color: "text-yellow-500", bg: "bg-yellow-500/10" },
         { value: "detailing", label: "Detailing", icon: Sparkles, color: "text-purple-500", bg: "bg-purple-500/10" },
+        { value: "car_wash", label: "Car Wash", icon: Droplets, color: "text-cyan-500", bg: "bg-cyan-500/10" },
+        { value: "roadworthy", label: "Roadworthy Center", icon: ShieldCheck, color: "text-emerald-600", bg: "bg-emerald-600/10" },
+        { value: "insurance", label: "Insurance Provider", icon: ShieldCheck, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+        { value: "shop", label: "Spare Parts & Shop", icon: Store, color: "text-amber-600", bg: "bg-amber-600/10" },
         { value: "towing", label: "Towing", icon: Truck, color: "text-orange-500", bg: "bg-orange-500/10" },
         { value: "fuel", label: "Fuel Delivery", icon: Fuel, color: "text-amber-500", bg: "bg-amber-500/10" },
-        { value: "auto_shop", label: "Auto Parts Shop", icon: Store, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+        { value: "auto_shop", label: "Auto Shop", icon: Store, color: "text-emerald-500", bg: "bg-emerald-500/10" },
         { value: "tire", label: "Tire Service", icon: CircleDot, color: "text-slate-500", bg: "bg-slate-500/10" },
-        { value: "electrical", label: "Auto Electrician", icon: Zap, color: "text-yellow-500", bg: "bg-yellow-500/10" },
         { value: "body_shop", label: "Body & Paint", icon: PaintBucket, color: "text-rose-500", bg: "bg-rose-500/10" },
     ];
 
@@ -117,6 +123,7 @@ type ProviderFormState = {
     is_verified: boolean;
     provider_type: ProviderType;
     logo_url: string;
+    backdrop_url: string;
     operating_hours: OperatingHours;
 };
 
@@ -137,6 +144,7 @@ export function ProvidersView() {
         is_verified: false,
         provider_type: "mechanic",
         logo_url: "",
+        backdrop_url: "",
         operating_hours: { ...DEFAULT_OPERATING_HOURS },
     };
 
@@ -178,18 +186,21 @@ export function ProvidersView() {
         return map;
     }, [list, allRequests]);
 
-    const fetchProviders = useCallback(async () => {
+    const fetchProviders = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         try {
-            const [providersData, requestsData] = await Promise.all([
-                listProviders(q),
-                listRequests()
+            const [providersData, requestsData, servicesData] = await Promise.all([
+                listProviders(q, signal),
+                listRequests(undefined, signal),
+                listServices(signal)
             ]);
             setList(providersData as ProviderRow[]);
             const reqs = requestsData as RequestRow[];
             setAllRequests(reqs);
             setActiveRequests(reqs.filter(r => r.status === 'pending' || r.status === 'in_progress' || r.status === 'accepted'));
-        } catch (err) {
+            setServices(servicesData as ServiceRow[]);
+        } catch (err: any) {
+            if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
             console.error(err);
             toast.error("Failed to load data");
         } finally {
@@ -198,8 +209,8 @@ export function ProvidersView() {
     }, [q]);
 
     useEffect(() => {
-        fetchProviders();
-        listServices().then((res) => setServices(res as ServiceRow[]));
+        const controller = new AbortController();
+        fetchProviders(controller.signal);
 
         const supabase = getSupabaseBrowser();
         const channel = supabase
@@ -214,6 +225,7 @@ export function ProvidersView() {
             .subscribe();
 
         return () => {
+            controller.abort();
             supabase.removeChannel(channel);
         };
     }, [fetchProviders]);
@@ -232,6 +244,7 @@ export function ProvidersView() {
                 lng: form.lng ? Number(form.lng) : null,
                 lat: form.lat ? Number(form.lat) : null,
                 logo_url: form.logo_url || null,
+                backdrop_url: form.backdrop_url || null,
                 operating_hours: form.operating_hours as unknown as Record<string, unknown>,
             };
 
@@ -283,6 +296,7 @@ export function ProvidersView() {
             lat: row.lat || "",
             provider_type: (row.provider_type as ProviderType) || "mechanic",
             logo_url: row.logo_url || "",
+            backdrop_url: row.backdrop_url || "",
             operating_hours: (row.operating_hours as OperatingHours) || { ...DEFAULT_OPERATING_HOURS },
         });
 
@@ -952,12 +966,12 @@ export function ProvidersView() {
                                     />
                                 </div>
 
-                                {/* Logo URL */}
+                                {/* Logo URL & Upload */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                                        <ImageIcon className="w-3 h-3" /> Logo / Photo URL
+                                        <ImageIcon className="w-3 h-3" /> Logo / Photo
                                     </label>
-                                    <div className="flex gap-3 items-center">
+                                    <div className="flex gap-3 items-start">
                                         {form.logo_url && (
                                             <img
                                                 src={form.logo_url}
@@ -965,12 +979,84 @@ export function ProvidersView() {
                                                 className="h-12 w-12 rounded-lg object-cover border border-border shrink-0"
                                             />
                                         )}
-                                        <input
-                                            className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm text-foreground"
-                                            value={form.logo_url}
-                                            onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
-                                            placeholder="https://example.com/logo.png"
-                                        />
+                                        <div className="flex-1 space-y-2">
+                                            <input
+                                                className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm text-foreground"
+                                                value={form.logo_url}
+                                                onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
+                                                placeholder="https://example.com/logo.png"
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-medium cursor-pointer transition-colors">
+                                                    <Upload className="w-3 h-3" />
+                                                    <span>Upload Logo</span>
+                                                    <input
+                                                        type="file"
+                                                        className="hidden"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (!file) return;
+                                                            try {
+                                                                const loadingToast = toast.loading("Uploading logo...");
+                                                                const url = await uploadProviderAsset(file, "logo");
+                                                                setForm({ ...form, logo_url: url });
+                                                                toast.dismiss(loadingToast);
+                                                                toast.success("Logo uploaded!");
+                                                            } catch (err) {
+                                                                toast.error("Upload failed");
+                                                            }
+                                                        }}
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Backdrop URL & Upload */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                        <ImageIcon className="w-3 h-3" /> Backdrop / Cover
+                                    </label>
+                                    <div className="flex flex-col gap-3">
+                                        {form.backdrop_url && (
+                                            <img
+                                                src={form.backdrop_url}
+                                                alt="Backdrop preview"
+                                                className="w-full h-24 rounded-lg object-cover border border-border"
+                                            />
+                                        )}
+                                        <div className="space-y-2">
+                                            <input
+                                                className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm text-foreground"
+                                                value={form.backdrop_url}
+                                                onChange={(e) => setForm({ ...form, backdrop_url: e.target.value })}
+                                                placeholder="https://example.com/backdrop.jpg"
+                                            />
+                                            <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-medium cursor-pointer transition-colors">
+                                                <Upload className="w-3 h-3" />
+                                                <span>Upload Backdrop</span>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        try {
+                                                            const loadingToast = toast.loading("Uploading backdrop...");
+                                                            const url = await uploadProviderAsset(file, "backdrop");
+                                                            setForm({ ...form, backdrop_url: url });
+                                                            toast.dismiss(loadingToast);
+                                                            toast.success("Backdrop uploaded!");
+                                                        } catch (err) {
+                                                            toast.error("Upload failed");
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
 

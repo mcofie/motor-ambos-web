@@ -8,7 +8,9 @@ import {
     MemberWithMembershipRow,
     VehicleRow,
     listServiceHistory,
-    ServiceHistoryRow
+    ServiceHistoryRow,
+    listOrgDrivers,
+    addOrgDriver
 } from "@/lib/supaFetch";
 import {
     ArrowLeft,
@@ -23,27 +25,42 @@ import {
     FileText,
     CheckCircle2,
     Loader2,
-    ShieldCheck
+    ShieldCheck,
+    Users,
+    Plus,
+    X,
+    Upload,
+    Zap,
+    Smartphone,
+    Check
 } from "lucide-react";
 import { cls, StatCard } from "../ui/AdminUI";
 import { toast } from "sonner";
 import { DigitalGlovebox } from "./DigitalGlovebox";
 
-interface MemberDetailViewProps {
+export interface MemberDetailViewProps {
     memberId: string;
+    initialMember?: MemberWithMembershipRow | null;
+    initialVehicles?: VehicleRow[];
 }
 
-export function MemberDetailView({ memberId }: MemberDetailViewProps) {
+export function MemberDetailView({ memberId, initialMember, initialVehicles }: MemberDetailViewProps) {
     const router = useRouter();
-    const [member, setMember] = useState<MemberWithMembershipRow | null>(null);
-    const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [member, setMember] = useState<MemberWithMembershipRow | null>(initialMember || null);
+    const [vehicles, setVehicles] = useState<VehicleRow[]>(initialVehicles || []);
+    const [loading, setLoading] = useState(!initialMember);
     const [isGloveboxOpen, setIsGloveboxOpen] = useState(false);
+    const [drivers, setDrivers] = useState<any[]>([]);
+    const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
+    const [newDriver, setNewDriver] = useState({ name: "", phone: "", vehicle_id: "" });
+    const [addingDriver, setAddingDriver] = useState(false);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
+        if (initialMember) return; // Skip if we have initial data
+
         setLoading(true);
         try {
-            const m = await getMemberById(memberId);
+            const m = await getMemberById(memberId, signal);
             if (!m) {
                 toast.error("Member not found");
                 router.push("/admin/memberships");
@@ -51,20 +68,55 @@ export function MemberDetailView({ memberId }: MemberDetailViewProps) {
             }
             setMember(m);
 
-            if (m.auth_user_id) {
-                const head = await listMemberVehicles(m.auth_user_id);
+            const mId = m.member_id || memberId;
+            const aId = m.auth_user_id;
+
+            if (mId) {
+                const head = await listMemberVehicles(mId, aId, signal);
                 setVehicles(head);
+
+                if (m.is_business) {
+                    listOrgDrivers(m.id || mId, signal).then(setDrivers).catch(e => {
+                        if (e.name === 'AbortError' || e.message?.includes('aborted')) return;
+                        console.error(e);
+                    });
+                }
             }
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
             console.error(err);
             toast.error("Failed to load member details");
         } finally {
             setLoading(false);
         }
-    }, [memberId, router]);
+    }, [memberId, router, initialMember]);
+
+    const handleAddDriver = async () => {
+        if (!member?.id || !newDriver.name || !newDriver.phone) {
+            toast.error("Please fill in name and phone");
+            return;
+        }
+        setAddingDriver(true);
+        try {
+            await addOrgDriver(member.id, newDriver.name, newDriver.phone, newDriver.vehicle_id || undefined);
+            toast.success("Driver added and notified");
+            setIsAddDriverOpen(false);
+            setNewDriver({ name: "", phone: "", vehicle_id: "" });
+            // Refresh list
+            const d = await listOrgDrivers(member.id);
+            setDrivers(d);
+        } catch (e) {
+            console.error(e);
+            toast.error("Failed to add driver");
+        } finally {
+            setAddingDriver(false);
+        }
+    };
 
     useEffect(() => {
-        fetchData();
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
     }, [fetchData]);
 
     if (loading) {
@@ -88,11 +140,16 @@ export function MemberDetailView({ memberId }: MemberDetailViewProps) {
                     <ArrowLeft className="h-5 w-5 text-slate-500 group-hover:text-primary transition-colors" />
                 </button>
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                        {member.full_name || "Unnamed Member"}
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        {member.is_business ? member.business_name : (member.full_name || "Unnamed Member")}
+                        {member.is_business && (
+                            <span className="bg-emerald-500/10 text-emerald-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                B2B Account
+                            </span>
+                        )}
                     </h2>
                     <p className="text-sm text-slate-500">
-                        Detailed profile and vehicle history
+                        {member.is_business ? "Fleet Organization & Management" : "Detailed profile and vehicle history"}
                     </p>
                 </div>
             </div>
@@ -115,8 +172,18 @@ export function MemberDetailView({ memberId }: MemberDetailViewProps) {
 
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Full Name</label>
-                                    <p className="font-semibold text-slate-900 dark:text-white">{member.full_name || "—"}</p>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        {member.is_business ? "Business Name" : "Full Name"}
+                                    </label>
+                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                        {member.is_business ? member.business_name : (member.full_name || "—")}
+                                    </p>
+                                    {member.is_business && (
+                                        <div className="pt-2">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Person</label>
+                                            <p className="text-sm text-slate-700 dark:text-slate-300">{member.full_name}</p>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Information</label>
@@ -161,13 +228,53 @@ export function MemberDetailView({ memberId }: MemberDetailViewProps) {
                             <Car className="h-4 w-4" />
                             Registered Fleet ({vehicles.length})
                         </h3>
-                        <button
-                            onClick={() => setIsGloveboxOpen(true)}
-                            className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
-                        >
-                            Open Digital Glovebox
-                        </button>
+                        {member.is_business && (
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => toast.info("Bulk Import Coming Soon")}
+                                    className="text-xs font-bold text-slate-500 hover:text-foreground transition-colors uppercase tracking-wider flex items-center gap-1"
+                                >
+                                    <Upload className="h-3 w-3" /> Bulk Import
+                                </button>
+                                <button
+                                    onClick={() => setIsGloveboxOpen(true)}
+                                    className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
+                                >
+                                    Open Digital Glovebox
+                                </button>
+                            </div>
+                        )}
+                        {!member.is_business && (
+                            <button
+                                onClick={() => setIsGloveboxOpen(true)}
+                                className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
+                            >
+                                Open Digital Glovebox
+                            </button>
+                        )}
                     </section>
+
+                    {/* Fleet Health Overview for Business */}
+                    {member.is_business && (
+                        <div className="grid grid-cols-3 gap-4 mb-4">
+                            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl font-bold text-slate-900 dark:text-white">{vehicles.length}</div>
+                                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Vehicles</div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl font-bold text-emerald-500">
+                                    {vehicles.filter(v => v.insurance_url).length}
+                                </div>
+                                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Insured</div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl font-bold text-emerald-500">
+                                    {vehicles.filter(v => v.roadworthy_url).length}
+                                </div>
+                                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Roadworthy</div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {vehicles.length > 0 ? (
@@ -226,7 +333,125 @@ export function MemberDetailView({ memberId }: MemberDetailViewProps) {
                         )}
                     </div>
 
-                    {/* Quick Stats Header */}
+                    {/* Fleet Drivers Section (B2B Only) */}
+                    {member.is_business && (
+                        <div className="pt-6 border-t border-border">
+                            <section className="flex items-center justify-between mb-4">
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Users className="h-4 w-4" />
+                                    Authorized Drivers ({drivers.length})
+                                </h3>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setIsAddDriverOpen(true)}
+                                        className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider flex items-center gap-1"
+                                    >
+                                        <Plus className="h-3 w-3" /> Add Driver
+                                    </button>
+                                </div>
+                            </section>
+
+                            <div className="bg-card rounded-xl border border-border overflow-hidden">
+                                {drivers.length > 0 ? (
+                                    <div className="divide-y divide-border">
+                                        {drivers.map((d) => (
+                                            <div key={d.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+                                                        <User className="h-4 w-4" />
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="font-bold text-sm text-foreground">{d.member?.full_name}</div>
+                                                        {d.member?.auth_user_id ? (
+                                                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[9px] font-bold border border-emerald-500/20 uppercase tracking-tighter">
+                                                                <Check className="h-2 w-2" /> Active
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[9px] font-bold border border-amber-500/20 uppercase tracking-tighter">
+                                                                <Smartphone className="h-2 w-2" /> Invited
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    {d.vehicle ? (
+                                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-white/5 border border-border text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                            <Car className="h-3 w-3" />
+                                                            {d.vehicle.year} {d.vehicle.model}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-[10px] text-muted-foreground italic">No Vehicle Assigned</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="p-8 text-center text-muted-foreground text-sm italic">
+                                        No drivers added yet. Add drivers to give them app access.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Add Driver Modal */}
+                    {isAddDriverOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                            <div className="bg-card w-full max-w-md rounded-xl shadow-2xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+                                    <h3 className="font-bold text-lg">Add Authorized Driver</h3>
+                                    <button onClick={() => setIsAddDriverOpen(false)} className="p-1 hover:bg-white/10 rounded"><X className="h-5 w-5" /></button>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Enter driver details. They will receive an SMS invite to download the app and join this fleet.
+                                    </p>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold uppercase text-muted-foreground">Driver Name</label>
+                                        <input
+                                            className="w-full p-2 rounded-lg border border-input bg-background"
+                                            placeholder="John Doe"
+                                            value={newDriver.name}
+                                            onChange={e => setNewDriver({ ...newDriver, name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold uppercase text-muted-foreground">Phone Number</label>
+                                        <input
+                                            className="w-full p-2 rounded-lg border border-input bg-background"
+                                            placeholder="055XXXXXXX"
+                                            value={newDriver.phone}
+                                            onChange={e => setNewDriver({ ...newDriver, phone: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold uppercase text-muted-foreground">Assign Vehicle (Optional)</label>
+                                        <select
+                                            className="w-full p-2 rounded-lg border border-input bg-background"
+                                            value={newDriver.vehicle_id}
+                                            onChange={e => setNewDriver({ ...newDriver, vehicle_id: e.target.value })}
+                                        >
+                                            <option value="">-- No Vehicle --</option>
+                                            {vehicles.map(v => (
+                                                <option key={v.id} value={v.id}>{v.year} {v.make} {v.model} ({v.plate})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="p-4 border-t border-border bg-muted/30 flex gap-3 justify-end">
+                                    <button onClick={() => setIsAddDriverOpen(false)} className="px-4 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:bg-white/5">Cancel</button>
+                                    <button
+                                        onClick={handleAddDriver}
+                                        disabled={addingDriver}
+                                        className="px-4 py-2 rounded-lg text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                                    >
+                                        {addingDriver ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add & Invite"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                         <section className="bg-card rounded-2xl border border-border p-6 shadow-sm">
                             <div className="flex items-center gap-3 mb-4">

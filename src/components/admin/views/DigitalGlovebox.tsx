@@ -54,7 +54,9 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
     const loadHistory = async (vehicleId: string) => {
         setLoadingHistory(true);
         try {
-            const data = await listServiceHistory(vehicleId);
+            const res = await fetch(`/api/admin-service-history?vehicle_id=${vehicleId}`);
+            if (!res.ok) throw new Error("Failed to fetch history");
+            const data = await res.json();
             setHistory(data);
         } catch (err) {
             console.error(err);
@@ -67,15 +69,21 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
     const handleAddHistory = async () => {
         if (!selectedVehicle) return;
         try {
-            await upsertServiceHistory({
-                vehicle_id: selectedVehicle.id,
-                description: newHistory.description,
-                service_date: newHistory.service_date,
-                provider_name: newHistory.provider_name,
-                mileage: newHistory.mileage ? Number(newHistory.mileage) : null,
-                cost: newHistory.cost ? Number(newHistory.cost) : null,
-                is_verified: true, // Admin entries are verified by default
+            const res = await fetch("/api/admin-service-history", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    vehicle_id: selectedVehicle.id,
+                    description: newHistory.description,
+                    service_date: newHistory.service_date,
+                    provider_name: newHistory.provider_name,
+                    mileage: newHistory.mileage ? Number(newHistory.mileage) : null,
+                    cost: newHistory.cost ? Number(newHistory.cost) : null,
+                    is_verified: true,
+                })
             });
+
+            if (!res.ok) throw new Error("Failed to add record");
             toast.success("Service record added");
             loadHistory(selectedVehicle.id);
             setIsAddingHistory(false);

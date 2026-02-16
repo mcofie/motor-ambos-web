@@ -1,13 +1,19 @@
-"use client";
-
-import { use } from "react";
 import { VehicleDetailView } from "@/components/admin/views/VehicleDetailView";
+import { getAdminVehicleDetails } from "@/lib/adminServerFetch";
 
 interface PageProps {
     params: Promise<{ id: string }>;
 }
 
-export default function VehicleDetailPage({ params }: PageProps) {
-    const { id } = use(params);
-    return <VehicleDetailView vehicleId={id} />;
+export default async function VehicleDetailPage({ params }: PageProps) {
+    const { id } = await params;
+    const data = await getAdminVehicleDetails(id);
+
+    return (
+        <VehicleDetailView
+            vehicleId={id}
+            initialVehicle={data?.vehicle}
+            initialHistory={data?.history}
+        />
+    );
 }

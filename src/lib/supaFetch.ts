@@ -9,7 +9,37 @@
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
+import { getSupabaseBrowser } from "./supabaseBrowser";
+
 if (!URL || !ANON) throw new Error("Missing environment variables");
+
+/**
+ * Uploads a file to the provider-assets bucket
+ */
+export async function uploadProviderAsset(file: File, path: string): Promise<string> {
+    const supabase = getSupabaseBrowser();
+
+    // Clean path and add timestamp to avoid collisions
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${path}-${Date.now()}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
+
+    const { data, error } = await supabase.storage
+        .from('provider-assets')
+        .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+        });
+
+    if (error) throw error;
+
+    // Return the public URL
+    const { data: { publicUrl } } = supabase.storage
+        .from('provider-assets')
+        .getPublicUrl(filePath);
+
+    return publicUrl;
+}
 
 /* ─────────────────────────────────────────
    Types
@@ -38,6 +68,8 @@ export type Provider = {
     lat: number;
     lng: number;
     is_verified: boolean;
+    logo_url?: string | null;
+    backdrop_url?: string | null;
 };
 
 type ProviderRow = {
@@ -142,6 +174,8 @@ type RpcProviderRow = {
     lng?: number | null;
     location?: GeoJSONPoint | null;
     is_verified?: boolean | null;
+    logo_url?: string | null;
+    backdrop_url?: string | null;
 };
 
 type ErrorPayload = {
@@ -195,6 +229,10 @@ export type MemberWithMembershipRow = {
     plan_code?: string | null;
     tier?: string | null;
     membership_id?: string | null;
+    car_brand?: string | null;
+    id?: string;
+    is_business?: boolean;
+    business_name?: string | null;
 };
 
 export type VehicleRow = {
@@ -210,6 +248,35 @@ export type VehicleRow = {
     roadworthy_url?: string | null;
     nfc_card_id?: string | null;
     nfc_serial_number?: string | null;
+    created_at?: string;
+};
+
+export type InvoiceRow = {
+    id: string;
+    org_id: string;
+    invoice_number: string;
+    status: 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+    issue_date: string;
+    due_date: string;
+    total_amount: number;
+    paid_amount: number;
+    currency: string;
+    notes?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    organization?: {
+        business_name: string;
+        full_name: string;
+    };
+};
+
+export type InvoiceItemRow = {
+    id: string;
+    invoice_id: string;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    amount: number;
     created_at?: string;
 };
 
@@ -449,9 +516,10 @@ export async function getUser(): Promise<SupabaseUserPayload> {
 ────────────────────────────────────────── */
 
 // Admin view
-export async function listServices(): Promise<ServiceRow[]> {
+export async function listServices(signal?: AbortSignal): Promise<ServiceRow[]> {
     const res = await fetch(`${URL}/rest/v1/services?select=id,name,code`, {
         headers: authHeaders(),
+        signal
     });
 
     await throwIfNotOk(res);
@@ -460,7 +528,7 @@ export async function listServices(): Promise<ServiceRow[]> {
 
 // PUBLIC lookup for help flow
 export async function lookupServiceIdByCode(
-    code: "battery" | "tire" | "oil" | "tow" | "rescue" | "fuel"
+    code: string
 ): Promise<string> {
     const res = await fetch(
         `${URL}/rest/v1/services?select=id&code=eq.${code}&limit=1`,
@@ -477,7 +545,7 @@ export async function lookupServiceIdByCode(
    PROVIDERS (Admin-only)
 ────────────────────────────────────────── */
 
-export async function listProviders(q?: string): Promise<ProviderRow[]> {
+export async function listProviders(q?: string, signal?: AbortSignal): Promise<ProviderRow[]> {
     const params = new URLSearchParams();
     params.set(
         "select",
@@ -495,6 +563,7 @@ export async function listProviders(q?: string): Promise<ProviderRow[]> {
             "lng",
             "provider_type",
             "logo_url",
+            "backdrop_url",
             "operating_hours",
             "created_at",
         ].join(",")
@@ -504,6 +573,7 @@ export async function listProviders(q?: string): Promise<ProviderRow[]> {
 
     const res = await fetch(`${URL}/rest/v1/providers?${params}`, {
         headers: authHeaders(),
+        signal
     });
 
     await throwIfNotOk(res);
@@ -534,6 +604,7 @@ export type InsertProviderParams = {
     owner_id?: string | null;
     provider_type?: string | null;
     logo_url?: string | null;
+    backdrop_url?: string | null;
     operating_hours?: Record<string, unknown> | null;
 };
 
@@ -552,6 +623,7 @@ export async function insertProvider(
         owner_id: p.owner_id ?? null,
         provider_type: p.provider_type ?? null,
         logo_url: p.logo_url ?? null,
+        backdrop_url: p.backdrop_url ?? null,
         operating_hours: p.operating_hours ?? null,
     };
 
@@ -584,6 +656,7 @@ export type UpdateProviderPatch = Partial<{
     is_verified: boolean;
     provider_type: string | null;
     logo_url: string | null;
+    backdrop_url: string | null;
     operating_hours: Record<string, unknown> | null;
 }>;
 
@@ -730,46 +803,50 @@ export async function setProviderServices(
 /**
  * List all active membership plans for the dashboard.
  */
-export async function listMembershipPlans(): Promise<MembershipPlanRow[]> {
-    const params = new URLSearchParams();
-    params.set(
-        "select",
-        [
-            "id",
-            "code",
-            "name",
-            "description",
-            "currency",
-            "price_monthly",
-            "price_yearly",
-            "included_callouts_per_year",
-            "free_tow_radius_km",
-            "discount_percent_on_services",
-            "max_vehicles",
-            "priority_support",
-            "is_active",
-        ].join(",")
-    );
-    params.set("order", "price_monthly.asc.nullslast");
+export async function listMembershipPlans(signal?: AbortSignal): Promise<MembershipPlanRow[]> {
+    const supabase = getSupabaseBrowser();
+    const query = supabase
+        .schema("motorambos")
+        .from("membership_plans")
+        .select("*")
+        .order("price_monthly", { ascending: true });
 
-    const res = await fetch(
-        `${URL}/rest/v1/membership_plans?${params.toString()}`,
-        {
-            headers: authHeaders(),
-        }
-    );
+    if (signal) (query as any).abortSignal(signal);
 
-    await throwIfNotOk(res);
-    return (await readJSONSafe<MembershipPlanRow[]>(res)) ?? [];
+    const { data, error } = await query;
+
+    if (error) {
+        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return [];
+        console.error("Error listing membership plans:", error.message || error);
+        return [];
+    }
+    return (data || []) as MembershipPlanRow[];
 }
 
-export async function listMembers(): Promise<MemberWithMembershipRow[]> {
-    const res = await fetch(
-        `${URL}/rest/v1/members?select=*`,
-        { headers: authHeaders() }
-    );
-    await throwIfNotOk(res);
-    const rows = (await readJSONSafe<any[]>(res)) ?? [];
+export async function listMembers(signal?: AbortSignal): Promise<MemberWithMembershipRow[]> {
+    const supabase = getSupabaseBrowser();
+    const query = supabase
+        .schema("motorambos")
+        .from("members")
+        .select(`
+            *,
+            membership_plans (
+                name,
+                code
+            )
+        `);
+
+    if (signal) (query as any).abortSignal(signal);
+
+    const { data, error } = await query;
+
+    if (error) {
+        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return [];
+        console.error("Error listing members:", error.message || error);
+        return [];
+    }
+
+    const rows = (data || []) as any[];
     // Map to the expected row type for the UI
     return rows.map(r => ({
         member_id: r.id,
@@ -777,31 +854,63 @@ export async function listMembers(): Promise<MemberWithMembershipRow[]> {
         full_name: r.full_name,
         phone: r.phone,
         email: r.email,
-        membership_tier: null,
-        membership_number: null,
-        membership_expiry_date: null,
-        membership_is_active: null,
+        membership_tier: r.membership_tier,
+        membership_number: r.membership_number,
+        membership_expiry_date: r.membership_expiry_date,
+        membership_is_active: r.membership_is_active,
+        plan_name: r.membership_plans?.name,
+        plan_code: r.membership_plans?.code,
+        car_brand: r.car_brand,
+        id: r.id,
+        is_business: r.is_business || false,
+        business_name: r.business_name,
     }));
 }
-export async function getMemberById(id: string): Promise<MemberWithMembershipRow | null> {
-    const res = await fetch(
-        `${URL}/rest/v1/members?id=eq.${id}&select=*`,
-        { headers: authHeaders() }
-    );
-    await throwIfNotOk(res);
-    const rows = (await readJSONSafe<any[]>(res)) ?? [];
-    if (rows.length === 0) return null;
-    const r = rows[0];
+export async function getMemberById(id: string, signal?: AbortSignal): Promise<MemberWithMembershipRow | null> {
+    const supabase = getSupabaseBrowser();
+    const query = supabase
+        .schema("motorambos")
+        .from("members")
+        .select(`
+            *,
+            membership_plans (
+                name,
+                code
+            )
+        `)
+        .eq("id", id)
+        .single();
+
+    if (signal) (query as any).abortSignal(signal);
+
+    const { data, error } = await query;
+
+    if (error) {
+        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return null;
+        // PGRST116 is 'No rows found', usually fine to return null silently
+        if (error.code !== 'PGRST116') {
+            console.error("Error fetching member by id:", error.message || error);
+        }
+        return null;
+    }
+    if (!data) return null;
+
     return {
-        member_id: r.id,
-        auth_user_id: r.auth_user_id,
-        full_name: r.full_name,
-        phone: r.phone,
-        email: r.email,
-        membership_tier: null,
-        membership_number: null,
-        membership_expiry_date: null,
-        membership_is_active: null,
+        member_id: data.id,
+        auth_user_id: data.auth_user_id,
+        full_name: data.full_name,
+        phone: data.phone,
+        email: data.email,
+        membership_tier: data.membership_tier,
+        membership_number: data.membership_number,
+        membership_expiry_date: data.membership_expiry_date,
+        membership_is_active: data.membership_is_active,
+        plan_name: data.membership_plans?.name,
+        plan_code: data.membership_plans?.code,
+        car_brand: data.car_brand,
+        id: data.id,
+        is_business: data.is_business || false,
+        business_name: data.business_name,
     };
 }
 
@@ -809,27 +918,8 @@ export async function getMemberById(id: string): Promise<MemberWithMembershipRow
  * Use RPC motorambos.list_members_with_memberships()
  * to get members + their latest membership snapshot.
  */
-export async function listMembersWithMemberships(): Promise<MemberWithMembershipRow[]> {
-    try {
-        const res = await fetch(
-            `${URL}/rest/v1/rpc/list_members_with_memberships`,
-            {
-                method: "POST",
-                headers: authHeaders(),
-                body: JSON.stringify({}),
-            }
-        );
-
-        if (!res.ok) {
-            console.warn("RPC list_members_with_memberships failed, falling back to listMembers");
-            return listMembers();
-        }
-
-        return (await readJSONSafe<MemberWithMembershipRow[]>(res)) ?? [];
-    } catch (e) {
-        console.error("Error in listMembersWithMemberships, falling back", e);
-        return listMembers();
-    }
+export async function listMembersWithMemberships(signal?: AbortSignal): Promise<MemberWithMembershipRow[]> {
+    return listMembers(signal);
 }
 
 /**
@@ -847,49 +937,85 @@ export async function upsertMemberMembership(params: {
     full_name?: string | null;
     plan_id: string;
     tier: string;
-    expiry_date?: string | null; // ISO string or null
+    expiry_date?: string | null;
+    is_business?: boolean;
+    business_name?: string | null;
+    parent_org_id?: string | null;
 }): Promise<void> {
-    const res = await fetch(`${URL}/rest/v1/rpc/upsert_member_membership`, {
+    const res = await fetch("/api/admin-upsert-membership", {
         method: "POST",
-        headers: {
-            ...authHeaders(),
-            "Content-Type": "application/json",
-            Prefer: "return=representation",
-        },
-        body: JSON.stringify({
-            p_member_id: params.member_id ?? null,
-            p_phone: params.phone,
-            p_email: params.email ?? null,
-            p_full_name: params.full_name ?? null,
-            p_plan_id: params.plan_id,
-            p_tier: params.tier,
-            p_expiry_date: params.expiry_date ?? null,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params)
     });
 
-    await throwIfNotOk(res);
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to upsert membership");
+    }
+}
+
+export async function listOrgDrivers(orgId: string, signal?: AbortSignal): Promise<any[]> {
+    const res = await fetch(`/api/admin-org-drivers?org_id=${orgId}`, { signal });
+    if (!res.ok) throw new Error("Failed to list drivers");
+    return res.json();
+}
+
+export async function addOrgDriver(orgId: string, fullName: string, phone: string, vehicleId?: string): Promise<void> {
+    const res = await fetch("/api/admin-org-drivers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ org_id: orgId, full_name: fullName, phone, vehicle_id: vehicleId })
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to add driver");
+    }
 }
 
 /* ─────────────────────────────────────────
    Membership Vehicles & Service History
    ────────────────────────────────────────── */
 
-export async function listMemberVehicles(authUserUserId: string): Promise<VehicleRow[]> {
-    const res = await fetch(
-        `${URL}/rest/v1/vehicles?user_id=eq.${authUserUserId}&select=*`,
-        { headers: authHeaders() }
-    );
-    await throwIfNotOk(res);
-    return (await readJSONSafe<VehicleRow[]>(res)) ?? [];
+export async function listMemberVehicles(memberId: string, authId?: string | null, signal?: AbortSignal): Promise<VehicleRow[]> {
+    const supabase = getSupabaseBrowser();
+    const ids = [memberId];
+    if (authId) ids.push(authId);
+
+    const query = supabase
+        .schema("motorambos")
+        .from("vehicles")
+        .select("*")
+        .in("user_id", ids);
+
+    if (signal) (query as any).abortSignal(signal);
+
+    const { data, error } = await query;
+
+    if (error) {
+        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return [];
+        console.error("Error fetching vehicles:", error.message || error);
+        return [];
+    }
+    return (data || []) as VehicleRow[];
 }
 
-export async function listAllVehicles(): Promise<VehicleRow[]> {
-    const res = await fetch(
-        `${URL}/rest/v1/vehicles?select=*`,
-        { headers: authHeaders() }
-    );
-    await throwIfNotOk(res);
-    return (await readJSONSafe<VehicleRow[]>(res)) ?? [];
+export async function listAllVehicles(signal?: AbortSignal): Promise<VehicleRow[]> {
+    const supabase = getSupabaseBrowser();
+    const query = supabase
+        .schema("motorambos")
+        .from("vehicles")
+        .select("*");
+
+    if (signal) (query as any).abortSignal(signal);
+
+    const { data, error } = await query;
+
+    if (error) {
+        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return [];
+        console.error("Error listing all vehicles:", error.message || error);
+        return [];
+    }
+    return (data || []) as VehicleRow[];
 }
 export async function getVehicleById(id: string): Promise<VehicleRow | null> {
     const res = await fetch(
@@ -1034,7 +1160,7 @@ export async function upsertServiceHistory(row: Partial<ServiceHistoryRow>): Pro
 ────────────────────────────────────────── */
 
 export async function createRequest(payload: {
-    helpType: "battery" | "tire" | "oil" | "tow" | "rescue" | "fuel";
+    helpType: string;
     driver_name: string;
     driver_phone: string;
     details?: string | null;
@@ -1134,11 +1260,13 @@ function mapRpcProvider(r: RpcProviderRow): Provider {
         lat: r.lat ?? latGeo ?? 0,
         lng: r.lng ?? lngGeo ?? 0,
         is_verified: r.is_verified ?? false,
+        logo_url: r.logo_url ?? null,
+        backdrop_url: r.backdrop_url ?? null,
     };
 }
 
 export async function findProvidersNear(
-    serviceCode: "battery" | "tire" | "oil" | "tow" | "fuel" | "rescue",
+    serviceCode: string,
     lat: number,
     lng: number,
     radiusKm = 20,
@@ -1165,7 +1293,7 @@ export async function findProvidersNear(
    Requests list (Admin)
 ────────────────────────────────────────── */
 
-export async function listRequests(status?: string): Promise<RequestsListRow[]> {
+export async function listRequests(status?: string, signal?: AbortSignal): Promise<RequestsListRow[]> {
     const params = new URLSearchParams();
     params.set(
         "select",
@@ -1179,6 +1307,7 @@ export async function listRequests(status?: string): Promise<RequestsListRow[]> 
             "details",
             "address_line",
             "location",
+            "service_id",
         ].join(",")
     );
     params.set("order", "created_at.desc");
@@ -1187,6 +1316,7 @@ export async function listRequests(status?: string): Promise<RequestsListRow[]> 
 
     const res = await fetch(`${URL}/rest/v1/requests?${params.toString()}`, {
         headers: authHeaders(),
+        signal
     });
 
     await throwIfNotOk(res);
@@ -1286,4 +1416,270 @@ export async function updateRequestStatus(
     });
 
     await throwIfNotOk(res);
+}
+/* ─────────────────────────────────────────
+   NFC Inventory & Requests
+   ────────────────────────────────────────── */
+
+export type NfcCardRow = {
+    id: string;
+    serial_number: string;
+    status: string;
+    batch_id?: string | null;
+    created_at?: string;
+};
+
+export type NfcRequestRow = {
+    id: string;
+    member_id: string;
+    vehicle_id?: string | null;
+    status: string;
+    request_type: string;
+    notes?: string | null;
+    created_at?: string;
+    member?: {
+        full_name: string;
+        phone: string;
+    };
+    vehicle?: {
+        year: string;
+        make: string;
+        model: string;
+        plate: string;
+    };
+};
+
+export async function listNfcCards(signal?: AbortSignal): Promise<NfcCardRow[]> {
+    const res = await fetch("/api/admin-nfc?type=cards", { signal });
+    if (!res.ok) {
+        console.error("Error listing NFC cards:", res.statusText);
+        return [];
+    }
+    return res.json();
+}
+
+export async function createNfcCardBatch(serials: string[], batchId?: string): Promise<void> {
+    const res = await fetch("/api/admin-nfc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: "create_batch",
+            serials,
+            batch_id: batchId
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create batch");
+    }
+}
+
+export async function listNfcRequests(signal?: AbortSignal): Promise<NfcRequestRow[]> {
+    const res = await fetch("/api/admin-nfc?type=requests", { signal });
+    if (!res.ok) {
+        console.error("Error listing NFC requests:", res.statusText);
+        return [];
+    }
+    return res.json();
+}
+
+export async function updateNfcRequestStatus(id: string, status: string): Promise<void> {
+    const res = await fetch("/api/admin-nfc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: "update_request_status",
+            id,
+            status
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed/to update status");
+    }
+}
+export async function bulkAssignNfcCards(mappings: { vehicle_id: string; serial_number: string }[]): Promise<void> {
+    const res = await fetch("/api/admin-nfc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: "bulk_assign_cards",
+            mappings
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to bulk assign cards");
+    }
+}
+
+export async function updateNfcCard(id: string, updates: Partial<NfcCardRow>): Promise<void> {
+    const res = await fetch("/api/admin-nfc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: "update_card",
+            id,
+            ...updates
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to update card");
+    }
+}
+
+export async function deleteNfcCard(id: string): Promise<void> {
+    const res = await fetch("/api/admin-nfc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: "delete_card",
+            id
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to delete card");
+    }
+}
+
+export async function listInvoices(orgId?: string, signal?: AbortSignal): Promise<InvoiceRow[]> {
+    const url = orgId ? `/api/admin-invoices?org_id=${orgId}` : "/api/admin-invoices";
+    const res = await fetch(url, { signal });
+    if (!res.ok) {
+        console.error("Error listing invoices:", res.statusText);
+        return [];
+    }
+    return res.json();
+}
+
+export async function createInvoice(payload: {
+    org_id: string;
+    due_date: string;
+    total_amount: number;
+    notes?: string;
+    items: { description: string; quantity: number; unit_price: number }[];
+}): Promise<InvoiceRow> {
+    const res = await fetch("/api/admin-invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create invoice");
+    }
+    return res.json();
+}
+
+export async function sendFleetReport(orgId: string, options: {
+    startDate: string;
+    endDate: string;
+    includeServices: boolean;
+    includeCompliance: boolean;
+    includeFleetStats: boolean;
+}): Promise<Blob> {
+    const res = await fetch("/api/admin-reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ org_id: orgId, type: 'fleet_summary', ...options })
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to generate report");
+    }
+    return res.blob();
+}
+
+export async function upsertOrganization(payload: {
+    id?: string;
+    business_name: string;
+    full_name: string;
+    email?: string;
+    phone: string;
+    membership_tier?: string;
+    membership_expiry_date?: string;
+    membership_is_active?: boolean;
+}): Promise<void> {
+    const isNew = !payload.id;
+    const url = isNew
+        ? `${URL}/rest/v1/members`
+        : `${URL}/rest/v1/members?id=eq.${payload.id}`;
+
+    // Clean payload of optional empties
+    const body: any = {
+        ...payload,
+        is_business: true,
+        updated_at: new Date().toISOString()
+    };
+    if (body.id) delete body.id;
+
+    const res = await fetch(url, {
+        method: isNew ? "POST" : "PATCH",
+        headers: {
+            ...authHeaders(),
+            ...(isNew ? { Prefer: "return=representation" } : {})
+        },
+        body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to save organization");
+    }
+}
+
+export async function recordInvoicePayment(invoiceId: string, amount: number): Promise<void> {
+    const res = await fetch(`${URL}/rest/v1/invoices?id=eq.${invoiceId}`, {
+        method: "PATCH",
+        headers: { ...authHeaders() },
+        body: JSON.stringify({
+            paid_amount: amount,
+            updated_at: new Date().toISOString()
+        })
+    });
+    if (!res.ok) throw new Error("Failed to record payment");
+}
+
+export async function listOrgNotes(orgId: string): Promise<any[]> {
+    const res = await fetch(`${URL}/rest/v1/organization_notes?org_id=eq.${orgId}&select=*&order=created_at.desc`, {
+        headers: { ...authHeaders() }
+    });
+    if (!res.ok) return [];
+    return res.json();
+}
+
+export async function addOrgNote(orgId: string, content: string, category: string = 'GENERAL'): Promise<void> {
+    const res = await fetch(`${URL}/rest/v1/organization_notes`, {
+        method: "POST",
+        headers: { ...authHeaders() },
+        body: JSON.stringify({
+            org_id: orgId,
+            content,
+            category,
+            created_at: new Date().toISOString()
+        })
+    });
+    if (!res.ok) throw new Error("Failed to save note");
+}
+
+export async function fetchOrgServiceAnalytics(orgId: string): Promise<{ total_requests: number, total_cost: number }> {
+    // This is a simplified fetch, ideally this would be a single RPC call or aggregation
+    const res = await fetch(`${URL}/rest/v1/service_history?vehicle_id=in.(select id from vehicles where user_id=eq.${orgId})&select=cost`, {
+        headers: { ...authHeaders() }
+    });
+    if (!res.ok) return { total_requests: 0, total_cost: 0 };
+    const data = await res.json();
+    return {
+        total_requests: data.length,
+        total_cost: data.reduce((sum: number, item: any) => sum + (item.cost || 0), 0)
+    };
 }

@@ -51,14 +51,18 @@ import {
 
 // Duplicate type config (keep in sync with ProvidersView)
 const PROVIDER_TYPES = [
-    { value: "mechanic", label: "Mechanic Shop", icon: Wrench, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { value: "car_wash", label: "Car Wash", icon: Droplets, color: "text-cyan-500", bg: "bg-cyan-500/10" },
+    { value: "mechanic", label: "Mechanic (General)", icon: Wrench, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { value: "mechanic_engine", label: "Mechanic (Engine)", icon: Wrench, color: "text-blue-600", bg: "bg-blue-600/10" },
+    { value: "mechanic_electrical", label: "Mechanic (Electrical)", icon: Zap, color: "text-yellow-500", bg: "bg-yellow-500/10" },
     { value: "detailing", label: "Detailing", icon: Sparkles, color: "text-purple-500", bg: "bg-purple-500/10" },
+    { value: "car_wash", label: "Car Wash", icon: Droplets, color: "text-cyan-500", bg: "bg-cyan-500/10" },
+    { value: "roadworthy", label: "Roadworthy Center", icon: ShieldCheck, color: "text-emerald-600", bg: "bg-emerald-600/10" },
+    { value: "insurance", label: "Insurance Provider", icon: ShieldCheck, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+    { value: "shop", label: "Spare Parts & Shop", icon: Store, color: "text-amber-600", bg: "bg-amber-600/10" },
     { value: "towing", label: "Towing", icon: Truck, color: "text-orange-500", bg: "bg-orange-500/10" },
     { value: "fuel", label: "Fuel Delivery", icon: Fuel, color: "text-amber-500", bg: "bg-amber-500/10" },
-    { value: "auto_shop", label: "Auto Parts Shop", icon: Store, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { value: "auto_shop", label: "Auto Shop", icon: Store, color: "text-emerald-500", bg: "bg-emerald-500/10" },
     { value: "tire", label: "Tire Service", icon: CircleDot, color: "text-slate-500", bg: "bg-slate-500/10" },
-    { value: "electrical", label: "Auto Electrician", icon: Zap, color: "text-yellow-500", bg: "bg-yellow-500/10" },
     { value: "body_shop", label: "Body & Paint", icon: PaintBucket, color: "text-rose-500", bg: "bg-rose-500/10" },
 ] as const;
 
@@ -201,9 +205,22 @@ export default function ProviderDetailPage() {
             </button>
 
             {/* Header Card */}
-            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-                <div className={cls("h-2 w-full", typeConfig.bg.replace("/10", ""))} />
-                <div className="p-6 flex flex-col md:flex-row gap-6">
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden relative">
+                {/* Backdrop Image */}
+                <div className="h-32 md:h-48 w-full relative overflow-hidden bg-muted">
+                    {provider.backdrop_url ? (
+                        <img
+                            src={provider.backdrop_url}
+                            alt="Provider backdrop"
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className={cls("w-full h-full opacity-20", typeConfig.bg.replace("/10", ""))} />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+                </div>
+
+                <div className="px-6 pb-6 flex flex-col md:flex-row gap-6 -mt-12 relative z-10">
                     {/* Logo / Avatar */}
                     <div className="shrink-0">
                         {provider.logo_url ? (

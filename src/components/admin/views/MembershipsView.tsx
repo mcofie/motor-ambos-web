@@ -48,12 +48,21 @@ type MembershipFormState = {
     plan_id: string;
     tier: string;
     expiry_date: string; // yyyy-mm-dd
+    is_business: boolean;
+    business_name: string;
+    parent_org_id: string;
 };
 
-export function MembershipsView() {
-    const [plans, setPlans] = useState<MembershipPlanRow[]>([]);
-    const [members, setMembers] = useState<MemberWithMembershipRow[]>([]);
-    const [loading, setLoading] = useState(false);
+export interface MembershipsViewProps {
+    initialPlans?: MembershipPlanRow[];
+    initialMembers?: MemberWithMembershipRow[];
+    initialAllVehicles?: VehicleRow[];
+}
+
+export function MembershipsView({ initialPlans, initialMembers, initialAllVehicles }: MembershipsViewProps) {
+    const [plans, setPlans] = useState<MembershipPlanRow[]>(initialPlans || []);
+    const [members, setMembers] = useState<MemberWithMembershipRow[]>(initialMembers || []);
+    const [loading, setLoading] = useState(!initialMembers);
     const [q, setQ] = useState("");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [form, setForm] = useState<MembershipFormState>({
@@ -64,31 +73,42 @@ export function MembershipsView() {
         plan_id: "",
         tier: "",
         expiry_date: "",
+        is_business: false,
+        business_name: "",
+        parent_org_id: "",
     });
+    const [filterType, setFilterType] = useState<"ALL" | "INDIVIDUAL" | "BUSINESS">("ALL");
     const [selectedMembership, setSelectedMembership] = useState<{ id: string, name: string, auth_user_id?: string | null } | null>(null);
     const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
-    const [allVehicles, setAllVehicles] = useState<VehicleRow[]>([]);
+    const [allVehicles, setAllVehicles] = useState<VehicleRow[]>(initialAllVehicles || []);
     const [isGloveboxOpen, setIsGloveboxOpen] = useState(false);
+
+    const organizations = members.filter(m => m.is_business && m.business_name);
 
 
     const filteredMembers = members.filter((m) => {
+        // First filter by type
+        if (filterType === "INDIVIDUAL" && m.is_business) return false;
+        if (filterType === "BUSINESS" && !m.is_business) return false;
+
         if (!q.trim()) return true;
-        const hay = `${m.full_name ?? ""} ${m.phone ?? ""} ${m.plan_name ?? ""} ${m.plan_code ?? ""}`.toLowerCase();
+        const hay = `${m.full_name ?? ""} ${m.phone ?? ""} ${m.plan_name ?? ""} ${m.business_name ?? ""}`.toLowerCase();
         return hay.includes(q.toLowerCase());
     });
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         try {
             const [plansRes, membersRes, vehiclesRes] = await Promise.all([
-                listMembershipPlans(),
-                listMembersWithMemberships(),
-                listAllVehicles(),
+                listMembershipPlans(signal),
+                listMembersWithMemberships(signal),
+                listAllVehicles(signal),
             ]);
             setPlans(plansRes);
             setMembers(membersRes);
             setAllVehicles(vehiclesRes);
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
             console.error(err);
             toast.error("Failed to load memberships");
         } finally {
@@ -97,8 +117,12 @@ export function MembershipsView() {
     }, []);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (!initialMembers) {
+            const controller = new AbortController();
+            fetchData(controller.signal);
+            return () => controller.abort();
+        }
+    }, [fetchData, initialMembers]);
 
     const newMembership = () => {
         const today = new Date();
@@ -114,6 +138,9 @@ export function MembershipsView() {
             plan_id: plans[0]?.id ?? "",
             tier: plans[0]?.code ?? "",
             expiry_date: defaultExpiry,
+            is_business: false,
+            business_name: "",
+            parent_org_id: "",
         });
         setIsSidebarOpen(true);
     };
@@ -130,28 +157,29 @@ export function MembershipsView() {
                 "",
             tier: m.membership_tier ?? m.plan_code ?? "",
             expiry_date: m.membership_expiry_date ? m.membership_expiry_date.slice(0, 10) : "",
+            is_business: m.is_business || false,
+            business_name: m.business_name || "",
+            parent_org_id: "", // TODO: If we want to show existing link, we'd need to fetch it or have it in row
         });
         setIsSidebarOpen(true);
     };
 
     const openGlovebox = async (m: MemberWithMembershipRow) => {
-        if (!m.auth_user_id) {
-            toast.error("This member has no digital account linked (auth_user_id is missing)");
-            return;
-        }
+        // No longer blocking offline members, we will try member_id fallback in fetch
         setSelectedMembership({
-            id: m.membership_id || m.member_id, // Use member_id as fallback id
+            id: m.membership_id || m.member_id,
             name: m.full_name || "Member",
             auth_user_id: m.auth_user_id
         });
         setIsGloveboxOpen(true);
-        try {
-            const vels = await listMemberVehicles(m.auth_user_id);
-            setVehicles(vels);
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to load vehicles");
-        }
+        setIsGloveboxOpen(true);
+
+        // Filter from already loaded vehicles instead of fetching (which fails RLS)
+        const vels = allVehicles.filter(v =>
+            v.user_id === m.member_id ||
+            (m.auth_user_id && v.user_id === m.auth_user_id)
+        );
+        setVehicles(vels);
     };
 
 
@@ -164,6 +192,9 @@ export function MembershipsView() {
             plan_id: form.plan_id,
             tier: form.tier.trim() || "STANDARD",
             expiry_date: form.expiry_date || null,
+            is_business: form.is_business,
+            business_name: form.is_business ? form.business_name.trim() : null,
+            parent_org_id: !form.is_business ? form.parent_org_id : null,
         };
 
         const promise = async () => {
@@ -194,22 +225,39 @@ export function MembershipsView() {
 
             <div className="flex-1 flex flex-col bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                 {/* Toolbar */}
-                <div className="p-4 border-b border-border flex items-center justify-between gap-4 bg-card">
-                    <div className="relative flex-1 max-w-md">
+                <div className="p-4 border-b border-border flex flex-col md:flex-row items-center justify-between gap-4 bg-card">
+                    <div className="flex bg-muted/30 p-1 rounded-lg">
+                        {(["ALL", "INDIVIDUAL", "BUSINESS"] as const).map(type => (
+                            <button
+                                key={type}
+                                onClick={() => setFilterType(type)}
+                                className={cls(
+                                    "px-4 py-1.5 text-xs font-semibold rounded-md transition-all",
+                                    filterType === type
+                                        ? "bg-white dark:bg-slate-800 text-primary shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                {type === "ALL" ? "All" : type === "INDIVIDUAL" ? "B2C" : "B2B"}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex-1 w-full md:w-auto relative max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input
                             className="w-full pl-9 pr-4 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground placeholder:text-muted-foreground"
-                            placeholder="Search members by name, phone, or plan..."
+                            placeholder="Search members..."
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
                         />
                     </div>
                     <button
                         onClick={newMembership}
-                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap"
                     >
                         <Plus className="h-4 w-4" />
-                        <span className="hidden sm:inline">Add Membership</span>
+                        <span className="hidden sm:inline">Add Member</span>
                     </button>
                 </div>
 
@@ -245,7 +293,16 @@ export function MembershipsView() {
                                                 className="group/name block"
                                             >
                                                 <div className="font-medium text-foreground group-hover/name:text-primary transition-colors flex items-center gap-1.5">
-                                                    {m.full_name || "Unnamed Member"}
+                                                    {m.is_business ? (
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold">{m.business_name}</span>
+                                                            <span className="text-[10px] text-muted-foreground font-normal flex items-center gap-1">
+                                                                <ShieldCheck className="w-3 h-3 text-emerald-500" /> B2B • {m.full_name}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        m.full_name || "Unnamed Member"
+                                                    )}
                                                     <ArrowRight className="h-3 w-3 opacity-0 group-hover/name:opacity-100 transition-all -translate-x-1 group-hover/name:translate-x-0" />
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
@@ -287,8 +344,14 @@ export function MembershipsView() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            {m.auth_user_id ? (() => {
-                                                const memberVehicles = allVehicles.filter(v => v.user_id === m.auth_user_id);
+                                            {(() => {
+                                                const memberVehicles = (allVehicles || []).filter(v => {
+                                                    const vUid = v.user_id?.toString().toLowerCase();
+                                                    const mAuthId = m.auth_user_id?.toString().toLowerCase();
+                                                    const mMemId = (m.member_id || m.id)?.toString().toLowerCase();
+                                                    return (mAuthId && vUid === mAuthId) || (vUid === mMemId);
+                                                });
+                                                const hasVehicles = memberVehicles.length > 0;
                                                 return (
                                                     <div className="flex flex-col gap-2">
                                                         {memberVehicles.length > 0 ? (
@@ -301,6 +364,13 @@ export function MembershipsView() {
                                                                         <span className="text-[9px] font-mono text-slate-500 uppercase">{v.plate}</span>
                                                                     </div>
                                                                 ))}
+                                                            </div>
+                                                        ) : m.car_brand ? (
+                                                            <div className="flex flex-col bg-slate-100 dark:bg-white/5 rounded px-2 py-1 border border-slate-200 dark:border-white/5">
+                                                                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                                                                    {m.car_brand}
+                                                                </span>
+                                                                <span className="text-[9px] text-muted-foreground/50 italic">Legacy Record</span>
                                                             </div>
                                                         ) : (
                                                             <span className="text-xs text-muted-foreground/50 italic font-medium">No vehicles</span>
@@ -317,9 +387,7 @@ export function MembershipsView() {
                                                         </button>
                                                     </div>
                                                 );
-                                            })() : (
-                                                <span className="text-xs text-muted-foreground/30 italic">No auth link</span>
-                                            )}
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-right">
 
@@ -377,8 +445,55 @@ export function MembershipsView() {
                                 <h4 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider border-b border-primary/20 pb-2">
                                     <UserIcon className="w-3 h-3" /> Member Info
                                 </h4>
+
+                                <div className="flex items-center gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                    <input
+                                        type="checkbox"
+                                        id="is_business"
+                                        checked={form.is_business}
+                                        onChange={(e) => setForm({ ...form, is_business: e.target.checked })}
+                                        className="h-4 w-4 accent-primary rounded"
+                                    />
+                                    <label htmlFor="is_business" className="text-sm font-medium cursor-pointer select-none">
+                                        This is a Business Account (B2B)
+                                    </label>
+                                </div>
+
+                                {form.is_business && (
+                                    <TextField
+                                        label="Business Name"
+                                        value={form.business_name}
+                                        onChange={(v) => setForm({ ...form, business_name: v })}
+                                        required
+                                        placeholder="Company Name Ltd."
+                                    />
+                                )}
+
+                                {!form.is_business && (
+                                    <div>
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Assign to Organization (Optional)
+                                        </label>
+                                        <select
+                                            className="mt-1 w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground"
+                                            value={form.parent_org_id}
+                                            onChange={(e) => setForm({ ...form, parent_org_id: e.target.value })}
+                                        >
+                                            <option value="">-- Individual Account --</option>
+                                            {organizations.map((org) => (
+                                                <option key={org.member_id} value={org.member_id}>
+                                                    {org.business_name} ({org.membership_tier})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-[10px] text-muted-foreground mt-1">
+                                            Select an organization to add this user to their fleet.
+                                        </p>
+                                    </div>
+                                )}
+
                                 <TextField
-                                    label="Full Name"
+                                    label={form.is_business ? "Contact Person Name" : "Full Name"}
                                     value={form.full_name}
                                     onChange={(v) => setForm({ ...form, full_name: v })}
                                     required
@@ -457,7 +572,8 @@ export function MembershipsView() {
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="flex-1 flex justify-center items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-all shadow-sm active:scale-95"
+                                disabled={!form.full_name.trim() || !form.phone.trim() || (form.is_business && !form.business_name.trim()) || !form.expiry_date}
+                                className="flex-1 flex justify-center items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Save className="h-4 w-4" /> Save Changes
                             </button>

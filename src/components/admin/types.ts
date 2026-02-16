@@ -1,6 +1,19 @@
 export type UUID = string;
 
-export type ProviderType = "mechanic" | "car_wash" | "detailing" | "towing" | "fuel" | "auto_shop" | "tire" | "electrical" | "body_shop";
+export type ProviderType = 
+    | "mechanic" 
+    | "mechanic_engine"
+    | "mechanic_electrical"
+    | "detailing" 
+    | "car_wash" 
+    | "roadworthy" 
+    | "insurance" 
+    | "shop"
+    | "towing" 
+    | "fuel" 
+    | "auto_shop" 
+    | "tire" 
+    | "body_shop";
 
 export type DaySchedule = {
     open: string;  // "08:00"
@@ -44,6 +57,7 @@ export interface ProviderRow {
     is_verified?: boolean | null;
     provider_type?: ProviderType | null;
     logo_url?: string | null;
+    backdrop_url?: string | null;
     operating_hours?: OperatingHours | null;
 }
 

@@ -37,6 +37,10 @@ import {
     ChevronDown,
     Navigation,
     LocateFixed,
+    ShieldCheck,
+    Sparkles,
+    Store,
+    Zap,
 } from "lucide-react";
 
 // Mock or Real imports
@@ -67,7 +71,7 @@ function extractErrorMessage(e: unknown): string | null {
 }
 
 const HelpSchema = z.object({
-    helpType: z.enum(["battery", "tire", "oil", "tow", "rescue", "fuel"]),
+    helpType: z.enum(["battery", "tire", "oil", "tow", "rescue", "fuel", "roadworthy", "insurance", "detailing", "car_wash", "shop", "electrical"]),
     carMake: z.string().min(2, "Car make is required"),
     carModel: z.string().min(1, "Car model is required"),
     carYear: z
@@ -113,6 +117,8 @@ export type Provider = {
     lat: number;
     lng: number;
     is_verified?: boolean;
+    logo_url?: string | null;
+    backdrop_url?: string | null;
 };
 
 const HELP_OPTIONS: Array<{
@@ -163,6 +169,48 @@ const HELP_OPTIONS: Array<{
             Icon: Droplets,
             hint: "Out of gas",
             colorClass: "text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-500/10 dark:border-emerald-500/20",
+        },
+        {
+            key: "roadworthy",
+            label: "Roadworthy",
+            Icon: BadgeCheck,
+            hint: "Cert / Renewal",
+            colorClass: "text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-400 dark:bg-indigo-500/10 dark:border-indigo-500/20",
+        },
+        {
+            key: "insurance",
+            label: "Insurance",
+            Icon: ShieldCheck,
+            hint: "Quotes / Renew",
+            colorClass: "text-cyan-700 bg-cyan-50 border-cyan-200 dark:text-cyan-400 dark:bg-cyan-500/10 dark:border-cyan-500/20",
+        },
+        {
+            key: "detailing",
+            label: "Detailing",
+            Icon: Sparkles,
+            hint: "Deep Clean / Polish",
+            colorClass: "text-purple-700 bg-purple-50 border-purple-200 dark:text-purple-400 dark:bg-purple-500/10 dark:border-purple-500/20",
+        },
+        {
+            key: "car_wash",
+            label: "Car Wash",
+            Icon: Droplets,
+            hint: "Wash & Vacuum",
+            colorClass: "text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/20",
+        },
+        {
+            key: "shop",
+            label: "Auto Shop",
+            Icon: Store,
+            hint: "Parts / Accessories",
+            colorClass: "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20",
+        },
+        {
+            key: "electrical",
+            label: "Electrical",
+            Icon: Zap,
+            hint: "AC / Wiring",
+            colorClass: "text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-400 dark:bg-yellow-500/10 dark:border-yellow-500/20",
         },
     ];
 
@@ -867,12 +915,34 @@ function ProviderCard({
         <>
             <div
                 className="bg-card rounded-3xl p-5 shadow-sm border border-border transition-all active:scale-[0.99]">
-                {/* Header */}
-                <div className="flex justify-between items-start mb-4">
+                {/* Header with Backdrop */}
+                <div className="relative h-24 sm:h-32 -mx-5 -mt-5 mb-4 overflow-hidden rounded-t-3xl bg-muted">
+                    {provider.backdrop_url ? (
+                        <img
+                            src={provider.backdrop_url}
+                            alt="Backdrop"
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary/10 to-transparent" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+
+                    <a href={mapsHref} target="_blank"
+                        className="absolute top-3 right-3 p-2.5 bg-background/80 backdrop-blur-md rounded-xl text-muted-foreground hover:bg-primary/20 hover:text-primary transition-colors z-10">
+                        <MapPin className="h-5 w-5" />
+                    </a>
+                </div>
+
+                {/* Info */}
+                <div className="flex justify-between items-start mb-4 relative z-10">
                     <div className="flex items-center gap-3">
-                        <div
-                            className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground text-lg font-bold">
-                            {provider.name.charAt(0)}
+                        <div className="h-12 w-12 rounded-2xl bg-background border border-border shadow-sm overflow-hidden flex items-center justify-center shrink-0">
+                            {provider.logo_url ? (
+                                <img src={provider.logo_url} alt={provider.name} className="h-full w-full object-cover" />
+                            ) : (
+                                <span className="text-muted-foreground text-lg font-bold">{provider.name.charAt(0)}</span>
+                            )}
                         </div>
                         <div>
                             <h3 className="font-bold text-card-foreground text-base flex items-center gap-1">
@@ -888,10 +958,6 @@ function ProviderCard({
                             </div>
                         </div>
                     </div>
-                    <a href={mapsHref} target="_blank"
-                        className="p-2.5 bg-muted rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-                        <MapPin className="h-5 w-5" />
-                    </a>
                 </div>
 
                 {/* Info Chips */}

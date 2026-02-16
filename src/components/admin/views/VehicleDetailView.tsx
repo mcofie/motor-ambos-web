@@ -34,13 +34,15 @@ import { toast } from "sonner";
 
 interface VehicleDetailViewProps {
     vehicleId: string;
+    initialVehicle?: VehicleRow | null;
+    initialHistory?: ServiceHistoryRow[];
 }
 
-export function VehicleDetailView({ vehicleId }: VehicleDetailViewProps) {
+export function VehicleDetailView({ vehicleId, initialVehicle, initialHistory }: VehicleDetailViewProps) {
     const router = useRouter();
-    const [vehicle, setVehicle] = useState<VehicleRow | null>(null);
-    const [history, setHistory] = useState<ServiceHistoryRow[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [vehicle, setVehicle] = useState<VehicleRow | null>(initialVehicle || null);
+    const [history, setHistory] = useState<ServiceHistoryRow[]>(initialHistory || []);
+    const [loading, setLoading] = useState(!initialVehicle);
     const [linking, setLinking] = useState(false);
 
     const generateBase62Id = (length: number = 8) => {
@@ -75,6 +77,7 @@ export function VehicleDetailView({ vehicleId }: VehicleDetailViewProps) {
     };
 
     const fetchData = useCallback(async () => {
+        if (initialVehicle) return;
         setLoading(true);
         try {
             const v = await getVehicleById(vehicleId);

@@ -83,7 +83,7 @@ export async function fetchPassportData(nfcId: string): Promise<PublicPassportDa
             supabase
                 .from("members")
                 .select("*")
-                .eq("auth_user_id", vehicle.user_id)
+                .or(`auth_user_id.eq.${vehicle.user_id},id.eq.${vehicle.user_id}`)
         ]);
 
         if (historyRes.error) console.error("[ServerFetch] History Error:", historyRes.error);

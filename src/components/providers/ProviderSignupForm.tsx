@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
-import { insertProvider, getUser } from "@/lib/supaFetch";
+import { insertProvider, getUser, uploadProviderAsset } from "@/lib/supaFetch";
 import { toast } from "sonner";
+import { Upload, ImageIcon, Loader2, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
 
 export function ProviderSignupForm() {
     const [isPending, setIsPending] = useState(false);
@@ -16,6 +16,8 @@ export function ProviderSignupForm() {
     const [success, setSuccess] = useState(false);
     const [lat, setLat] = useState<number | null>(null);
     const [lng, setLng] = useState<number | null>(null);
+    const [logoUrl, setLogoUrl] = useState<string>("");
+    const [isUploading, setIsUploading] = useState(false);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -60,6 +62,8 @@ export function ProviderSignupForm() {
                 is_active: false,
                 is_verified: false,
                 owner_id: userId,
+                provider_type: formData.get("providerType") as string,
+                logo_url: logoUrl || null,
             });
 
             setSuccess(true);
@@ -99,6 +103,47 @@ export function ProviderSignupForm() {
                 </div>
             )}
 
+            <div className="space-y-4 pt-2">
+                <Label>Business Logo</Label>
+                <div className="flex items-center gap-4">
+                    <div className="h-20 w-20 rounded-2xl bg-muted border border-border flex items-center justify-center overflow-hidden shrink-0">
+                        {logoUrl ? (
+                            <img src={logoUrl} alt="Logo" className="h-full w-full object-cover" />
+                        ) : (
+                            <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
+                        )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                        <Label htmlFor="logo-upload" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-semibold cursor-pointer hover:bg-primary/20 transition-colors">
+                            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            {isUploading ? "Uploading..." : "Upload Logo"}
+                            <input
+                                id="logo-upload"
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                disabled={isUploading}
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    try {
+                                        setIsUploading(true);
+                                        const url = await uploadProviderAsset(file, "signup-logo");
+                                        setLogoUrl(url);
+                                        toast.success("Logo uploaded!");
+                                    } catch (err) {
+                                        toast.error("Upload failed");
+                                    } finally {
+                                        setIsUploading(false);
+                                    }
+                                }}
+                            />
+                        </Label>
+                        <p className="text-[10px] text-muted-foreground">Square images work best. Max 2MB.</p>
+                    </div>
+                </div>
+            </div>
+
             <div className="space-y-2">
                 <Label htmlFor="displayName">Business Name</Label>
                 <Input
@@ -108,6 +153,27 @@ export function ProviderSignupForm() {
                     required
                     minLength={2}
                 />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="providerType">Service Category</Label>
+                <select
+                    id="providerType"
+                    name="providerType"
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <option value="">Select a category</option>
+                    <option value="mechanic">Mechanic (General)</option>
+                    <option value="mechanic_engine">Mechanic (Engine Specialist)</option>
+                    <option value="mechanic_electrical">Mechanic (Electrical Specialist)</option>
+                    <option value="detailing">Detailing & Polish</option>
+                    <option value="car_wash">Car Wash</option>
+                    <option value="roadworthy">Roadworthy Center</option>
+                    <option value="insurance">Insurance Provider</option>
+                    <option value="shop">Spare Parts & Accessories</option>
+                    <option value="towing">Towing Service</option>
+                </select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

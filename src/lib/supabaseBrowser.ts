@@ -5,7 +5,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Single instance across the app
-let _client: SupabaseClient | null = null;
+let _client: any = null;
 
 /**
  * Browser client using @supabase/ssr for proper cookie-based sessions.
@@ -24,7 +24,11 @@ export function getSupabaseBrowser(): SupabaseClient {
     // createBrowserClient from @supabase/ssr automatically handles:
     // - Cookie-based session storage (syncs with server/middleware)
     // - Session persistence and auto-refresh
-    _client = createBrowserClient(url, anonKey);
+    _client = createBrowserClient(url, anonKey, {
+        db: {
+            schema: 'motorambos'
+        }
+    });
 
     return _client;
 }

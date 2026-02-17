@@ -596,7 +596,7 @@ export function SmartNfcView() {
                                                 )}>
                                                     {req.request_type}
                                                 </span>
-                                                <span className="text-[10px] text-muted-foreground">{new Date(req.created_at || "").toLocaleDateString()}</span>
+                                                <span className="text-[10px] text-muted-foreground">{req.created_at ? new Date(req.created_at).toLocaleDateString() : ""}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

@@ -1,0 +1,31 @@
+
+> motor_ambos@0.1.0 build
+> next build --turbopack
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   ▲ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ✓ Compiled successfully in 6.3s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/admin/views/OrganizationsView.tsx:613:140
+Type error: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string | number | Date'.
+      Type 'undefined' is not assignable to type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string | number'.
+      Type 'undefined' is not assignable to type 'string | number'.
+
+[0m [90m 611 |[39m                                                                     [33m<[39m[33m/[39m[33mtd[39m[33m>[39m
+ [90m 612 |[39m                                                                     [33m<[39m[33mtd[39m className[33m=[39m[32m"px-8 py-5"[39m[33m>[39m
+[31m[1m>[22m[39m[90m 613 |[39m                                                                         [33m<[39m[33mdiv[39m className[33m=[39m[32m"text-xs font-bold text-muted-foreground"[39m[33m>[39m{[36mnew[39m [33mDate[39m(inv[33m.[39mcreated_at)[33m.[39mtoLocaleDateString()}[33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m     |[39m                                                                                                                                            [31m[1m^[22m[39m
+ [90m 614 |[39m                                                                     [33m<[39m[33m/[39m[33mtd[39m[33m>[39m
+ [90m 615 |[39m                                                                     [33m<[39m[33mtd[39m className[33m=[39m[32m"px-8 py-5"[39m[33m>[39m
+ [90m 616 |[39m                                                                         [33m<[39m[33mdiv[39m className[33m=[39m[32m"text-sm font-black text-foreground italic"[39m[33m>[39m[33mGHS[39m {inv[33m.[39mtotal_amount[33m.[39mtoLocaleString()}[33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

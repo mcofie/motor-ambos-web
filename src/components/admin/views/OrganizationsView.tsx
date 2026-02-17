@@ -610,7 +610,7 @@ export function OrganizationsView() {
                                                                         <div className="font-black text-foreground text-sm font-mono tracking-tighter">#{inv.invoice_number}</div>
                                                                     </td>
                                                                     <td className="px-8 py-5">
-                                                                        <div className="text-xs font-bold text-muted-foreground">{new Date(inv.created_at).toLocaleDateString()}</div>
+                                                                        <div className="text-xs font-bold text-muted-foreground">{inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '—'}</div>
                                                                     </td>
                                                                     <td className="px-8 py-5">
                                                                         <div className="text-sm font-black text-foreground italic">GHS {inv.total_amount.toLocaleString()}</div>

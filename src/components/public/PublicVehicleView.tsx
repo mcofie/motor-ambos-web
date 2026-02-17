@@ -7,7 +7,8 @@ import {
     getPublicMemberByUserId,
     VehicleRow,
     ServiceHistoryRow,
-    MemberWithMembershipRow
+    MemberWithMembershipRow,
+    NfcCardRow
 } from "@/lib/supaFetch";
 import {
     Car,
@@ -39,6 +40,8 @@ interface PublicVehicleViewProps {
         vehicle: VehicleRow | null;
         history: ServiceHistoryRow[];
         member: MemberWithMembershipRow | null;
+        isUnassigned?: boolean;
+        cardDetails?: NfcCardRow | null;
     }
 }
 
@@ -127,16 +130,68 @@ export function PublicVehicleView({ nfcId, initialData }: PublicVehicleViewProps
         );
     }
 
+    if (initialData?.isUnassigned) {
+        return (
+            <div className="flex flex-col min-h-screen items-center justify-center px-6 text-center bg-background space-y-8 animate-in fade-in duration-700">
+                <div className="h-24 w-24 bg-primary/10 rounded-3xl flex items-center justify-center relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-primary/20 animate-pulse" />
+                    <Sparkles className="h-10 w-10 text-primary relative z-10" />
+                </div>
+
+                <div className="space-y-3">
+                    <h2 className="text-3xl font-black text-foreground uppercase tracking-tight leading-none">New Smart Card</h2>
+                    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                        This digital passport is ready to be linked to your vehicle.
+                    </p>
+                </div>
+
+                <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-6 space-y-6 shadow-xl">
+                    <div className="space-y-1 text-left">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Serial Number</label>
+                        <p className="text-xl font-mono font-bold text-foreground tracking-widest">{initialData?.cardDetails?.serial_number}</p>
+                    </div>
+
+                    <div className="pt-4 border-t border-border space-y-4">
+                        <div className="flex items-start gap-3 text-left">
+                            <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center shrink-0 mt-0.5">
+                                <span className="text-xs font-bold font-mono">1</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground pt-1">Open the <b>MotorAmbos Mobile App</b> on your device.</p>
+                        </div>
+                        <div className="flex items-start gap-3 text-left">
+                            <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center shrink-0 mt-0.5">
+                                <span className="text-xs font-bold font-mono">2</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground pt-1">Go to <b>Vehicle Settings</b> and select <b>"Link Smart Card"</b>.</p>
+                        </div>
+                        <div className="flex items-start gap-3 text-left">
+                            <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center shrink-0 mt-0.5">
+                                <span className="text-xs font-bold font-mono">3</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground pt-1">Enter the serial number above to activate this passport.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-4 pt-4">
+                    <Link href="/" className="px-8 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-xs font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">
+                        Back to Home
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     if (!vehicle) {
         return (
-            <div className="flex flex-col h-screen items-center justify-center px-6 text-center bg-background space-y-6">
+            <div className="flex flex-col min-h-screen items-center justify-center px-6 text-center bg-background space-y-6">
                 <div className="h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center">
                     <AlertCircle className="h-10 w-10 text-destructive" />
                 </div>
                 <div>
                     <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">Invalid Passport</h2>
                     <p className="mt-2 text-muted-foreground max-w-xs text-sm">
-                        This ID tag is not linked to an active vehicle registry.
+                        This ID tag is not found in our registry.
                     </p>
                 </div>
                 <Link href="/" className="text-primary font-bold hover:underline text-sm uppercase tracking-widest">

@@ -27,6 +27,7 @@ import {
     FileText,
     History,
     CheckCircle2,
+    Smartphone,
 } from "lucide-react";
 import { listMemberVehicles, VehicleRow } from "@/lib/supaFetch";
 import { DigitalGlovebox } from "./DigitalGlovebox";
@@ -361,7 +362,15 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
                                                                         <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
                                                                             {v.year} {v.make} {v.model}
                                                                         </span>
-                                                                        <span className="text-[9px] font-mono text-slate-500 uppercase">{v.plate}</span>
+                                                                        <div className="flex items-center justify-between gap-2">
+                                                                            <span className="text-[9px] font-mono text-slate-500 uppercase">{v.plate}</span>
+                                                                            {v.nfc_serial_number && (
+                                                                                <div className="flex items-center gap-0.5" title={`Linked to ${v.nfc_serial_number}`}>
+                                                                                    <Smartphone className="h-2 w-2 text-indigo-500" />
+                                                                                    <span className="text-[7px] font-bold text-indigo-500/70">NFC</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -589,6 +598,7 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
                     memberName={selectedMembership.name}
                     vehicles={vehicles}
                     onClose={() => setIsGloveboxOpen(false)}
+                    onRefresh={fetchData}
                 />
             )}
         </div>

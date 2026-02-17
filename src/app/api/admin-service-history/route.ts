@@ -39,18 +39,18 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { id, vehicle_id, description, service_date, provider_name, mileage, cost, is_verified } = body;
+        const { id, vehicle_id, description, service_date, provider_name, location, mileage, cost, is_verified, document_url, document_metadata } = body;
 
         let query;
         if (id) {
             query = supabaseAdmin
                 .from("service_history")
-                .update({ vehicle_id, description, service_date, provider_name, mileage, cost, is_verified })
+                .update({ vehicle_id, description, service_date, provider_name, location, mileage, cost, is_verified, document_url, document_metadata })
                 .eq("id", id);
         } else {
             query = supabaseAdmin
                 .from("service_history")
-                .insert({ vehicle_id, description, service_date, provider_name, mileage, cost, is_verified });
+                .insert({ vehicle_id, description, service_date, provider_name, location, mileage, cost, is_verified, document_url, document_metadata });
         }
 
         const { error } = await query;

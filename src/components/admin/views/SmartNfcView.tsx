@@ -15,11 +15,13 @@ import {
     MemberWithMembershipRow,
     bulkAssignNfcCards,
     updateNfcCard,
-    deleteNfcCard
+    deleteNfcCard,
+    unlinkNfcCard
 } from "@/lib/supaFetch";
 import {
     QrCode,
     Link as LinkIcon,
+    Unlink as UnlinkIcon,
     RefreshCw,
     Search,
     ExternalLink,
@@ -38,7 +40,8 @@ import {
     Building2,
     Layers,
     Trash2,
-    Edit
+    Edit,
+    Shield
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -79,6 +82,10 @@ export function SmartNfcView() {
     const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
     const [isBulkAssignOpen, setIsBulkAssignOpen] = useState(false);
     const [bulkOrgId, setBulkOrgId] = useState("");
+
+    // Deletion Modal
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [cardToDelete, setCardToDelete] = useState<string | null>(null);
 
     const organizations = members.filter(m => m.is_business && (m.business_name || m.full_name));
 
@@ -153,25 +160,43 @@ export function SmartNfcView() {
 
     const handleSaveLink = async () => {
         if (!editingVehicle) return;
-        if (!serialInput.trim()) {
+        const cleanSerial = serialInput.trim().toUpperCase();
+        if (!cleanSerial) {
             toast.error("Please enter a serial number");
             return;
         }
 
         setUpdatingId(editingVehicle.id);
-        const publicId = generateBase62Id(8);
 
         try {
-            await updateVehicle(editingVehicle.id, {
-                nfc_card_id: publicId,
-                nfc_serial_number: serialInput
+            // 1. Verify existence and availability
+            const vRes = await fetch("/api/admin-nfc", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "verify_card",
+                    serial_number: cleanSerial
+                })
             });
+
+            if (!vRes.ok) {
+                const err = await vRes.json();
+                toast.error(err.error || "Card verification failed");
+                return;
+            }
+
+            // 2. Perform Link
+            await bulkAssignNfcCards([{
+                vehicle_id: editingVehicle.id,
+                serial_number: cleanSerial
+            }]);
+
             toast.success("Card linked successfully");
             setIsLinkDialogOpen(false);
             fetchData();
         } catch (err: any) {
             if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
-            toast.error("Failed to link card");
+            toast.error("Failed to link card: " + (err.message || "Unknown error"));
         } finally {
             setUpdatingId(null);
         }
@@ -206,22 +231,39 @@ export function SmartNfcView() {
         }
     };
 
-    const handleDeleteCard = async (id: string) => {
-        if (id.startsWith('legacy-')) {
+    const handleDeleteCard = async () => {
+        if (!cardToDelete) return;
+        if (cardToDelete.startsWith('legacy-')) {
             toast.error("Legacy entries cannot be deleted.");
             return;
         }
 
-        if (!confirm("Are you sure you want to delete this card?")) return;
-
-        setUpdatingId(id);
+        setUpdatingId(cardToDelete);
         try {
-            await deleteNfcCard(id);
+            await deleteNfcCard(cardToDelete);
             toast.success("Card deleted");
+            setIsDeleteDialogOpen(false);
+            setCardToDelete(null);
             fetchData();
         } catch (e: any) {
             if (e.name === 'AbortError' || e.message?.includes('aborted')) return;
             toast.error("Delete failed");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleUnlinkCard = async (serial: string) => {
+        if (!confirm(`Are you sure you want to unlink card ${serial}? This will break the connection to any vehicle.`)) return;
+
+        setUpdatingId(`unlink-${serial}`);
+        try {
+            await unlinkNfcCard(serial);
+            toast.success("Card unlinked successfully");
+            fetchData();
+        } catch (e: any) {
+            console.error(e);
+            toast.error("Unlink failed: " + (e.message || "Unknown error"));
         } finally {
             setUpdatingId(null);
         }
@@ -304,12 +346,29 @@ export function SmartNfcView() {
         ...vehicles.map(v => v.nfc_serial_number).filter(Boolean) as string[]
     ]);
 
-    const inventoryList = Array.from(allSerials).map(serial => {
-        const cardRecord = cards.find(c => c.serial_number === serial);
-        const linkedVehicle = vehicles.find(v => v.nfc_serial_number === serial);
+    const inventoryList = Array.from(allSerials).map(originalSerial => {
+        const serial = originalSerial.trim().toUpperCase();
+        const cardRecord = cards.find(c => c.serial_number.trim().toUpperCase() === serial);
+
+        // Match by serial number OR by public_id if available
+        const linkedVehicle = vehicles.find(v => {
+            const serialMatch = v.nfc_serial_number?.trim().toUpperCase() === serial;
+            const publicIdMatch = cardRecord?.public_id && v.nfc_card_id === cardRecord.public_id;
+            return serialMatch || publicIdMatch;
+        });
+
+        if (cardRecord?.status === 'ASSIGNED' && !linkedVehicle) {
+            console.log(`[NFC Debug] Card ${serial} is ASSIGNED but no vehicle found.`, {
+                cardSerial: cardRecord.serial_number,
+                cardPublicId: cardRecord.public_id,
+                totalVehicles: vehicles.length
+            });
+        }
+
         return {
             id: cardRecord?.id || `legacy-${serial}`,
-            serial_number: serial,
+            serial_number: originalSerial,
+            public_id: cardRecord?.public_id,
             batch_id: cardRecord?.batch_id,
             status: cardRecord?.status || (linkedVehicle ? 'ASSIGNED' : 'UNKNOWN'),
             linkedVehicle
@@ -335,7 +394,7 @@ export function SmartNfcView() {
     }
 
     const totalCards = cards.length;
-    const unlinkedCards = cards.filter(c => !c.vehicle_id).length;
+    const unlinkedCards = cards.filter(c => c.status === 'MANUFACTURED').length;
     const pendingRequestsCount = requests.filter(r => r.status === 'PENDING').length;
 
     return (
@@ -428,9 +487,21 @@ export function SmartNfcView() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase tracking-tighter">
-                                                {card.batch_id || "—"}
-                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase tracking-tighter w-fit">
+                                                    {card.batch_id || "—"}
+                                                </span>
+                                                {card.public_id && (
+                                                    <Link
+                                                        href={`/v/${card.public_id}`}
+                                                        target="_blank"
+                                                        className="text-[9px] font-mono text-primary hover:underline mt-1 flex items-center gap-1"
+                                                    >
+                                                        /v/{card.public_id}
+                                                        <ExternalLink className="h-2 w-2" />
+                                                    </Link>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             {card.linkedVehicle ? (
@@ -460,17 +531,38 @@ export function SmartNfcView() {
                                                         <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">{card.linkedVehicle.plate}</div>
                                                     </div>
                                                 </Link>
+                                            ) : card.status === 'ASSIGNED' ? (
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[10px] text-destructive font-bold uppercase tracking-widest">Broken Link</span>
+                                                    <p className="text-[9px] text-muted-foreground leading-tight max-w-[120px]">Card assigned in registry but not found on any vehicle.</p>
+                                                </div>
                                             ) : (
                                                 <span className="text-xs text-muted-foreground italic">—</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {card.status === 'ASSIGNED' ? (
+                                                    <button
+                                                        onClick={() => handleUnlinkCard(card.serial_number)}
+                                                        disabled={updatingId === `unlink-${card.serial_number}`}
+                                                        className="p-1.5 hover:text-amber-600 transition-colors bg-muted/50 hover:bg-amber-500/10 rounded-lg border border-border"
+                                                        title="Unlink / Reset Card"
+                                                    >
+                                                        {updatingId === `unlink-${card.serial_number}` ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <UnlinkIcon className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                ) : (
+                                                    <button onClick={() => { setCardToDelete(card.id); setIsDeleteDialogOpen(true); }} className="p-1.5 hover:text-destructive transition-colors bg-muted/50 hover:bg-destructive/10 rounded-lg border border-border">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
+
                                                 <button onClick={() => handleEditCard(card)} className="p-1.5 hover:text-primary transition-colors bg-muted/50 hover:bg-primary/10 rounded-lg border border-border">
                                                     <Edit className="h-4 w-4" />
-                                                </button>
-                                                <button onClick={() => handleDeleteCard(card.id)} className="p-1.5 hover:text-destructive transition-colors bg-muted/50 hover:bg-destructive/10 rounded-lg border border-border">
-                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -699,13 +791,37 @@ export function SmartNfcView() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Serial Number</label>
-                                <Input placeholder="e.g. MA-26-00123" value={serialInput} onChange={(e) => setSerialInput(e.target.value)} className="font-mono" />
+                                <Input placeholder="e.g. MA-26-00123" value={serialInput} onChange={(e) => setSerialInput(e.target.value)} className="font-mono uppercase" />
                             </div>
                         </div>
                     )}
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsLinkDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSaveLink} disabled={!serialInput || updatingId === editingVehicle?.id}>Link Card</Button>
+                        <Button onClick={handleSaveLink} disabled={!serialInput.trim() || updatingId === editingVehicle?.id}>
+                            {updatingId === editingVehicle?.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Shield className="h-4 w-4 mr-2" />}
+                            Verify & Link
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <AlertCircle className="h-5 w-5" />
+                            Delete NFC Card
+                        </DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this card from inventory? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleDeleteCard} disabled={!!updatingId}>
+                            {updatingId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                            Delete Permanently
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

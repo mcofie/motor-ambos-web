@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { VehicleRow, ServiceHistoryRow, MemberWithMembershipRow } from "./supaFetch";
+import { VehicleRow, ServiceHistoryRow, MemberWithMembershipRow, NfcCardRow } from "./supaFetch";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -8,6 +8,8 @@ export type PublicPassportData = {
     vehicle: VehicleRow | null;
     history: ServiceHistoryRow[];
     member: MemberWithMembershipRow | null;
+    isUnassigned?: boolean;
+    cardDetails?: NfcCardRow | null;
 };
 
 // Helper to decode JWT role safely without external libs for debugging
@@ -65,7 +67,25 @@ export async function fetchPassportData(nfcId: string): Promise<PublicPassportDa
         }
 
         if (!vehicles || vehicles.length === 0) {
-            console.warn(`[ServerFetch] Request OK but no vehicle found for ID: ${nfcId}`);
+            console.warn(`[ServerFetch] No vehicle found for ID: ${nfcId}. Checking NFC Inventory...`);
+
+            // Check if it's an unassigned card in inventory
+            const { data: cards, error: cError } = await supabase
+                .from("nfc_cards")
+                .select("*")
+                .eq("public_id", nfcId);
+
+            if (cards && cards.length > 0) {
+                console.log(`[ServerFetch] Found unassigned card for ID: ${nfcId}`);
+                return {
+                    vehicle: null,
+                    history: [],
+                    member: null,
+                    isUnassigned: true,
+                    cardDetails: cards[0] as NfcCardRow
+                };
+            }
+
             return { vehicle: null, history: [], member: null };
         }
 

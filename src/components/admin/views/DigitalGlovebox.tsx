@@ -14,13 +14,24 @@ import {
     Shield,
     Smartphone,
     ExternalLink,
-    Loader2
+    Loader2,
+    QrCode,
+    Link as LinkIcon,
+    Search,
+    RefreshCw,
+    MapPin,
+    Image as ImageIcon,
+    Clock
 } from "lucide-react";
 import {
     VehicleRow,
     ServiceHistoryRow,
     listServiceHistory,
-    upsertServiceHistory
+    upsertServiceHistory,
+    listNfcCards,
+    NfcCardRow,
+    bulkAssignNfcCards,
+    updateVehicle
 } from "@/lib/supaFetch";
 import { cls } from "../ui/AdminUI";
 import { toast } from "sonner";
@@ -30,9 +41,10 @@ interface DigitalGloveboxProps {
     memberName: string;
     vehicles: VehicleRow[];
     onClose: () => void;
+    onRefresh?: () => void;
 }
 
-export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }: DigitalGloveboxProps) {
+export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose, onRefresh }: DigitalGloveboxProps) {
     const [selectedVehicle, setSelectedVehicle] = useState<VehicleRow | null>(vehicles[0] || null);
     const [history, setHistory] = useState<ServiceHistoryRow[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
@@ -41,15 +53,34 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
         description: "",
         service_date: new Date().toISOString().split('T')[0],
         provider_name: "",
+        location: "",
         mileage: "",
         cost: "",
     });
 
+    // NFC States
+    const [isLinkingNfc, setIsLinkingNfc] = useState(false);
+    const [availableCards, setAvailableCards] = useState<NfcCardRow[]>([]);
+    const [nfcQuery, setNfcQuery] = useState("");
+    const [loadingCards, setLoadingCards] = useState(false);
+    const [linkingId, setLinkingId] = useState<string | null>(null);
+    const [confirmUnlink, setConfirmUnlink] = useState(false);
+
+    useEffect(() => {
+        if (selectedVehicle) {
+            const updated = vehicles.find(v => v.id === selectedVehicle.id);
+            if (updated) setSelectedVehicle(updated);
+        }
+    }, [vehicles]);
+
     useEffect(() => {
         if (selectedVehicle) {
             loadHistory(selectedVehicle.id);
+            // Reset NFC state when vehicle changes
+            setIsLinkingNfc(false);
+            setNfcQuery("");
         }
-    }, [selectedVehicle]);
+    }, [selectedVehicle?.id]);
 
     const loadHistory = async (vehicleId: string) => {
         setLoadingHistory(true);
@@ -77,6 +108,7 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                     description: newHistory.description,
                     service_date: newHistory.service_date,
                     provider_name: newHistory.provider_name,
+                    location: newHistory.location,
                     mileage: newHistory.mileage ? Number(newHistory.mileage) : null,
                     cost: newHistory.cost ? Number(newHistory.cost) : null,
                     is_verified: true,
@@ -91,6 +123,7 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                 description: "",
                 service_date: new Date().toISOString().split('T')[0],
                 provider_name: "",
+                location: "",
                 mileage: "",
                 cost: "",
             });
@@ -99,6 +132,96 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
             toast.error("Failed to add service record");
         }
     };
+
+    const loadAvailableCards = async () => {
+        setLoadingCards(true);
+        try {
+            const cards = await listNfcCards();
+            setAvailableCards(cards.filter(c => c.status === 'MANUFACTURED'));
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to load NFC inventory");
+        } finally {
+            setLoadingCards(false);
+        }
+    };
+
+    const handleLinkNfc = async (serial: string) => {
+        if (!selectedVehicle) return;
+        const cleanSerial = serial.trim().toUpperCase();
+        if (!cleanSerial) return;
+
+        setLinkingId(cleanSerial);
+        try {
+            // 1. Verify existence and status via API
+            const vRes = await fetch("/api/admin-nfc", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "verify_card",
+                    serial_number: cleanSerial
+                })
+            });
+
+            if (!vRes.ok) {
+                const err = await vRes.json();
+                toast.error(err.error || "Card verification failed");
+                return;
+            }
+
+            // 2. Perform Link
+            await bulkAssignNfcCards([{
+                vehicle_id: selectedVehicle.id,
+                serial_number: cleanSerial
+            }]);
+
+            toast.success("NFC Smart Card linked successfully");
+            setIsLinkingNfc(false);
+            if (onRefresh) onRefresh();
+            // Update local selection to reflect change
+            setSelectedVehicle(prev => prev ? { ...prev, nfc_serial_number: cleanSerial } : null);
+        } catch (err: any) {
+            console.error(err);
+            toast.error("Linking failed: " + (err.message || "Unknown error"));
+        } finally {
+            setLinkingId(null);
+        }
+    };
+
+    const handleUnlinkNfc = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!selectedVehicle) return;
+
+        if (!confirmUnlink) {
+            setConfirmUnlink(true);
+            toast.info("Click again to confirm unlinking", {
+                duration: 3000,
+                onDismiss: () => setConfirmUnlink(false)
+            });
+            setTimeout(() => setConfirmUnlink(false), 3000);
+            return;
+        }
+
+        setLinkingId('unlink');
+        try {
+            await updateVehicle(selectedVehicle.id, {
+                nfc_card_id: null,
+                nfc_serial_number: null
+            });
+            toast.success("NFC Smart Card unlinked");
+            if (onRefresh) onRefresh();
+            setSelectedVehicle(prev => prev ? { ...prev, nfc_serial_number: null, nfc_card_id: null } : null);
+        } catch (err) {
+            console.error(err);
+            toast.error("Unlinking failed");
+        } finally {
+            setLinkingId(null);
+        }
+    };
+
+    const filteredCards = availableCards.filter(c =>
+        c.serial_number.toLowerCase().includes(nfcQuery.toLowerCase())
+    );
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-end">
@@ -111,7 +234,7 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                 {/* Header */}
                 <header className="p-6 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-bold flex items-center gap-2">
+                        <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
                             <Wallet className="h-5 w-5 text-emerald-500" />
                             Digital Glovebox
                         </h2>
@@ -142,7 +265,7 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                                     )}
                                 >
                                     <Car className={cls("h-5 w-5 mb-1", selectedVehicle?.id === v.id ? "text-emerald-500" : "text-slate-400")} />
-                                    <span className="font-bold text-sm block">
+                                    <span className="font-bold text-sm block truncate w-full">
                                         {v.year} {v.make} {v.model}
                                     </span>
                                     <span className="text-[10px] font-mono uppercase tracking-tighter opacity-70">{v.plate}</span>
@@ -155,36 +278,130 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                         <>
                             {/* Digital Docs & NFC */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <section className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/20">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <Smartphone className="h-6 w-6 opacity-80" />
-                                        <div className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">NFC Active</div>
-                                    </div>
-                                    <h3 className="font-bold text-lg mb-1">Smart NFC Link</h3>
-                                    <p className="text-xs text-white/70 mb-4">Point NFC tag to: amb.os/v/{selectedVehicle.id.slice(0, 8)}</p>
-                                    <button className="w-full py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
-                                        <ExternalLink className="h-3 w-3" />
-                                        Test Live Link
-                                    </button>
+                                <section className={cls(
+                                    "p-5 rounded-2xl text-white shadow-lg transition-all relative overflow-hidden group",
+                                    selectedVehicle.nfc_serial_number
+                                        ? "bg-gradient-to-br from-indigo-500 to-violet-600 shadow-indigo-500/20"
+                                        : "bg-slate-100 dark:bg-white/5 border-2 border-dashed border-slate-300 dark:border-white/10 text-slate-400 shadow-none"
+                                )}>
+                                    {selectedVehicle.nfc_serial_number ? (
+                                        <>
+                                            <div className="flex items-center justify-between mb-4 relative z-10">
+                                                <Smartphone className="h-6 w-6 opacity-80" />
+                                                <div className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">Linked</div>
+                                            </div>
+                                            <h3 className="font-bold text-lg mb-1 relative z-10">Smart NFC Passport</h3>
+                                            <p className="text-[10px] font-mono opacity-70 mb-4 relative z-10 uppercase tracking-widest">{selectedVehicle.nfc_serial_number}</p>
+
+                                            <div className="space-y-2 relative z-10">
+                                                <a
+                                                    href={`/v/${selectedVehicle.nfc_card_id}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="w-full py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                                                >
+                                                    <ExternalLink className="h-3 w-3" />
+                                                    Test Live Link
+                                                </a>
+                                                <button
+                                                    onClick={handleUnlinkNfc}
+                                                    disabled={linkingId === 'unlink'}
+                                                    className="w-full py-2 text-[10px] font-bold uppercase tracking-widest text-white/50 hover:text-white transition-colors"
+                                                >
+                                                    {linkingId === 'unlink' ? "Unlinking..." : "Unlink Physical Card"}
+                                                </button>
+                                            </div>
+                                            <Smartphone className="absolute -right-4 -bottom-4 h-24 w-24 opacity-10 rotate-12 group-hover:rotate-6 transition-transform" />
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full py-4 space-y-3">
+                                            <QrCode className="h-8 w-8 opacity-20" />
+                                            {isLinkingNfc ? (
+                                                <div className="w-full space-y-3">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                                                        <input
+                                                            autoFocus
+                                                            className="w-full pl-7 pr-3 py-2 bg-white dark:bg-slate-900 rounded-lg text-xs border border-slate-200 dark:border-white/10 outline-none text-slate-900 dark:text-white font-mono uppercase"
+                                                            placeholder="Type or Select Serial..."
+                                                            value={nfcQuery}
+                                                            onChange={(e) => setNfcQuery(e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' && nfcQuery) handleLinkNfc(nfcQuery);
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    {nfcQuery && !availableCards.some(c => c.serial_number === nfcQuery.toUpperCase()) && (
+                                                        <button
+                                                            onClick={() => handleLinkNfc(nfcQuery)}
+                                                            disabled={!!linkingId}
+                                                            className="w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 transition-all border border-emerald-500/20"
+                                                        >
+                                                            {linkingId === nfcQuery.toUpperCase() ? <Loader2 className="h-3 w-3 animate-spin" /> : <Shield className="h-3 w-3" />}
+                                                            Verify & Link: {nfcQuery.toUpperCase()}
+                                                        </button>
+                                                    )}
+
+                                                    <div className="max-h-32 overflow-y-auto bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/10 shadow-inner">
+                                                        {loadingCards ? (
+                                                            <div className="p-4 flex justify-center"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
+                                                        ) : filteredCards.length > 0 ? (
+                                                            filteredCards.map(c => (
+                                                                <button
+                                                                    key={c.id}
+                                                                    onClick={() => handleLinkNfc(c.serial_number)}
+                                                                    disabled={!!linkingId}
+                                                                    className="w-full px-3 py-2 text-left text-[10px] font-mono font-bold hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between border-b last:border-0 border-slate-100 dark:border-white/5 text-slate-700 dark:text-slate-300"
+                                                                >
+                                                                    {c.serial_number}
+                                                                    {linkingId === c.serial_number ? <Loader2 className="h-3 w-3 animate-spin" /> : <LinkIcon className="h-3 w-3 opacity-30" />}
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            <p className="p-4 text-[10px] text-center opacity-50 text-slate-500">No available cards</p>
+                                                        )}
+                                                    </div>
+                                                    <button onClick={() => setIsLinkingNfc(false)} className="w-full text-[10px] font-bold uppercase text-slate-400 hover:text-slate-600">Cancel</button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="text-center">
+                                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">No NFC Linked</p>
+                                                        <p className="text-[9px] opacity-60 mt-1 uppercase">Link card to activate passport</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            setIsLinkingNfc(true);
+                                                            loadAvailableCards();
+                                                        }}
+                                                        className="px-4 py-2 bg-slate-950 dark:bg-white text-white dark:text-slate-950 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:scale-105 transition-all"
+                                                    >
+                                                        Link Smart Card
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </section>
 
                                 <section className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex flex-col justify-between">
                                     <div className="flex items-center gap-2 mb-4">
                                         <Shield className="h-5 w-5 text-emerald-500" />
-                                        <span className="font-bold text-sm">Active Documents</span>
+                                        <span className="font-bold text-sm text-slate-900 dark:text-white">Active Documents</span>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5">
                                             <div className="flex items-center gap-2">
                                                 <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                <span className="text-[10px] font-medium uppercase tracking-tight">Insurance</span>
+                                                <span className="text-[10px] font-medium uppercase tracking-tight text-slate-700 dark:text-slate-300">Insurance</span>
                                             </div>
                                             <FileText className="h-3 w-3 text-slate-400 cursor-pointer hover:text-emerald-500" />
                                         </div>
                                         <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5">
                                             <div className="flex items-center gap-2">
                                                 <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                <span className="text-[10px] font-medium uppercase tracking-tight">Roadworthy</span>
+                                                <span className="text-[10px] font-medium uppercase tracking-tight text-slate-700 dark:text-slate-300">Roadworthy</span>
                                             </div>
                                             <FileText className="h-3 w-3 text-slate-400 cursor-pointer hover:text-emerald-500" />
                                         </div>
@@ -212,21 +429,29 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                                         <div className="grid grid-cols-2 gap-3">
                                             <input
                                                 type="date"
-                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
+                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white"
                                                 value={newHistory.service_date}
                                                 onChange={(e) => setNewHistory({ ...newHistory, service_date: e.target.value })}
                                             />
                                             <input
                                                 type="text"
                                                 placeholder="Service Center Name"
-                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
+                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white"
                                                 value={newHistory.provider_name}
                                                 onChange={(e) => setNewHistory({ ...newHistory, provider_name: e.target.value })}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Service Location (Required)"
+                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white"
+                                                value={newHistory.location}
+                                                required
+                                                onChange={(e) => setNewHistory({ ...newHistory, location: e.target.value })}
                                             />
                                         </div>
                                         <textarea
                                             placeholder="What was done? (e.g. Full engine service, brake pad replacement)"
-                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-3 text-xs focus:ring-1 focus:ring-emerald-500 outline-none h-20 resize-none"
+                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-3 text-xs focus:ring-1 focus:ring-emerald-500 outline-none h-20 resize-none text-slate-900 dark:text-white"
                                             value={newHistory.description}
                                             onChange={(e) => setNewHistory({ ...newHistory, description: e.target.value })}
                                         />
@@ -234,14 +459,14 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                                             <input
                                                 type="number"
                                                 placeholder="Mileage (km)"
-                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
+                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white"
                                                 value={newHistory.mileage}
                                                 onChange={(e) => setNewHistory({ ...newHistory, mileage: e.target.value })}
                                             />
                                             <input
                                                 type="number"
                                                 placeholder="Total Cost (GHS)"
-                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
+                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-lg p-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white"
                                                 value={newHistory.cost}
                                                 onChange={(e) => setNewHistory({ ...newHistory, cost: e.target.value })}
                                             />
@@ -249,13 +474,14 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                                         <div className="flex gap-2 pt-2">
                                             <button
                                                 onClick={() => setIsAddingHistory(false)}
-                                                className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-white/5 text-[10px] font-bold uppercase transition-colors hover:bg-slate-100"
+                                                className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-white/5 text-[10px] font-bold uppercase transition-colors hover:bg-slate-100 text-slate-700 dark:text-slate-300"
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 onClick={handleAddHistory}
-                                                className="flex-1 py-2 bg-emerald-500 text-white rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                                                disabled={!newHistory.location.trim() || !newHistory.description.trim()}
+                                                className="flex-1 py-2 bg-emerald-500 text-white rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 Save Record
                                             </button>
@@ -288,10 +514,14 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                                                         )}
                                                     </div>
                                                     <h4 className="text-sm font-bold text-slate-800 dark:text-white">{item.description}</h4>
-                                                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-medium">
+                                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-medium">
                                                         <span className="flex items-center gap-1">
-                                                            <ClipboardCheck className="h-3 w-3" />
+                                                            <ClipboardCheck className="h-3 w-3 text-slate-400" />
                                                             {item.provider_name || "Self Recorded"}
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            <MapPin className="h-3 w-3 text-rose-400" />
+                                                            {item.location || "N/A"}
                                                         </span>
                                                         {item.mileage && (
                                                             <span className="flex items-center gap-1">
@@ -303,6 +533,19 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose }:
                                                             <span className="flex items-center gap-1">
                                                                 <Wallet className="h-3 w-3" />
                                                                 GHS {item.cost.toLocaleString()}
+                                                            </span>
+                                                        )}
+                                                        {item.document_metadata && (
+                                                            <span className="flex items-center gap-1 text-indigo-500/80 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-500/20">
+                                                                <ImageIcon className="h-2.5 w-2.5" />
+                                                                {item.document_metadata.size ? `${(item.document_metadata.size / 1024 / 1024).toFixed(1)}MB` : "DOC"}
+                                                                {item.document_metadata.type && ` • ${item.document_metadata.type.split('/')[1].toUpperCase()}`}
+                                                                {item.document_metadata.lastModified && (
+                                                                    <span className="flex items-center gap-1 ml-1 pl-1 border-l border-indigo-200 dark:border-indigo-500/30">
+                                                                        <Clock className="h-2 w-2" />
+                                                                        {new Date(item.document_metadata.lastModified).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                )}
                                                             </span>
                                                         )}
                                                     </div>

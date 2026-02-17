@@ -67,6 +67,19 @@ export async function GET(request: Request) {
             return NextResponse.json(formatted);
         }
 
+        if (type === "vehicles") {
+            const { data, error } = await supabaseAdmin
+                .from("vehicles")
+                .select("*")
+                .order("created_at", { ascending: false });
+
+            if (error) {
+                console.error("Vehicles Fetch Error:", error);
+                throw error;
+            }
+            return NextResponse.json(data);
+        }
+
         return NextResponse.json({ error: "Invalid type parameter" }, { status: 400 });
 
     } catch (error: any) {
@@ -87,8 +100,12 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: "Invalid serials array" }, { status: 400 });
             }
 
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            const generateId = () => Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+
             const rows = serials.map((s: string) => ({
                 serial_number: s,
+                public_id: generateId(),
                 batch_id: batch_id || null,
                 status: 'MANUFACTURED'
             }));
@@ -132,16 +149,16 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: "Invalid mappings array" }, { status: 400 });
             }
 
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            const generateId = () => Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-
-            // We need to update both vehicles and cards
-            // This is a bit complex in Supabase without a stored procedure, 
-            // but we can do it in a loop for now or multi-updates
-
             for (const map of mappings) {
-                const publicId = generateId();
-                // 1. Update Vehicle
+                // 1. Get the card's public_id from registry
+                const { data: cards } = await supabaseAdmin
+                    .from("nfc_cards")
+                    .select("public_id")
+                    .eq("serial_number", map.serial_number);
+
+                const publicId = cards && cards[0]?.public_id ? cards[0].public_id : Array.from({ length: 8 }, () => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 62)]).join("");
+
+                // 2. Update Vehicle
                 const { error: vError } = await supabaseAdmin
                     .from("vehicles")
                     .update({
@@ -163,6 +180,25 @@ export async function POST(request: Request) {
             }
 
             return NextResponse.json({ success: true });
+        }
+
+        if (action === "verify_card") {
+            const { serial_number } = body;
+            const { data, error } = await supabaseAdmin
+                .from("nfc_cards")
+                .select("*")
+                .eq("serial_number", serial_number)
+                .single();
+
+            if (error || !data) {
+                return NextResponse.json({ error: "Serial number not found in inventory" }, { status: 404 });
+            }
+
+            if (data.status === 'ASSIGNED') {
+                return NextResponse.json({ error: "Card is already assigned to another vehicle" }, { status: 400 });
+            }
+
+            return NextResponse.json({ success: true, card: data });
         }
 
         if (action === "update_card") {
@@ -193,6 +229,32 @@ export async function POST(request: Request) {
                 .eq("id", id);
 
             if (error) throw error;
+            return NextResponse.json({ success: true });
+        }
+
+        if (action === "unlink_card") {
+            const { serial_number } = body;
+            if (!serial_number) return NextResponse.json({ error: "Missing serial_number" }, { status: 400 });
+
+            // 1. Clear Vehicle Link
+            const { error: vError } = await supabaseAdmin
+                .from("vehicles")
+                .update({
+                    nfc_card_id: null,
+                    nfc_serial_number: null
+                })
+                .eq("nfc_serial_number", serial_number);
+
+            if (vError) console.warn("Unlink: Vehicle update warning:", vError.message);
+
+            // 2. Reset Card Status
+            const { error: cError } = await supabaseAdmin
+                .from("nfc_cards")
+                .update({ status: 'MANUFACTURED' })
+                .eq("serial_number", serial_number);
+
+            if (cError) throw cError;
+
             return NextResponse.json({ success: true });
         }
 

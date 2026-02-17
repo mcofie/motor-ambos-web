@@ -286,10 +286,12 @@ export type ServiceHistoryRow = {
     service_date: string;
     description: string;
     provider_name?: string | null;
+    location?: string | null;
     mileage?: number | null;
     cost?: number | null;
     is_verified: boolean;
     document_url?: string | null;
+    document_metadata?: any | null;
     created_at?: string;
 };
 
@@ -816,7 +818,7 @@ export async function listMembershipPlans(signal?: AbortSignal): Promise<Members
     const { data, error } = await query;
 
     if (error) {
-        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return [];
+        if (error.message === 'Fetch is aborted' || error.message === 'signal is aborted without reason' || (signal && signal.aborted)) return [];
         console.error("Error listing membership plans:", error.message || error);
         return [];
     }
@@ -841,7 +843,7 @@ export async function listMembers(signal?: AbortSignal): Promise<MemberWithMembe
     const { data, error } = await query;
 
     if (error) {
-        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return [];
+        if (error.message === 'Fetch is aborted' || error.message === 'signal is aborted without reason' || (signal && signal.aborted)) return [];
         console.error("Error listing members:", error.message || error);
         return [];
     }
@@ -886,7 +888,7 @@ export async function getMemberById(id: string, signal?: AbortSignal): Promise<M
     const { data, error } = await query;
 
     if (error) {
-        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return null;
+        if (error.message === 'Fetch is aborted' || error.message === 'signal is aborted without reason' || (signal && signal.aborted)) return null;
         // PGRST116 is 'No rows found', usually fine to return null silently
         if (error.code !== 'PGRST116') {
             console.error("Error fetching member by id:", error.message || error);
@@ -992,7 +994,7 @@ export async function listMemberVehicles(memberId: string, authId?: string | nul
     const { data, error } = await query;
 
     if (error) {
-        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return [];
+        if (error.message === 'Fetch is aborted' || error.message === 'signal is aborted without reason' || (signal && signal.aborted)) return [];
         console.error("Error fetching vehicles:", error.message || error);
         return [];
     }
@@ -1000,22 +1002,17 @@ export async function listMemberVehicles(memberId: string, authId?: string | nul
 }
 
 export async function listAllVehicles(signal?: AbortSignal): Promise<VehicleRow[]> {
-    const supabase = getSupabaseBrowser();
-    const query = supabase
-        .schema("motorambos")
-        .from("vehicles")
-        .select("*");
+    const res = await fetch("/api/admin-nfc?type=vehicles", { signal }).catch(err => {
+        if (err.name === 'AbortError' || err.message === 'signal is aborted without reason') return null;
+        throw err;
+    });
+    if (!res) return [];
 
-    if (signal) (query as any).abortSignal(signal);
-
-    const { data, error } = await query;
-
-    if (error) {
-        if (error.message === 'Fetch is aborted' || (signal && signal.aborted)) return [];
-        console.error("Error listing all vehicles:", error.message || error);
+    if (!res.ok) {
+        console.error("Error listing all vehicles:", res.statusText);
         return [];
     }
-    return (data || []) as VehicleRow[];
+    return res.json();
 }
 export async function getVehicleById(id: string): Promise<VehicleRow | null> {
     const res = await fetch(
@@ -1424,6 +1421,7 @@ export async function updateRequestStatus(
 export type NfcCardRow = {
     id: string;
     serial_number: string;
+    public_id?: string | null;
     status: string;
     batch_id?: string | null;
     created_at?: string;
@@ -1450,12 +1448,29 @@ export type NfcRequestRow = {
 };
 
 export async function listNfcCards(signal?: AbortSignal): Promise<NfcCardRow[]> {
-    const res = await fetch("/api/admin-nfc?type=cards", { signal });
+    const res = await fetch("/api/admin-nfc?type=cards", { signal }).catch(err => {
+        if (err.name === 'AbortError' || err.message === 'signal is aborted without reason') return null;
+        throw err;
+    });
+    if (!res) return [];
+
     if (!res.ok) {
         console.error("Error listing NFC cards:", res.statusText);
         return [];
     }
     return res.json();
+}
+
+export async function unlinkNfcCard(serial_number: string): Promise<void> {
+    const res = await fetch("/api/admin-nfc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: "unlink_card",
+            serial_number
+        })
+    });
+    await throwIfNotOk(res);
 }
 
 export async function createNfcCardBatch(serials: string[], batchId?: string): Promise<void> {
@@ -1476,7 +1491,12 @@ export async function createNfcCardBatch(serials: string[], batchId?: string): P
 }
 
 export async function listNfcRequests(signal?: AbortSignal): Promise<NfcRequestRow[]> {
-    const res = await fetch("/api/admin-nfc?type=requests", { signal });
+    const res = await fetch("/api/admin-nfc?type=requests", { signal }).catch(err => {
+        if (err.name === 'AbortError' || err.message === 'signal is aborted without reason') return null;
+        throw err;
+    });
+    if (!res) return [];
+
     if (!res.ok) {
         console.error("Error listing NFC requests:", res.statusText);
         return [];
@@ -1551,7 +1571,12 @@ export async function deleteNfcCard(id: string): Promise<void> {
 
 export async function listInvoices(orgId?: string, signal?: AbortSignal): Promise<InvoiceRow[]> {
     const url = orgId ? `/api/admin-invoices?org_id=${orgId}` : "/api/admin-invoices";
-    const res = await fetch(url, { signal });
+    const res = await fetch(url, { signal }).catch(err => {
+        if (err.name === 'AbortError' || err.message === 'signal is aborted without reason') return null; // swallow abort
+        throw err;
+    });
+    if (!res) return []; // aborted
+
     if (!res.ok) {
         console.error("Error listing invoices:", res.statusText);
         return [];
@@ -1672,12 +1697,33 @@ export async function addOrgNote(orgId: string, content: string, category: strin
 }
 
 export async function fetchOrgServiceAnalytics(orgId: string): Promise<{ total_requests: number, total_cost: number }> {
-    // This is a simplified fetch, ideally this would be a single RPC call or aggregation
-    const res = await fetch(`${URL}/rest/v1/service_history?vehicle_id=in.(select id from vehicles where user_id=eq.${orgId})&select=cost`, {
-        headers: { ...authHeaders() }
-    });
-    if (!res.ok) return { total_requests: 0, total_cost: 0 };
-    const data = await res.json();
+    const supabase = getSupabaseBrowser();
+
+    // 1. Get vehicles for org
+    const { data: vehicles } = await supabase
+        .schema("motorambos")
+        .from("vehicles")
+        .select("id")
+        .eq("user_id", orgId);
+
+    if (!vehicles || vehicles.length === 0) return { total_requests: 0, total_cost: 0 };
+
+    const vehicleIds = vehicles.map(v => v.id);
+
+    // 2. Get service history for those vehicles
+    const { data: history, error } = await supabase
+        .schema("motorambos")
+        .from("service_history")
+        .select("cost")
+        .in("vehicle_id", vehicleIds);
+
+    if (error) {
+        if (error.message === 'Fetch is aborted' || error.message === 'signal is aborted without reason') return { total_requests: 0, total_cost: 0 };
+        console.error("Error fetching analytics:", error);
+        return { total_requests: 0, total_cost: 0 };
+    }
+
+    const data = history || [];
     return {
         total_requests: data.length,
         total_cost: data.reduce((sum: number, item: any) => sum + (item.cost || 0), 0)

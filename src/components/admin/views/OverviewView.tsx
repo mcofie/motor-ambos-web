@@ -23,9 +23,11 @@ import {
     Calendar,
     ArrowUpRight,
     ArrowDownRight,
-    Car
+    Car,
+    ShieldCheck,
+    Building2
 } from "lucide-react";
-import { listProviders, listRequests } from "@/lib/supaFetch";
+import { listProviders, listRequests, listAllVehicles, getVehicleMaintenanceStatus } from "@/lib/supaFetch";
 import { getSupabaseBrowser } from "@/lib/supabaseBrowser";
 import { StatCard } from "../ui/AdminUI";
 import { ProviderRow, RequestRow } from "../types";
@@ -40,17 +42,20 @@ const STATUS_COLORS: Record<string, string> = {
 export function OverviewView() {
     const [providers, setProviders] = useState<ProviderRow[]>([]);
     const [requests, setRequests] = useState<RequestRow[]>([]);
+    const [vehicles, setVehicles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [pData, rData] = await Promise.all([
+                const [pData, rData, vData] = await Promise.all([
                     listProviders(),
-                    listRequests()
+                    listRequests(),
+                    listAllVehicles()
                 ]);
                 setProviders(pData as ProviderRow[]);
                 setRequests(rData as RequestRow[]);
+                setVehicles(vData);
             } catch (error) {
                 console.error("Failed to load analytics data", error);
             } finally {
@@ -121,16 +126,22 @@ export function OverviewView() {
                     color="bg-emerald-500"
                 />
                 <StatCard
-                    title="Active Fleet"
-                    value={activeProviders}
-                    icon={Car}
-                    color="bg-blue-500"
+                    title="Fleet Health"
+                    value={`${vehicles.length ? Math.round((vehicles.filter(v => getVehicleMaintenanceStatus(v).oilChangeStatus === 'HEALTHY').length / vehicles.length) * 100) : 100}%`}
+                    icon={ShieldCheck}
+                    color="bg-emerald-500"
                 />
                 <StatCard
                     title="Total Requests"
                     value={requests.length}
                     icon={Activity}
                     color="bg-indigo-500"
+                />
+                <StatCard
+                    title="Active Providers"
+                    value={activeProviders}
+                    icon={Building2}
+                    color="bg-blue-500"
                 />
                 <StatCard
                     title="Completion Rate"

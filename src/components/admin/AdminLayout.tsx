@@ -1,11 +1,11 @@
 import React from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import { User } from "./types";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, ShieldCheck } from "lucide-react";
 
 interface AdminLayoutProps {
     children: React.ReactNode;
-    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations";
+    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations" | "advisor";
     user: User | null;
     onLogout: () => void;
 }

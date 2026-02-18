@@ -1,18 +1,18 @@
 export type UUID = string;
 
-export type ProviderType = 
-    | "mechanic" 
+export type ProviderType =
+    | "mechanic"
     | "mechanic_engine"
     | "mechanic_electrical"
-    | "detailing" 
-    | "car_wash" 
-    | "roadworthy" 
-    | "insurance" 
+    | "detailing"
+    | "car_wash"
+    | "roadworthy"
+    | "insurance"
     | "shop"
-    | "towing" 
-    | "fuel" 
-    | "auto_shop" 
-    | "tire" 
+    | "towing"
+    | "fuel"
+    | "auto_shop"
+    | "tire"
     | "body_shop";
 
 export type DaySchedule = {

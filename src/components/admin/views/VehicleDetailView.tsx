@@ -10,7 +10,8 @@ import {
     ServiceHistoryRow,
     getMemberById,
     updateVehicle,
-    bulkAssignNfcCards
+    bulkAssignNfcCards,
+    getVehicleMaintenanceStatus
 } from "@/lib/supaFetch";
 import {
     ArrowLeft,
@@ -202,10 +203,82 @@ export function VehicleDetailView({ vehicleId, initialVehicle, initialHistory }:
                                 </div>
                             </div>
 
+                            {/* Maintenance Advisor Section */}
+                            <div className="pt-4 border-t border-border space-y-4">
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                                    Maintenance Health
+                                    {getVehicleMaintenanceStatus(vehicle).oilChangeStatus === 'HEALTHY' ? (
+                                        <span className="text-emerald-500 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Healthy</span>
+                                    ) : (
+                                        <span className="text-amber-500 flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Attention</span>
+                                    )}
+                                </h4>
+
+                                {(() => {
+                                    const status = getVehicleMaintenanceStatus(vehicle);
+                                    const statusColors = {
+                                        HEALTHY: "bg-emerald-500",
+                                        UPCOMING: "bg-amber-500",
+                                        OVERDUE: "bg-rose-500"
+                                    };
+
+                                    return (
+                                        <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-border space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tight">
+                                                    <span className="text-slate-400">Oil Life</span>
+                                                    <span className={status.oilChangeStatus === 'OVERDUE' ? 'text-rose-500' : 'text-slate-900 dark:text-white'}>
+                                                        {status.kmRemaining.toLocaleString()} KM Left
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden border border-border/50">
+                                                    <div
+                                                        className={cls("h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(16,185,129,0.3)]", statusColors[status.oilChangeStatus])}
+                                                        style={{ width: `${status.percentLife}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="p-2 bg-white dark:bg-white/5 rounded-xl border border-border/50 shadow-sm">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Current</p>
+                                                    <p className="text-xs font-bold font-mono">{(vehicle.current_mileage || 0).toLocaleString()} km</p>
+                                                </div>
+                                                <div className="p-2 bg-white dark:bg-white/5 rounded-xl border border-border/50 shadow-sm">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Last Change</p>
+                                                    <p className="text-xs font-bold font-mono">{(vehicle.last_oil_change_mileage || 0).toLocaleString()} km</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Anti-Cheat Estimator */}
+                                            <div className="pt-3 border-t border-border/50">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <ShieldCheck className="h-3 w-3 text-indigo-500" />
+                                                    <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest">Fair Price Advisor</span>
+                                                </div>
+                                                <div className="p-3 bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/20 rounded-xl relative overflow-hidden group/fair">
+                                                    <div className="absolute top-0 right-0 p-1">
+                                                        <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                                                        Fair price for a standard oil change:
+                                                        <span className="block text-sm font-black text-indigo-600 dark:text-indigo-400 mt-1 tracking-tight">GHS 280 — 350</span>
+                                                    </p>
+                                                    <div className="mt-2 flex items-center justify-between">
+                                                        <span className="text-[8px] text-indigo-400 font-bold uppercase">Market Average Analysis</span>
+                                                        <button className="text-[8px] font-bold text-indigo-600 hover:underline uppercase">Vetted Shops &rarr;</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+
                             {/* Smart Card Section */}
                             <div className="pt-4 border-t border-border space-y-4">
                                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
-                                    Smart Card Profile
+                                    Smart Passport ID
                                     {vehicle.nfc_card_id && (
                                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                                     )}

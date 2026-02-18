@@ -88,6 +88,7 @@ type ProviderRow = {
     updated_at?: string;
     provider_type?: string | null;
     logo_url?: string | null;
+    is_verified?: boolean | null;
     operating_hours?: Record<string, unknown> | null;
 };
 
@@ -249,6 +250,9 @@ export type VehicleRow = {
     nfc_card_id?: string | null;
     nfc_serial_number?: string | null;
     created_at?: string;
+    current_mileage?: number | null;
+    last_oil_change_mileage?: number | null;
+    avg_daily_km?: number | null;
 };
 
 export type InvoiceRow = {
@@ -384,6 +388,73 @@ async function throwIfNotOk(res: Response): Promise<void> {
     const body = await readJSONSafe<ErrorPayload>(res);
     const msg = body?.message || body?.error || `HTTP ${res.status}`;
     throw new Error(String(msg));
+}
+
+/* ─────────────────────────────────────────
+   Smart Service Advisor Logic
+────────────────────────────────────────── */
+
+export type FairPriceEstimate = {
+    average: number;
+    range: [number, number];
+    sampleSize: number;
+    currency: string;
+};
+
+/**
+ * Calculates current market fair price for a service type
+ */
+export async function getMarketFairPrice(serviceCode: string): Promise<FairPriceEstimate | null> {
+    const res = await fetch(`${URL}/rest/v1/provider_rates?service_code=eq.${serviceCode}&select=base_price,currency`, {
+        headers: authHeaders()
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json() as { base_price: number, currency: string }[];
+    if (!data.length) return null;
+
+    const prices = data.map(d => d.base_price).filter(p => p > 0);
+    if (!prices.length) return null;
+
+    const total = prices.reduce((a, b) => a + b, 0);
+    const avg = total / prices.length;
+
+    // Simple range: +/- 15% from average
+    return {
+        average: Math.round(avg),
+        range: [Math.round(avg * 0.85), Math.round(avg * 1.15)],
+        sampleSize: prices.length,
+        currency: data[0].currency || "GHS"
+    };
+}
+
+export type MaintenanceStatus = {
+    oilChangeStatus: "HEALTHY" | "UPCOMING" | "OVERDUE";
+    kmRemaining: number;
+    percentLife: number;
+};
+
+/**
+ * Calculates maintenance health based on mileage
+ */
+export function getVehicleMaintenanceStatus(vehicle: VehicleRow): MaintenanceStatus {
+    const current = vehicle.current_mileage || 0;
+    const last = vehicle.last_oil_change_mileage || 0;
+    const INTERVAL = 5000; // 5000km interval for oil change
+
+    const used = current - last;
+    const remaining = Math.max(0, INTERVAL - used);
+    const percent = Math.max(0, Math.min(100, (remaining / INTERVAL) * 100));
+
+    let status: "HEALTHY" | "UPCOMING" | "OVERDUE" = "HEALTHY";
+    if (used >= INTERVAL) status = "OVERDUE";
+    else if (used >= INTERVAL * 0.8) status = "UPCOMING";
+
+    return {
+        oilChangeStatus: status,
+        kmRemaining: remaining,
+        percentLife: Math.round(percent)
+    };
 }
 
 const ewktFromLatLng = (lat: number, lng: number) =>
@@ -568,6 +639,7 @@ export async function listProviders(q?: string, signal?: AbortSignal): Promise<P
             "backdrop_url",
             "operating_hours",
             "created_at",
+            "is_verified",
         ].join(",")
     );
     params.set("order", "created_at.desc");
@@ -1504,20 +1576,21 @@ export async function listNfcRequests(signal?: AbortSignal): Promise<NfcRequestR
     return res.json();
 }
 
-export async function updateNfcRequestStatus(id: string, status: string): Promise<void> {
+export async function updateNfcRequestStatus(id: string, status: string, notes?: string): Promise<void> {
     const res = await fetch("/api/admin-nfc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             action: "update_request_status",
             id,
-            status
+            status,
+            notes
         })
     });
 
     if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed/to update status");
+        throw new Error(err.error || "Failed to update status");
     }
 }
 export async function bulkAssignNfcCards(mappings: { vehicle_id: string; serial_number: string }[]): Promise<void> {

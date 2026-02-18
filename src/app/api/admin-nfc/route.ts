@@ -125,14 +125,17 @@ export async function POST(request: Request) {
         }
 
         if (action === "update_request_status") {
-            const { id, status } = body;
+            const { id, status, notes } = body;
             if (!id || !status) {
                 return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
             }
 
             const { error } = await supabaseAdmin
                 .from("nfc_requests")
-                .update({ status, updated_at: new Date().toISOString() })
+                .update({
+                    status,
+                    notes
+                })
                 .eq("id", id);
 
             if (error) {
@@ -210,8 +213,7 @@ export async function POST(request: Request) {
                 .update({
                     serial_number,
                     status,
-                    batch_id,
-                    updated_at: new Date().toISOString()
+                    batch_id
                 })
                 .eq("id", id);
 

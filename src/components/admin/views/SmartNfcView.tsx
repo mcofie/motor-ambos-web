@@ -78,6 +78,10 @@ export function SmartNfcView() {
     const [isCardEditOpen, setIsCardEditOpen] = useState(false);
     const [editingCard, setEditingCard] = useState<any>(null);
 
+    // Request Edit Dialog
+    const [isRequestEditOpen, setIsRequestEditOpen] = useState(false);
+    const [editingRequest, setEditingRequest] = useState<NfcRequestRow | null>(null);
+
     // Bulk Mode
     const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
     const [isBulkAssignOpen, setIsBulkAssignOpen] = useState(false);
@@ -326,15 +330,35 @@ export function SmartNfcView() {
         }
     };
 
-    const handleUpdateRequest = async (id: string, status: string) => {
+    const handleUpdateRequest = async (id: string, status: string, notes?: string) => {
         setUpdatingId(id);
         try {
-            await updateNfcRequestStatus(id, status);
-            setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-            toast.success("Status updated");
+            await updateNfcRequestStatus(id, status, notes);
+            setRequests(prev => prev.map(r => r.id === id ? { ...r, status, notes } : r));
+            toast.success("Request updated");
         } catch (e: any) {
             if (e.name === 'AbortError' || e.message?.includes('aborted')) return;
             toast.error("Failed to update status");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleEditRequest = (req: NfcRequestRow) => {
+        setEditingRequest(req);
+        setIsRequestEditOpen(true);
+    };
+
+    const handleSaveRequestUpdate = async () => {
+        if (!editingRequest) return;
+        setUpdatingId(editingRequest.id);
+        try {
+            await updateNfcRequestStatus(editingRequest.id, editingRequest.status, editingRequest.notes || "");
+            toast.success("Request updated");
+            setIsRequestEditOpen(false);
+            fetchData();
+        } catch (e: any) {
+            toast.error("Update failed");
         } finally {
             setUpdatingId(null);
         }
@@ -504,13 +528,25 @@ export function SmartNfcView() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {card.linkedVehicle ? (
+                                            {card.status === 'ASSIGNED' ? (
                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 uppercase tracking-tight">
                                                     <CheckCircle2 className="h-3 w-3" /> Assigned
                                                 </span>
                                             ) : card.status === 'MANUFACTURED' ? (
                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold border border-blue-200 uppercase tracking-tight">
                                                     Available
+                                                </span>
+                                            ) : card.status === 'LOST' ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 uppercase tracking-tight">
+                                                    Lost
+                                                </span>
+                                            ) : card.status === 'DAMAGED' ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold border border-rose-200 uppercase tracking-tight">
+                                                    Damaged
+                                                </span>
+                                            ) : card.status === 'VOID' ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 uppercase tracking-tight">
+                                                    Void
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] font-bold border border-border uppercase tracking-tight">
@@ -612,6 +648,11 @@ export function SmartNfcView() {
                                                             <Car className="h-3 w-3" /> {req.vehicle.make} {req.vehicle.model}
                                                         </div>
                                                     )}
+                                                    {req.notes && (
+                                                        <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-lg text-[10px] text-amber-800 dark:text-amber-200 leading-tight italic">
+                                                            "{req.notes}"
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
@@ -621,24 +662,23 @@ export function SmartNfcView() {
                                                 req.status === 'PENDING' ? "bg-blue-500/10 text-blue-600 border-blue-500/20" :
                                                     req.status === 'SHIPPED' ? "bg-purple-500/10 text-purple-600 border-purple-500/20" :
                                                         req.status === 'DELIVERED' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
-                                                            "bg-muted text-muted-foreground border-border"
+                                                            req.status === 'CANCELLED' ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
+                                                                "bg-muted text-muted-foreground border-border"
                                             )}>
                                                 {req.status === 'SHIPPED' && <Truck className="h-3 w-3" />}
+                                                {req.status === 'CANCELLED' && <AlertCircle className="h-3 w-3" />}
                                                 {req.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2">
-                                                {req.status === 'PENDING' && (
-                                                    <button onClick={() => handleUpdateRequest(req.id, 'SHIPPED')} disabled={updatingId === req.id} className="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:bg-primary/90 transition-colors">
-                                                        Mark Shipped
-                                                    </button>
-                                                )}
-                                                {req.status === 'SHIPPED' && (
-                                                    <button onClick={() => handleUpdateRequest(req.id, 'DELIVERED')} disabled={updatingId === req.id} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors">
-                                                        Mark Delivered
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => handleEditRequest(req)}
+                                                    className="p-1.5 hover:text-primary transition-colors bg-muted/50 hover:bg-primary/10 rounded-lg border border-border"
+                                                    title="Edit / Set Status"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -714,11 +754,64 @@ export function SmartNfcView() {
                                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Batch ID</label>
                                 <Input value={editingCard.batch_id || ""} onChange={e => setEditingCard({ ...editingCard, batch_id: e.target.value })} />
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Status</label>
+                                <select
+                                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                                    value={editingCard.status}
+                                    onChange={e => setEditingCard({ ...editingCard, status: e.target.value })}
+                                >
+                                    <option value="MANUFACTURED">Available (Manufactured)</option>
+                                    <option value="ASSIGNED">Assigned</option>
+                                    <option value="LOST">Lost</option>
+                                    <option value="DAMAGED">Damaged</option>
+                                    <option value="VOID">Void</option>
+                                </select>
+                            </div>
                         </div>
                     )}
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsCardEditOpen(false)}>Cancel</Button>
                         <Button onClick={handleUpdateCardSave} disabled={updatingId === editingCard?.id}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isRequestEditOpen} onOpenChange={setIsRequestEditOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Card Request</DialogTitle>
+                        <DialogDescription>Update the status and progress of this request.</DialogDescription>
+                    </DialogHeader>
+                    {editingRequest && (
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Status</label>
+                                <select
+                                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                                    value={editingRequest.status}
+                                    onChange={e => setEditingRequest({ ...editingRequest, status: e.target.value })}
+                                >
+                                    <option value="PENDING">Pending</option>
+                                    <option value="SHIPPED">Shipped</option>
+                                    <option value="DELIVERED">Delivered</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Admin Notes</label>
+                                <Textarea
+                                    placeholder="Add internal notes about this request..."
+                                    value={editingRequest.notes || ""}
+                                    onChange={e => setEditingRequest({ ...editingRequest, notes: e.target.value })}
+                                    className="min-h-[100px]"
+                                />
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsRequestEditOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveRequestUpdate} disabled={updatingId === editingRequest?.id}>Save Changes</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

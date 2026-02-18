@@ -48,13 +48,14 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
     // Determine active tab from pathname
     const pathParts = pathname.split("/");
     // If it's something like /admin/memberships/123, the active tab is "memberships"
-    let activeTab: "overview" | "providers" | "requests" | "memberships" | "nfc" | "organizations" = "overview";
+    let activeTab: "overview" | "providers" | "requests" | "memberships" | "nfc" | "organizations" | "advisor" = "overview";
 
     if (pathParts.includes("memberships") || pathParts.includes("vehicles")) activeTab = "memberships";
     else if (pathParts.includes("providers")) activeTab = "providers";
     else if (pathParts.includes("requests")) activeTab = "requests";
     else if (pathParts.includes("nfc")) activeTab = "nfc";
     else if (pathParts.includes("organizations")) activeTab = "organizations";
+    else if (pathParts.includes("advisor")) activeTab = "advisor";
     else if (pathParts.includes("overview")) activeTab = "overview";
 
     return (

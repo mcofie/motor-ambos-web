@@ -1,69 +1,78 @@
 "use client";
 
-import React from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, Tooltip, LayersControl, LayerGroup } from "react-leaflet";
+import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, Tooltip, LayersControl, LayerGroup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ProviderRow, RequestRow } from "../types";
 import { Edit2, ShieldCheck, Phone, Clock } from "lucide-react";
 
 // Fix for Leaflet default icons in Next.js/React
-const DefaultIcon = L.icon({
-    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-});
+function useLeafletIcons() {
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const iconRetinaUrl = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png';
+            const iconUrl = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png';
+            const shadowUrl = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png';
 
-L.Marker.prototype.options.icon = DefaultIcon;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl,
+                iconUrl,
+                shadowUrl,
+            });
+        }
+    }, []);
+}
 
-// Custom Icons
-const availableIcon = L.divIcon({
-    className: "custom-div-icon marker-emerald",
-    html: `
-        <div class="pulse-ring"></div>
-        <div style="background-color: #10b981; width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 4px white; position: relative; z-index: 10;"></div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-});
+// Custom Icons - Created inside a component or carefully handled
+const getIcons = () => {
+    if (typeof window === 'undefined') return {};
 
-const busyIcon = L.divIcon({
-    className: "custom-div-icon marker-violet",
-    html: `
-        <div class="pulse-ring"></div>
-        <div style="background-color: #7c3aed; width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 4px white; position: relative; z-index: 10;"></div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-});
-
-const offlineIcon = L.divIcon({
-    className: "custom-div-icon",
-    html: `<div style="background-color: #64748b; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.4), 0 0 0 3px white;"></div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-});
-
-const pendingRequestIcon = L.divIcon({
-    className: "custom-div-icon marker-amber",
-    html: `
-        <div class="pulse-ring"></div>
-        <div style="background-color: #f59e0b; width: 24px; height: 24px; transform: rotate(45deg); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 4px white; position: relative; z-index: 10;"></div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-});
-
-const activeRequestIcon = L.divIcon({
-    className: "custom-div-icon marker-blue",
-    html: `
-        <div class="pulse-ring"></div>
-        <div style="background-color: #3b82f6; width: 24px; height: 24px; transform: rotate(45deg); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 4px white; position: relative; z-index: 10;"></div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-});
+    return {
+        availableIcon: L.divIcon({
+            className: "custom-div-icon marker-emerald",
+            html: `
+                <div class="pulse-ring"></div>
+                <div style="background-color: #10b981; width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 4px white; position: relative; z-index: 10;"></div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+        }),
+        busyIcon: L.divIcon({
+            className: "custom-div-icon marker-violet",
+            html: `
+                <div class="pulse-ring"></div>
+                <div style="background-color: #7c3aed; width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 4px white; position: relative; z-index: 10;"></div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+        }),
+        offlineIcon: L.divIcon({
+            className: "custom-div-icon",
+            html: `<div style="background-color: #64748b; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.4), 0 0 0 3px white;"></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10],
+        }),
+        pendingRequestIcon: L.divIcon({
+            className: "custom-div-icon marker-amber",
+            html: `
+                <div class="pulse-ring"></div>
+                <div style="background-color: #f59e0b; width: 24px; height: 24px; transform: rotate(45deg); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 4px white; position: relative; z-index: 10;"></div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+        }),
+        activeRequestIcon: L.divIcon({
+            className: "custom-div-icon marker-blue",
+            html: `
+                <div class="pulse-ring"></div>
+                <div style="background-color: #3b82f6; width: 24px; height: 24px; transform: rotate(45deg); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 4px white; position: relative; z-index: 10;"></div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+        })
+    };
+};
 
 interface ProviderMapClientProps {
     providers: ProviderRow[];
@@ -71,13 +80,64 @@ interface ProviderMapClientProps {
     onEdit: (provider: ProviderRow) => void;
 }
 
+function MapController({ providers }: { providers: ProviderRow[] }) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!map) return;
+
+        // Force multiple resize calculations to ensure Leaflet has correct dimensions
+        // Some flex/grid layouts take a few frames to settle.
+        const resizer = () => map.invalidateSize();
+
+        const t1 = setTimeout(resizer, 100);
+        const t2 = setTimeout(resizer, 500);
+        const t3 = setTimeout(resizer, 2000);
+
+        // Fit bounds if providers exist
+        const providersWithCoords = providers.filter(p =>
+            p.lat !== null && p.lat !== undefined &&
+            p.lng !== null && p.lng !== undefined &&
+            Math.abs(Number(p.lat)) > 0.01 && Math.abs(Number(p.lng)) > 0.01
+        );
+
+        if (providersWithCoords.length > 0) {
+            try {
+                const bounds = L.latLngBounds(providersWithCoords.map(p => [Number(p.lat), Number(p.lng)] as [number, number]));
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+            } catch (e) {
+                console.warn("Could not fit bounds:", e);
+            }
+        }
+
+        return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+        };
+    }, [map, providers]);
+
+    return null;
+}
+
 export default function ProviderMapClient({ providers, requests = [], onEdit }: ProviderMapClientProps) {
-    // Default center (e.g., Accra, Ghana)
+    useLeafletIcons();
+    const [isMounted, setIsMounted] = useState(false);
+    const icons = getIcons();
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Default center (Accra, Ghana)
     const defaultCenter: [number, number] = [5.6037, -0.1870];
 
+    if (!isMounted) return null;
+
     return (
-        <div className="h-full w-full rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800 z-0 relative bg-slate-50">
-            <style jsx global>{`
+        <div className="h-full w-full rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800 z-0 relative bg-slate-50 min-h-[500px]">
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
                     background: white;
                     color: #0f172a;
@@ -88,10 +148,9 @@ export default function ProviderMapClient({ providers, requests = [], onEdit }: 
                     color: #64748b !important;
                 }
                 .custom-div-icon {
-                    background: transparent;
-                    border: none;
+                    background: transparent !important;
+                    border: none !important;
                 }
-                /* Pulsing Animation for Active Elements */
                 @keyframes pulse-ring {
                     0% { transform: scale(0.33); opacity: 1; }
                     80%, 100% { transform: scale(2); opacity: 0; }
@@ -109,7 +168,7 @@ export default function ProviderMapClient({ providers, requests = [], onEdit }: 
                 .marker-violet .pulse-ring { border: 3px solid #7c3aed; }
                 .marker-amber .pulse-ring { border: 3px solid #f59e0b; }
                 .marker-blue .pulse-ring { border: 3px solid #3b82f6; }
-            `}</style>
+            `}} />
 
             <MapContainer
                 center={defaultCenter}
@@ -118,43 +177,49 @@ export default function ProviderMapClient({ providers, requests = [], onEdit }: 
                 scrollWheelZoom={true}
                 className="z-0"
             >
-                {/* Dark Matter Tiles for Command Center Feel */}
                 <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    subdomains='abcd'
+                    maxZoom={20}
                 />
 
-                <LayersControl position="topright">
+                <MapController providers={providers} />
 
+                <LayersControl position="topright">
                     <LayersControl.Overlay checked name="Providers">
                         <LayerGroup>
                             {providers.map((provider) => {
-                                if (!provider.lat || !provider.lng) return null;
-                                const position: [number, number] = [Number(provider.lat), Number(provider.lng)];
+                                const lat = Number(provider.lat);
+                                const lng = Number(provider.lng);
+                                if (isNaN(lat) || isNaN(lng) || Math.abs(lat) < 0.01) return null;
 
-                                // Check if provider is busy (has any active request assigned)
+                                const position: [number, number] = [lat, lng];
+
                                 const activeJob = requests.find(r => r.provider_id === provider.id && (r.status === 'accepted' || r.status === 'in_progress'));
                                 const isBusy = !!activeJob;
                                 const isOffline = !provider.is_active;
 
-                                let icon = offlineIcon;
+                                let icon = icons.offlineIcon;
                                 let statusColor = "bg-slate-100 text-slate-700";
                                 let statusText = "Offline";
                                 let circleColor = "#94a3b8";
 
                                 if (!isOffline) {
                                     if (isBusy) {
-                                        icon = busyIcon;
+                                        icon = icons.busyIcon;
                                         statusColor = "bg-violet-100 text-violet-700";
                                         statusText = "Busy (On Job)";
                                         circleColor = "#7c3aed";
                                     } else {
-                                        icon = availableIcon;
+                                        icon = icons.availableIcon;
                                         statusColor = "bg-emerald-100 text-emerald-700";
                                         statusText = "Available";
                                         circleColor = "#10b981";
                                     }
                                 }
+
+                                if (!icon) return null;
 
                                 return (
                                     <React.Fragment key={provider.id}>
@@ -166,8 +231,7 @@ export default function ProviderMapClient({ providers, requests = [], onEdit }: 
                                                 fillColor: circleColor,
                                                 fillOpacity: 0.05,
                                                 weight: 1,
-                                                dashArray: !isOffline ? undefined : "4 4",
-                                                className: "transition-all duration-1000"
+                                                dashArray: !isOffline ? undefined : "4 4"
                                             }}
                                         />
                                         <Marker
@@ -226,13 +290,17 @@ export default function ProviderMapClient({ providers, requests = [], onEdit }: 
                                     position = [(req.location as any).lat, (req.location as any).lng];
                                 }
 
-                                if (!position) return null;
+                                if (!position || isNaN(position[0]) || isNaN(position[1])) return null;
 
                                 const assignedProvider = providers.find(p => p.id === req.provider_id);
+                                const reqIcon = icons.pendingRequestIcon; // Fallback
+
+                                const currentIcon = req.status === 'pending' ? icons.pendingRequestIcon : icons.activeRequestIcon;
+
+                                if (!currentIcon) return null;
 
                                 return (
                                     <React.Fragment key={req.id}>
-                                        {/* Connection Line */}
                                         {assignedProvider && assignedProvider.lat && assignedProvider.lng && (
                                             <Polyline
                                                 positions={[
@@ -248,10 +316,9 @@ export default function ProviderMapClient({ providers, requests = [], onEdit }: 
                                             />
                                         )}
 
-                                        {/* Request Pin */}
                                         <Marker
                                             position={position}
-                                            icon={req.status === 'pending' ? pendingRequestIcon : activeRequestIcon}
+                                            icon={currentIcon}
                                         >
                                             <Tooltip direction="top" offset={[0, -10]} opacity={0.9} className="font-sans text-xs font-bold text-slate-900 bg-white border-0 px-2 py-1 rounded shadow-lg">
                                                 {req.driver_name || "New Request"} ({req.status})
@@ -286,7 +353,6 @@ export default function ProviderMapClient({ providers, requests = [], onEdit }: 
                             })}
                         </LayerGroup>
                     </LayersControl.Overlay>
-
                 </LayersControl>
             </MapContainer>
         </div>

@@ -641,8 +641,13 @@ export function ProvidersView() {
                     )}
 
                     {viewMode === "map" ? (
-                        <div className="h-full w-full p-4 min-h-[500px]">
-                            <ProviderMap providers={filteredList} requests={activeRequests} onEdit={handleEdit} />
+                        <div className="w-full h-[600px] p-4">
+                            <ProviderMap
+                                key={`map-${filteredList.length}-${filterType}`}
+                                providers={filteredList}
+                                requests={activeRequests}
+                                onEdit={handleEdit}
+                            />
                         </div>
                     ) : (
                         <>

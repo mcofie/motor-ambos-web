@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Wrench, LifeBuoy, Users, LogOut, LayoutDashboard, QrCode, Building2 } from "lucide-react";
+import { Wrench, LifeBuoy, Users, LogOut, LayoutDashboard, QrCode, Building2, ShieldCheck } from "lucide-react";
 import { cls } from "./ui/AdminUI";
 
 interface AdminSidebarProps {
-    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations";
+    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations" | "advisor";
     onLogout: () => void;
 }
 
@@ -74,6 +74,13 @@ export function AdminSidebar({ activeTab, onLogout }: AdminSidebarProps) {
                     icon={Building2}
                     label="Organizations"
                     badge="New"
+                />
+                <NavButton
+                    active={currentTab === "advisor"}
+                    href="/admin/advisor"
+                    icon={ShieldCheck}
+                    label="Smart Advisor"
+                    badge="AI"
                 />
             </nav>
 

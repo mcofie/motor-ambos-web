@@ -11,7 +11,11 @@ import {
     getMemberById,
     updateVehicle,
     bulkAssignNfcCards,
-    getVehicleMaintenanceStatus
+    getVehicleMaintenanceStatus,
+    listFuelLogs,
+    listDrivingTrips,
+    FuelLogRow,
+    DrivingTripRow
 } from "@/lib/supaFetch";
 import {
     ArrowLeft,
@@ -35,7 +39,10 @@ import {
     X,
     Smartphone,
     Search,
-    Shield
+    Shield,
+    Fuel,
+    Gauge,
+    Trophy
 } from "lucide-react";
 import { cls } from "../ui/AdminUI";
 import { toast } from "sonner";
@@ -53,8 +60,11 @@ export function VehicleDetailView({ vehicleId, initialVehicle, initialHistory }:
     const router = useRouter();
     const [vehicle, setVehicle] = useState<VehicleRow | null>(initialVehicle || null);
     const [history, setHistory] = useState<ServiceHistoryRow[]>(initialHistory || []);
+    const [fuelLogs, setFuelLogs] = useState<FuelLogRow[]>([]);
+    const [trips, setTrips] = useState<DrivingTripRow[]>([]);
     const [loading, setLoading] = useState(!initialVehicle);
     const [linking, setLinking] = useState(false);
+    const [activeTab, setActiveTab] = useState<"history" | "fuel" | "safety">("history");
 
     // NFC States
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -117,19 +127,28 @@ export function VehicleDetailView({ vehicleId, initialVehicle, initialHistory }:
     };
 
     const fetchData = useCallback(async () => {
-        if (initialVehicle) return;
         setLoading(true);
         try {
-            const v = await getVehicleById(vehicleId);
-            if (!v) {
-                toast.error("Vehicle not found");
-                router.back();
-                return;
+            // Fetch vehicle if not provided as initial prop
+            if (!vehicle) {
+                const v = await getVehicleById(vehicleId);
+                if (!v) {
+                    toast.error("Vehicle not found");
+                    router.back();
+                    return;
+                }
+                setVehicle(v);
             }
-            setVehicle(v);
 
-            const h = await listServiceHistory(vehicleId);
+            // Always fetch dynamic data (history, fuel logs, trips)
+            const [h, f, t] = await Promise.all([
+                listServiceHistory(vehicleId),
+                listFuelLogs(vehicleId),
+                listDrivingTrips(vehicleId)
+            ]);
             setHistory(h);
+            setFuelLogs(f);
+            setTrips(t);
         } catch (err) {
             console.error(err);
             toast.error("Failed to load vehicle details");
@@ -370,148 +389,265 @@ export function VehicleDetailView({ vehicleId, initialVehicle, initialHistory }:
                     </section>
                 </div>
 
-                {/* Service History */}
                 <div className="lg:col-span-2 space-y-6">
                     <section className="flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            Service History ({history.length})
-                        </h3>
+                        <div className="flex items-center gap-6 border-b border-border w-full">
+                            <button
+                                onClick={() => setActiveTab("history")}
+                                className={cls(
+                                    "pb-4 text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all border-b-2",
+                                    activeTab === "history" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <Clock className="h-4 w-4" />
+                                Service History ({history.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("fuel")}
+                                className={cls(
+                                    "pb-4 text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all border-b-2",
+                                    activeTab === "fuel" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <Fuel className="h-4 w-4" />
+                                Fuel Logs ({fuelLogs.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("safety")}
+                                className={cls(
+                                    "pb-4 text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all border-b-2",
+                                    activeTab === "safety" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <Gauge className="h-4 w-4" />
+                                Safety Score
+                            </button>
+                        </div>
                     </section>
 
                     <div className="space-y-4">
-                        {history.length > 0 ? (
-                            history.map((h, i) => (
-                                <div key={h.id} className="relative pl-8 group">
-                                    {/* Timeline Line */}
-                                    {i !== history.length - 1 && (
-                                        <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-white/5" />
-                                    )}
+                        {activeTab === "history" && (
+                            history.length > 0 ? (
+                                history.map((h, i) => (
+                                    <div key={h.id} className="relative pl-8 group">
+                                        {/* Timeline Line */}
+                                        {i !== history.length - 1 && (
+                                            <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-white/5" />
+                                        )}
 
-                                    {/* Timeline Node */}
-                                    <div className="absolute left-0 top-1 h-8 w-8 rounded-full border-4 border-white dark:border-slate-950 bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
-                                        <Wrench className="h-3 w-3" />
-                                    </div>
+                                        {/* Timeline Node */}
+                                        <div className="absolute left-0 top-1 h-8 w-8 rounded-full border-4 border-white dark:border-slate-950 bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                                            <Wrench className="h-3 w-3" />
+                                        </div>
 
-                                    <div className="bg-card rounded-2xl border border-border p-5 hover:border-primary/20 transition-all">
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div>
-                                                <h4 className="font-bold text-slate-900 dark:text-white capitalize">{h.description}</h4>
-                                                <p className="text-xs text-slate-500 flex items-center gap-2 mt-1">
-                                                    <Calendar className="h-3 w-3" />
-                                                    {new Date(h.service_date).toLocaleDateString(undefined, { dateStyle: 'long' })}
-                                                </p>
+                                        <div className="bg-card rounded-2xl border border-border p-5 hover:border-primary/20 transition-all">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900 dark:text-white capitalize">{h.description}</h4>
+                                                    <p className="text-xs text-slate-500 flex items-center gap-2 mt-1">
+                                                        <Calendar className="h-3 w-3" />
+                                                        {new Date(h.service_date).toLocaleDateString(undefined, { dateStyle: 'long' })}
+                                                    </p>
+                                                </div>
+                                                {h.is_verified && (
+                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold border border-emerald-500/20">
+                                                        <CheckCircle2 className="h-3 w-3" />
+                                                        Verified
+                                                    </div>
+                                                )}
                                             </div>
-                                            {h.is_verified && (
-                                                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold border border-emerald-500/20">
-                                                    <CheckCircle2 className="h-3 w-3" />
-                                                    Verified
+
+                                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/50">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Provider</label>
+                                                    <p className="text-xs font-medium truncate">{h.provider_name || "Self Reported"}</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Location</label>
+                                                    <div className="flex items-center gap-1">
+                                                        <MapPin className="h-2.5 w-2.5 text-rose-500" />
+                                                        <p className="text-xs font-medium truncate">{h.location || "N/A"}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Mileage</label>
+                                                    <p className="text-xs font-medium">{(h.mileage || 0).toLocaleString()} km</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Cost</label>
+                                                    <p className="text-xs font-bold text-emerald-600">GHS {(h.cost || 0).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+
+                                            {h.document_url && (
+                                                <div className="mt-4 pt-4 border-t border-border/50">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">Service Verification Photo</label>
+                                                    <div className="flex items-start gap-4">
+                                                        <a
+                                                            href={h.document_url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="relative block w-40 aspect-[3/2] rounded-xl overflow-hidden border border-border hover:border-primary/50 transition-all group shadow-sm shrink-0"
+                                                        >
+                                                            <img
+                                                                src={h.document_url}
+                                                                alt="Service document"
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                            />
+                                                            <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-[2px]">
+                                                                <div className="flex flex-col items-center gap-2">
+                                                                    <ExternalLink className="h-5 w-5 text-white" />
+                                                                    <span className="text-[10px] font-bold text-white uppercase tracking-tighter">View Full Size</span>
+                                                                </div>
+                                                            </div>
+                                                        </a>
+                                                        {h.document_metadata && (
+                                                            <div className="py-2 space-y-2">
+                                                                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                                                                    <ImageIcon className="h-3 w-3" />
+                                                                    <span className="text-[10px] font-bold uppercase tracking-tight">Image Meta</span>
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    {h.document_metadata.name && (
+                                                                        <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4 pb-1 border-b border-border/30">
+                                                                            <span>File:</span>
+                                                                            <span className="font-mono font-bold text-foreground truncate max-w-[120px]">
+                                                                                {h.document_metadata.name}
+                                                                            </span>
+                                                                        </p>
+                                                                    )}
+                                                                    <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4">
+                                                                        <span>Size:</span>
+                                                                        <span className="font-mono font-bold text-foreground">
+                                                                            {h.document_metadata.size ? `${(h.document_metadata.size / 1024 / 1024).toFixed(2)} MB` : "N/A"}
+                                                                        </span>
+                                                                    </p>
+                                                                    <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4">
+                                                                        <span>Type:</span>
+                                                                        <span className="font-mono font-bold text-foreground uppercase">
+                                                                            {h.document_metadata.type?.split('/')[1] || "N/A"}
+                                                                        </span>
+                                                                    </p>
+                                                                    {h.document_metadata.lastModified && (
+                                                                        <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4">
+                                                                            <span>Uploaded:</span>
+                                                                            <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                                                                <Clock className="h-2 w-2" />
+                                                                                {new Date(h.document_metadata.lastModified).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                                                            </span>
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="py-20 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center bg-muted/20">
+                                    <AlertCircle className="h-10 w-10 text-slate-300 mb-3" />
+                                    <p className="text-sm text-slate-500 font-medium">No recorded service history</p>
+                                </div>
+                            )
+                        )}
 
-                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/50">
-                                            <div className="space-y-1">
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Provider</label>
-                                                <p className="text-xs font-medium truncate">{h.provider_name || "Self Reported"}</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Location</label>
-                                                <div className="flex items-center gap-1">
-                                                    <MapPin className="h-2.5 w-2.5 text-rose-500" />
-                                                    <p className="text-xs font-medium truncate">{h.location || "N/A"}</p>
+                        {activeTab === "fuel" && (
+                            fuelLogs.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {fuelLogs.map(log => (
+                                        <div key={log.id} className="bg-card rounded-2xl border border-border p-5 hover:border-primary/20 transition-all">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
+                                                        <Fuel className="h-5 w-5" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-sm tracking-tight">{log.station_name || "Unknown Station"}</h4>
+                                                        <p className="text-[10px] text-muted-foreground uppercase">{new Date(log.date || log.created_at).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-black text-emerald-600">GHS {log.total_cost?.toLocaleString()}</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-tighter">{log.liters} {log.fuel_type || "L"}</p>
                                                 </div>
                                             </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Mileage</label>
-                                                <p className="text-xs font-medium">{(h.mileage || 0).toLocaleString()} km</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Cost</label>
-                                                <p className="text-xs font-bold text-emerald-600">GHS {(h.cost || 0).toLocaleString()}</p>
+                                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Odometer</label>
+                                                    <p className="text-xs font-mono font-bold">{(log.odometer_reading || 0).toLocaleString()} km</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Unit Price</label>
+                                                    <p className="text-xs font-mono font-bold">GHS {log.price_per_liter?.toLocaleString()}</p>
+                                                </div>
                                             </div>
                                         </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-20 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center bg-muted/20">
+                                    <Fuel className="h-10 w-10 text-slate-300 mb-3" />
+                                    <p className="text-sm text-slate-500 font-medium">No fuel logs recorded</p>
+                                </div>
+                            )
+                        )}
 
-                                        {h.document_url && (
-                                            <div className="mt-4 pt-4 border-t border-border/50">
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">Service Verification Photo</label>
-                                                <div className="flex items-start gap-4">
-                                                    <a
-                                                        href={h.document_url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="relative block w-40 aspect-[3/2] rounded-xl overflow-hidden border border-border hover:border-primary/50 transition-all group shadow-sm shrink-0"
-                                                    >
-                                                        <img
-                                                            src={h.document_url}
-                                                            alt="Service document"
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                        />
-                                                        <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-[2px]">
-                                                            <div className="flex flex-col items-center gap-2">
-                                                                <ExternalLink className="h-5 w-5 text-white" />
-                                                                <span className="text-[10px] font-bold text-white uppercase tracking-tighter">View Full Size</span>
-                                                            </div>
-                                                        </div>
-                                                    </a>
-                                                    {h.document_metadata && (
-                                                        <div className="py-2 space-y-2">
-                                                            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                                                                <ImageIcon className="h-3 w-3" />
-                                                                <span className="text-[10px] font-bold uppercase tracking-tight">Image Meta</span>
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                {h.document_metadata.name && (
-                                                                    <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4 pb-1 border-b border-border/30">
-                                                                        <span>File:</span>
-                                                                        <span className="font-mono font-bold text-foreground truncate max-w-[120px]">
-                                                                            {h.document_metadata.name}
-                                                                        </span>
-                                                                    </p>
-                                                                )}
-                                                                <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4">
-                                                                    <span>Size:</span>
-                                                                    <span className="font-mono font-bold text-foreground">
-                                                                        {h.document_metadata.size ? `${(h.document_metadata.size / 1024 / 1024).toFixed(2)} MB` : "N/A"}
-                                                                    </span>
-                                                                </p>
-                                                                <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4">
-                                                                    <span>Type:</span>
-                                                                    <span className="font-mono font-bold text-foreground uppercase">
-                                                                        {h.document_metadata.type?.split('/')[1] || "N/A"}
-                                                                    </span>
-                                                                </p>
-                                                                {h.document_metadata.lastModified && (
-                                                                    <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4">
-                                                                        <span>Uploaded:</span>
-                                                                        <span className="font-mono font-bold text-foreground flex items-center gap-1">
-                                                                            <Clock className="h-2 w-2" />
-                                                                            {new Date(h.document_metadata.lastModified).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                                                                        </span>
-                                                                    </p>
-                                                                )}
-                                                                {h.document_metadata.dimensions && (
-                                                                    <p className="text-[10px] text-muted-foreground flex items-center justify-between gap-4">
-                                                                        <span>Dimensions:</span>
-                                                                        <span className="font-mono font-bold text-foreground">
-                                                                            {h.document_metadata.dimensions.width}x{h.document_metadata.dimensions.height}
-                                                                        </span>
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
+                        {activeTab === "safety" && (
+                            <div className="space-y-6">
+                                <div className="bg-gradient-to-br from-indigo-600 to-primary rounded-2xl p-8 text-white relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                                        <Trophy className="h-32 w-32 rotate-12" />
+                                    </div>
+                                    <div className="relative z-10">
+                                        <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-white/60 mb-2">Aggregate Driving Score</h4>
+                                        <div className="flex items-baseline gap-4">
+                                            <span className="text-6xl font-black tracking-tighter">
+                                                {trips.length > 0 ? Math.round(trips.reduce((acc, t) => acc + t.average_score, 0) / trips.length) : "--"}
+                                            </span>
+                                            <span className="text-xl font-bold text-white/40">/ 100</span>
+                                        </div>
+                                        <p className="mt-4 text-white/80 max-w-sm text-sm font-medium">
+                                            Based on the last {trips.length} trips recorded by the telematics unit.
+                                        </p>
                                     </div>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="py-20 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center bg-muted/20">
-                                <AlertCircle className="h-10 w-10 text-slate-300 mb-3" />
-                                <p className="text-sm text-slate-500 font-medium">No recorded service history</p>
-                                <p className="text-xs text-slate-400 mt-1">Updates from the provider app will appear here.</p>
+
+                                {trips.length > 0 ? (
+                                    <div className="space-y-3">
+                                        <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Recent Trips</h5>
+                                        {trips.map(trip => (
+                                            <div key={trip.id} className="bg-card rounded-xl border border-border p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={cls(
+                                                        "h-10 w-10 rounded-lg flex items-center justify-center font-bold",
+                                                        trip.average_score >= 80 ? "bg-emerald-500/10 text-emerald-600" :
+                                                            trip.average_score >= 60 ? "bg-amber-500/10 text-amber-600" : "bg-rose-500/10 text-rose-600"
+                                                    )}>
+                                                        {Math.round(trip.average_score)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold">{new Date(trip.start_time).toLocaleDateString()}</p>
+                                                        <p className="text-[10px] text-muted-foreground uppercase">{trip.distance_km.toFixed(1)} km traveled</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Duration</p>
+                                                    <p className="text-xs font-mono font-bold">
+                                                        {Math.round((new Date(trip.end_time).getTime() - new Date(trip.start_time).getTime()) / 60000)} mins
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-12 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center bg-muted/20">
+                                        <Gauge className="h-10 w-10 text-slate-300 mb-3" />
+                                        <p className="text-sm text-slate-500 font-medium">No driving trips recorded yet</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

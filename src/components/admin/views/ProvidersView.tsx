@@ -125,6 +125,11 @@ type ProviderFormState = {
     logo_url: string;
     backdrop_url: string;
     operating_hours: OperatingHours;
+    purchase_url: string;
+    purchase_action_label: string;
+    experience_years: number | null;
+    specializations: string | null;
+    certification_url: string | null;
 };
 
 export function ProvidersView() {
@@ -146,6 +151,11 @@ export function ProvidersView() {
         logo_url: "",
         backdrop_url: "",
         operating_hours: { ...DEFAULT_OPERATING_HOURS },
+        purchase_url: "",
+        purchase_action_label: "",
+        experience_years: null,
+        specializations: null,
+        certification_url: null,
     };
 
     const [form, setForm] = useState<ProviderFormState>({ ...emptyForm });
@@ -245,6 +255,11 @@ export function ProvidersView() {
                 lat: form.lat ? Number(form.lat) : null,
                 logo_url: form.logo_url || null,
                 backdrop_url: form.backdrop_url || null,
+                purchase_url: form.purchase_url || null,
+                purchase_action_label: form.purchase_action_label || null,
+                experience_years: form.experience_years,
+                specializations: form.specializations || null,
+                certification_url: form.certification_url || null,
                 operating_hours: form.operating_hours as unknown as Record<string, unknown>,
             };
 
@@ -298,6 +313,11 @@ export function ProvidersView() {
             logo_url: row.logo_url || "",
             backdrop_url: row.backdrop_url || "",
             operating_hours: (row.operating_hours as OperatingHours) || { ...DEFAULT_OPERATING_HOURS },
+            purchase_url: row.purchase_url || "",
+            purchase_action_label: row.purchase_action_label || "",
+            experience_years: row.experience_years ?? null,
+            specializations: row.specializations || "",
+            certification_url: row.certification_url || "",
         });
 
         const ids = await getProviderServiceIds(row.id);
@@ -1077,6 +1097,19 @@ export function ProvidersView() {
                                         value={form.lng || ""}
                                         onChange={(v) => setForm({ ...form, lng: v })}
                                         className="font-mono text-xs"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <TextField
+                                        label="Booking / Purchase URL"
+                                        value={form.purchase_url}
+                                        onChange={(v) => setForm({ ...form, purchase_url: v })}
+                                    />
+                                    <TextField
+                                        label="Action Label (e.g. Book Now)"
+                                        value={form.purchase_action_label}
+                                        onChange={(v) => setForm({ ...form, purchase_action_label: v })}
                                     />
                                 </div>
                             </section>

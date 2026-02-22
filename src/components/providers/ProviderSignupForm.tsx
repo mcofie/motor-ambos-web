@@ -34,6 +34,11 @@ export function ProviderSignupForm() {
         const about = formData.get("about") as string;
         const coverageRadiusKm = Number(formData.get("coverageRadiusKm"));
         const calloutFee = Number(formData.get("calloutFee"));
+        const experienceYears = formData.get("experienceYears") ? Number(formData.get("experienceYears")) : null;
+        const specializations = formData.get("specializations") as string;
+        const certificationUrl = formData.get("certificationUrl") as string;
+        const purchaseUrl = formData.get("purchaseUrl") as string;
+        const purchaseActionLabel = formData.get("purchaseActionLabel") as string;
         const lat = formData.get("lat") ? Number(formData.get("lat")) : null;
         const lng = formData.get("lng") ? Number(formData.get("lng")) : null;
 
@@ -64,6 +69,11 @@ export function ProviderSignupForm() {
                 owner_id: userId,
                 provider_type: formData.get("providerType") as string,
                 logo_url: logoUrl || null,
+                experience_years: experienceYears,
+                specializations: specializations || null,
+                certification_url: certificationUrl || null,
+                purchase_url: purchaseUrl || null,
+                purchase_action_label: purchaseActionLabel || null,
             });
 
             setSuccess(true);
@@ -299,12 +309,64 @@ export function ProviderSignupForm() {
                 </Button>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="experienceYears">Years of Experience</Label>
+                    <Input
+                        id="experienceYears"
+                        name="experienceYears"
+                        type="number"
+                        placeholder="e.g. 5"
+                        min={0}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="certificationUrl">Certification URL (Optional)</Label>
+                    <Input
+                        id="certificationUrl"
+                        name="certificationUrl"
+                        type="url"
+                        placeholder="Link to your certifications"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="specializations">Specializations (Optional)</Label>
+                <Input
+                    id="specializations"
+                    name="specializations"
+                    placeholder="e.g. Toyota, Hybrid Engines, Auto Painting"
+                />
+                <p className="text-[10px] text-muted-foreground">List key areas you excel in, separated by commas.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="purchaseUrl">Purchase/Booking URL (Optional)</Label>
+                    <Input
+                        id="purchaseUrl"
+                        name="purchaseUrl"
+                        type="url"
+                        placeholder="e.g. https://mybookingsite.com"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="purchaseActionLabel">Action Label (Optional)</Label>
+                    <Input
+                        id="purchaseActionLabel"
+                        name="purchaseActionLabel"
+                        placeholder="e.g. Book Now, Buy Parts"
+                    />
+                </div>
+            </div>
+
             <div className="space-y-2">
                 <Label htmlFor="about">About your business (Optional)</Label>
                 <Textarea
                     id="about"
                     name="about"
-                    placeholder="Tell us about your services, experience, and specialties..."
+                    placeholder="Tell us about your services, history, and why users should trust you..."
                     className="min-h-[100px]"
                 />
             </div>

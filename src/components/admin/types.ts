@@ -59,6 +59,11 @@ export interface ProviderRow {
     logo_url?: string | null;
     backdrop_url?: string | null;
     operating_hours?: OperatingHours | null;
+    experience_years?: number | null;
+    specializations?: string | null;
+    certification_url?: string | null;
+    purchase_url?: string | null;
+    purchase_action_label?: string | null;
 }
 
 export interface ServiceRow {
@@ -101,3 +106,40 @@ export interface ProviderStats {
     avgRating: number | null;
     revenue: number;
 }
+
+export type FuelLogRow = {
+    id: string;
+    vehicle_id: string;
+    user_id: string;
+    date: string;
+    liters: number;
+    price_per_liter: number;
+    total_cost: number;
+    odometer_reading: number | null;
+    station_name: string | null;
+    fuel_type: string | null;
+    is_full_tank?: boolean;
+    notes?: string | null;
+    created_at: string;
+};
+
+export type DrivingTripRow = {
+    id: string;
+    user_id: string;
+    vehicle_id: string;
+    start_time: string;
+    end_time: string;
+    distance_km: number;
+    average_score: number;
+};
+
+export type AiQueryRow = {
+    id: string;
+    member_id: string;
+    event_type: string;
+    event_data: {
+        query: string;
+        response: string;
+    };
+    created_at: string;
+};

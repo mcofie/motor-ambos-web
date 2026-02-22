@@ -13,7 +13,8 @@ import {
     Pie,
     Cell,
     LineChart,
-    Line
+    Line,
+    Legend
 } from "recharts";
 import {
     Users,
@@ -25,12 +26,13 @@ import {
     ArrowDownRight,
     Car,
     ShieldCheck,
-    Building2
+    Building2,
+    Sparkles
 } from "lucide-react";
-import { listProviders, listRequests, listAllVehicles, getVehicleMaintenanceStatus } from "@/lib/supaFetch";
+import { listProviders, listRequests, listAllVehicles, getVehicleMaintenanceStatus, listAiQueries } from "@/lib/supaFetch";
 import { getSupabaseBrowser } from "@/lib/supabaseBrowser";
 import { StatCard } from "../ui/AdminUI";
-import { ProviderRow, RequestRow } from "../types";
+import { ProviderRow, RequestRow, AiQueryRow } from "../types";
 
 const STATUS_COLORS: Record<string, string> = {
     "Completed": "#10b981", // emerald-500
@@ -43,19 +45,22 @@ export function OverviewView() {
     const [providers, setProviders] = useState<ProviderRow[]>([]);
     const [requests, setRequests] = useState<RequestRow[]>([]);
     const [vehicles, setVehicles] = useState<any[]>([]);
+    const [aiQueries, setAiQueries] = useState<AiQueryRow[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [pData, rData, vData] = await Promise.all([
+                const [pData, rData, vData, aiData] = await Promise.all([
                     listProviders(),
                     listRequests(),
-                    listAllVehicles()
+                    listAllVehicles(),
+                    listAiQueries(5)
                 ]);
                 setProviders(pData as ProviderRow[]);
                 setRequests(rData as RequestRow[]);
                 setVehicles(vData);
+                setAiQueries(aiData);
             } catch (error) {
                 console.error("Failed to load analytics data", error);
             } finally {
@@ -90,6 +95,11 @@ export function OverviewView() {
         { name: "Pending", value: requests.filter(r => r.status === "pending").length },
         { name: "Cancelled", value: requests.filter(r => r.status === "cancelled").length },
     ].filter(d => d.value > 0);
+
+    const serviceDistribution = requestStatusData.map(item => ({
+        ...item,
+        color: STATUS_COLORS[item.name] || "#cbd5e1"
+    }));
 
     // 3. Revenue Estimate (Mock calculation based on completed requests * avg fee)
     // In a real app, this would sum up actual transaction values.
@@ -259,24 +269,60 @@ export function OverviewView() {
             </div>
 
             {/* Quick Actions / Recent Activity Row */}
-            <div className="grid grid-cols-1 gap-6">
-                <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-8 text-white relative overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-8 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                    <div className="relative z-10 flex items-center justify-between">
+                    <div className="relative z-10 flex flex-col h-full justify-between">
                         <div>
                             <h3 className="text-2xl font-bold mb-2">System Health</h3>
-                            <p className="text-slate-300 max-w-xl">
+                            <p className="text-slate-300 max-w-xl text-sm leading-relaxed">
                                 All systems operational. Real-time fleet tracking is active.
-                                {activeProviders} providers are currently online and ready to accept requests.
+                                {activeProviders} providers are currently online across Greater Accra.
+                                Drive scores are being synchronized every 15 minutes.
                             </p>
                         </div>
-                        <div className="hidden sm:flex items-center gap-4">
+                        <div className="mt-8 flex items-center gap-4">
                             <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                                 <span className="text-sm font-medium">Database Connected</span>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div className="bg-card rounded-xl border border-border p-6 shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">AI Mechanic Insights</h3>
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary/10 px-2 py-0.5 rounded-full">
+                            <Sparkles className="h-3 w-3" /> Live
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 flex-1">
+                        {aiQueries.length > 0 ? aiQueries.map((q) => (
+                            <div key={q.id} className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-2 hover:bg-muted/50 transition-colors group">
+                                <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase">
+                                    <span>User Query</span>
+                                    <span>{new Date(q.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <p className="text-sm font-medium text-foreground line-clamp-2 italic">
+                                    "{q.event_data.query}"
+                                </p>
+                                <div className="pt-1 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
+                                    <span className="text-[9px] font-bold text-primary uppercase tracking-tight">Advised to visit checked partner</span>
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border rounded-xl">
+                                <Sparkles className="h-8 w-8 text-muted-foreground/20 mb-3" />
+                                <p className="text-xs font-medium text-muted-foreground">No recent AI interactions logged.</p>
+                            </div>
+                        )}
+                    </div>
+                    <button className="mt-4 w-full py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border-t border-border pt-4">
+                        View All AI Conversations →
+                    </button>
                 </div>
             </div>
         </div>

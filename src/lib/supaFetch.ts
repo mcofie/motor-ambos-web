@@ -92,6 +92,43 @@ type ProviderRow = {
     operating_hours?: Record<string, unknown> | null;
 };
 
+export type FuelLogRow = {
+    id: string;
+    vehicle_id: string;
+    user_id: string;
+    date: string;
+    liters: number;
+    price_per_liter: number;
+    total_cost: number;
+    odometer_reading: number | null;
+    station_name: string | null;
+    fuel_type: string | null;
+    is_full_tank?: boolean;
+    notes?: string | null;
+    created_at: string;
+};
+
+export type DrivingTripRow = {
+    id: string;
+    user_id: string;
+    vehicle_id: string;
+    start_time: string;
+    end_time: string;
+    distance_km: number;
+    average_score: number;
+};
+
+export type AiQueryRow = {
+    id: string;
+    member_id: string;
+    event_type: string;
+    event_data: {
+        query: string;
+        response: string;
+    };
+    created_at: string;
+};
+
 type ServiceRow = {
     id: string;
     name?: string;
@@ -640,6 +677,11 @@ export async function listProviders(q?: string, signal?: AbortSignal): Promise<P
             "operating_hours",
             "created_at",
             "is_verified",
+            "experience_years",
+            "specializations",
+            "certification_url",
+            "purchase_url",
+            "purchase_action_label",
         ].join(",")
     );
     params.set("order", "created_at.desc");
@@ -680,6 +722,11 @@ export type InsertProviderParams = {
     logo_url?: string | null;
     backdrop_url?: string | null;
     operating_hours?: Record<string, unknown> | null;
+    experience_years?: number | null;
+    specializations?: string | null;
+    certification_url?: string | null;
+    purchase_url?: string | null;
+    purchase_action_label?: string | null;
 };
 
 export async function insertProvider(
@@ -699,6 +746,11 @@ export async function insertProvider(
         logo_url: p.logo_url ?? null,
         backdrop_url: p.backdrop_url ?? null,
         operating_hours: p.operating_hours ?? null,
+        experience_years: p.experience_years ?? null,
+        specializations: p.specializations ?? null,
+        certification_url: p.certification_url ?? null,
+        purchase_url: p.purchase_url ?? null,
+        purchase_action_label: p.purchase_action_label ?? null,
     };
 
     if (typeof p.lat === "number" && typeof p.lng === "number") {
@@ -732,6 +784,11 @@ export type UpdateProviderPatch = Partial<{
     logo_url: string | null;
     backdrop_url: string | null;
     operating_hours: Record<string, unknown> | null;
+    experience_years: number | null;
+    specializations: string | null;
+    certification_url: string | null;
+    purchase_url: string | null;
+    purchase_action_label: string | null;
 }>;
 
 export async function updateProvider(
@@ -1801,4 +1858,41 @@ export async function fetchOrgServiceAnalytics(orgId: string): Promise<{ total_r
         total_requests: data.length,
         total_cost: data.reduce((sum: number, item: any) => sum + (item.cost || 0), 0)
     };
+}
+
+/**
+ * Lists fuel logs for a vehicle or user
+ */
+export async function listFuelLogs(vehicleId?: string, userId?: string): Promise<FuelLogRow[]> {
+    let query = `${URL}/rest/v1/fuel_logs?select=*&order=created_at.desc`;
+    if (vehicleId) query += `&vehicle_id=eq.${vehicleId}`;
+    if (userId) query += `&user_id=eq.${userId}`;
+
+    const res = await fetch(query, { headers: { ...authHeaders() } });
+    if (!res.ok) return [];
+    return res.json();
+}
+
+/**
+ * Lists driving trips for a vehicle or user
+ */
+export async function listDrivingTrips(vehicleId?: string, userId?: string): Promise<DrivingTripRow[]> {
+    let query = `${URL}/rest/v1/driving_trips?select=*&order=start_time.desc`;
+    if (vehicleId) query += `&vehicle_id=eq.${vehicleId}`;
+    if (userId) query += `&user_id=eq.${userId}`;
+
+    const res = await fetch(query, { headers: { ...authHeaders() } });
+    if (!res.ok) return [];
+    return res.json();
+}
+
+/**
+ * Lists AI Mechanic queries from telemetry_events
+ */
+export async function listAiQueries(limit: number = 20): Promise<AiQueryRow[]> {
+    const res = await fetch(`${URL}/rest/v1/telemetry_events?event_type=eq.ai_query&select=*&order=created_at.desc&limit=${limit}`, {
+        headers: { ...authHeaders() }
+    });
+    if (!res.ok) return [];
+    return res.json();
 }

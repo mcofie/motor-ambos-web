@@ -3,7 +3,7 @@ import { ThemeProvider } from "@/components/ThemeProvider"
 import { CSPostHogProvider } from "@/components/PostHogProvider"
 import PostHogPageView from "@/components/PostHogPageView"
 import { Suspense } from "react"
-import { Inter, Poppins, Anta } from 'next/font/google'
+import { Inter, Space_Grotesk, Space_Mono } from 'next/font/google'
 
 const inter = Inter({
     subsets: ['latin'],
@@ -11,17 +11,16 @@ const inter = Inter({
     display: 'swap',
 })
 
-const poppins = Poppins({
+const spaceGrotesk = Space_Grotesk({
     subsets: ['latin'],
-    weight: ['400', '600', '700'],
-    variable: '--font-poppins',
+    variable: '--font-space',
     display: 'swap',
 })
 
-const anta = Anta({
+const spaceMono = Space_Mono({
     subsets: ['latin'],
-    weight: '400',              // Anta only has 400
-    variable: '--font-anta',
+    weight: ['400', '700'],
+    variable: '--font-mono',
     display: 'swap',
 })
 
@@ -35,8 +34,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en" suppressHydrationWarning className={`${inter.variable} ${poppins.variable} ${anta.variable}`}>
-            {/* Use your default text font here (Inter) */}
+        <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable} ${spaceMono.variable}`}>
+            {/* Use Inter for body text */}
             <body className="font-sans antialiased">
                 <ThemeProvider
                     attribute="class"

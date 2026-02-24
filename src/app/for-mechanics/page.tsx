@@ -12,89 +12,82 @@ export default function ForMechanicsPage() {
 
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-                    <div className="absolute inset-0 -z-20 h-full w-full bg-background">
-                        {/* Background Pattern */}
-                        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.03]" />
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/10 rounded-full blur-[120px] opacity-30" />
+                <section className="relative pt-44 pb-32 overflow-hidden bg-background">
+                    <div className="absolute inset-0 -z-10">
+                        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.05]" />
                     </div>
 
-                    <div className="container mx-auto px-4 max-w-6xl text-center relative z-10">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            <Zap className="h-3.5 w-3.5" />
-                            <span>No-App Web Interface for Professionals</span>
-                        </div>
+                    <div className="container mx-auto px-6 max-w-7xl text-center relative z-10">
+                        <div className="ambos-label mb-8 mx-auto">PROFESSIONAL TERMINAL: NO APP REQUIRED</div>
 
-                        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
-                            Empower Your Shop <br />
-                            <span className="text-primary">Without an App.</span>
+                        <h1 className="ambos-heading text-5xl md:text-9xl mb-8 leading-[0.85] text-foreground">
+                            EMPOWER YOUR SHOP <br />
+                            <span className="text-primary italic">WITHOUT AN APP.</span>
                         </h1>
 
-                        <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-10">
-                            Join the Motor Ambos network. Just tap a customer's NFC Smart Card to log service,
-                            send professional digital invoices, and build a verified reputation—all from your browser.
+                        <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-16 uppercase tracking-tight">
+                            Join the Motor Ambos network. Just tap a customer&apos;s Smart Card to log service,
+                            dispatch digital invoices, and build a data-verified reputation — all via browser.
                         </p>
 
-                        <div className="flex justify-center gap-4">
-                            <Button asChild size="lg" className="h-12 px-8 text-base font-bold bg-primary text-primary-foreground hover:bg-primary/90">
+                        <div className="flex justify-center">
+                            <button className="ambos-btn-lime py-6 px-12 text-lg">
                                 <Link href="/providers/join">Register Your Garage</Link>
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </section>
 
                 {/* The Mechanic's Edge Section */}
-                <section className="py-24 bg-muted/30">
-                    <div className="container mx-auto px-4 max-w-6xl">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl font-bold mb-4">The Digital Tool for Growth</h2>
-                            <p className="text-muted-foreground max-w-2xl mx-auto">
-                                Focus on fixing cars, not chasing paperwork. Our platform provides the tools you need to look professional and stay organized.
-                            </p>
+                <section className="py-32 bg-muted/5 border-y border-border">
+                    <div className="container mx-auto px-6 max-w-7xl">
+                        <div className="mb-24 space-y-4">
+                            <div className="ambos-label">Digital Advantage</div>
+                            <h2 className="ambos-heading text-4xl md:text-7xl">The Professional Edge.</h2>
                         </div>
 
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-0 border border-border">
                             {/* Feature 1: Tap to Log */}
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-14 w-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
-                                    <Zap className="h-7 w-7" />
+                            <div className="bg-background border-r border-b lg:border-b-0 border-border p-10 hover:bg-muted/5 transition-colors">
+                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                    <Zap size={28} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Tap to Log</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    Simply tap the customer's <strong>NFC Card</strong> with your phone. A secure browser page opens instantly where you can log the service in seconds.
+                                <h3 className="ambos-heading text-2xl mb-6">Tap to Log</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
+                                    Simply tap the customer&apos;s <strong>NFC Card</strong>. Instant browser interface for high-speed service logging.
                                 </p>
                             </div>
 
                             {/* Feature 2: Digital Invoicing */}
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-14 w-14 bg-secondary/20 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
-                                    <Eye className="h-7 w-7" />
+                            <div className="bg-background border-r border-b lg:border-b-0 border-border p-10 hover:bg-muted/5 transition-colors">
+                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                    <Eye size={28} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Professional Invoices</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    Send detailed, professional <strong>Digital Invoices</strong> to your customers via SMS or WhatsApp. No more messy paper receipts.
+                                <h3 className="ambos-heading text-2xl mb-6">Technical Invoices</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
+                                    Send detailed, data-backed <strong>Digital Invoices</strong> via WhatsApp. Professional, paperless, permanent.
                                 </p>
                             </div>
 
                             {/* Feature 3: Verified Reputation */}
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-14 w-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
-                                    <TrendingUp className="h-7 w-7" />
+                            <div className="bg-background border-r border-b md:border-b-0 border-border p-10 hover:bg-muted/5 transition-colors">
+                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                    <TrendingUp size={28} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Verified History</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    Every job you log adds to the car's <strong>Permanent Data Log</strong>. Customers value your work more when it's officially recorded.
+                                <h3 className="ambos-heading text-2xl mb-6">Verified History</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
+                                    Every job entry adds to the car&apos;s <strong>Permanent Passport</strong>. Verified work commands premium value.
                                 </p>
                             </div>
 
                             {/* Feature 4: Genuine Parts */}
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-14 w-14 bg-secondary/20 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
-                                    <Clock className="h-7 w-7" />
+                            <div className="bg-background p-10 hover:bg-muted/5 transition-colors">
+                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                    <Clock size={28} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Auth Parts Sourcing</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    Access our <strong>Verified Parts Network</strong>. Order genuine spares directly to your shop, ensuring quality for every repair.
+                                <h3 className="ambos-heading text-2xl mb-6">Parts Terminal</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
+                                    One-tap access to our <strong>Verified Parts Network</strong>. Genuine spares dispatched directly to your shop.
                                 </p>
                             </div>
                         </div>
@@ -102,15 +95,17 @@ export default function ForMechanicsPage() {
                 </section>
 
                 {/* Call to Action */}
-                <section className="py-24">
-                    <div className="container mx-auto px-4 max-w-4xl text-center">
-                        <h2 className="text-3xl font-bold mb-6">Elevate Your Garage Today</h2>
-                        <p className="text-lg text-muted-foreground mb-8">
-                            Join the standard for car care in Ghana. No app installation required for you or your staff.
+                <section className="py-32 bg-onyx text-white">
+                    <div className="container mx-auto px-6 max-w-4xl text-center">
+                        <h2 className="ambos-heading text-4xl md:text-8xl mb-8 leading-[0.9]">Upgrade Your <br /> Garage Today</h2>
+                        <p className="text-xl mb-16 text-white/50 uppercase tracking-widest font-medium">
+                            Join the industrial standard for car care in Ghana. <br /> Total professional control, unlocked.
                         </p>
-                        <Button asChild size="lg" className="h-14 px-10 text-lg font-bold">
-                            <Link href="/providers/join">Claim Your Digital Shop</Link>
-                        </Button>
+                        <div className="flex justify-center">
+                            <button className="ambos-btn-lime py-8 px-16 text-xl">
+                                <Link href="/providers/join">Claim Your Digital ID</Link>
+                            </button>
+                        </div>
                     </div>
                 </section>
             </main>

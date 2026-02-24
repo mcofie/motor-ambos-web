@@ -1,38 +1,30 @@
-import type { Metadata } from "next";
-import { Navbar } from "@/components/landing/Navbar";
-import { HeroSection } from "@/components/landing/HeroSection";
-import { GloveboxExplorer } from "@/components/landing/GloveboxExplorer";
-import { ServicesSection } from "@/components/landing/ServicesSection";
-import { MembershipSection } from "@/components/landing/MembershipSection";
-import { WhyUsSection } from "@/components/landing/WhyUsSection";
-import { AppShowcaseSection } from "@/components/landing/AppShowcaseSection";
-import { CTAStrip } from "@/components/landing/CTAStrip";
-import { Footer } from "@/components/landing/Footer";
-
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
-import { FAQSection } from "@/components/landing/FAQSection";
-
-import { RoadsideSection } from "@/components/landing/RoadsideSection";
+import { PerkNavbar } from "@/components/perk-landing/PerkNavbar";
+import { PerkHero } from "@/components/perk-landing/PerkHero";
+import { PerkServices } from "@/components/perk-landing/PerkServices";
+import { PerkBusiness } from "@/components/perk-landing/PerkBusiness";
+import { PerkProviders } from "@/components/perk-landing/PerkProviders";
+import { PerkNFC } from "@/components/perk-landing/PerkNFC";
+import { PerkSOS } from "@/components/perk-landing/PerkSOS";
+import { PerkFAQ } from "@/components/perk-landing/PerkFAQ";
+import { PerkFinalCTA, PerkFooter } from "@/components/perk-landing/PerkFooter";
 
 export default function LandingPage() {
     return (
-        <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
-            <Navbar />
+        <div className="min-h-screen selection:bg-lime/30">
+            <PerkNavbar />
 
             <main className="flex flex-col">
-                <HeroSection />
-                <GloveboxExplorer />
-                <ServicesSection />
-                <RoadsideSection />
-                <MembershipSection />
-                <WhyUsSection />
-                <TestimonialsSection />
-                <AppShowcaseSection />
-                <FAQSection />
-                <CTAStrip />
+                <PerkHero />
+                <PerkServices />
+                <PerkBusiness />
+                <PerkProviders />
+                <PerkNFC />
+                <PerkSOS />
+                <PerkFAQ />
+                <PerkFinalCTA />
             </main>
 
-            <Footer />
+            <PerkFooter />
         </div>
     );
 }

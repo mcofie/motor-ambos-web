@@ -19,29 +19,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import {
-    Car,
-    ArrowRight,
-    ChevronLeft,
-    AlertTriangle,
-    BatteryCharging,
-    Disc,
-    Droplets,
-    Truck,
-    Phone,
-    MapPin,
-    Star,
-    Loader2,
-    BadgeCheck,
-    MessageCircle,
-    ChevronDown,
-    Navigation,
-    LocateFixed,
-    ShieldCheck,
-    Sparkles,
-    Store,
-    Zap,
-} from "lucide-react";
+import { LucideIcon, Car, ArrowRight, ChevronLeft, AlertTriangle, BatteryCharging, Disc, Droplets, Truck, Phone, MapPin, Star, Loader2, BadgeCheck, MessageCircle, ChevronDown, Navigation, LocateFixed, ShieldCheck, Sparkles, Store, Zap } from "lucide-react";
 
 // Mock or Real imports
 import { createRequest, findProvidersNear } from "@/lib/supaFetch";
@@ -124,7 +102,7 @@ export type Provider = {
 const HELP_OPTIONS: Array<{
     key: HelpForm["helpType"];
     label: string;
-    Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    Icon: LucideIcon;
     hint: string;
     colorClass: string;
 }> = [
@@ -472,86 +450,88 @@ export default function GetHelpWizardPage() {
     return (
         <main className="min-h-screen bg-background font-sans text-foreground">
             {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-30 w-full bg-background/80 backdrop-blur-xl border-b border-border">
-                <div className="mx-auto max-w-lg px-4 h-14 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+            <header className="sticky top-0 z-30 w-full bg-background/90 backdrop-blur-md border-b border-border">
+                <div className="mx-auto max-w-lg px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
                         {step !== "help" && (
                             <button
                                 onClick={onBack}
-                                className="mr-1 -ml-2 p-2 rounded-full hover:bg-muted text-muted-foreground"
+                                className="p-2 border border-border hover:bg-muted text-muted-foreground transition-colors"
                             >
-                                <ChevronLeft className="h-5 w-5" />
+                                <ChevronLeft size={20} />
                             </button>
                         )}
                         <div className="flex flex-col">
-                            <span className="text-sm font-bold tracking-tight text-foreground">
-                                Motor Ambos
+                            <span className="ambos-heading text-lg tracking-[0.2em] text-foreground">
+                                MOTOR_AMBOS
                             </span>
-                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
-                                {step === "help" && "Step 1: Request"}
-                                {step === "car" && "Step 2: Vehicle"}
-                                {step === "contact" && "Step 3: Location"}
-                                {step === "providers" && "Nearby Help"}
+                            <span className="mono-text text-[10px] text-primary font-bold">
+                                {step === "help" && "STRATEGY_NODE: SERVICE_SELECT"}
+                                {step === "car" && "STRATEGY_NODE: VEHICLE_INTEL"}
+                                {step === "contact" && "STRATEGY_NODE: DEPLOY_LOC"}
+                                {step === "providers" && "STRATEGY_NODE: ACTIVE_UNITS"}
                             </span>
                         </div>
                     </div>
-                    <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-foreground transition-all duration-500 ease-out"
-                            style={{ width: `${progressPercent}% ` }}
-                        />
-                    </div>
+                </div>
+                {/* Industrial Progress Bar */}
+                <div className="h-1 w-full bg-muted">
+                    <div
+                        className="h-full bg-primary transition-all duration-700 ease-out"
+                        style={{ width: `${progressPercent}%` }}
+                    />
                 </div>
             </header>
 
             {/* Main Content Area */}
-            <div className="mx-auto w-full max-w-lg px-4 py-6 pb-32">
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="mx-auto w-full max-w-lg px-6 py-12 pb-44">
+                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
                     {/* STEP 1: HELP TYPE */}
                     {step === "help" && (
-                        <div className="space-y-6">
-                            <div className="space-y-2 text-center mb-8">
-                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                    How can we help?
+                        <div className="space-y-12">
+                            <div className="space-y-4">
+                                <div className="ambos-label">PROTOCOL_SELECTION</div>
+                                <h1 className="ambos-heading text-4xl md:text-5xl text-foreground">
+                                    Define Service <br /> Intervention.
                                 </h1>
-                                <p className="text-sm text-muted-foreground">
-                                    Select the service you need right now.
-                                </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-4">
                                 {HELP_OPTIONS.map((opt) => (
                                     <div
                                         key={opt.key}
                                         onClick={() => setValue("helpType", opt.key, { shouldValidate: true })}
                                         className={cn(
-                                            "cursor-pointer relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 p-4 text-center transition-all duration-200 active:scale-95",
+                                            "cursor-pointer group relative flex flex-col items-start justify-between gap-8 border-2 p-6 transition-all duration-300",
                                             helpType === opt.key
-                                                ? "border-foreground bg-foreground text-background shadow-lg"
-                                                : "border-transparent bg-card text-muted-foreground shadow-sm hover:bg-muted/50 hover:border-border"
+                                                ? "border-primary bg-muted/5 shadow-[0_0_30px_-10px_rgba(217,255,0,0.3)]"
+                                                : "border-border bg-background hover:border-border/80"
                                         )}
                                     >
                                         <div
                                             className={cn(
-                                                "rounded-xl p-3 transition-colors",
+                                                "p-3 border border-border transition-colors",
                                                 helpType === opt.key
-                                                    ? "bg-background/10 text-background"
-                                                    : opt.colorClass
+                                                    ? "bg-primary text-black border-primary"
+                                                    : "text-muted-foreground group-hover:text-foreground"
                                             )}
                                         >
-                                            <opt.Icon className="h-6 w-6" />
+                                            <opt.Icon size={24} />
                                         </div>
-                                        <div className="space-y-0.5">
-                                            <span className="block text-sm font-bold">{opt.label}</span>
+                                        <div className="space-y-2 text-left">
+                                            <span className="ambos-heading text-xs block">{opt.label}</span>
                                             <span
                                                 className={cn(
-                                                    "block text-[10px] opacity-80",
-                                                    helpType === opt.key ? "text-background/70" : "text-muted-foreground"
+                                                    "block mono-text text-[9px] tracking-widest",
+                                                    helpType === opt.key ? "text-primary font-bold" : "text-muted-foreground"
                                                 )}
                                             >
                                                 {opt.hint}
                                             </span>
                                         </div>
+                                        {helpType === opt.key && (
+                                            <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-primary animate-pulse" />
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -560,34 +540,32 @@ export default function GetHelpWizardPage() {
 
                     {/* STEP 2: CAR DETAILS */}
                     {step === "car" && (
-                        <div className="space-y-6">
-                            <div className="space-y-2 mb-6">
-                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                    Vehicle Details
+                        <div className="space-y-12">
+                            <div className="space-y-4">
+                                <div className="ambos-label">VEHICLE_REGISTRATION</div>
+                                <h1 className="ambos-heading text-4xl text-foreground">
+                                    Asset <br /> Telemetry.
                                 </h1>
-                                <p className="text-sm text-muted-foreground">
-                                    Help the provider identify your car.
-                                </p>
                             </div>
 
-                            <div className="space-y-4 bg-card p-5 rounded-3xl shadow-sm border border-border">
-                                <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-6 ambos-card p-8 border-2 bg-background/50">
+                                <div className="grid grid-cols-2 gap-6">
                                     <ModernInput
-                                        label="Make"
-                                        placeholder="Toyota"
+                                        label="MANUFACTURER"
+                                        placeholder="TOYOTA"
                                         {...register("carMake")}
                                         error={errors.carMake?.message}
                                     />
                                     <ModernInput
-                                        label="Model"
-                                        placeholder="Corolla"
+                                        label="MODEL_TYPE"
+                                        placeholder="COROLLA"
                                         {...register("carModel")}
                                         error={errors.carModel?.message}
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-6">
                                     <ModernInput
-                                        label="Year"
+                                        label="FABRIC_YEAR"
                                         placeholder="2019"
                                         inputMode="numeric"
                                         maxLength={4}
@@ -595,16 +573,16 @@ export default function GetHelpWizardPage() {
                                         error={errors.carYear?.message}
                                     />
                                     <ModernInput
-                                        label="Color"
-                                        placeholder="Silver"
+                                        label="HUE_CODE"
+                                        placeholder="SILVER"
                                         {...register("carColor")}
                                         error={errors.carColor?.message}
                                     />
                                 </div>
                                 <ModernInput
-                                    label="License Plate"
+                                    label="IDENTIFICATION_PLATE"
                                     placeholder="GR-5522-23"
-                                    className="uppercase"
+                                    className="uppercase font-bold tracking-[0.2em]"
                                     {...register("plateNumber")}
                                     error={errors.plateNumber?.message}
                                 />
@@ -614,76 +592,68 @@ export default function GetHelpWizardPage() {
 
                     {/* STEP 3: CONTACT & LOCATION */}
                     {step === "contact" && (
-                        <div className="space-y-6">
-                            <div className="space-y-2 mb-6">
-                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                    Contact & Location
+                        <div className="space-y-12">
+                            <div className="space-y-4">
+                                <div className="ambos-label">GEOSPATIAL_SYNC</div>
+                                <h1 className="ambos-heading text-4xl text-foreground">
+                                    Deployment <br /> Coordinates.
                                 </h1>
-                                <p className="text-sm text-muted-foreground">
-                                    Where should we send help?
-                                </p>
                             </div>
 
-                            <div className="bg-card p-5 rounded-3xl shadow-sm border border-border space-y-4">
+                            <div className="ambos-card p-8 border-2 bg-background/50 space-y-8">
                                 <ModernInput
-                                    label="Your Name"
-                                    placeholder="John Doe"
+                                    label="OPERATOR_NAME"
+                                    placeholder="JOHN DOE"
                                     {...register("fullName")}
                                     error={errors.fullName?.message}
                                 />
                                 <ModernInput
-                                    label="Phone Number"
+                                    label="COMMS_LINK"
                                     placeholder="054 123 4567"
                                     inputMode="tel"
                                     {...register("phone")}
                                     error={errors.phone?.message}
-                                    icon={<Phone className="h-4 w-4 text-muted-foreground" />}
+                                    icon={<Phone size={18} className="text-muted-foreground" />}
                                 />
                             </div>
 
                             {/* Location Card */}
-                            <div className="relative overflow-hidden bg-card rounded-3xl p-5 shadow-sm border border-border text-card-foreground">
-                                <div
-                                    className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl"></div>
+                            <div className="ambos-card p-8 border-2 bg-onyx text-white relative overflow-hidden">
+                                <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 blur-[100px]" />
 
-                                <div className="flex items-center justify-between mb-4 relative z-10">
-                                    <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
-                                        <MapPin className="h-4 w-4 text-primary" />
-                                        <span>Current Location</span>
+                                <div className="flex items-center justify-between mb-8 relative z-10">
+                                    <div className="flex items-center gap-2 mono-text text-[10px] text-white/50">
+                                        <MapPin size={14} className="text-primary" />
+                                        <span>SIGNAL_LOCK: {loc ? 'TRUE' : 'FALSE'}</span>
                                     </div>
                                     {loc && (
-                                        <span
-                                            className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded-full border border-primary/20">
-                                            Acquired
+                                        <span className="ambos-label bg-primary text-black">
+                                            LATCHED
                                         </span>
                                     )}
                                 </div>
 
-                                <div className="space-y-4 relative z-10">
+                                <div className="space-y-6 relative z-10">
                                     {loc ? (
-                                        <div
-                                            className="p-3 bg-muted rounded-xl border border-border">
-                                            <div
-                                                className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Coordinates
+                                        <div className="p-6 bg-white/5 border border-white/10">
+                                            <div className="mono-text text-[10px] text-white/40 mb-3 font-bold tracking-widest">COORDINATE_DATA</div>
+                                            <div className="ambos-heading text-2xl tracking-tighter text-white">
+                                                {loc.lat.toFixed(6)}, {loc.lng.toFixed(6)}
                                             </div>
-                                            <div className="font-mono text-lg tracking-tight text-foreground">
-                                                {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
-                                            </div>
-                                            <div className="text-[10px] text-muted-foreground mt-1">
-                                                Accuracy: ±{Math.round(loc.accuracy || 0)}m
+                                            <div className="mono-text text-[9px] text-primary mt-2">
+                                                MARGIN_ERROR: ±{Math.round(loc.accuracy || 0)}M
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-muted-foreground leading-relaxed">
-                                            We need your location to match you with the nearest mechanics.
+                                        <div className="mono-text text-xs text-white/50 leading-relaxed uppercase tracking-wider">
+                                            Geospatial data required for precision matching with nearby mechanic nodes.
                                         </div>
                                     )}
 
                                     {locError && locError !== GEO_ERROR_BLOCKED && (
-                                        <div
-                                            className="flex items-start gap-2 text-red-600 dark:text-red-400 text-xs bg-red-50 dark:bg-red-950/30 p-2 rounded-lg border border-red-100 dark:border-red-900/50">
-                                            <AlertTriangle className="h-4 w-4 shrink-0" />
-                                            <span>{locError}</span>
+                                        <div className="flex items-start gap-4 text-red-400 bg-red-400/10 p-4 border border-red-400/20">
+                                            <AlertTriangle size={18} className="shrink-0" />
+                                            <span className="mono-text text-[10px] lowercase">{locError}</span>
                                         </div>
                                     )}
 
@@ -691,24 +661,24 @@ export default function GetHelpWizardPage() {
                                         <BlockedLocationHelp onRetry={requestLocation} />
                                     )}
 
-                                    <Button
+                                    <button
                                         type="button"
                                         onClick={requestLocation}
                                         disabled={locBusy}
-                                        className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-bold rounded-xl transition-all active:scale-95"
+                                        className="w-full py-6 ambos-btn-secondary border-white/20 text-white hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"
                                     >
                                         {locBusy ? (
-                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                            <Loader2 size={18} className="animate-spin" />
                                         ) : loc ? (
                                             <>
-                                                <LocateFixed className="mr-2 h-4 w-4" /> Update Location
+                                                <LocateFixed size={18} /> <span className="mono-text">SYNC_COORD_AGAIN</span>
                                             </>
                                         ) : (
                                             <>
-                                                <Navigation className="mr-2 h-4 w-4" /> Share Location
+                                                <Navigation size={18} /> <span className="mono-text">REQUEST_GPS_LATCH</span>
                                             </>
                                         )}
-                                    </Button>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -716,47 +686,43 @@ export default function GetHelpWizardPage() {
 
                     {/* STEP 4: PROVIDERS */}
                     {step === "providers" && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between px-1">
-                                <h2 className="text-lg font-bold text-foreground">Nearby Help</h2>
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <span>Within 15km</span>
-                                    <div className="h-1 w-1 rounded-full bg-muted-foreground"></div>
-                                    <span>{loc?.lat.toFixed(2)}, {loc?.lng.toFixed(2)}</span>
+                        <div className="space-y-12">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-2">
+                                    <div className="ambos-label">ACTIVE_NODES</div>
+                                    <h2 className="ambos-heading text-3xl">Local Grid.</h2>
+                                </div>
+                                <div className="text-right">
+                                    <div className="mono-text text-[10px] text-muted-foreground uppercase tracking-widest">Latency: 12ms</div>
+                                    <div className="mono-text text-[10px] text-primary">{loc?.lat.toFixed(4)}, {loc?.lng.toFixed(4)}</div>
                                 </div>
                             </div>
 
                             {loadingProviders && (
-                                <div
-                                    className="py-20 flex flex-col items-center justify-center text-muted-foreground space-y-4">
+                                <div className="py-32 flex flex-col items-center justify-center space-y-8">
                                     <div className="relative">
-                                        <div
-                                            className="h-12 w-12 rounded-full border-4 border-muted border-t-foreground animate-spin"></div>
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <Car className="h-4 w-4 text-foreground" />
-                                        </div>
+                                        <div className="h-20 w-20 border border-border animate-spin" />
+                                        <Car size={24} className="absolute inset-0 m-auto animate-pulse" />
                                     </div>
-                                    <p className="text-sm font-medium">Scanning network...</p>
+                                    <p className="ambos-heading text-sm text-primary animate-pulse">Scanning infrastructure...</p>
                                 </div>
                             )}
 
                             {!loadingProviders && (providers?.length ?? 0) === 0 && (
-                                <div
-                                    className="py-16 text-center px-6 bg-card rounded-3xl border border-border shadow-sm">
-                                    <div
-                                        className="mx-auto h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                                        <MapPin className="h-8 w-8 text-muted-foreground" />
+                                <div className="py-24 text-center px-8 border border-border bg-muted/5 space-y-8">
+                                    <div className="mx-auto h-20 w-20 border border-border flex items-center justify-center opacity-20">
+                                        <MapPin size={32} />
                                     </div>
-                                    <h3 className="text-lg font-bold text-foreground mb-2">No providers nearby</h3>
-                                    <p className="text-sm text-muted-foreground mb-6">We couldn&apos;t find any active partners
-                                        in your immediate area right now.</p>
-                                    <Button variant="outline" onClick={() => setStep("contact")}>Change
-                                        Location</Button>
+                                    <div className="space-y-4">
+                                        <h3 className="ambos-heading text-xl">Node Isolation</h3>
+                                        <p className="mono-text text-[10px] text-muted-foreground leading-relaxed uppercase tracking-widest">No active service units detected in the current geofence.</p>
+                                    </div>
+                                    <button onClick={() => setStep("contact")} className="ambos-btn-secondary w-full">REDEFINE_GEOLOC</button>
                                 </div>
                             )}
 
                             {!loadingProviders && providers && providers.length > 0 && loc && (
-                                <div className="space-y-4">
+                                <div className="space-y-8">
                                     {providers.map((p) => (
                                         <ProviderCard
                                             key={p.id}
@@ -773,30 +739,30 @@ export default function GetHelpWizardPage() {
             </div>
 
             {/* Bottom Floating Action Bar */}
-            <div
-                className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border z-40">
+            <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/95 backdrop-blur-md border-t border-border z-40">
                 <div className="mx-auto max-w-lg">
                     {step !== "providers" ? (
-                        <Button
+                        <button
                             type="button"
                             disabled={!canNext || isSubmitting || (step === "contact" && loadingProviders)}
                             onClick={onNext}
-                            className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-foreground/10 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100"
+                            className="ambos-btn-lime w-full h-16 text-sm flex items-center justify-center gap-4 disabled:opacity-20 disabled:grayscale transition-all"
                         >
                             {step === "contact" && (isSubmitting || loadingProviders) ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <Loader2 size={18} className="animate-spin" />
                             ) : (
-                                <span className="flex items-center gap-2">
-                                    {step === "help" && "Continue to Vehicle"}
-                                    {step === "car" && "Continue to Location"}
-                                    {step === "contact" && "Find Providers"}
-                                    <ArrowRight className="h-5 w-5" />
-                                </span>
+                                <>
+                                    <span className="ambos-heading tracking-[0.2em]">
+                                        {step === "help" && "INITIALIZE_VEHICLE"}
+                                        {step === "car" && "SYNC_LOCATION"}
+                                        {step === "contact" && "SCAN_NEARBY_NODES"}
+                                    </span>
+                                    <ArrowRight size={18} />
+                                </>
                             )}
-                        </Button>
+                        </button>
                     ) : (
-                        <Button
-                            variant="outline"
+                        <button
                             disabled={loadingProviders}
                             onClick={() =>
                                 refreshSearchAgain(
@@ -806,14 +772,14 @@ export default function GetHelpWizardPage() {
                                     loc
                                 )
                             }
-                            className="w-full h-12 rounded-xl border-border text-muted-foreground"
+                            className="ambos-btn-secondary w-full h-16 flex items-center justify-center gap-4 text-xs"
                         >
                             {loadingProviders ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 size={18} className="animate-spin" />
                             ) : (
-                                "Refresh Results"
+                                "RE-SCAN_NETWORK_INFRASTRUCTURE"
                             )}
-                        </Button>
+                        </button>
                     )}
                 </div>
             </div>
@@ -833,22 +799,22 @@ const ModernInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"inp
 }>(
     ({ label, error, icon, className, ...props }, ref) => {
         return (
-            <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground ml-1">{label}</label>
+            <div className="space-y-2">
+                <label className="mono-text text-[10px] font-bold text-muted-foreground ml-0">{label}</label>
                 <div className="relative group">
                     <input
                         ref={ref}
                         className={cn(
-                            "flex h-12 w-full rounded-xl border-2 border-input bg-background px-4 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:bg-card disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
-                            icon && "pl-10",
-                            error && "border-destructive bg-destructive/10 focus-visible:border-destructive",
+                            "flex h-14 w-full rounded-none border border-border bg-background px-4 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:border-primary focus-visible:bg-muted/5 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 uppercase tracking-wider",
+                            icon && "pl-12",
+                            error && "border-red-500 bg-red-500/5 focus-visible:border-red-500",
                             className
                         )}
                         {...props}
                     />
-                    {icon && <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">{icon}</div>}
+                    {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">{icon}</div>}
                 </div>
-                {error && <p className="text-[11px] font-medium text-red-500 ml-1">{error}</p>}
+                {error && <p className="mono-text text-[10px] font-bold text-red-500">{error}</p>}
             </div>
         )
     }
@@ -865,7 +831,7 @@ function ProviderCard({
     smsBody: string;
     onLockRequest?: (provider: Provider) => Promise<void> | void;
 }) {
-    const telHref = `tel:${provider.phone} `;
+    const telHref = `tel:${provider.phone}`;
     const mapsHref = `https://maps.google.com/?q=${provider.lat},${provider.lng}`;
 
     const [callDialogOpen, setCallDialogOpen] = useState(false);
@@ -904,7 +870,6 @@ function ProviderCard({
             if (!res.ok) throw new Error("Failed");
             setSmsDialogOpen(false);
         } catch (e: unknown) {
-            // e is unused here, which caused a warning. We can log it or just set standard msg.
             setSmsError("Failed to send SMS");
         } finally {
             setSendingSms(false);
@@ -913,87 +878,78 @@ function ProviderCard({
 
     return (
         <>
-            <div
-                className="bg-card rounded-3xl p-5 shadow-sm border border-border transition-all active:scale-[0.99]">
+            <div className="ambos-card p-6 border-2 border-border/50">
                 {/* Header with Backdrop */}
-                <div className="relative h-24 sm:h-32 -mx-5 -mt-5 mb-4 overflow-hidden rounded-t-3xl bg-muted">
+                <div className="relative h-32 -mx-6 -mt-6 mb-6 overflow-hidden bg-muted">
                     {provider.backdrop_url ? (
                         <img
                             src={provider.backdrop_url}
                             alt="Backdrop"
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover grayscale brightness-50"
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/10 to-transparent" />
+                        <div className="w-full h-full bg-onyx border-b border-border" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80" />
 
                     <a href={mapsHref} target="_blank"
-                        className="absolute top-3 right-3 p-2.5 bg-background/80 backdrop-blur-md rounded-xl text-muted-foreground hover:bg-primary/20 hover:text-primary transition-colors z-10">
-                        <MapPin className="h-5 w-5" />
+                        className="absolute top-4 right-4 p-3 bg-background border border-border rounded-none text-foreground hover:bg-primary hover:text-black transition-colors z-10">
+                        <MapPin size={20} />
                     </a>
                 </div>
 
                 {/* Info */}
-                <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-2xl bg-background border border-border shadow-sm overflow-hidden flex items-center justify-center shrink-0">
+                <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="h-14 w-14 bg-onyx border border-border flex items-center justify-center shrink-0">
                             {provider.logo_url ? (
-                                <img src={provider.logo_url} alt={provider.name} className="h-full w-full object-cover" />
+                                <img src={provider.logo_url} alt={provider.name} className="h-full w-full object-cover grayscale" />
                             ) : (
-                                <span className="text-muted-foreground text-lg font-bold">{provider.name.charAt(0)}</span>
+                                <span className="ambos-heading text-xl">{provider.name.charAt(0)}</span>
                             )}
                         </div>
                         <div>
-                            <h3 className="font-bold text-card-foreground text-base flex items-center gap-1">
+                            <h3 className="ambos-heading text-lg flex items-center gap-2">
                                 {provider.name}
-                                {provider.is_verified && <BadgeCheck className="h-4 w-4 text-primary fill-primary/10" />}
+                                {provider.is_verified && <BadgeCheck size={18} className="text-primary" />}
                             </h3>
-                            <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground mt-0.5">
-                                <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md">
-                                    <Star className="h-3 w-3 fill-current" /> {provider.rating?.toFixed(1) || "New"}
+                            <div className="flex items-center gap-4 mono-text text-[10px] text-muted-foreground mt-1">
+                                <span className="flex items-center gap-1.5 text-primary">
+                                    <Star size={12} className="fill-current" /> {provider.rating?.toFixed(1) || "NEW_NODE"}
                                 </span>
                                 <span>•</span>
-                                <span>{provider.distance_km.toFixed(1)} km away</span>
+                                <span>{provider.distance_km.toFixed(1)}KM_RADIUS</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Info Chips */}
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-2 mb-6">
                     {provider.min_callout_fee != null && (
-                        <span
-                            className="text-[10px] font-bold uppercase tracking-wide bg-muted text-muted-foreground px-2.5 py-1 rounded-lg border border-border">
-                            Fee: GH₵{provider.min_callout_fee}
-                        </span>
+                        <div className="ambos-label bg-muted text-muted-foreground">FEE: GH₵{provider.min_callout_fee}</div>
                     )}
                     {provider.coverage_radius_km != null && (
-                        <span
-                            className="text-[10px] font-bold uppercase tracking-wide bg-muted text-muted-foreground px-2.5 py-1 rounded-lg border border-border">
-                            Range: {provider.coverage_radius_km}km
-                        </span>
+                        <div className="ambos-label bg-muted text-muted-foreground">RANGE: {provider.coverage_radius_km}KM</div>
                     )}
                 </div>
 
                 {/* Services Toggle */}
                 {provider.services.length > 0 && (
-                    <div className="mb-5">
+                    <div className="mb-6">
                         <button onClick={() => setShowServices(!showServices)}
-                            className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-1">
-                            <span
-                                className="flex-1 text-left">{showServices ? 'Hide' : 'View'} {provider.services.length} services & pricing</span>
-                            <ChevronDown className={cn("h-4 w-4 transition-transform", showServices && "rotate-180")} />
+                            className="flex items-center gap-4 mono-text text-[10px] text-muted-foreground hover:text-primary transition-colors w-full border-t border-border pt-4">
+                            <span className="flex-1 text-left">{showServices ? 'HIDE' : 'EXPAND'} {provider.services.length} SERVICE_PROTOCOLS</span>
+                            <ChevronDown size={14} className={cn("transition-transform", showServices && "rotate-180")} />
                         </button>
 
                         {showServices && (
-                            <div className="mt-2 space-y-2 animate-in slide-in-from-top-2 duration-200">
+                            <div className="mt-4 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
                                 {provider.services.map(s => (
-                                    <div key={s.code}
-                                        className="flex justify-between items-center text-xs p-2.5 rounded-xl bg-muted/50 border border-border">
-                                        <span className="font-medium text-foreground">{s.name}</span>
-                                        <span className="font-bold text-foreground">
-                                            {s.price ? `GH₵${s.price}` : 'N/A'}
+                                    <div key={s.code} className="flex justify-between items-center p-3 border border-border bg-muted/5">
+                                        <span className="mono-text text-[10px] font-bold text-foreground">{s.name}</span>
+                                        <span className="mono-text text-[10px] text-primary">
+                                            {s.price ? `GH₵${s.price}` : 'VARIABLE_RATE'}
                                         </span>
                                     </div>
                                 ))}
@@ -1003,57 +959,50 @@ function ProviderCard({
                 )}
 
                 {/* Actions */}
-                <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCallDialogOpen(true)}
-                        className="h-12 rounded-xl border-2 border-border font-bold text-foreground text-sm hover:bg-muted transition-colors flex items-center justify-center gap-2">
-                        <Phone className="h-4 w-4" /> Call
+                <div className="grid grid-cols-2 gap-4">
+                    <button onClick={() => setCallDialogOpen(true)} className="ambos-btn-secondary py-3 text-xs w-full">
+                        <Phone size={14} className="inline mr-2" /> CALL
                     </button>
-                    <button onClick={() => setSmsDialogOpen(true)}
-                        className="h-12 rounded-xl bg-foreground font-bold text-background text-sm hover:bg-foreground/90 transition-colors shadow-md flex items-center justify-center gap-2">
-                        <MessageCircle className="h-4 w-4" /> Send Info
+                    <button onClick={() => setSmsDialogOpen(true)} className="ambos-btn-lime py-3 text-xs w-full">
+                        <MessageCircle size={14} className="inline mr-2" /> SEND_INFO
                     </button>
                 </div>
 
-                {/* Modals nested here for simplicity */}
+                {/* Modals with industrial styling */}
                 <Dialog open={callDialogOpen} onOpenChange={setCallDialogOpen}>
-                    <DialogContent className="rounded-3xl bg-card text-card-foreground border-border">
+                    <DialogContent className="rounded-none bg-background border-2 border-border max-w-sm">
                         <DialogHeader>
-                            <DialogTitle className="text-foreground">Call Provider?</DialogTitle>
-                            <DialogDescription className="text-muted-foreground">We will log this request so you can track it.</DialogDescription>
+                            <DialogTitle className="ambos-heading">INITIALIZE_CALL</DialogTitle>
+                            <DialogDescription className="mono-text text-[10px] uppercase pt-2">Authorize communication protocol with service provider.</DialogDescription>
                         </DialogHeader>
-                        {lockError && <p className="text-red-500 text-sm">{lockError}</p>}
-                        <div className="flex gap-2 mt-4">
-                            <Button variant="ghost" onClick={() => setCallDialogOpen(false)}
-                                className="flex-1 rounded-xl text-foreground hover:bg-muted">Cancel</Button>
-                            <Button onClick={handleCall} disabled={locking} className="flex-1 rounded-xl bg-foreground text-background hover:bg-foreground/90">
-                                {locking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Call Now"}
-                            </Button>
+                        {lockError && <p className="mono-text text-red-500 text-[10px]">{lockError}</p>}
+                        <div className="flex gap-4 mt-8">
+                            <button onClick={() => setCallDialogOpen(false)} className="ambos-btn-secondary flex-1 py-4 text-xs">CANCEL</button>
+                            <button onClick={handleCall} disabled={locking} className="ambos-btn-lime flex-1 py-4 text-xs font-bold">
+                                {locking ? <Loader2 size={16} className="animate-spin mx-auto" /> : "EXECUTE"}
+                            </button>
                         </div>
                     </DialogContent>
                 </Dialog>
 
                 <Dialog open={smsDialogOpen} onOpenChange={setSmsDialogOpen}>
-                    <DialogContent className="rounded-3xl bg-card text-card-foreground border-border">
+                    <DialogContent className="rounded-none bg-background border-2 border-border max-w-sm">
                         <DialogHeader>
-                            <DialogTitle className="text-foreground">Send Details via SMS</DialogTitle>
-                            <DialogDescription className="text-muted-foreground">Send your location and car info to {provider.name}.</DialogDescription>
+                            <DialogTitle className="ambos-heading">DATA_TRANSMISSION</DialogTitle>
+                            <DialogDescription className="mono-text text-[10px] uppercase pt-2">Transmit telemetry and location data to {provider.name}.</DialogDescription>
                         </DialogHeader>
-                        <div
-                            className="bg-muted p-3 rounded-xl text-xs text-muted-foreground font-mono border border-border my-2">
+                        <div className="bg-muted/10 p-4 border border-border mono-text text-[10px] text-muted-foreground my-4 break-words">
                             {smsBody}
                         </div>
-                        {smsError && <p className="text-red-500 text-sm">{smsError}</p>}
-                        <div className="flex gap-2 mt-4">
-                            <Button variant="ghost" onClick={() => setSmsDialogOpen(false)}
-                                className="flex-1 rounded-xl text-foreground hover:bg-muted">Cancel</Button>
-                            <Button onClick={handleSms} disabled={sendingSms}
-                                className="flex-1 rounded-xl bg-foreground text-background hover:bg-foreground/90">
-                                {sendingSms ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send SMS"}
-                            </Button>
+                        {smsError && <p className="mono-text text-red-500 text-[10px]">{smsError}</p>}
+                        <div className="flex gap-4 mt-4">
+                            <button onClick={() => setSmsDialogOpen(false)} className="ambos-btn-secondary flex-1 py-4 text-xs">ABORT</button>
+                            <button onClick={handleSms} disabled={sendingSms} className="ambos-btn-lime flex-1 py-4 text-xs font-bold">
+                                {sendingSms ? <Loader2 size={16} className="animate-spin mx-auto" /> : "TRANSMIT"}
+                            </button>
                         </div>
                     </DialogContent>
                 </Dialog>
-
             </div>
         </>
     )
@@ -1061,13 +1010,12 @@ function ProviderCard({
 
 function BlockedLocationHelp({ onRetry }: { onRetry: () => void }) {
     return (
-        <div className="mt-4 p-4 bg-amber-50 text-amber-900 rounded-2xl border border-amber-100 text-sm space-y-2">
-            <div className="font-bold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" /> Location Blocked
+        <div className="mt-4 p-6 bg-red-400/10 text-red-400 border border-red-400/20 space-y-4">
+            <div className="ambos-heading text-xs flex items-center gap-2">
+                <AlertTriangle size={16} /> Signal Blocked
             </div>
-            <p>Please enable location services in your browser settings to find nearby help.</p>
-            <Button size="sm" onClick={onRetry} variant="outline"
-                className="bg-white border-amber-200 text-amber-900 hover:bg-amber-100 w-full mt-2">Retry</Button>
+            <p className="mono-text text-[10px] uppercase leading-relaxed tracking-widest">Enable location services in browser settings to initialize grid synchronization.</p>
+            <button onClick={onRetry} className="ambos-btn-lime w-full text-[10px] py-3">RETRY_SYNC</button>
         </div>
     )
 }

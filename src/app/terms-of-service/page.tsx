@@ -6,51 +6,55 @@ export default function TermsOfServicePage() {
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
             <Navbar />
-            <main className="flex-grow pt-24">
-                <div className="container mx-auto px-4 py-8 max-w-4xl">
-                    <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
-                    <p className="text-sm text-gray-500 mb-8">Last updated: {new Date().toLocaleDateString()}</p>
+            <main className="flex-grow pt-44 pb-24 bg-background">
+                <div className="container mx-auto px-6 max-w-4xl">
+                    <div className="ambos-label mb-8">System Protocols</div>
+                    <h1 className="ambos-heading text-4xl md:text-7xl mb-6 text-foreground">Terms of Service</h1>
+                    <p className="mono-text text-[10px] text-muted-foreground uppercase tracking-widest mb-16">
+                        Last protocol update: {new Date().toLocaleDateString()}
+                    </p>
 
-                    <section className="mb-8">
-                        <h2 className="text-xl font-semibold mb-3">1. Agreement to Terms</h2>
-                        <p className="mb-4">
-                            These Terms of Service constitute a legally binding agreement made between you, whether personally or on behalf of an entity (&quot;you&quot;) and Motor Ambos (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), concerning your access to and use of our website and services. By accessing the site, you have read, understood, and agreed to be bound by all of these Terms of Service.
-                        </p>
-                    </section>
+                    <div className="space-y-16">
+                        <section className="border-l-2 border-primary pl-8">
+                            <h2 className="ambos-heading text-xl mb-6 text-foreground uppercase tracking-widest">1. Technical Agreement</h2>
+                            <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm">
+                                These Terms constitute a binding technical agreement between the user and Motor Ambos Infrastructure. Accessing our systems implies full compliance with these protocols.
+                            </p>
+                        </section>
 
-                    <section className="mb-8">
-                        <h2 className="text-xl font-semibold mb-3">2. Intellectual Property Rights</h2>
-                        <p className="mb-4">
-                            Unless otherwise indicated, the safe is our proprietary property and all source code, databases, functionality, software, website designs, audio, video, text, photographs, and graphics on the site (collectively, the &quot;Content&quot;) and the trademarks, service marks, and logos contained therein (the &quot;Marks&quot;) are owned or controlled by us or licensed to us, and are protected by copyright and trademark laws.
-                        </p>
-                    </section>
+                        <section className="border-l-2 border-border pl-8">
+                            <h2 className="ambos-heading text-xl mb-6 text-foreground uppercase tracking-widest">2. Intellectual Infrastructure</h2>
+                            <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm">
+                                All code, telemetry, interface designs, and technical data within the Ambos ecosystem are proprietary infrastructure, protected under international technical and copyright laws.
+                            </p>
+                        </section>
 
-                    <section className="mb-8">
-                        <h2 className="text-xl font-semibold mb-3">3. User Representations</h2>
-                        <p className="mb-4">
-                            By using the Site, you represent and warrant that:
-                        </p>
-                        <ul className="list-disc pl-6 mb-4 space-y-2">
-                            <li>All registration information you submit will be true, accurate, current, and complete.</li>
-                            <li>You will maintain the accuracy of such information and promptly update such registration information as necessary.</li>
-                            <li>You have the legal capacity and you agree to comply with these Terms of Service.</li>
-                            <li>You are not a minor in the jurisdiction in which you reside.</li>
-                        </ul>
-                    </section>
+                        <section className="border-l-2 border-border pl-8">
+                            <h2 className="ambos-heading text-xl mb-6 text-foreground uppercase tracking-widest">3. User Integrity</h2>
+                            <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm mb-6">
+                                Users maintaining data on the platform represent that:
+                            </p>
+                            <ul className="space-y-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                                <li className="flex gap-4"><span className="text-primary">[+]</span> <span>All telemetry and registration data is accurate.</span></li>
+                                <li className="flex gap-4"><span className="text-primary">[+]</span> <span>They possess full legal capacity to utilize the infrastructure.</span></li>
+                                <li className="flex gap-4"><span className="text-primary">[+]</span> <span>System access will be conducted within defined legal parameters.</span></li>
+                            </ul>
+                        </section>
 
-                    <section className="mb-8">
-                        <h2 className="text-xl font-semibold mb-3">4. Limitation of Liability</h2>
-                        <p className="mb-4">
-                            In no event will we or our directors, employees, or agents be liable to you or any third party for any direct, indirect, consequential, exemplary, incidental, special, or punitive damages, including lost profit, lost revenue, loss of data, or other damages arising from your use of the site, even if we have been advised of the possibility of such damages.
-                        </p>
-                    </section>
+                        <section className="border-l-2 border-border pl-8">
+                            <h2 className="ambos-heading text-xl mb-6 text-foreground uppercase tracking-widest">4. Liability Limitations</h2>
+                            <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm">
+                                Motor Ambos Infrastructure is not liable for indirect system failures, data corruption, or external hardware issues arising from user-side telemetry errors.
+                            </p>
+                        </section>
 
-                    <section className="mb-8">
-                        <h2 className="text-xl font-semibold mb-3">5. Contact Us</h2>
-                        <p className="mb-4">
-                            In order to resolve a complaint regarding the Site or to receive further information regarding use of the Site, please contact us at support@motorambos.com.
-                        </p>
-                    </section>
+                        <section className="border-l-2 border-border pl-8">
+                            <h2 className="ambos-heading text-xl mb-6 text-foreground uppercase tracking-widest">5. Technical Complaints</h2>
+                            <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm">
+                                Resolve system complaints via the primary support terminal: <span className="text-foreground font-bold">support@motorambos.com</span>
+                            </p>
+                        </section>
+                    </div>
                 </div>
             </main>
             <Footer />

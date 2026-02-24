@@ -221,11 +221,10 @@ export function MembershipPageClient() {
         return (
             <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
                 <div className="w-full max-w-sm space-y-6">
-                    <div className="space-y-2 text-center">
-                        <div className="mx-auto h-12 w-12 rounded-full bg-muted animate-pulse" />
-                        <div className="h-6 w-48 rounded-full bg-muted animate-pulse mx-auto" />
+                    <div className="space-y-4 text-center">
+                        <div className="mx-auto h-2 w-24 bg-primary animate-pulse" />
+                        <div className="h-12 w-64 bg-muted/20 animate-pulse mx-auto" />
                     </div>
-                    <div className="h-56 w-full rounded-3xl bg-muted animate-pulse" />
                 </div>
             </div>
         );
@@ -245,36 +244,35 @@ export function MembershipPageClient() {
     /* ───────── Error / Empty (Lookup View) ───────── */
     if (error || !m) {
         return (
-            <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+            <div className="min-h-screen bg-background text-foreground flex flex-col">
                 <Navbar />
-                <main className="flex-grow flex items-center justify-center p-4">
-                    <div className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
-                        <div
-                            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted border border-border">
+                <main className="flex-grow flex items-center justify-center p-6">
+                    <div className="mx-auto flex w-full max-w-md flex-col gap-12 text-center">
+                        <div className="mx-auto flex h-24 w-24 items-center justify-center bg-onyx border-2 border-primary/20">
                             {error ? (
-                                <AlertCircle className="h-8 w-8 text-muted-foreground" />
+                                <AlertCircle size={40} className="text-primary" />
                             ) : (
-                                <Search className="h-8 w-8 text-muted-foreground" />
+                                <Search size={40} className="text-primary" />
                             )}
                         </div>
 
-                        <div className="space-y-2">
-                            <h1 className="text-2xl font-bold tracking-tight">
-                                {error ? "Membership Not Found" : "Membership Lookup"}
+                        <div className="space-y-6">
+                            <h1 className="ambos-heading text-4xl">
+                                {error ? "SYSTEM_ERROR" : "MEMBER_LOOKUP"}
                             </h1>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="mono-text text-sm text-muted-foreground uppercase tracking-widest leading-relaxed">
                                 {error
                                     ? error
-                                    : "Please use the unique link provided in your welcome email to view your digital membership card."}
+                                    : "Authorization required. Please utilize the unique technical link provided in your welcome protocol."}
                             </p>
                         </div>
 
-                        <div className="pt-4">
+                        <div className="pt-8 border-t border-border">
                             <Link
-                                href="/club/lookup"
-                                className="text-sm text-primary hover:underline font-medium"
+                                href="/club"
+                                className="ambos-btn-secondary py-4 px-8 block text-center"
                             >
-                                &larr; Try Again
+                                &larr; Return to Terminal
                             </Link>
                         </div>
                     </div>
@@ -286,123 +284,88 @@ export function MembershipPageClient() {
 
     /* ───────── Main View (Digital Card) ───────── */
     return (
-        <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-foreground flex flex-col font-sans">
-            {/* Optional: Add Navbar here if you want navigation on the card page too, 
-                but usually digital cards are standalone. Keeping it clean as established. */}
+        <div className="min-h-screen bg-background text-foreground flex flex-col">
+            <Navbar />
 
-            <main className="flex-grow mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-10">
+            <main className="flex-grow mx-auto flex w-full max-w-lg flex-col gap-12 px-6 py-44">
 
                 {/* Header */}
-                <header className="space-y-2 text-center sm:text-left flex justify-between items-start">
-                    <div>
-                        <div
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm mb-2">
-                            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                            <span>Verified Membership</span>
-                        </div>
-                        <h1 className="text-3xl font-bold tracking-tight">Digital Card</h1>
+                <header className="flex justify-between items-end pb-8 border-b border-border">
+                    <div className="space-y-4">
+                        <div className="ambos-label">IDENTITY_PROTOCOL</div>
+                        <h1 className="ambos-heading text-5xl">Digital Card</h1>
                     </div>
-                    <Link href="/" className="text-xs font-medium text-muted-foreground hover:text-primary">
-                        Home
-                    </Link>
+                    <div className="mono-text text-[10px] text-muted-foreground uppercase tracking-widest">
+                        v2.0.48
+                    </div>
                 </header>
 
-                {/* ──── THE CARD (Dark Mode) ──── */}
-                <section className="group relative perspective-1000">
-                    <div
-                        className="relative mx-auto w-full max-w-md aspect-[1.58/1] rotate-1 transition-transform duration-500 hover:rotate-0">
-                        <div
-                            className="absolute inset-0 translate-y-4 rounded-2xl bg-primary/20 blur-3xl opacity-50" />
-                        <div
-                            className="absolute inset-0 rounded-2xl bg-gradient-to-br from-card to-background border border-border shadow-2xl flex flex-col justify-between p-6 text-foreground overflow-hidden">
-                            <div className="flex justify-between items-start z-10">
-                                <Car className="text-primary h-8 w-8" />
-                                <div className="text-right">
-                                    <span className="font-mono text-[10px] text-muted-foreground block tracking-widest">MEMBER ID</span>
-                                    <span
-                                        className="font-mono text-xs text-muted-foreground tracking-wider">{m.membershipNumber}</span>
-                                </div>
+                {/* ──── THE CARD (Industrial) ──── */}
+                <section className="space-y-8">
+                    <div className="ambos-card bg-onyx p-10 border-2 border-primary/20 aspect-[1.58/1] flex flex-col justify-between relative overflow-hidden">
+                        <div className="flex justify-between items-start z-10">
+                            <div className="h-12 w-12 bg-primary flex items-center justify-center text-black">
+                                <Car size={24} />
                             </div>
-                            <div className="z-10">
-                                <div className="text-lg font-bold tracking-wider mb-1 uppercase truncate">
-                                    {m.memberName}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className={`h-2 w-2 rounded-full ${statusColor} animate-pulse`} />
-                                    <span className="text-xs text-muted-foreground font-mono uppercase">{statusLabel}</span>
-                                </div>
+                            <div className="text-right">
+                                <span className="ambos-label text-[10px] block mb-2 px-2">MEMBER_ID</span>
+                                <span className="mono-text text-white text-sm tracking-[0.2em]">{m.membershipNumber}</span>
                             </div>
-                            <div className="flex justify-between items-end z-10">
-                                <span
-                                    className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded font-bold uppercase tracking-wide">
-                                    {m.tier} PLAN
-                                </span>
-                                <div className="h-8 w-12 bg-muted rounded-md opacity-50" />
+                        </div>
+
+                        <div className="z-10 space-y-4">
+                            <div className="ambos-heading text-3xl text-white uppercase truncate">
+                                {m.memberName}
                             </div>
-                            <div
-                                className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-2xl pointer-events-none" />
+                            <div className="flex items-center gap-4">
+                                <div className={`h-2 w-2 ${m.status === 'active' ? 'bg-primary' : 'bg-red-500'}`} />
+                                <span className="mono-text text-[10px] text-white/50 uppercase tracking-[0.3em] font-bold">STATUS: {statusLabel}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-end z-10">
+                            <div className="ambos-label bg-primary text-black px-4 py-1 text-xs">{m.tier} PROTOCOL</div>
+                            <div className="h-8 w-12 bg-white/5 border border-white/10" />
                         </div>
                     </div>
-                    <p className="mt-8 text-center text-xs text-muted-foreground">
-                        Show this card to your provider upon arrival.
+                    <p className="mono-text text-[10px] text-center text-muted-foreground uppercase tracking-widest">
+                        Present this terminal identity to provider for authentication.
                     </p>
                 </section>
 
-                {/* ──── DETAILS SECTION (Light Mode / Clean) ──── */}
-                <section className="grid gap-4">
+                {/* ──── DETAILS SECTION ──── */}
+                <section className="grid gap-8">
 
                     {/* Primary Vehicle Info */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-                            <div
-                                className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                                <CarFront className="h-4 w-4" />
-                            </div>
-                            <p className="text-xs text-muted-foreground font-medium">Vehicle</p>
-                            <p className="font-bold text-sm text-foreground truncate">{primaryVehicle.model}</p>
+                    <div className="grid grid-cols-2 gap-0 border border-border">
+                        <div className="bg-muted/5 p-8 border-r border-border">
+                            <div className="ambos-label mb-6 bg-foreground text-background inline-block">VEHICLE</div>
+                            <p className="ambos-heading text-xl text-foreground truncate">{primaryVehicle.model}</p>
+                            <p className="mono-text text-[10px] text-muted-foreground mt-2 uppercase">Telematics: Active</p>
                         </div>
-                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-                            <div
-                                className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                                <div className="font-mono text-[10px] font-bold">GH</div>
-                            </div>
-                            <p className="text-xs text-muted-foreground font-medium">License Plate</p>
-                            <p className="font-bold text-sm text-foreground font-mono">{primaryVehicle.plate}</p>
+                        <div className="bg-muted/5 p-8">
+                            <div className="ambos-label mb-6 bg-foreground text-background inline-block">PLATE</div>
+                            <p className="ambos-heading text-xl text-foreground font-mono">{primaryVehicle.plate}</p>
+                            <p className="mono-text text-[10px] text-muted-foreground mt-2 uppercase">Region: GHANA</p>
                         </div>
-                    </div>
-
-                    {/* Coverage & Status */}
-                    <div
-                        className="rounded-2xl border border-border bg-card p-4 shadow-sm flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div
-                                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                <Activity className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-bold text-foreground">Status: {statusLabel}</p>
-                                <p className="text-xs text-muted-foreground">Renew: {formatDate(m.renewalDate)}</p>
-                            </div>
-                        </div>
-                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                     </div>
 
                     {/* Benefits List */}
-                    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-                        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-foreground">
-                            <Wrench className="h-4 w-4 text-muted-foreground" />
-                            Included Benefits
+                    <div className="ambos-card p-8 bg-muted/5 border-2 border-border">
+                        <h3 className="ambos-heading text-lg mb-8 uppercase tracking-widest flex items-center gap-4">
+                            <Wrench size={18} className="text-primary" />
+                            Active Protocols
                         </h3>
-                        <ul className="space-y-3">
+                        <ul className="space-y-6">
                             {[
                                 "Priority roadside dispatch",
-                                "Battery jump-start & diagnostics",
-                                "Flat tyre change service",
-                                "Fuel delivery coordination",
-                                "Towing within coverage radius"
+                                "Battery diagnostics & terminal cleanup",
+                                "Rapid tyre replacement protocol",
+                                "Emergency fuel synthesis dispatch",
+                                "Heavy-duty towing infrastructure"
                             ].map((benefit, i) => (
-                                <li key={i} className="flex items-start gap-3 text-xs text-muted-foreground">
-                                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                                <li key={i} className="flex items-center gap-6 mono-text text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                    <div className="h-1 w-4 bg-primary shrink-0" />
                                     <span>{benefit}</span>
                                 </li>
                             ))}
@@ -410,17 +373,17 @@ export function MembershipPageClient() {
                     </div>
 
                     {/* Footer Meta */}
-                    <div
-                        className="flex items-center justify-between px-2 text-[10px] text-muted-foreground uppercase tracking-wider">
-                        <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>Accra, Ghana</span>
+                    <div className="flex flex-col gap-4 mono-text text-[10px] text-muted-foreground uppercase tracking-[0.3em] border-t border-border pt-8">
+                        <div className="flex items-center gap-4">
+                            <MapPin size={12} className="text-primary" />
+                            <span>Operational Node: Accra</span>
                         </div>
-                        <span>Member since {formatDate(m.memberSince)}</span>
+                        <div>Initialized: {formatDate(m.memberSince)}</div>
                     </div>
 
                 </section>
             </main>
+            <Footer />
         </div>
     );
 }

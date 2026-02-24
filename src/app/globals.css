@@ -8,186 +8,99 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    /*--font-sans: var(--font-geist-sans);*/
-    /*--font-mono: var(--font-geist-mono);*/
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
     --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-lime: #D9FF00;
+    --color-onyx: #0A0A0A;
+    --color-vector: #FFFFFF;
+
+    /* Font families for Tailwind v4 */
+    --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    --font-space: var(--font-space), sans-serif;
+    --font-mono: var(--font-mono), monospace;
 }
 
-/* ---------- Light theme (default) ---------- */
 :root {
-    --radius: 0.625rem;
-
-    /* Neutrals (High contrast) */
-    --background: #ffffff;
-    --foreground: #163300;
-    /* Forest Green */
-
-    --card: #ffffff;
-    --card-foreground: #163300;
-
-    --popover: #ffffff;
-    --popover-foreground: #163300;
-
-    /* === Brand accents === */
-    /* Primary: Forest Green for high contrast text/buttons */
-    --primary: #163300;
-    --primary-foreground: #ffffff;
-
-    /* Accent: Very light green for hover */
-    --accent: #f2f9ed;
-    --accent-foreground: #163300;
-
-    /* Secondary: Bright Green for accents */
-    --secondary: #9FE870;
-    --secondary-foreground: #163300;
-
-    /* Muted & UI neutrals */
-    --muted: #f2f9ed;
-    --muted-foreground: #5d7052;
-
-    --destructive: oklch(0.577 0.245 27.325);
-
-    --border: #e2e8e0;
-    --input: #e2e8e0;
-
-    /* Focus ring */
-    --ring: #163300;
-
-    /* Charts (keep your existing palette) */
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-
-    /* Sidebar tokens */
-    --sidebar: #f2f9ed;
-    --sidebar-foreground: #163300;
-    --sidebar-primary: #9FE870;
-    --sidebar-primary-foreground: #163300;
-    --sidebar-accent: #e2e8e0;
-    --sidebar-accent-foreground: #163300;
-    --sidebar-border: #e2e8e0;
-    --sidebar-ring: #9FE870;
+    --background: #FFFFFF;
+    --foreground: #0A0A0A;
+    --primary: #D9FF00;
+    --primary-foreground: #0A0A0A;
+    --secondary: #F5F5F5;
+    --secondary-foreground: #0A0A0A;
+    --muted: #F5F5F5;
+    --muted-foreground: #737373;
+    --accent: #D9FF00;
+    --accent-foreground: #0A0A0A;
+    --border: #E5E5E5;
+    --input: #E5E5E5;
+    --ring: #0A0A0A;
 }
 
-/* ---------- Dark theme ---------- */
 .dark {
-    /* Dark neutrals (Midnight Green Background) */
-    --background: #0D1F00;
-    --foreground: #ffffff;
-
-    --card: #122800;
-    /* Elevated deep forest green */
-    --card-foreground: #ffffff;
-
-    --popover: #0D1F00;
-    --popover-foreground: #ffffff;
-
-    /* Primary: Bright Green (#9FE870) */
-    --primary: #9FE870;
-    --primary-foreground: #163300;
-
-    /* Accent: Darker green */
-    --accent: #224505;
-    --accent-foreground: #ffffff;
-
-    /* Secondary: White for strong contrast */
-    --secondary: #ffffff;
-    --secondary-foreground: #163300;
-
-    /* Muted & UI */
-    --muted: #224505;
-    --muted-foreground: #a3c299;
-
-    --destructive: oklch(0.704 0.191 22.216);
-
-    --border: #2e5c0a;
-    --input: #2e5c0a;
-    --ring: #9FE870;
-
-    /* Charts (unchanged) */
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-
-    /* Sidebar */
-    --sidebar: #0D1F00;
-    --sidebar-foreground: #ffffff;
-    --sidebar-primary: #9FE870;
-    --sidebar-primary-foreground: #163300;
-    --sidebar-accent: #224505;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #2e5c0a;
-    --sidebar-ring: #9FE870;
+    --background: #0A0A0A;
+    --foreground: #FFFFFF;
+    --primary: #D9FF00;
+    --primary-foreground: #0A0A0A;
+    --secondary: #141414;
+    --secondary-foreground: #FFFFFF;
+    --muted: #141414;
+    --muted-foreground: #A3A3A3;
+    --accent: #D9FF00;
+    --accent-foreground: #0A0A0A;
+    --border: #1F1F1F;
+    --input: #1F1F1F;
+    --ring: #D9FF00;
 }
 
-/* ---------- Base layer ---------- */
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        @apply border-border;
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground antialiased font-sans;
     }
 }
 
 @layer utilities {
-    .glass-premium {
-        @apply bg-background/40 backdrop-blur-xl border border-white/10;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    .ambos-card {
+        @apply bg-white dark:bg-onyx border border-border rounded-none overflow-hidden transition-all duration-300;
     }
 
-    .service-pulse {
-        @apply relative flex h-2 w-2;
+    .ambos-btn-primary {
+        @apply bg-foreground text-background font-bold px-8 py-4 transition-all hover:opacity-90 active:scale-95 font-space uppercase tracking-widest text-sm rounded-none;
     }
 
-    .service-pulse::after {
-        content: '';
-        @apply absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75;
+    .ambos-btn-secondary {
+        @apply bg-transparent border border-foreground text-foreground font-bold px-8 py-4 transition-all hover:bg-foreground hover:text-background active:scale-95 font-space uppercase tracking-widest text-sm rounded-none;
     }
 
-    .service-pulse::before {
-        content: '';
-        @apply relative inline-flex h-2 w-2 rounded-full bg-primary;
+    .ambos-btn-lime {
+        @apply bg-lime text-black font-bold px-8 py-4 transition-all hover:brightness-95 active:scale-95 font-space uppercase tracking-widest text-sm rounded-none;
     }
 
-    .perspective-2000 {
-        perspective: 2000px;
+    .ambos-heading {
+        @apply font-space font-bold uppercase tracking-[0.15em] leading-[1.1];
+    }
+
+    .ambos-label {
+        @apply inline-flex items-center px-3 py-1 rounded-none bg-foreground text-background text-[10px] font-bold uppercase tracking-widest;
+    }
+
+    .mono-text {
+        @apply font-mono text-xs uppercase tracking-tight;
+    }
+
+    .passport-id-box {
+        @apply bg-secondary border border-border py-4 px-6 font-mono text-lg tracking-wider;
     }
 }

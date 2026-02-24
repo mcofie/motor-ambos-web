@@ -17,69 +17,74 @@ export default function RoadsideAssistancePage() {
 
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden bg-muted/20">
-                    <div className="container mx-auto px-4 max-w-6xl relative z-10">
+                <section className="relative pt-44 pb-32 overflow-hidden bg-background">
+                    <div className="absolute inset-0 -z-20 h-full w-full">
+                        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.05]" />
+                    </div>
+                    <div className="container mx-auto px-6 max-w-7xl relative z-10">
                         <div className="max-w-3xl">
-                            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
-                                Stuck on the Road? <br />
-                                <span className="text-primary">We've Got You.</span>
+                            <div className="ambos-label mb-8">NODE_EMERGENCY: ROADSIDE_DISPATCH_PROTOCOL</div>
+                            <h1 className="ambos-heading text-5xl md:text-9xl mb-8 leading-[0.85] text-foreground uppercase">
+                                STUCK ON ROAD? <br />
+                                <span className="text-primary italic">WE DEPLOY NOW.</span>
                             </h1>
-                            <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl">
-                                Fast, reliable roadside assistance exactly when you need it. No membership required for on-demand service.
+                            <p className="text-xl md:text-2xl text-muted-foreground mb-16 leading-relaxed max-w-2xl uppercase tracking-tight">
+                                High-velocity roadside intervention. Direct dispatch units on standby.
+                                No subscription required for immediate on-demand assistance.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <Button asChild size="lg" className="h-14 px-8 text-lg font-bold">
+                            <div className="flex flex-col sm:flex-row gap-6">
+                                <button className="ambos-btn-lime py-6 px-12 text-lg">
                                     <Link href="/help">Get Help Now</Link>
-                                </Button>
-                                <Button asChild variant="outline" size="lg" className="h-14 px-8 text-lg font-bold">
-                                    <Link href="/club">View Membership Plans</Link>
-                                </Button>
+                                </button>
+                                <button className="ambos-btn-secondary py-6 px-12 text-lg">
+                                    <Link href="/club">Membership Plans</Link>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* Services Grid */}
-                <section className="py-24">
-                    <div className="container mx-auto px-4 max-w-6xl">
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300">
-                                <div className="h-14 w-14 bg-red-500/10 rounded-2xl flex items-center justify-center mb-6 text-red-500">
-                                    <Truck className="h-7 w-7" />
+                <section className="py-32">
+                    <div className="container mx-auto px-6 max-w-7xl">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-0 border border-border">
+                            <div className="ambos-card p-12 border-r border-b lg:border-b-0 border-border bg-background hover:bg-muted/5 transition-colors">
+                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                    <Truck size={28} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Towing</h3>
-                                <p className="text-muted-foreground">
-                                    Professional towing for breakdowns or accidents. We'll get you to safety or your preferred mechanic.
+                                <h3 className="ambos-heading text-2xl mb-6">Towing</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest leading-relaxed">
+                                    Professional extraction for mechanical fail or collision. Transport to secure node or mechanic.
                                 </p>
                             </div>
 
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300">
-                                <div className="h-14 w-14 bg-orange-500/10 rounded-2xl flex items-center justify-center mb-6 text-orange-500">
-                                    <Fuel className="h-7 w-7" />
+                            <div className="ambos-card p-12 border-r border-b lg:border-b-0 border-border bg-background hover:bg-muted/5 transition-colors">
+                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                    <Fuel size={28} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Fuel Delivery</h3>
-                                <p className="text-muted-foreground">
-                                    Ran out of gas? We'll deliver enough fuel to get you to the nearest station.
+                                <h3 className="ambos-heading text-2xl mb-6">Refuel</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest leading-relaxed">
+                                    Energy exhaustion? We deliver fuel payload to reach nearest replenishment station.
                                 </p>
                             </div>
 
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300">
-                                <div className="h-14 w-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center mb-6 text-yellow-500">
-                                    <Battery className="h-7 w-7" />
+                            <div className="ambos-card p-12 border-r border-b lg:border-b-0 border-border bg-background hover:bg-muted/5 transition-colors">
+                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                    <Battery size={28} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Jump Start</h3>
-                                <p className="text-muted-foreground">
-                                    Dead battery? We'll give your car the boost it needs to get back on the road.
+                                <h3 className="ambos-heading text-2xl mb-6">Jump Start</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest leading-relaxed">
+                                    Power failure? High-volt boost to initialize your ICE/EV systems immediately.
                                 </p>
                             </div>
 
-                            <div className="bg-card border border-border p-8 rounded-2xl hover:shadow-lg transition-all duration-300">
-                                <div className="h-14 w-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-500">
-                                    <Key className="h-7 w-7" />
+                            <div className="ambos-card p-12 bg-background hover:bg-muted/5 transition-colors">
+                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                    <Key size={28} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">Lockout Service</h3>
-                                <p className="text-muted-foreground">
-                                    Locked your keys inside? Our professionals can open your car without damage.
+                                <h3 className="ambos-heading text-2xl mb-6">Lockout</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest leading-relaxed">
+                                    Integrity lock? Non-destructive entry protocols to regain vehicle access.
                                 </p>
                             </div>
                         </div>
@@ -87,17 +92,20 @@ export default function RoadsideAssistancePage() {
                 </section>
 
                 {/* CTA Section */}
-                <section className="py-24 bg-primary/5">
-                    <div className="container mx-auto px-4 max-w-4xl text-center">
-                        <h2 className="text-3xl font-bold mb-6">Don't Wait on the Side of the Road</h2>
-                        <p className="text-lg text-muted-foreground mb-8">
-                            Our average response time is under 30 minutes. Request help instantly.
+                <section className="py-32 bg-onyx text-white">
+                    <div className="container mx-auto px-6 max-w-4xl text-center">
+                        <div className="ambos-label mb-8 mx-auto border-white/20 text-white">INTERVENTION_STATS</div>
+                        <h2 className="ambos-heading text-4xl md:text-8xl mb-12 uppercase leading-[0.9]">Rapid Response <br /> Infrastructure</h2>
+                        <p className="text-xl mb-16 text-white/50 uppercase tracking-[0.2em] font-medium leading-relaxed max-w-2xl mx-auto">
+                            Average deployment timeline: <span className="text-white">&lt;28 minutes</span>. <br /> Request immediate tactical assistance.
                         </p>
-                        <Button asChild size="lg" className="h-14 px-10 text-lg font-bold">
-                            <Link href="/help">
-                                Request Assistance <ArrowRight className="ml-2 h-5 w-5" />
-                            </Link>
-                        </Button>
+                        <div className="flex justify-center">
+                            <button className="ambos-btn-lime py-8 px-16 text-xl">
+                                <Link href="/help">
+                                    Request Assistance
+                                </Link>
+                            </button>
+                        </div>
                     </div>
                 </section>
             </main>

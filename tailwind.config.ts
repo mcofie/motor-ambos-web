@@ -1,5 +1,5 @@
 // tailwind.config.ts
-import type {Config} from 'tailwindcss'
+import type { Config } from 'tailwindcss'
 
 const config: Config = {
     content: [
@@ -10,12 +10,10 @@ const config: Config = {
     theme: {
         extend: {
             fontFamily: {
-                // default body/UI
                 sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-                // section headings, CTA
-                heading: ['var(--font-poppins)', 'ui-sans-serif', 'system-ui'],
-                // hero/brand display
-                display: ['var(--font-anta)', 'ui-sans-serif', 'system-ui'],
+                space: ['var(--font-space)', 'sans-serif'],
+                mono: ['var(--font-mono)', 'monospace'],
+                heading: ['var(--font-space)', 'ui-sans-serif', 'system-ui'],
             },
         },
     },

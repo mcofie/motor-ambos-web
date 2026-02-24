@@ -17,39 +17,28 @@ export default function BusinessPage() {
 
             <main className="flex-grow">
                 {/* Hero Section: The Productivity Pitch */}
-                <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-[#0A0A0A] text-white">
-                    <div className="absolute inset-0 -z-20 h-full w-full">
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#9FE870]/20 via-transparent to-transparent opacity-60" />
-                        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.05]" />
+                <section className="relative pt-44 pb-32 overflow-hidden bg-onyx text-white">
+                    <div className="container mx-auto px-6 max-w-7xl relative z-10">
+                        <div className="max-w-4xl">
+                            <div className="ambos-label mb-8 bg-primary text-black inline-block">SYSTEM_LEVEL: CORPORATE INFRASTRUCTURE</div>
 
-                        {/* Decorative glow */}
-                        <div className="absolute top-1/4 -right-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] opacity-30" />
-                    </div>
-
-                    <div className="container mx-auto px-4 max-w-6xl relative z-10">
-                        <div className="max-w-4xl mx-auto text-center">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold text-[#9FE870] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <Zap className="h-4 w-4" />
-                                <span className="tracking-wide uppercase">Motor Ambos Corporate Care</span>
-                            </div>
-
-                            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-[1.1]">
+                            <h1 className="ambos-heading text-5xl md:text-9xl mb-8 leading-[0.85]">
                                 Productive teams <br />
-                                <span className="text-[#9FE870]">never get stuck.</span>
+                                <span className="text-primary italic">never get stuck.</span>
                             </h1>
 
-                            <p className="text-xl md:text-2xl text-white/70 mb-12 leading-relaxed max-w-3xl mx-auto font-medium">
-                                Your top talent shouldn't be stuck at the DVLA or by the roadside.
-                                Give them the <span className="text-white font-bold italic underline decoration-[#9FE870] decoration-2 underline-offset-4">Motor Ambos Black Card</span> — the ultimate corporate perk.
+                            <p className="text-xl md:text-2xl text-white/70 mb-16 leading-relaxed max-w-3xl font-medium uppercase tracking-tight">
+                                Your top talent shouldn&apos;t be stuck at the DVLA or by the roadside.
+                                Secure the <span className="text-primary underline decoration-primary decoration-4 underline-offset-8">Ambos Black Card</span> — the protocol for elite corporate mobility.
                             </p>
 
-                            <div className="flex flex-col sm:flex-row justify-center gap-5">
-                                <Button asChild size="lg" className="h-16 px-10 text-xl font-bold bg-[#9FE870] text-[#163300] hover:bg-[#9FE870]/90 border-none rounded-full shadow-2xl shadow-primary/20 flex items-center gap-2">
-                                    <Link href="/contact-sales">Partner with Us <ArrowRight className="h-5 w-5" /></Link>
-                                </Button>
-                                <Button asChild variant="outline" size="lg" className="h-16 px-10 text-xl font-bold border-white/20 text-white hover:bg-white/10 bg-transparent rounded-full font-medium">
-                                    <Link href="#offer">See the Offer</Link>
-                                </Button>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <button className="ambos-btn-lime py-6 px-12 text-lg">
+                                    <Link href="/contact-sales">Partner with Us</Link>
+                                </button>
+                                <button className="ambos-btn-secondary py-6 px-12 text-lg border-white text-white">
+                                    <Link href="#offer">View Documentation</Link>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -57,44 +46,45 @@ export default function BusinessPage() {
 
                 {/* The Offer Section */}
                 <section id="offer" className="py-32 bg-background">
-                    <div className="container mx-auto px-4 max-w-6xl">
-                        <div className="grid lg:grid-cols-2 gap-20 items-center">
-                            <div className="space-y-10">
-                                <div className="space-y-4">
-                                    <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
-                                        The Perk That Pays <br /> For Itself.
+                    <div className="container mx-auto px-6 max-w-7xl">
+                        <div className="grid lg:grid-cols-2 gap-24 items-start">
+                            <div className="space-y-16">
+                                <div className="space-y-6">
+                                    <div className="ambos-label">Value Proposition</div>
+                                    <h2 className="ambos-heading text-4xl md:text-7xl text-foreground leading-[0.9]">
+                                        Infrastructure <br /> That Pays.
                                     </h2>
-                                    <p className="text-xl text-muted-foreground leading-relaxed">
+                                    <p className="text-xl text-muted-foreground leading-relaxed uppercase tracking-wider">
                                         Companies in Accra lose thousands of productive hours to vehicle bureaucracy.
-                                        We solve it by turning car care into a seamless corporate benefit.
+                                        We solve it by turning car care into a technical corporate benefit.
                                     </p>
                                 </div>
 
-                                <div className="space-y-8">
+                                <div className="space-y-12">
                                     {[
                                         {
                                             title: "The B2B Pitch",
-                                            desc: "Offer 'Motor Ambos Corporate Care' to your employees. You pay the subscription; they pay for repairs. You get a productive workforce; they get elite safety.",
+                                            desc: "Deploy 'Ambos Corporate Care' to your organization. You secure the infrastructure; they execute the mission. Productive workforce; elite safety standards.",
                                             icon: Building2
                                         },
                                         {
                                             title: "Zero Bureaucracy",
-                                            desc: "We ensure their cars never expire (insurance/roadworthy). No more mid-day runs to the DVLA.",
+                                            desc: "We ensure their vehicles never expire. Fully automated Roadworthy and Insurance compliance protocol.",
                                             icon: ShieldCheck
                                         },
                                         {
                                             title: "24/7 Rapid Rescue",
-                                            desc: "If they break down, our units arrive in minutes. We get them home safely, so they can get back to what matters.",
+                                            desc: "Red-tier emergency response. Our units arrive in minutes to secure personnel and asset recovery.",
                                             icon: Zap
                                         }
                                     ].map((feature, i) => (
-                                        <div key={i} className="flex gap-6 group">
-                                            <div className="h-14 w-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shrink-0 transition-all group-hover:bg-primary group-hover:text-primary-foreground">
-                                                <feature.icon className="h-7 w-7" />
+                                        <div key={i} className="flex gap-8 group">
+                                            <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center shrink-0">
+                                                <feature.icon size={28} />
                                             </div>
-                                            <div>
-                                                <h4 className="font-bold text-xl mb-2">{feature.title}</h4>
-                                                <p className="text-base text-muted-foreground leading-relaxed italic border-l-2 border-primary/20 pl-4">{feature.desc}</p>
+                                            <div className="pt-2">
+                                                <h4 className="ambos-heading text-xl mb-3 text-foreground">{feature.title}</h4>
+                                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">{feature.desc}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -103,54 +93,36 @@ export default function BusinessPage() {
 
                             {/* Black Card Mockup */}
                             <div className="relative">
-                                <div className="relative aspect-[4/5] bg-neutral-900 rounded-[3rem] p-12 border-4 border-neutral-800 shadow-3xl flex flex-col justify-between group overflow-hidden">
-                                    {/* Content */}
-                                    <div className="relative z-10 space-y-6">
-                                        <div className="flex justify-between items-start">
-                                            <div className="h-14 w-14 bg-[#9FE870] rounded-2xl flex items-center justify-center">
-                                                <Zap className="h-8 w-8 text-[#163300]" />
+                                <div className="ambos-card bg-onyx p-12 aspect-[4/5] border-2 border-primary/20 flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex justify-between items-start mb-16">
+                                            <div className="h-16 w-16 bg-primary flex items-center justify-center">
+                                                <Zap size={32} className="text-black" />
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-[#9FE870] font-black tracking-widest text-[10px] uppercase mb-1">Elite Tier</div>
-                                                <div className="text-white text-xl font-bold tracking-tight">BLACK CARD</div>
+                                                <div className="ambos-label bg-primary text-black mb-2">ELITE_TIER</div>
+                                                <div className="ambos-heading text-3xl text-white">BLACK CARD</div>
                                             </div>
                                         </div>
 
-                                        <div className="pt-8 space-y-4">
-                                            <h3 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-                                                Verified Compliance
-                                                <span className="service-pulse" />
-                                            </h3>
-                                            <div className="flex gap-2">
-                                                <span className="px-3 py-1 bg-[#9FE870]/20 text-[#9FE870] rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#9FE870]/30">Insurance OK</span>
-                                                <span className="px-3 py-1 bg-[#9FE870]/20 text-[#9FE870] rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#9FE870]/30">Roadworthy OK</span>
+                                        <div className="space-y-8">
+                                            <h3 className="ambos-heading text-4xl text-white">Verified <br /> Compliance</h3>
+                                            <div className="flex flex-wrap gap-3">
+                                                <span className="ambos-label border border-primary text-primary">INSURANCE_OK</span>
+                                                <span className="ambos-label border border-primary text-primary">ROADWORTHY_OK</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Bottom Quote */}
-                                    <div className="relative z-10">
-                                        <div className="text-white/40 text-sm italic mb-4 leading-relaxed">
-                                            "Our top 50 managers haven't visited a repair shop in 12 months. Total peace of mind."
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-1 bg-[#9FE870] w-12 rounded-full" />
-                                            <span className="text-white font-bold text-xs tracking-widest uppercase">CEO, FinTech Accra</span>
+                                    <div className="border-t border-primary/20 pt-8 mt-12">
+                                        <p className="mono-text text-[10px] text-white/40 mb-4 tracking-widest">
+                                            "Our management fleet is now fully autonomous. Zero downtime."
+                                        </p>
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-[2px] bg-primary w-12" />
+                                            <span className="ambos-heading text-xs text-white">CEO, FINTECH ACCRA</span>
                                         </div>
                                     </div>
-
-                                    {/* Mesh Gradient Background */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#9FE870]/20 to-transparent opacity-40 group-hover:opacity-60 transition-opacity" />
-                                    <div className="absolute -bottom-24 -right-24 h-96 w-96 bg-primary/20 blur-[100px] rounded-full" />
-                                </div>
-
-                                {/* Floating Labels */}
-                                <div className="absolute -top-6 -right-6 bg-white border border-border shadow-xl p-4 rounded-2xl rotate-6 hidden sm:block">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <CheckCircle2 className="h-4 w-4 text-[#9FE870]" />
-                                        <span className="font-bold text-xs uppercase tracking-widest">HR Approved</span>
-                                    </div>
-                                    <div className="text-[10px] text-muted-foreground font-medium">100% Tax-Deductible Perk</div>
                                 </div>
                             </div>
                         </div>
@@ -158,37 +130,37 @@ export default function BusinessPage() {
                 </section>
 
                 {/* Core Pillars */}
-                <section className="py-24 border-t border-border">
-                    <div className="container mx-auto px-4 max-w-6xl">
-                        <div className="text-center mb-16 space-y-4">
-                            <h3 className="text-3xl font-extrabold tracking-tight">Strategic Corporate Infrastructure</h3>
-                            <p className="text-muted-foreground max-w-2xl mx-auto">More than just a perk—it's a management system for your entire organization's mobility.</p>
+                <section className="py-32 border-y border-border bg-muted/5">
+                    <div className="container mx-auto px-6 max-w-7xl">
+                        <div className="mb-24 space-y-4">
+                            <div className="ambos-label">Strategic Pillars</div>
+                            <h3 className="ambos-heading text-4xl md:text-7xl">Corporate Protocol</h3>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-8">
+                        <div className="grid md:grid-cols-3 gap-0 border border-border">
                             {[
                                 {
                                     title: "Centralized Compliance",
-                                    desc: "Automated Roadworthy and Insurance renewals for hundreds of vehicles with one single corporate account.",
+                                    desc: "Automated roadworthy and insurance renewals for enterprise-scale fleets through a single administrative terminal.",
                                     icon: Building2
                                 },
                                 {
                                     title: "Maintenance Auditing",
-                                    desc: "Every service record is cryptographically verified on the Digital Passport. No more overpaying for 'ghost' repairs.",
+                                    desc: "Every service is data-verified on the Digital Passport. Technical integrity across the entire organizational fleet.",
                                     icon: BarChart3
                                 },
                                 {
                                     title: "Employee Safety",
-                                    desc: "Passive safety feature for first responders to access critical medical data via the card if an accident occurs.",
+                                    desc: "High-priority first responder access to medical telemetry via the hardware interface in emergency scenarios.",
                                     icon: Users
                                 }
                             ].map((pillar, i) => (
-                                <div key={i} className="bg-card border border-border p-8 rounded-[2rem] hover:shadow-2xl hover:shadow-primary/5 transition-all group">
-                                    <div className="h-14 w-14 rounded-2xl bg-primary/5 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
-                                        <pillar.icon className="h-7 w-7" />
+                                <div key={i} className="bg-background border-b md:border-b-0 md:border-r last:border-r-0 border-border p-12 hover:bg-muted/5 transition-colors">
+                                    <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
+                                        <pillar.icon size={28} />
                                     </div>
-                                    <h4 className="text-xl font-bold mb-3">{pillar.title}</h4>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">{pillar.desc}</p>
+                                    <h4 className="ambos-heading text-2xl mb-6">{pillar.title}</h4>
+                                    <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">{pillar.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -196,19 +168,16 @@ export default function BusinessPage() {
                 </section>
 
                 {/* CTA Section */}
-                <section className="py-32 bg-[#0A0A0A] text-white overflow-hidden relative">
-                    {/* Background effects */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#9FE870]/5 blur-[120px] rounded-full pointer-events-none" />
-
-                    <div className="container mx-auto px-4 max-w-4xl text-center relative z-10">
-                        <h2 className="text-4xl md:text-6xl font-extrabold mb-8 tracking-tight">Convert CAC to <br /> <span className="text-[#9FE870]">Scale and Trust.</span></h2>
-                        <p className="text-xl mb-12 text-white/70 leading-relaxed font-medium">
-                            Join the banks, tech firms, and logistics leaders in Accra who have eliminated vehicle downtime.
+                <section className="py-32 bg-onyx text-white overflow-hidden relative">
+                    <div className="container mx-auto px-6 max-w-4xl text-center relative z-10">
+                        <h2 className="ambos-heading text-4xl md:text-8xl mb-8 leading-[0.9]">Convert Chaos into <br /> <span className="text-primary">System Trust.</span></h2>
+                        <p className="text-xl mb-16 text-white/50 uppercase tracking-widest font-medium">
+                            Join the banking and logistics leaders in Accra. <br /> Eliminate automotive failure as a risk factor.
                         </p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-5">
-                            <Button asChild size="lg" className="h-16 px-12 text-xl font-bold bg-white text-black hover:bg-white/90 rounded-full font-black">
-                                <Link href="/contact-sales">Request Corporate Demo</Link>
-                            </Button>
+                        <div className="flex justify-center">
+                            <button className="ambos-btn-lime py-8 px-16 text-xl">
+                                <Link href="/contact-sales">Request Corporate Terminal</Link>
+                            </button>
                         </div>
                     </div>
                 </section>

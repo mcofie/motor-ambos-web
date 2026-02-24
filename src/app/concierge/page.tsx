@@ -17,78 +17,67 @@ export default function ConciergePage() {
 
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-muted/20">
+                <section className="relative pt-44 pb-32 overflow-hidden bg-background">
                     <div className="absolute inset-0 -z-20 h-full w-full">
-                        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.03]" />
+                        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.05]" />
                     </div>
 
-                    <div className="container mx-auto px-4 max-w-6xl relative z-10">
+                    <div className="container mx-auto px-6 max-w-7xl relative z-10">
                         <div className="max-w-3xl">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <ShieldCheck className="h-3.5 w-3.5" />
-                                <span>Zero-Queue Compliance</span>
-                            </div>
+                            <div className="ambos-label mb-8">COMPLIANCE_CONCIERGE: ZERO_QUEUE_PROTOCOL</div>
 
-                            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
-                                We Queue <br />
-                                <span className="text-primary">So You Don't.</span>
+                            <h1 className="ambos-heading text-5xl md:text-9xl mb-8 leading-[0.85] text-foreground">
+                                WE QUEUE <br />
+                                <span className="text-primary italic">SO YOU DON&apos;T.</span>
                             </h1>
 
-                            <p className="text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl">
-                                Roadworthy, Insurance, and DVLA paperwork—the 'boring' parts of car ownership made effortless.
-                                We handle the logistics while you focus on driving.
+                            <p className="text-xl md:text-2xl text-muted-foreground mb-16 leading-relaxed max-w-2xl uppercase tracking-tight">
+                                Roadworthy, Insurance, and DVLA paperwork — the technical logistics of car ownership made effortless.
+                                We execute the bureaucracy while you maintain your velocity.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Button asChild size="lg" className="h-14 px-8 text-lg font-bold">
+                                <button className="ambos-btn-lime py-6 px-12 text-lg">
                                     <Link href="/club">Join Ambos Club</Link>
-                                </Button>
-                                <Button asChild variant="outline" size="lg" className="h-14 px-8 text-lg font-bold">
-                                    <Link href="#how-it-works">How it Works</Link>
-                                </Button>
+                                </button>
+                                <button className="ambos-btn-secondary py-6 px-12 text-lg border-foreground text-foreground hover:bg-foreground hover:text-background transition-colors">
+                                    <Link href="#how-it-works">View Documentation</Link>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* How it Works */}
-                <section id="how-it-works" className="py-24">
-                    <div className="container mx-auto px-4 max-w-6xl">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-4">The Concierge Experience</h2>
-                            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-                                Managing your car's compliance has never been this simple.
-                            </p>
+                <section id="how-it-works" className="py-32 bg-muted/5 border-y border-border">
+                    <div className="container mx-auto px-6 max-w-7xl">
+                        <div className="mb-24 space-y-4">
+                            <div className="ambos-label">Operational Workflow</div>
+                            <h2 className="ambos-heading text-4xl md:text-7xl">The Concierge Protocol.</h2>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-12">
-                            <div className="relative p-8 rounded-3xl bg-card border border-border">
-                                <div className="absolute -top-6 left-8 h-12 w-12 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20">
-                                    1
-                                </div>
-                                <h3 className="text-xl font-bold mt-4 mb-4">Auto-Monitoring</h3>
-                                <p className="text-muted-foreground text-sm leading-relaxed">
-                                    Your Digital Passport tracks your Roadworthy and Insurance expiry dates automatically.
+                        <div className="grid md:grid-cols-3 gap-0 border border-border">
+                            <div className="relative bg-background border-r border-b md:border-b-0 border-border p-12 hover:bg-muted/5 transition-colors">
+                                <div className="ambos-label bg-primary text-black mb-10 inline-block px-4">STEP_01</div>
+                                <h3 className="ambos-heading text-2xl mb-6">Auto-Monitoring</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
+                                    Your Digital Passport tracks Roadworthy and Insurance expiration via technical telemetry—automatically.
                                 </p>
                             </div>
 
-                            <div className="relative p-8 rounded-3xl bg-card border border-border">
-                                <div className="absolute -top-6 left-8 h-12 w-12 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20">
-                                    2
-                                </div>
-                                <h3 className="text-xl font-bold mt-4 mb-4">Smart Alerts</h3>
-                                <p className="text-muted-foreground text-sm leading-relaxed">
-                                    We notify you 30 days before expiry. With one click, you authorize us to handle the renewal.
+                            <div className="relative bg-background border-r border-b md:border-b-0 border-border p-12 hover:bg-muted/5 transition-colors">
+                                <div className="ambos-label bg-primary text-black mb-10 inline-block px-4">STEP_02</div>
+                                <h3 className="ambos-heading text-2xl mb-6">Smart Alerts</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
+                                    System notification dispatched 30 days prior to expiry. One-tap authorization to initialize the renewal sequence.
                                 </p>
                             </div>
 
-                            <div className="relative p-8 rounded-3xl bg-card border border-border">
-                                <div className="absolute -top-6 left-8 h-12 w-12 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20">
-                                    3
-                                </div>
-                                <h3 className="text-xl font-bold mt-4 mb-4">Digital Handover</h3>
-                                <p className="text-muted-foreground text-sm leading-relaxed">
-                                    We collect your documents, complete the process at the DVLA, and update your Digital Passport instantly.
+                            <div className="relative bg-background p-12 hover:bg-muted/5 transition-colors">
+                                <div className="ambos-label bg-primary text-black mb-10 inline-block px-4">STEP_03</div>
+                                <h3 className="ambos-heading text-2xl mb-6">Digital Handover</h3>
+                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
+                                    We collect physical assets, complete the DVLA processing, and update your Digital Passport instantly.
                                 </p>
                             </div>
                         </div>
@@ -96,54 +85,54 @@ export default function ConciergePage() {
                 </section>
 
                 {/* Features List */}
-                <section className="py-24 bg-muted/30">
-                    <div className="container mx-auto px-4 max-w-6xl">
-                        <div className="flex flex-col md:flex-row gap-16 items-center">
-                            <div className="md:w-1/2 space-y-8">
-                                <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
-                                    Total Compliance <br /> Peace of Mind.
+                <section className="py-32">
+                    <div className="container mx-auto px-6 max-w-7xl">
+                        <div className="flex flex-col md:flex-row gap-24 items-start">
+                            <div className="md:w-1/2 space-y-12">
+                                <div className="ambos-label">System Integrity</div>
+                                <h2 className="ambos-heading text-4xl md:text-7xl leading-[0.9]">
+                                    TOTAL COMPLIANCE. <br /> <span className="text-primary italic">ZERO DOWNTIME.</span>
                                 </h2>
-                                <p className="text-lg text-muted-foreground leading-relaxed">
-                                    Our concierge service is designed for the busy professional who values their time.
-                                    Eliminate the risk of fines and the stress of queues.
+                                <p className="text-xl text-muted-foreground leading-relaxed uppercase tracking-tight">
+                                    Designed for high-performance individuals who value their velocity.
+                                    Eliminate regulatory risk and the friction of human queues.
                                 </p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                     {[
                                         { title: "DVLA Renewals", icon: FileCheck },
-                                        { title: "Insurance Updates", icon: shieldCheck },
+                                        { title: "Insurance Updates", icon: ShieldCheck },
                                         { title: "Document Storage", icon: Clock },
                                         { title: "Fast Processing", icon: Zap }
                                     ].map((feature, i) => (
-                                        <div key={i} className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                <CheckCircle2 className="h-5 w-5" />
-                                            </div>
-                                            <span className="font-semibold">{feature.title}</span>
+                                        <div key={i} className="flex items-center gap-6 font-bold uppercase tracking-widest text-foreground text-sm">
+                                            <div className="h-2 w-8 bg-primary" />
+                                            {feature.title}
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            <div className="md:w-1/2 bg-card border border-border p-12 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-8">
-                                    <ShieldCheck className="h-16 w-16 text-primary/10 group-hover:text-primary/20 transition-colors" />
-                                </div>
-                                <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <div className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Next Renewal</div>
-                                        <div className="text-2xl font-bold text-primary">Roadworthy</div>
+                            <div className="md:w-1/2 w-full">
+                                <div className="ambos-card bg-onyx p-16 border-2 border-primary/20 relative overflow-hidden">
+                                    <div className="space-y-12">
+                                        <div className="space-y-4">
+                                            <div className="ambos-label bg-primary text-black mb-2 inline-block">SYSTEM_STATUS: PENDING_RENEWAL</div>
+                                            <div className="ambos-heading text-4xl text-white">ROADWORTHY</div>
+                                        </div>
+
+                                        <div className="flex gap-6 items-center">
+                                            <div className="mono-text text-white/50 bg-white/5 px-6 py-3 border border-white/10 text-xl tracking-tighter">OCT 24, 2026</div>
+                                            <div className="ambos-label border border-primary text-primary">UPCOMING</div>
+                                        </div>
+
+                                        <div className="pt-8 border-t border-white/10">
+                                            <button className="ambos-btn-lime w-full py-6 text-xl">
+                                                Authorize Concierge
+                                            </button>
+                                        </div>
+                                        <p className="mono-text text-[10px] text-white/30 text-center tracking-widest uppercase">
+                                            Standard processing time: 24-48 hours.
+                                        </p>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <div className="bg-muted px-4 py-2 rounded-xl text-sm font-mono tracking-tighter">OCT 24, 2026</div>
-                                        <div className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold self-center">UPCOMING</div>
-                                    </div>
-                                    <div className="pt-8">
-                                        <Button className="w-full h-12 font-bold bg-[#9ae600] text-black hover:bg-[#9ae600]/90 dark:bg-primary dark:text-primary-foreground">
-                                            Authorize Concierge
-                                        </Button>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground text-center">
-                                        Standard processing time: 24-48 hours.
-                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -151,17 +140,19 @@ export default function ConciergePage() {
                 </section>
 
                 {/* Final CTA */}
-                <section className="py-24">
-                    <div className="container mx-auto px-4 max-w-4xl text-center">
-                        <h2 className="text-3xl font-bold mb-6">Stop Waiting in Queues</h2>
-                        <p className="text-lg text-muted-foreground mb-8">
-                            Join the Motor Ambos Club and let us handle your vehicle's bureaucracy.
+                <section className="py-32 bg-onyx text-white">
+                    <div className="container mx-auto px-6 max-w-4xl text-center">
+                        <h2 className="ambos-heading text-4xl md:text-8xl mb-8 leading-[0.9]">Stop Waiting <br /> In Queues</h2>
+                        <p className="text-xl mb-16 text-white/50 uppercase tracking-widest font-medium">
+                            Join the Motor Ambos Club and automate your vehicle&apos;s bureaucracy. <br /> Maximum efficiency, unlocked.
                         </p>
-                        <Button asChild size="lg" className="h-14 px-10 text-lg font-bold">
-                            <Link href="/club">
-                                See Membership Plans <ArrowRight className="ml-2 h-4 w-4" />
-                            </Link>
-                        </Button>
+                        <div className="flex justify-center">
+                            <button className="ambos-btn-lime py-8 px-16 text-xl">
+                                <Link href="/club">
+                                    See Membership Plans
+                                </Link>
+                            </button>
+                        </div>
                     </div>
                 </section>
             </main>

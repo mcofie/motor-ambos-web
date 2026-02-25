@@ -1,100 +1,53 @@
 "use client";
 
 import React from "react";
-import { Check, ArrowRight, Table, BarChart3, Clock, LayoutDashboard } from "lucide-react";
+import { Check, ArrowRight, BarChart3, Database } from "lucide-react";
 
 export function PerkBusiness() {
-    const bullets = [
-        "Eliminate ghost receipts",
-        "Prevent fuel leakage",
-        "Automate compliance renewals",
-        "Increase resale confidence",
-        "Centralized rescue coordination"
-    ];
-
     return (
-        <section id="business" className="wise-section bg-white border-t border-border">
-            <div className="wise-container">
-                <div className="grid lg:grid-cols-2 gap-20 items-center">
-                    {/* Left: Content */}
-                    <div className="space-y-12">
-                        <div className="space-y-8">
-                            <h2 className="wise-heading-section !leading-none">
-                                Fleet control, <br /> simplified.
-                            </h2>
-                            <p className="wise-body max-w-xl">
-                                Total visibility for corporate cars, logistics, and businesses. Manage scale without the friction of manual records and unverified spending.
-                            </p>
-                        </div>
-
-                        <ul className="space-y-6">
-                            {bullets.map((bullet, i) => (
-                                <li key={i} className="flex items-center gap-6 group cursor-default">
-                                    <div className="w-6 h-6 rounded-full bg-[#9FE870] flex items-center justify-center transition-transform group-hover:scale-110">
-                                        <Check size={14} className="text-black" strokeWidth={5} />
-                                    </div>
-                                    <span className="font-bold text-[20px] tracking-tight transition-colors group-hover:text-black">{bullet}</span>
-                                </li>
-                            ))}
-                        </ul>
-
-                        <div className="pt-8">
-                            <button className="wise-btn-primary !px-12 group">
-                                Request demo
-                                <ArrowRight size={20} className="ml-3 group-hover:translate-x-1 transition-transform" />
-                            </button>
+        <section id="business" className="section-blue">
+            <div className="fintech-container">
+                <div className="grid lg:grid-cols-2 gap-24 items-center">
+                    {/* Left: Sketch Illustration */}
+                    <div className="relative">
+                        <div className="max-w-xl mx-auto transform lg:-translate-x-12">
+                            <img
+                                src="/Users/maxwellcofie/.gemini/antigravity/brain/c7261970-ed8d-49a1-9a3a-fccc5227265e/infographic_fleet_sketch_1772025611386.png"
+                                alt="Fleet Management Sketch"
+                                className="w-full h-auto opacity-90 rounded-3xl"
+                            />
                         </div>
                     </div>
 
-                    {/* Right: Dashboard Preview (Conceptual UI) */}
-                    <div className="relative wise-fade-in lg:ml-10">
-                        <div className="relative wise-card !p-0 overflow-hidden shadow-wise-lg border border-[#E2E8F0] bg-[#FFFFFF]">
-                            <div className="p-8 space-y-8">
-                                <div className="flex justify-between items-center border-b border-[#F0F2F5] pb-6">
-                                    <div className="flex items-center gap-4">
-                                        <LayoutDashboard size={20} className="text-[#5D7079]" />
-                                        <span className="text-[12px] font-black uppercase tracking-widest text-[#5D7079]">Live Fleet Audit</span>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <div className="w-3 h-3 rounded-full bg-[#9FE870]" />
-                                        <div className="w-3 h-3 rounded-full bg-[#F0F2F5]" />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {[
-                                        { id: "NODE_01", car: "Land Rover Defender", state: "Verified", cost: "GHS 2,400" },
-                                        { id: "NODE_12", car: "Toyota Hilux (Fleet)", state: "Auditing", cost: "GHS 1,120", active: true },
-                                        { id: "NODE_09", car: "Mercedes Sprinter", state: "Verified", cost: "GHS 4,890" }
-                                    ].map((fleet, idx) => (
-                                        <div key={idx} className={`p-6 rounded-[12px] border transition-all ${fleet.active ? 'bg-[#F0F2F5] border-transparent' : 'bg-white border-[#F0F2F5] hover:border-[#E2E8F0]'}`}>
-                                            <div className="flex justify-between items-center">
-                                                <div className="space-y-1">
-                                                    <div className="text-[10px] font-black text-[#5D7079] uppercase tracking-widest opacity-60">{fleet.id}</div>
-                                                    <div className="text-lg font-black tracking-tight">{fleet.car}</div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className={`text-sm font-black ${fleet.state === 'Auditing' ? 'text-amber-500' : 'text-[#9FE870]'}`}>{fleet.state}</div>
-                                                    <div className="text-[12px] font-bold text-[#5D7079]">{fleet.cost}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                    {/* Right: Text */}
+                    <div className="space-y-10">
+                        <div className="space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 text-[10px] font-black uppercase tracking-widest">
+                                Fleets
                             </div>
+                            <h2 className="section-heading">
+                                Fleet visibility <br /> at scale.
+                            </h2>
+                            <p className="body-copy">
+                                Strategic logistics infrastructure. Move from manual oversight to automated vehicle sovereignty. Reconcile fuel and eliminate ghost receipts instantly.
+                            </p>
+                        </div>
 
-                            <div className="bg-[#000000] p-8 flex justify-between items-center text-white">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                                        <BarChart3 size={24} className="text-[#9FE870]" />
+                        <div className="space-y-4">
+                            {["Ghost receipt elimination", "Fuel reconciliation", "Compliance automation", "Resale value protection"].map((item, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <div className="h-5 w-5 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-600">
+                                        <Check size={12} strokeWidth={3} />
                                     </div>
-                                    <div className="space-y-0.5">
-                                        <div className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-40">Monthly Efficiency</div>
-                                        <div className="text-3xl font-black text-[#9FE870]">+14.2%</div>
-                                    </div>
+                                    <span className="text-sm font-bold text-black/60">{item}</span>
                                 </div>
-                                <ArrowRight size={24} className="text-white/20" />
-                            </div>
+                            ))}
+                        </div>
+
+                        <div className="pt-4">
+                            <button className="btn-primary">
+                                Request fleet demo
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -102,3 +55,136 @@ export function PerkBusiness() {
         </section>
     );
 }
+
+export function PerkSOS() {
+    return (
+        <section id="sos" className="section-white">
+            <div className="fintech-container">
+                <div className="grid lg:grid-cols-2 gap-24 items-center">
+                    {/* Left: Text */}
+                    <div className="space-y-10 order-2 lg:order-1">
+                        <div className="space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 text-[10px] font-black uppercase tracking-widest">
+                                Roadside
+                            </div>
+                            <h2 className="section-heading">
+                                When it matters.
+                            </h2>
+                            <p className="body-copy">
+                                Instant roadside dispatch protocol for any vehicle failure. Use the app or USSD to get help immediately, verified by our network of rescue nodes.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="p-6 bg-[#F4F8FD] rounded-2xl space-y-3">
+                                <div className="text-[10px] font-black uppercase text-black/30">Average ETA</div>
+                                <div className="text-2xl font-black">14.2m</div>
+                            </div>
+                            <div className="p-6 bg-[#F4F8FD] rounded-2xl space-y-3">
+                                <div className="text-[10px] font-black uppercase text-black/30">Network Nodes</div>
+                                <div className="text-2xl font-black">1.2K+</div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4">
+                            <button className="flex items-center gap-2 text-red-600 font-black uppercase tracking-widest text-[12px] hover:translate-x-1 transition-transform">
+                                Request Rescue <ArrowRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Right: Product Card Visual */}
+                    <div className="order-1 lg:order-2">
+                        <div className="fintech-card fintech-shadow space-y-8 transform lg:scale-105">
+                            <div className="flex justify-between items-center">
+                                <div className="label-technical">SOS Terminal v4.0</div>
+                                <div className="h-3 w-3 rounded-full bg-red-600 animate-pulse" />
+                            </div>
+
+                            <div className="space-y-4">
+                                {["Flat Tyre", "Dead Battery", "Overheating", "Tow Request"].map((issue, i) => (
+                                    <div key={i} className="p-5 border-2 border-[#E8EDF2] rounded-2xl flex justify-between items-center hover:border-red-600/30 cursor-pointer transition-colors group">
+                                        <span className="font-black text-lg group-hover:text-red-600 transition-colors">{issue}</span>
+                                        <div className="h-6 w-6 rounded-full border-2 border-[#E8EDF2] group-hover:bg-red-600 group-hover:border-red-600 transition-all" />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button className="w-full py-5 bg-red-600 text-white rounded-2xl font-black text-lg shadow-lg shadow-red-600/20">
+                                Deploy Rescue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+export function PerkTrust() {
+    return (
+        <section id="trust" className="section-blue">
+            <div className="fintech-container">
+                <div className="grid lg:grid-cols-2 gap-24 items-center">
+                    {/* Left: Visual (Like "Fair, transparent fees") */}
+                    <div className="relative">
+                        <div className="fintech-card fintech-shadow p-10 space-y-8 bg-white max-w-md mx-auto">
+                            <div className="space-y-2 pb-6 border-b border-[#F0F2F5]">
+                                <h4 className="text-xl font-black">Fee Transparency</h4>
+                                <p className="text-sm text-black/40">Real-time settlement for service providers.</p>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-bold text-black/60">Subscription Fee</span>
+                                    <span className="text-sm font-black text-[#9FE870]">GHS 0.00</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-bold text-black/60">Service Commission</span>
+                                    <span className="text-sm font-black text-black">capped at 5%</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-bold text-black/60">Network Access</span>
+                                    <Check size={18} className="text-[#9FE870]" strokeWidth={3} />
+                                </div>
+                            </div>
+
+                            <button className="w-full bg-[#9FE870] text-black py-4 rounded-xl font-black text-sm uppercase tracking-widest">
+                                Join the Network
+                            </button>
+                        </div>
+                        {/* Background blobs for Cashramp feel */}
+                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-100 rounded-full blur-3xl -z-10" />
+                        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#9FE870]/10 rounded-full blur-3xl -z-10" />
+                    </div>
+
+                    {/* Right: Text */}
+                    <div className="space-y-10">
+                        <div className="space-y-6">
+                            <h2 className="section-heading">
+                                Built for scale <br /> across Africa.
+                            </h2>
+                            <p className="body-copy">
+                                We believe in the sovereignty of vehicle data. Our systems are built to ensure that every record is verified, tamper-proof, and accessible. No hidden fees or locked ecosystems.
+                            </p>
+                        </div>
+                        <ul className="space-y-4">
+                            {[
+                                "No hidden service records",
+                                "Verified NFC logs",
+                                "Secure data storage",
+                                "Direct settlement for workshops"
+                            ].map((text, i) => (
+                                <li key={i} className="flex items-center gap-3">
+                                    <Check size={16} className="text-[#9FE870]" strokeWidth={3} />
+                                    <span className="text-sm font-bold text-black/60">{text}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+

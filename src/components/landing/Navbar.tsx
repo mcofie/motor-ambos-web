@@ -2,111 +2,103 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger
-} from "@/components/ui/sheet";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { Car, Menu } from "lucide-react";
+import { Menu, X, ArrowUpRight } from "lucide-react";
 
 export function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
-        const handleScroll = () => setIsScrolled(window.scrollY > 20);
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
     const navLinks = [
-        { href: "/#services", label: "Services" },
-        { href: "/business", label: "Business" },
-        { href: "/roadside-assistance", label: "Rescue" },
-        { href: "/about-us", label: "About" },
+        { name: "Personal", href: "#drivers" },
+        { name: "Business", href: "#fleets" },
     ];
 
     return (
-        <header
-            className={`fixed top-0 z-50 w-full transition-all duration-700 ${isScrolled
-                ? "glass-nav py-4 shadow-2xl"
-                : "bg-transparent py-8 border-transparent"
-                }`}>
-            <div className="mx-auto flex max-w-[1600px] items-center justify-between px-8">
-                <Link href="/" className="flex items-center gap-2 group">
-                    <span className="ambos-heading text-xl md:text-2xl tracking-[0.4em] text-foreground group-hover:text-primary transition-all duration-500 font-black">
-                        MOTOR_AMBOS
-                    </span>
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${isScrolled ? "bg-white border-b-2 border-black py-4" : "bg-transparent py-8"}`}>
+            <div className="fintech-container flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-2">
+                    <div className="w-10 h-10 bg-[#9FE870] border-2 border-black rounded-[4px] flex items-center justify-center font-black text-xl text-black">A</div>
+                    <span className="text-2xl font-black tracking-tighter text-black uppercase">ambos</span>
                 </Link>
 
-                {/* Desktop Nav */}
-                <nav className="hidden lg:flex items-center gap-12">
+                <div className="hidden lg:flex items-center gap-8">
                     {navLinks.map((link) => (
                         <Link
-                            key={link.href}
+                            key={link.name}
                             href={link.href}
-                            className="mono-text text-[10px] font-black tracking-[0.3em] text-muted-foreground hover:text-primary transition-all uppercase"
+                            className="text-[12px] font-black uppercase tracking-widest text-black hover:bg-[#9FE870] px-2 py-1 transition-colors"
                         >
-                            {link.label}
+                            {link.name}
                         </Link>
                     ))}
-                    <div className="flex items-center gap-10 ml-8 pl-12 border-l border-white/5">
-                        <ThemeToggle />
-                        <button className="text-[10px] mono-text font-black tracking-[0.3em] hover:text-primary transition-colors cursor-pointer uppercase">
-                            SYSTEM_LOGIN
-                        </button>
-                        <button className="ambos-btn-lime !py-4 !px-10 !text-[10px] !tracking-[0.4em]">
-                            <Link href="/club">JOIN_GRID</Link>
-                        </button>
-                    </div>
-                </nav>
+                </div>
 
-                {/* Mobile Nav */}
-                <div className="flex items-center gap-6 lg:hidden">
-                    <ThemeToggle />
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <button className="p-4 bg-white/5 rounded-2xl border border-white/10 hover:border-primary/50 transition-all">
-                                <Menu className="h-6 w-6 text-foreground" />
-                            </button>
-                        </SheetTrigger>
-                        <SheetContent side="right" className="bg-background/98 backdrop-blur-3xl border-l-white/5 w-full sm:w-[500px] p-0 rounded-none overflow-hidden">
-                            <div className="flex flex-col h-full bg-background relative">
-                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/[0.03] blur-[120px] -z-10" />
-                                <div className="p-12 border-b border-white/5 flex justify-between items-center">
-                                    <Link href="/" className="ambos-heading text-xl md:text-2xl tracking-[0.4em] text-foreground font-black">
-                                        MOTOR_AMBOS
-                                    </Link>
-                                </div>
-                                <div className="flex-grow p-12 flex flex-col justify-center space-y-12">
-                                    {navLinks.map((link) => (
-                                        <Link
-                                            key={link.href}
-                                            href={link.href}
-                                            className="block text-6xl md:text-7xl ambos-heading text-foreground hover:text-primary transition-all duration-500 hover:translate-x-8 tracking-tighter"
-                                        >
-                                            {link.label.toUpperCase()}
-                                        </Link>
-                                    ))}
-                                </div>
-                                <div className="p-12 border-t border-white/5 flex flex-col gap-6 bg-background/50">
-                                    <button className="text-sm mono-text font-black tracking-[0.4em] text-foreground/40 hover:text-primary transition-all text-left uppercase">
-                                        SYSTEM_LOGIN_PORTAL
-                                    </button>
-                                    <button className="ambos-btn-lime !py-10 !text-xl !tracking-[0.5em]">
-                                        JOIN_OPERATIONAL_GRID
-                                    </button>
-                                </div>
-                            </div>
-                        </SheetContent>
-                    </Sheet>
+                <div className="flex items-center gap-3">
+                    <button className="btn-primary !hidden md:!inline-flex !px-6 !py-3 !text-xs">
+                        Join Platform <ArrowUpRight size={14} className="ml-2" />
+                    </button>
+
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="lg:hidden p-2 border-2 border-black bg-white flex items-center justify-center h-10 w-10 shrink-0"
+                    >
+                        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                    </button>
                 </div>
             </div>
-        </header>
+
+            {/* Flat Mobile Menu Drawer */}
+            <div
+                className={`lg:hidden fixed inset-0 bg-black/60 z-[100] transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            <div className={`lg:hidden fixed top-0 right-0 bottom-0 w-[80%] max-w-sm bg-white z-[101] border-l-4 border-black transition-transform duration-300 ease-in-out transform ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+                <div className="p-8 flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-16">
+                        <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-[#9FE870] border-2 border-black rounded-[4px] flex items-center justify-center font-black text-lg text-black">A</div>
+                            <span className="text-xl font-black uppercase tracking-tighter">ambos</span>
+                        </Link>
+                        <button
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="p-2 border-2 border-black bg-[#9FE870]"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col gap-8">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.name}
+                                href={link.href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="text-5xl font-black text-black tracking-tight uppercase border-b-4 border-black pb-4 hover:bg-[#9FE870] transition-colors"
+                            >
+                                {link.name}
+                            </Link>
+                        ))}
+                    </div>
+
+                    <div className="mt-auto space-y-6">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                            Automotive Infrastructure <br /> For a Unified Africa.
+                        </p>
+                        <button className="btn-primary w-full !py-8 !text-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]">
+                            Join Platform
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
     );
 }
-

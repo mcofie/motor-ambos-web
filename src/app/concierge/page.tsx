@@ -1,8 +1,7 @@
 import React from 'react';
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
-import { Button } from "@/components/ui/button";
-import { ShieldCheck, Calendar, Clock, FileCheck, ArrowRight, Zap, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Calendar, Clock, FileCheck, ArrowRight, Zap, CheckCircle2, Gavel, Handshake, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
@@ -12,113 +11,121 @@ export const metadata = {
 
 export default function ConciergePage() {
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/30">
+        <div className="min-h-screen bg-white text-[#1E1E1E] flex flex-col font-sans">
             <Navbar />
 
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-44 pb-32 overflow-hidden bg-background mesh-bg">
-                    <div className="card-circle opacity-50" />
+                <section className="relative pt-44 pb-32 overflow-hidden bg-[#F0F2F5]">
+                    <div className="wise-container relative z-10 text-center">
+                        <div className="max-w-4xl mx-auto space-y-12">
+                            <h1 className="wise-heading-hero">
+                                We queue. <br />
+                                <span className="text-[#2D5B18] italic">So you don&apos;t.</span>
+                            </h1>
 
-                    <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
-                        <div className="flex flex-col items-center text-center space-y-16 lg:space-y-20">
-                            <div className="ambos-label">COMPLIANCE_CONCIERGE: ZERO_QUEUE_PROTOCOL_v2.1</div>
+                            <p className="wise-body text-xl max-w-2xl mx-auto">
+                                Roadworthy, Insurance, and DVLA paperwork — the technical logistics of car ownership made effortless. We execute the bureaucracy while you maintain your velocity.
+                            </p>
 
-                            <div className="space-y-8 max-w-6xl">
-                                <h1 className="ambos-heading text-[10vw] md:text-[8vw] lg:text-[7vw] leading-[0.85] text-foreground tracking-tighter">
-                                    WE_QUEUE. <br />
-                                    <span className="text-primary italic text-glow">SO_YOU_DON&apos;T.</span>
-                                </h1>
-
-                                <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed font-medium">
-                                    Roadworthy, Insurance, and DVLA paperwork — the technical logistics of car ownership made effortless. We execute the bureaucracy while you maintain your velocity.
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-8">
-                                <button className="ambos-btn-lime !py-10 !px-24 text-2xl">
-                                    <Link href="/club">JOIN_AMBOS_CLUB</Link>
-                                </button>
-                                <button className="ambos-btn-secondary !py-10 !px-24 text-2xl">
-                                    <Link href="#how-it-works">PROTOCOL_INDEX</Link>
-                                </button>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
+                                <Link href="/club">
+                                    <button className="wise-btn-primary !px-12 py-5 flex items-center gap-3">
+                                        Join the Club <ArrowRight size={20} />
+                                    </button>
+                                </Link>
+                                <Link href="#how-it-works">
+                                    <button className="wise-btn-secondary !px-12 py-5">
+                                        Learn the protocol
+                                    </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* How it Works */}
-                <section id="how-it-works" className="py-44 bg-background relative overflow-hidden border-y border-white/5">
-                    <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
-                        <div className="mb-32 space-y-8 text-center md:text-left">
-                            <div className="ambos-label mx-auto md:ml-0">OPERATIONAL_WORKFLOW</div>
-                            <h2 className="ambos-heading text-6xl md:text-8xl text-foreground text-glow text-balance leading-[0.85]">THE_CONCIERGE_PROTOCOL.</h2>
+                {/* The Protocol */}
+                <section id="how-it-works" className="py-44 bg-white border-y border-border">
+                    <div className="wise-container">
+                        <div className="grid lg:grid-cols-2 gap-24 items-end mb-24">
+                            <div className="space-y-6">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#F0F2F5] rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-[#5D7079]">
+                                    Operational Workflow
+                                </div>
+                                <h2 className="wise-heading-section !leading-none">The Concierge <br /> Protocol.</h2>
+                            </div>
+                            <p className="wise-body text-lg">
+                                Designed for high-performance individuals who value their time. We eliminate regulatory risk and the friction of human queues.
+                            </p>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-12">
+                        <div className="grid md:grid-cols-3 gap-8">
                             {[
-                                { step: "01", title: "AUTO_MONITORING", desc: "Your Digital Passport tracks Roadworthy and Insurance expiration via technical telemetry—automatically." },
-                                { step: "02", title: "SMART_ALERTS", desc: "System notification dispatched 30 days prior to expiry. One-tap authorization to initialize the renewal sequence." },
-                                { step: "03", title: "DIGITAL_HANDOVER", desc: "We collect physical assets, complete the DVLA processing, and update your Digital Passport instantly." }
+                                { step: "01", title: "Monitoring", desc: "Your Digital Passport tracks Roadworthy and Insurance expiration via technical telemetry—automatically." },
+                                { step: "02", title: "Smart Alerts", desc: "System notification dispatched 30 days prior to expiry. One-tap authorization to initialize the renewal sequence." },
+                                { step: "03", title: "Execution", desc: "We collect physical assets, complete the DVLA processing, and update your Digital Passport instantly." }
                             ].map((s, i) => (
-                                <div key={i} className="ambos-card p-12 text-left bg-white/[0.02] border-white/5 group hover:border-primary/40">
-                                    <div className="ambos-heading text-6xl text-primary/10 mb-8 tracking-tighter group-hover:text-primary transition-colors">{s.step}</div>
-                                    <h4 className="ambos-heading text-2xl mb-6 text-foreground tracking-tight">{s.title}</h4>
-                                    <p className="mono-text text-[11px] text-muted-foreground uppercase tracking-widest leading-relaxed font-medium">{s.desc}</p>
+                                <div key={i} className="wise-card !p-12 space-y-8 group hover:border-[#9FE870]">
+                                    <span className="text-5xl font-black text-[#5D7079]/10 group-hover:text-[#9FE870] transition-colors">{s.step}</span>
+                                    <div className="space-y-4">
+                                        <h4 className="text-2xl font-black tracking-tight uppercase">{s.title}</h4>
+                                        <p className="text-sm font-bold text-[#5D7079] leading-relaxed uppercase tracking-widest">{s.desc}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                {/* Status Visualization */}
-                <section className="py-44 bg-background relative overflow-hidden">
-                    <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
+                {/* Status Integration */}
+                <section className="py-44 bg-[#F0F2F5]">
+                    <div className="wise-container">
                         <div className="flex flex-col lg:flex-row gap-32 items-center">
-                            <div className="lg:w-1/2 space-y-16">
-                                <div className="ambos-label">SYSTEM_INTEGRITY</div>
-                                <h2 className="ambos-heading text-7xl md:text-8xl leading-[0.8] text-foreground tracking-tighter">
-                                    TOTAL_COMPLIANCE. <br /> <span className="text-primary italic text-glow">ZERO_DOWNTIME.</span>
-                                </h2>
-                                <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed font-medium uppercase tracking-tight">
-                                    Designed for high-performance individuals who value their velocity. Eliminate regulatory risk and the friction of human queues.
+                            <div className="lg:w-1/2 space-y-12">
+                                <h2 className="wise-heading-section !leading-none">Total Compliance. <br /> <span className="text-[#2D5B18] italic">Zero Downtime.</span></h2>
+                                <p className="wise-body">
+                                    Our system integrates directly with national regulatory databases to ensure your vehicle remains mission-ready at all times.
                                 </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                     {[
                                         { title: "DVLA Renewals", icon: FileCheck },
                                         { title: "Insurance Updates", icon: ShieldCheck },
-                                        { title: "Document Storage", icon: Clock },
-                                        { title: "Fast Processing", icon: Zap }
+                                        { title: "Document Handling", icon: FileText },
+                                        { title: "Rapid Turnaround", icon: Zap }
                                     ].map((f, i) => (
-                                        <div key={i} className="flex items-center gap-6 mono-text text-[12px] font-black tracking-[0.3em] text-foreground">
-                                            <div className="h-[1px] w-12 bg-primary" />
-                                            {f.title.toUpperCase()}
+                                        <div key={i} className="flex items-center gap-4 text-sm font-black uppercase tracking-[0.2em] text-[#5D7079]">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-[#9FE870]" />
+                                            {f.title}
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
                             <div className="lg:w-1/2 w-full">
-                                <div className="ambos-card bg-zinc-900/80 p-16 border border-white/5 relative overflow-hidden group hover:border-primary/40 transition-all duration-700">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.03] blur-[80px]" />
-                                    <div className="space-y-12 relative z-10">
-                                        <div className="space-y-4">
-                                            <div className="ambos-label !bg-primary !text-black mb-4">SYSTEM_STATUS: PENDING_RENEWAL</div>
-                                            <div className="ambos-heading text-5xl text-white tracking-tighter">ROADWORTHY_UNIT</div>
+                                <div className="wise-card !p-12 !bg-black text-white relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#9FE870]/10 blur-[80px]" />
+                                    <div className="space-y-10 relative z-10">
+                                        <div className="space-y-2">
+                                            <div className="px-4 py-1.5 bg-[#9FE870]/20 text-[#9FE870] border border-[#9FE870]/20 rounded-full text-[10px] font-black uppercase tracking-widest inline-block mb-4">
+                                                Upcoming Renewal
+                                            </div>
+                                            <h3 className="text-3xl font-black tracking-tighter uppercase">Roadworthy Unit</h3>
                                         </div>
 
-                                        <div className="flex gap-6 items-center flex-wrap">
-                                            <div className="mono-text text-white/50 bg-white/5 px-8 py-4 border border-white/10 text-2xl tracking-tighter font-black">OCT_24_2026</div>
-                                            <div className="px-6 py-2 border-2 border-primary text-primary text-[10px] font-black tracking-widest uppercase rounded-full">UPCOMING</div>
+                                        <div className="flex items-center gap-6">
+                                            <div className="px-8 py-5 bg-white/5 border border-white/10 text-2xl font-black tracking-tight">
+                                                OCT 24, 2026
+                                            </div>
+                                            <div className="h-10 w-px bg-white/10" />
+                                            <span className="text-xs font-black uppercase tracking-widest opacity-40">MA Protocol v2.1</span>
                                         </div>
 
-                                        <div className="pt-12 border-t border-white/10">
-                                            <button className="ambos-btn-lime w-full !py-8 !text-2xl !tracking-[0.4em]">
-                                                AUTHORIZE_CONCIERGE
-                                            </button>
-                                        </div>
-                                        <p className="mono-text text-[10px] text-white/30 text-center tracking-[0.3em] uppercase font-bold">
-                                            STANDARD_PROCESSING: 24-48_HOURS.
+                                        <button className="wise-btn-primary w-full !py-6 !text-xl flex items-center justify-center gap-4">
+                                            Authorize Concierge <ArrowRight size={24} />
+                                        </button>
+
+                                        <p className="text-[10px] font-black uppercase text-center tracking-widest opacity-40">
+                                            Standard processing cycle: 24-48 hours.
                                         </p>
                                     </div>
                                 </div>
@@ -128,23 +135,18 @@ export default function ConciergePage() {
                 </section>
 
                 {/* Final CTA */}
-                <section className="py-44 bg-foreground text-background mesh-bg !bg-none relative overflow-hidden">
-                    <div className="absolute inset-0 bg-primary/10 blur-[150px] -z-10" />
-                    <div className="container mx-auto px-8 flex flex-col items-center text-center space-y-20">
-                        <div className="ambos-label !bg-background !text-foreground !border-none">INITIALIZE_AUTOMATION</div>
-                        <h2 className="ambos-heading text-7xl md:text-[10vw] leading-[0.75] text-background text-center tracking-tighter uppercase">
-                            STOP_WAITING <br />
-                            <span className="text-primary italic text-glow">IN_QUEUES.</span>
-                        </h2>
-
-                        <p className="text-xl md:text-2xl text-background/60 max-w-4xl mx-auto uppercase mono-text tracking-[0.3em] font-black leading-relaxed">
+                <section className="py-44 bg-black text-white text-center">
+                    <div className="wise-container max-w-4xl space-y-16">
+                        <h2 className="wise-heading-hero !text-white !leading-[0.85]">Stop waiting <br /> <span className="text-[#9FE870] italic">in queues.</span></h2>
+                        <p className="text-xl font-bold opacity-60 uppercase tracking-widest leading-relaxed">
                             Join the Motor Ambos Club and automate your vehicle&apos;s bureaucracy. Maximum efficiency, unlocked.
                         </p>
-
-                        <div className="pt-10">
-                            <button className="ambos-btn-lime !py-12 !px-32 !text-3xl !tracking-[0.5em] hover:!shadow-[0_20px_60px_-10px_rgba(206,255,0,0.5)]">
-                                <Link href="/club">VIEW_MEMBERSHIP_PLANS</Link>
-                            </button>
+                        <div className="pt-8">
+                            <Link href="/club">
+                                <button className="wise-btn-primary !px-16 !py-6 !text-2xl shadow-[0_20px_60px_-10px_rgba(159,232,112,0.3)]">
+                                    View Membership Plans
+                                </button>
+                            </Link>
                         </div>
                     </div>
                 </section>

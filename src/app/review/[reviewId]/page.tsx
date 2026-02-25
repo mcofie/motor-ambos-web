@@ -4,18 +4,9 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Wrench, Star, CheckCircle, ChevronLeft, ArrowRight, Loader2 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Wrench, Star, CheckCircle, ChevronLeft, ArrowRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Assuming these imports exist based on your snippet
-import {
-    submitProviderReview,
-    getRequestReviewContext,
-} from "@/lib/supaFetch";
+import { submitProviderReview, getRequestReviewContext } from "@/lib/supaFetch";
 
 type StepKey = "rating" | "review";
 
@@ -32,7 +23,6 @@ const RATING_LABELS: Record<number, string> = {
     5: "Excellent",
 };
 
-// Updated type definition to allow null | undefined | string
 type RequestReviewContext = {
     provider_name?: string | null;
     provider_phone?: string | null;
@@ -59,50 +49,29 @@ export default function ReviewPage() {
     const [context, setContext] = useState<RequestReviewContext>(null);
     const [ctxLoading, setCtxLoading] = useState<boolean>(true);
 
-    // Calculate progress
-    const activeIndex = Math.max(
-        0,
-        steps.findIndex((s) => s.key === step)
-    );
+    const activeIndex = Math.max(0, steps.findIndex((s) => s.key === step));
     const progressPercent = ((activeIndex + 1) / steps.length) * 100;
 
-    const canNext =
-        step === "rating"
-            ? rating !== null
-            : step === "review"
-                ? review.trim().length > 5 && rating !== null
-                : false;
+    const canNext = step === "rating" ? rating !== null : step === "review" ? review.trim().length > 5 && rating !== null : false;
 
-    // Load request/provider/service context for banner
     useEffect(() => {
         if (!requestId || typeof requestId !== "string") {
             setCtxLoading(false);
             return;
         }
-
         let cancelled = false;
-
         (async () => {
             try {
                 setCtxLoading(true);
                 const ctx = await getRequestReviewContext(requestId);
-                if (!cancelled) {
-                    // The error was here because ctx properties could be null
-                    setContext(ctx);
-                }
+                if (!cancelled) setContext(ctx);
             } catch (e) {
-                console.error("[getRequestReviewContext] error:", e);
-                if (!cancelled) {
-                    setContext(null);
-                }
+                if (!cancelled) setContext(null);
             } finally {
                 if (!cancelled) setCtxLoading(false);
             }
         })();
-
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, [requestId]);
 
     async function handlePrimary() {
@@ -111,244 +80,169 @@ export default function ReviewPage() {
             setStep("review");
             return;
         }
-
         if (step === "review") {
             if (!rating || review.trim().length <= 5) return;
-            if (!requestId) {
-                setErrorMsg("This review link is invalid. Please request a new link.");
-                return;
-            }
-
             try {
                 setSubmitting(true);
                 setErrorMsg(null);
-
-                await submitProviderReview({
-                    requestId,
-                    rating,
-                    review: review.trim(),
-                    driverPhone: driverPhone || null,
-                    outcome,
-                });
-
+                await submitProviderReview({ requestId: requestId!, rating, review: review.trim(), driverPhone: driverPhone || null, outcome });
                 setSubmitted(true);
+                window.scrollTo(0, 0);
             } catch (err) {
-                console.error("[submitProviderReview] error:", err);
-                setErrorMsg(
-                    "We couldn't submit your review. This link may be invalid or expired. Please try again or request a new link."
-                );
+                setErrorMsg("We couldn't submit your review. This link may be invalid or expired.");
             } finally {
                 setSubmitting(false);
             }
         }
     }
 
-    function onBack() {
-        if (step === "review") return setStep("rating");
-    }
-
-    // Handle missing / bad reviewId up-front
     if (!requestId || typeof requestId !== "string") {
         return (
-            <main className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
-                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <Wrench className="h-8 w-8 text-muted-foreground" />
+            <main className="min-h-screen bg-white flex flex-col items-center justify-center p-8 text-center space-y-8">
+                <div className="w-20 h-20 bg-[#F0F2F5] rounded-full flex items-center justify-center text-[#5D7079]">
+                    <AlertCircle size={40} />
                 </div>
-                <h1 className="text-2xl font-bold text-foreground mb-2">Invalid Link</h1>
-                <p className="text-muted-foreground max-w-md text-sm">
-                    We couldn&apos;t find the request connected to this review link. It may have expired or is incorrect.
+                <h1 className="text-3xl font-black tracking-tight uppercase">Invalid Link.</h1>
+                <p className="text-sm font-bold text-[#5D7079] uppercase tracking-widest max-w-sm">
+                    We couldn&apos;t find the request connected to this link. It may have expired.
                 </p>
             </main>
         );
     }
 
-    const providerLabel =
-        context?.provider_name ||
-        context?.provider_phone ||
-        "your mechanic";
+    const providerLabel = context?.provider_name || context?.provider_phone || "your mechanic";
+    const serviceLabel = context?.service_name || context?.service_code || "Motor Ambos help request";
 
-    const serviceLabel =
-        context?.service_name ||
-        context?.service_code ||
-        "Motor Ambos help request";
+    if (submitted) {
+        return (
+            <main className="min-h-screen bg-white flex flex-col items-center justify-center p-8 text-center space-y-12 animate-in fade-in zoom-in duration-500">
+                <div className="w-32 h-32 bg-[#9FE870] rounded-full flex items-center justify-center text-[#2D5B18] shadow-wise-lg">
+                    <CheckCircle2 size={64} strokeWidth={3} />
+                </div>
+                <div className="space-y-4">
+                    <h1 className="text-4xl font-black tracking-tight uppercase">Thank You.</h1>
+                    <p className="text-lg font-bold text-[#5D7079] max-w-md mx-auto uppercase tracking-widest leading-relaxed">
+                        Your data helps us maintain high integrity for the Motor Ambos network.
+                    </p>
+                </div>
+                <button onClick={() => window.close()} className="wise-btn-secondary !px-12">Close Window</button>
+            </main>
+        );
+    }
 
     return (
-        <main className="min-h-screen bg-background font-sans text-foreground">
-            {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-30 w-full bg-background/80 backdrop-blur-xl border-b border-border">
-                <div className="mx-auto max-w-lg px-4 h-14 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        {!submitted && step !== "rating" && (
-                            <button
-                                onClick={onBack}
-                                className="mr-1 -ml-2 p-2 rounded-full hover:bg-muted text-muted-foreground"
-                            >
-                                <ChevronLeft className="h-5 w-5" />
+        <main className="min-h-screen bg-[#F0F2F5] text-[#1E1E1E] flex flex-col font-sans">
+            <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl border-b border-border">
+                <div className="mx-auto max-w-lg px-6 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        {step !== "rating" && (
+                            <button onClick={() => setStep("rating")} className="p-2 -ml-2 text-[#5D7079] hover:text-black transition-colors">
+                                <ChevronLeft size={24} />
                             </button>
                         )}
-                        <div className="flex flex-col">
-                            <span className="text-sm font-bold tracking-tight text-foreground">
-                                Motor Ambos
-                            </span>
-                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
-                                {submitted ? 'Feedback Sent' : 'Rate Experience'}
-                            </span>
-                        </div>
+                        <span className="text-sm font-black uppercase tracking-widest leading-none">Review Node</span>
                     </div>
-
-                    {!submitted && (
-                        <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-foreground transition-all duration-500 ease-out"
-                                style={{ width: `${progressPercent}%` }}
-                            />
-                        </div>
-                    )}
+                </div>
+                <div className="h-1 w-full bg-[#F0F2F5]">
+                    <div className="h-full bg-[#9FE870] transition-all duration-700 ease-out" style={{ width: `${progressPercent}%` }} />
                 </div>
             </header>
 
-            {/* Main Content Area */}
-            <div className="mx-auto w-full max-w-lg px-4 py-8 pb-32">
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="mx-auto w-full max-w-lg px-6 py-12 pb-40">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-12">
+                    <div className="text-center space-y-6">
+                        <h1 className="wise-heading-hero !text-5xl !leading-[0.85]">
+                            {step === "rating" ? "How did it go?" : "Any details?"}
+                        </h1>
+                        <p className="text-sm font-bold text-[#5D7079] uppercase tracking-widest leading-relaxed">
+                            {ctxLoading ? "Querying request details..." : (
+                                <span>Rating <strong className="text-black">{providerLabel}</strong> for <strong className="text-black">{serviceLabel}</strong></span>
+                            )}
+                        </p>
+                    </div>
 
-                    {/* Header Text */}
-                    {!submitted && (
-                        <div className="mb-8 text-center space-y-2">
-                            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                {step === "rating" ? "How did it go?" : "Any details to share?"}
-                            </h1>
-                            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                                {ctxLoading
-                                    ? "Loading request details..."
-                                    : context
-                                        ? <span>Rating <strong>{providerLabel}</strong> for <strong>{serviceLabel}</strong></span>
-                                        : "Your feedback helps us improve the Motor Ambos network."}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* STEP 1: RATING */}
-                    {!submitted && step === "rating" && (
-                        <div className="bg-card p-8 rounded-3xl shadow-sm border border-border flex flex-col items-center gap-6">
+                    {step === "rating" && (
+                        <div className="wise-card !p-12 space-y-12 flex flex-col items-center">
                             <div className="flex items-center gap-2">
-                                {Array.from({ length: 5 }, (_, i) => i + 1).map((star) => {
-                                    const active =
-                                        hoverRating !== null
-                                            ? star <= hoverRating
-                                            : star <= (rating ?? 0);
-
+                                {[1, 2, 3, 4, 5].map((star) => {
+                                    const active = (hoverRating ?? rating ?? 0) >= star;
                                     return (
                                         <button
                                             key={star}
-                                            type="button"
-                                            className="group relative p-1 transition-transform active:scale-95"
                                             onMouseEnter={() => setHoverRating(star)}
                                             onMouseLeave={() => setHoverRating(null)}
                                             onClick={() => setRating(star)}
+                                            className="transition-transform active:scale-90"
                                         >
                                             <Star
-                                                className={cn(
-                                                    "h-10 w-10 transition-all duration-200",
-                                                    active
-                                                        ? "fill-yellow-400 text-yellow-400 scale-110"
-                                                        : "text-muted-foreground/30 group-hover:text-yellow-200"
-                                                )}
-                                                strokeWidth={active ? 0 : 1.5}
+                                                size={48}
+                                                className={cn("transition-all", active ? "fill-[#9FE870] text-[#9FE870] scale-110" : "text-[#5D7079]/20")}
+                                                strokeWidth={active ? 1 : 2}
                                             />
                                         </button>
                                     );
                                 })}
                             </div>
-
-                            <div className="min-h-[2rem] flex items-center justify-center">
+                            <div className="min-h-[4rem] text-center">
                                 {rating ? (
-                                    <span className="inline-flex items-center rounded-full bg-foreground px-4 py-1.5 text-xs font-bold text-background shadow-md transition-all animate-in zoom-in duration-300">
-                                        {rating} / 5 – {RATING_LABELS[rating]}
-                                    </span>
+                                    <div className="animate-in zoom-in duration-300">
+                                        <p className="text-4xl font-black tracking-tighter mb-2">{rating}/5</p>
+                                        <p className="text-[12px] font-black uppercase tracking-widest text-[#5D7079]">{RATING_LABELS[rating]}</p>
+                                    </div>
                                 ) : (
-                                    <span className="text-xs text-muted-foreground font-medium">
-                                        Tap a star to select
-                                    </span>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5D7079] opacity-40">Tap a star to rate experience</p>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    {/* STEP 2: REVIEW */}
-                    {!submitted && step === "review" && (
-                        <div className="bg-card p-6 rounded-3xl shadow-sm border border-border space-y-4">
-                            <div className="space-y-1.5">
-                                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Written Review</Label>
-                                <Textarea
+                    {step === "review" && (
+                        <div className="wise-card !p-10 space-y-8">
+                            <div className="space-y-4">
+                                <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079] ml-1">Technician Feedback</label>
+                                <textarea
                                     rows={6}
                                     value={review}
                                     onChange={(e) => setReview(e.target.value)}
-                                    placeholder="The mechanic arrived quickly and was very professional..."
-                                    className="resize-none text-base bg-background border-input rounded-xl focus-visible:ring-ring min-h-[160px]"
+                                    placeholder="Tell us about the service..."
+                                    className="w-full bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[24px] p-8 text-xl font-bold outline-none transition-all resize-none placeholder:text-[#5D7079]/20"
                                     autoFocus
                                 />
                                 <div className="flex justify-between items-center px-1">
-                                    <p className="text-[10px] text-muted-foreground">
-                                        Min 6 chars. Don&apos;t share private info.
-                                    </p>
-                                    <span className={cn("text-[10px] font-medium", review.length > 5 ? "text-emerald-600" : "text-muted-foreground")}>
+                                    <p className="text-[10px] font-bold text-[#5D7079] uppercase tracking-widest opacity-60">Min 6 characters required</p>
+                                    <span className={cn("text-[10px] font-black uppercase", review.length > 5 ? "text-[#2D5B18]" : "text-[#5D7079]")}>
                                         {review.length} / 6
                                     </span>
                                 </div>
                             </div>
 
                             {errorMsg && (
-                                <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20">
-                                    {errorMsg}
+                                <div className="p-5 bg-red-50 border border-red-100 rounded-[20px] flex items-center gap-4 text-red-600">
+                                    <AlertCircle className="shrink-0" size={24} />
+                                    <span className="text-sm font-black uppercase tracking-tight">{errorMsg}</span>
                                 </div>
                             )}
                         </div>
                     )}
-
-                    {/* SUCCESS STATE */}
-                    {submitted && (
-                        <div className="bg-card p-10 rounded-3xl shadow-sm border border-border flex flex-col items-center text-center gap-6 mt-8">
-                            <div className="h-20 w-20 bg-emerald-500/10 rounded-full flex items-center justify-center animate-in zoom-in duration-500">
-                                <CheckCircle className="h-10 w-10 text-emerald-500" />
-                            </div>
-                            <div className="space-y-2">
-                                <h2 className="text-2xl font-bold text-foreground">Thank you!</h2>
-                                <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
-                                    Your feedback helps us maintain high standards for the Motor Ambos network.
-                                </p>
-                            </div>
-                            <Button variant="outline" className="mt-2 rounded-xl border-border text-muted-foreground" onClick={() => window.close()}>
-                                Close Window
-                            </Button>
-                        </div>
-                    )}
-
                 </div>
             </div>
 
-            {/* Sticky Footer Action Bar */}
-            {!submitted && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border z-30 pb-[env(safe-area-inset-bottom)]">
-                    <div className="mx-auto max-w-lg">
-                        <Button
-                            type="button"
-                            disabled={!canNext || submitting}
-                            onClick={handlePrimary}
-                            className="w-full h-12 rounded-xl text-base font-bold shadow-lg shadow-foreground/10 transition-all active:scale-95"
-                        >
-                            {submitting ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                                <span className="flex items-center gap-2">
-                                    {step === "rating" ? "Next Step" : "Submit Review"}
-                                    <ArrowRight className="h-4 w-4" />
-                                </span>
-                            )}
-                        </Button>
-                    </div>
+            <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-border z-30 pb-[env(safe-area-inset-bottom)]">
+                <div className="mx-auto max-w-lg">
+                    <button
+                        disabled={!canNext || submitting}
+                        onClick={handlePrimary}
+                        className="wise-btn-primary w-full !py-6 !text-xl flex items-center justify-center gap-3 disabled:opacity-30"
+                    >
+                        {submitting ? <Loader2 className="animate-spin" /> : (
+                            <>
+                                {step === "rating" ? "Next Step" : "Submit Rating"}
+                                <ArrowRight size={24} />
+                            </>
+                        )}
+                    </button>
                 </div>
-            )}
-
+            </div>
         </main>
     );
 }

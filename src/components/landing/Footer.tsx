@@ -1,67 +1,109 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
-import { Car } from "lucide-react";
+import { Globe, Github, Twitter, Linkedin, Facebook, Instagram } from "lucide-react";
 
 export function Footer() {
     const year = new Date().getFullYear();
+
+    const sections = [
+        {
+            title: "Product",
+            links: [
+                { name: "Compliance", href: "/#services" },
+                { name: "Verified Logs", href: "/#nfc" },
+                { name: "Roadside Rescue", href: "/#sos" },
+                { name: "Marketplace", href: "/#services" },
+            ]
+        },
+        {
+            title: "Business",
+            links: [
+                { name: "Fleet Control", href: "/#business" },
+                { name: "Corporate Demo", href: "/#business" },
+                { name: "Institutional", href: "/#business" },
+            ]
+        },
+        {
+            title: "Providers",
+            links: [
+                { name: "Become a partner", href: "/providers/join" },
+                { name: "Mechanic Sync", href: "/for-mechanics" },
+                { name: "Service Centers", href: "/#providers" },
+            ]
+        },
+        {
+            title: "NFC",
+            links: [
+                { name: "Onyx Protocol", href: "/digital-passport" },
+                { name: "Order Card", href: "/digital-passport" },
+                { name: "Verification", href: "/digital-passport" },
+            ]
+        },
+        {
+            title: "Company",
+            links: [
+                { name: "About us", href: "/about-us" },
+                { name: "Mission", href: "/#trust" },
+                { name: "Careers", href: "/careers" },
+                { name: "Contact", href: "/contact" },
+            ]
+        },
+        {
+            title: "Legal",
+            links: [
+                { name: "Privacy Policy", href: "/privacy-policy" },
+                { name: "Terms", href: "/terms-of-service" },
+                { name: "Security", href: "/#trust" },
+            ]
+        }
+    ];
+
     return (
-        <footer className="pt-60 pb-16 bg-background relative overflow-hidden selection:bg-primary selection:text-black mt-20">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-            <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
-                <div className="flex flex-col lg:flex-row justify-between items-start gap-32 mb-40">
-                    <div className="space-y-16 max-w-md">
-                        <Link href="/" className="flex items-center gap-2 group">
-                            <span className="ambos-heading text-3xl tracking-[0.5em] group-hover:text-primary transition-all duration-500 font-black">MOTOR_AMBOS</span>
+        <footer className="bg-[#050B15] text-white pt-32 pb-16">
+            <div className="fintech-container">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-16 lg:gap-8 mb-32">
+                    {sections.map((section) => (
+                        <div key={section.title} className="space-y-8">
+                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#9FE870]">{section.title}</h4>
+                            <ul className="space-y-5">
+                                {section.links.map((link) => (
+                                    <li key={link.name}>
+                                        <Link href={link.href} className="text-[15px] font-bold text-white/40 hover:text-[#9FE870] transition-colors">
+                                            {link.name}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Bottom Bar */}
+                <div className="pt-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
+                    <div className="space-y-6">
+                        <Link href="/" className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-[6px] bg-[#9FE870] flex items-center justify-center font-black text-lg text-black">A</div>
+                            <span className="text-xl font-black tracking-tighter">ambos</span>
                         </Link>
-                        <p className="mono-text text-[11px] text-muted-foreground leading-relaxed tracking-[0.3em] font-black uppercase opacity-60">
-                            INDUSTRIAL_INFRASTRUCTURE_FOR_GHA_AUTOMOTIVE_FUTURE. <br />
-                            <span className="text-primary italic">SECURE. VERIFIED. SOVEREIGN.</span>
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-24 w-full lg:max-w-4xl">
-                        <div className="space-y-12">
-                            <h4 className="mono-text text-[10px] text-primary/50 font-black tracking-[0.4em] uppercase">SYSTEM_DIRECTORY</h4>
-                            <div className="flex flex-col gap-8">
-                                <Link href="/digital-passport" className="mono-text text-[12px] font-black tracking-[0.2em] hover:text-primary transition-all hover:translate-x-2">DIGITAL_PASSPORT</Link>
-                                <Link href="/concierge" className="mono-text text-[12px] font-black tracking-[0.2em] hover:text-primary transition-all hover:translate-x-2">CONCIERGE_HUB</Link>
-                                <Link href="/club" className="mono-text text-[12px] font-black tracking-[0.2em] hover:text-primary transition-all hover:translate-x-2">CLUB_ACCESS</Link>
-                            </div>
-                        </div>
-                        <div className="space-y-12">
-                            <h4 className="mono-text text-[10px] text-primary/50 font-black tracking-[0.4em] uppercase">NETWORK_NODES</h4>
-                            <div className="flex flex-col gap-8">
-                                <Link href="/about-us" className="mono-text text-[12px] font-black tracking-[0.2em] hover:text-primary transition-all hover:translate-x-2">ABOUT_UNIT</Link>
-                                <Link href="/for-mechanics" className="mono-text text-[12px] font-black tracking-[0.2em] hover:text-primary transition-all hover:translate-x-2">MECHANIC_SYNC</Link>
-                                <Link href="/resources" className="mono-text text-[12px] font-black tracking-[0.2em] hover:text-primary transition-all hover:translate-x-2">PROTOCOLS</Link>
-                            </div>
-                        </div>
-                        <div className="space-y-12">
-                            <h4 className="mono-text text-[10px] text-primary/50 font-black tracking-[0.4em] uppercase">LEGAL_CORE</h4>
-                            <div className="flex flex-col gap-8">
-                                <Link href="/privacy-policy" className="mono-text text-[12px] font-black tracking-[0.2em] hover:text-primary transition-all hover:translate-x-2">PRIVACY_POLICY</Link>
-                                <Link href="/terms-of-service" className="mono-text text-[12px] font-black tracking-[0.2em] hover:text-primary transition-all hover:translate-x-2">SYSTEM_TERMS</Link>
-                            </div>
+                        <div className="text-[11px] font-bold text-white/30 uppercase tracking-[0.1em]">
+                            © {year} Motor Ambos Technology Inc. Built for Scale.
                         </div>
                     </div>
-                </div>
 
-                <div className="pt-20 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-12">
-                    <div className="space-y-4 text-center md:text-left">
-                        <p className="mono-text text-[10px] text-muted-foreground tracking-[0.5em] font-black uppercase">
-                            © {year} MOTOR_AMBOS_INFRASTRUCTURE. ALL_SYSTEMS_OPERATIONAL.
-                        </p>
-                    </div>
-                    <div className="flex gap-12">
-                        <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_#CEFF00] animate-pulse" />
-                        <span className="mono-text text-[10px] text-primary font-black tracking-[0.5em] uppercase">LINK_ESTABLISHED</span>
-                    </div>
-                </div>
-
-                <div className="pt-32 pb-4">
-                    <div className="ambos-heading text-[15vw] opacity-[0.03] pointer-events-none whitespace-nowrap overflow-hidden w-full text-center leading-none select-none tracking-tighter">
-                        INDUSTRIAL_INFRASTRUCTURE_OS
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
+                        <div className="flex gap-8 text-white/30">
+                            <Twitter size={18} className="hover:text-[#9FE870] cursor-pointer transition-colors" />
+                            <Linkedin size={18} className="hover:text-[#9FE870] cursor-pointer transition-colors" />
+                            <Facebook size={18} className="hover:text-[#9FE870] cursor-pointer transition-colors" />
+                            <Instagram size={18} className="hover:text-[#9FE870] cursor-pointer transition-colors" />
+                        </div>
+                        <div className="h-px w-full md:w-px md:h-8 bg-white/5" />
+                        <button className="flex items-center gap-2 text-[11px] font-black text-white/30 hover:text-white uppercase tracking-widest transition-colors">
+                            <Globe size={14} />
+                            <span>English (UK)</span>
+                        </button>
                     </div>
                 </div>
             </div>

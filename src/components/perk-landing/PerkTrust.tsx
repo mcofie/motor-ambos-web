@@ -1,49 +1,30 @@
 "use client";
 
 import React from "react";
-import { ShieldCheck, Lock, Database } from "lucide-react";
 
 export function PerkTrust() {
-    const systems = [
-        {
-            title: "Dedicated fraud & verification",
-            desc: "Advanced terminal protocols ensure that every record logged is from a verified provider.",
-            icon: ShieldCheck
-        },
-        {
-            title: "2-factor authentication",
-            desc: "Keep your vehicle history secure with industry-standard login protection.",
-            icon: Lock
-        },
-        {
-            title: "Secure data storage",
-            desc: "Your records are encrypted and stored in high-integrity cloud nodes.",
-            icon: Database
-        }
+    const statements = [
+        { label: "01 // INTEGRITY", text: "Verified service records built on immutable logs. No hidden history." },
+        { label: "02 // SCALE", text: "Engineered to manage vehicle fleets from 10 to 10,000 units across Africa." },
+        { label: "03 // SOVEREIGNTY", text: "Your vehicle data, structured and accessible. Ownership through visibility." }
     ];
 
     return (
-        <section className="wise-section bg-[#F0F2F5] border-t border-border">
-            <div className="wise-container">
-                <div className="space-y-20">
-                    <div className="max-w-2xl">
-                        <h2 className="wise-heading-section">
-                            Built to protect your <br /> vehicle data.
-                        </h2>
+        <section id="trust" className="section-blue">
+            <div className="fintech-container">
+                <div className="grid lg:grid-cols-12 gap-24 items-start">
+                    <div className="lg:col-span-12 space-y-12 mb-24">
+                        <h2 className="section-heading">Built for scale across Africa.</h2>
+                        <div className="h-2 w-48 bg-black" />
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-12 lg:gap-20">
-                        {systems.map((sys, i) => (
-                            <div key={i} className="space-y-6">
-                                <div className="w-14 h-14 rounded-full bg-[#FFFFFF] flex items-center justify-center shadow-sm">
-                                    <sys.icon size={28} className="text-black" />
-                                </div>
-                                <div className="space-y-3">
-                                    <h3 className="text-2xl font-black tracking-tight">{sys.title}</h3>
-                                    <p className="text-base font-bold text-[#5D7079] leading-relaxed">
-                                        {sys.desc}
-                                    </p>
-                                </div>
+                    <div className="lg:col-span-12 grid md:grid-cols-3 gap-16">
+                        {statements.map((s, i) => (
+                            <div key={i} className="space-y-10 group">
+                                <div className="label-technical text-black group-hover:text-[#9FE870] transition-colors">{s.label}</div>
+                                <p className="hero-heading !text-3xl lg:!text-5xl !leading-tight tracking-tighter">
+                                    {s.text}
+                                </p>
                             </div>
                         ))}
                     </div>

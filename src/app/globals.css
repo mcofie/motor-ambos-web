@@ -16,93 +16,92 @@
     --color-input: var(--input);
     --color-ring: var(--ring);
 
-    /* Font families */
-    --font-sans: "Inter", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-    --font-mono: "Space Mono", var(--font-mono), monospace;
-
-    /* Spacing Scale override for Wise feel */
-    --spacing-18: 4.5rem;
-    --spacing-22: 5.5rem;
-    --spacing-30: 7.5rem;
+    /* Font families - Technical & Flat */
+    --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "Space Mono", monospace;
 }
 
 :root {
     --background: #FFFFFF;
     --foreground: #000000;
+
+    /* Hard Brand Green */
     --primary: #9FE870;
     --primary-foreground: #000000;
-    --secondary: #F0F2F5;
-    /* Wise Light Grey Section Background */
-    --secondary-foreground: #000000;
-    --muted: #F0F2F5;
-    --muted-foreground: #5D7079;
+
+    --secondary: #000000;
+    --secondary-foreground: #FFFFFF;
+
+    --muted: #F5F5F5;
+    --muted-foreground: #666666;
+
     --accent: #9FE870;
     --accent-foreground: #000000;
-    --border: #E2E8F0;
-    --input: #FFFFFF;
-    --ring: #9FE870;
-    --radius: 16px;
 
-    /* Shadows - Wise uses very subtle, structured shadows */
-    --wise-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-    --wise-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --border: #000000;
+    --input: #FFFFFF;
+    --ring: #000000;
+
+    /* Flat & Sharp Borders */
+    --radius: 4px;
+
+    /* No shadows - Flat design */
+    --fintech-shadow: none;
+    --fintech-shadow-lg: none;
 }
 
 @layer components {
-    .wise-section {
-        @apply py-24 md:py-32;
+    .section-white {
+        @apply py-20 md:py-32 bg-white;
     }
 
-    .wise-container {
+    .section-grey {
+        @apply py-20 md:py-32 bg-[#F5F5F5] border-y border-black;
+    }
+
+    .section-dark {
+        @apply py-20 md:py-32 bg-black text-white;
+    }
+
+    .fintech-container {
         @apply container mx-auto px-6 max-w-7xl;
     }
 
-    /* Extremely bold, oversized hero headlines with tight spacing */
-    .wise-heading-hero {
-        @apply text-[56px] md:text-[88px] lg:text-[104px] leading-[0.95] font-black tracking-[-0.04em] text-foreground;
+    /* Flat Typography: Sharp, Technical */
+    .hero-heading {
+        @apply text-[42px] md:text-[84px] lg:text-[110px] leading-[0.9] font-black tracking-[-0.05em] text-foreground uppercase;
     }
 
-    .wise-heading-section {
-        @apply text-[36px] md:text-[52px] lg:text-[64px] leading-[1.05] font-black tracking-[-0.03em] text-foreground;
+    .section-heading {
+        @apply text-[32px] md:text-[56px] lg:text-[72px] leading-[0.95] font-black tracking-[-0.04em] text-foreground uppercase;
     }
 
-    .wise-body {
-        @apply text-lg md:text-xl text-[#5D7079] leading-relaxed;
+    .body-copy {
+        @apply text-lg md:text-xl text-black leading-relaxed font-bold uppercase tracking-tight;
     }
 
-    .wise-label-caps {
-        @apply text-sm font-black uppercase tracking-[0.25em] text-[#000000] block mb-6;
+    /* Flat Buttons: Sharp corners, solid borders */
+    .btn-primary {
+        @apply bg-[#9FE870] text-black px-8 py-4 rounded-[4px] font-black border-2 border-black transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-0 active:translate-y-0 inline-flex items-center justify-center;
+        font-size: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
     }
 
-    /* Primary: Rounded green button, solid fill */
-    .wise-btn-primary {
-        @apply bg-[#9FE870] text-black px-10 py-5 rounded-full font-bold transition-all duration-200 hover:brightness-105 active:scale-[0.98] inline-flex items-center justify-center border-none;
-        font-size: 17px;
+    .btn-secondary {
+        @apply bg-white text-black px-8 py-4 rounded-[4px] font-black border-2 border-black transition-all duration-200 hover:bg-[#F5F5F5] inline-flex items-center justify-center;
+        font-size: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
     }
 
-    /* Secondary: White background, subtle grey border */
-    .wise-btn-secondary {
-        @apply bg-white border border-[#c2c3c3] text-black px-10 py-5 rounded-full font-bold transition-all duration-200 hover:bg-[#F0F2F5] active:scale-[0.98] inline-flex items-center justify-center;
-        font-size: 17px;
+    /* Flat Cards: Thick borders, zero elevation */
+    .fintech-card {
+        @apply bg-white border-2 border-black rounded-[4px] p-8 transition-all duration-200;
     }
 
-    /* Cards: Large, flat, 16px radius, soft drop shadow, very structured */
-    .wise-card {
-        @apply bg-white border border-border rounded-[16px] shadow-sm p-10 transition-all;
-    }
-
-    .wise-card-hover {
-        @apply hover:shadow-md hover:border-[#9FE870]/40;
-    }
-
-    .wise-fade-in {
-        @apply animate-in fade-in duration-800 ease-out;
-    }
-
-    .wise-transition-spring {
-        transition-property: all;
-        transition-duration: 400ms;
-        transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    .fintech-shadow {
+        @apply shadow-none;
     }
 }
 
@@ -113,5 +112,17 @@
 
     body {
         @apply bg-background text-foreground antialiased;
+        font-family: var(--font-sans);
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground antialiased;
+        font-family: var(--font-sans);
     }
 }

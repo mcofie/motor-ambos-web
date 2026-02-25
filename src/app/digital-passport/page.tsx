@@ -1,9 +1,9 @@
 import React from 'react';
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
-import { Button } from "@/components/ui/button";
-import { CreditCard, ShieldCheck, ClipboardList, Zap, ArrowRight, Share2, Search } from 'lucide-react';
+import { CreditCard, ShieldCheck, ClipboardList, Zap, ArrowRight, Share2, Search, Cpu } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export const metadata = {
     title: "The Digital Passport | Motor Ambos",
@@ -12,66 +12,57 @@ export const metadata = {
 
 export default function DigitalPassportPage() {
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+        <div className="min-h-screen bg-white text-[#1E1E1E] flex flex-col font-sans">
             <Navbar />
 
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-44 pb-32 overflow-hidden bg-background mesh-bg">
-                    <div className="card-circle opacity-50" />
-
-                    <div className="container mx-auto px-6 max-w-7xl relative z-10">
-                        <div className="flex flex-col items-center text-center space-y-16">
-                            <div className="ambos-label">HARDWARE_ANCHOR: VERIFIED_TELEMETRY</div>
-
-                            <div className="space-y-8">
-                                <h1 className="ambos-heading text-[10vw] md:text-[8vw] lg:text-[7vw] leading-[0.8] text-foreground tracking-tighter">
-                                    YOUR_CAR&apos;S <br />
-                                    <span className="text-primary italic text-glow">DIGITAL_PASSPORT.</span>
-                                </h1>
-
-                                <p className="text-xl md:text-2xl text-muted-foreground font-medium max-w-3xl mx-auto leading-relaxed">
-                                    An immutable hardware record for the modern owner. Storing every repair, renewal, and safety metric in one sovereign interface.
-                                </p>
+                <section className="relative pt-44 pb-32 overflow-hidden bg-[#F0F2F5]">
+                    <div className="wise-container relative z-10 text-center">
+                        <div className="max-w-4xl mx-auto space-y-12">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-[#5D7079] shadow-xs">
+                                <Cpu size={14} className="text-[#9FE870]" />
+                                Hardware Anchor Protocol
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-8 items-center pt-8">
-                                <button className="ambos-btn-lime !py-8 !px-20 text-xl">
-                                    ORDER_HARDWARE
-                                </button>
-                                <button className="ambos-btn-secondary !py-8 !px-20 text-xl">
-                                    LINK_TERMINAL
-                                </button>
-                            </div>
+                            <h1 className="wise-heading-hero">
+                                Your car&apos;s <br />
+                                <span className="text-[#2D5B18] italic">Digital Passport.</span>
+                            </h1>
 
-                            <div className="w-full max-w-2xl pt-20">
-                                <div className="mono-text mb-4">HARDWARE_READOUT</div>
-                                <div className="passport-id-box flex items-center justify-between group hover:border-primary/40 transition-all cursor-crosshair">
-                                    <span>MA_TERMINAL_v1.0.4</span>
-                                    <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_#CEFF00] animate-pulse" />
-                                </div>
+                            <p className="wise-body text-xl max-w-2xl mx-auto">
+                                An immutable hardware record for the modern owner. Storing every repair, renewal, and safety metric in one sovereign interface.
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
+                                <button className="wise-btn-primary !px-12 py-5 flex items-center gap-3">
+                                    Order Hardware <ArrowRight size={20} />
+                                </button>
+                                <button className="wise-btn-secondary !px-12 py-5">
+                                    Link Terminal
+                                </button>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Features Grid */}
-                <section className="py-32 bg-background relative overflow-hidden">
-                    <div className="container mx-auto px-6 max-w-7xl relative z-10">
+                {/* Features */}
+                <section className="py-44 bg-white border-y border-border">
+                    <div className="wise-container">
                         <div className="grid md:grid-cols-3 gap-8">
                             {[
-                                { title: "Permanent Log", icon: ClipboardList, desc: "Verified history of all repairs. Instant technical verification for mechanics via hardware tap—zero app overhead." },
-                                { title: "DVLA Protocol", icon: ShieldCheck, desc: "Infrastructure-level monitoring. Automated roadworthy and insurance renewals synchronized with your physical ID." },
-                                { title: "Emergency ICE", icon: Zap, desc: "High-priority medical beacon. Instant access for first responders to critical telemetry and emergency contacts." }
+                                { title: "Permanent Log", icon: ClipboardList, color: "text-blue-600 bg-blue-50", desc: "Verified history of all repairs. Instant technical verification for mechanics via hardware tap—zero app overhead." },
+                                { title: "DVLA Protocol", icon: ShieldCheck, color: "text-[#2D5B18] bg-[#9FE870]/10", desc: "Infrastructure-level monitoring. Automated roadworthy and insurance renewals synchronized with your physical ID." },
+                                { title: "Emergency ICE", icon: Zap, color: "text-amber-600 bg-amber-50", desc: "High-priority medical beacon. Instant access for first responders to critical telemetry and emergency contacts." }
                             ].map((f, i) => (
-                                <div key={i} className="ambos-card p-12 group hover:border-primary/30">
-                                    <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-10 group-hover:bg-primary group-hover:text-black transition-all duration-500">
+                                <div key={i} className="wise-card !p-12 space-y-12 group hover:border-[#9FE870]">
+                                    <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-all", f.color)}>
                                         <f.icon size={28} />
                                     </div>
-                                    <h3 className="ambos-heading text-2xl mb-6 text-foreground tracking-tight">{f.title.toUpperCase()}</h3>
-                                    <p className="mono-text text-[11px] text-muted-foreground leading-relaxed">
-                                        {f.desc}
-                                    </p>
+                                    <div className="space-y-6">
+                                        <h3 className="text-2xl font-black tracking-tight uppercase">{f.title}</h3>
+                                        <p className="text-sm font-bold text-[#5D7079] leading-relaxed uppercase tracking-widest">{f.desc}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -79,48 +70,53 @@ export default function DigitalPassportPage() {
                 </section>
 
                 {/* Resale Value Section */}
-                <section className="py-44 bg-background relative">
-                    <div className="container mx-auto px-6 max-w-7xl">
+                <section className="py-44 bg-[#F0F2F5]">
+                    <div className="wise-container">
                         <div className="flex flex-col lg:flex-row items-center gap-32">
-                            <div className="lg:w-1/2 relative group">
-                                <div className="absolute -inset-4 bg-primary/10 blur-[100px] opacity-0 group-hover:opacity-100 transition-all duration-1000" />
-                                <div className="ambos-card bg-zinc-900/80 p-20 aspect-[4/3] border-white/5 relative z-10 flex flex-col justify-between overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.03] blur-[80px]" />
-                                    <div className="flex justify-between items-start relative z-10">
-                                        <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-black shadow-[0_0_30px_rgba(206,255,0,0.3)]">
-                                            <Zap size={40} />
+                            <div className="lg:w-1/2 w-full">
+                                <div className="wise-card !p-12 !bg-black text-white relative overflow-hidden aspect-[1.58/1] flex flex-col justify-between shadow-wise-lg group">
+                                    <div className="absolute top-0 right-0 w-80 h-80 bg-[#9FE870]/10 blur-[100px]" />
+
+                                    <div className="flex justify-between items-start z-10">
+                                        <div className="w-16 h-16 bg-[#9FE870] rounded-2xl flex items-center justify-center text-black">
+                                            <Zap size={32} />
                                         </div>
-                                        <div className="mono-text text-[10px] text-white/40 tracking-[0.4em] font-black uppercase">SYSTEM_TAG: TERMINAL_ALPHA</div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-[#9FE870]">Terminal Alpha</p>
+                                            <p className="text-sm font-black opacity-40">v1.0.4 r2</p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-6 relative z-10">
-                                        <div className="h-[1px] bg-white/10 w-full" />
-                                        <div className="h-[1px] bg-white/10 w-2/3" />
+
+                                    <div className="space-y-1 z-10">
+                                        <p className="text-6xl font-black tracking-tighter opacity-10 group-hover:opacity-20 transition-opacity">PASSPORT</p>
+                                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-[#9FE870] w-1/3 group-hover:w-full transition-all duration-1000" />
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-end relative z-10">
-                                        <div className="ambos-heading text-4xl text-white tracking-widest">MOTOR_AMBOS</div>
-                                        <div className="h-14 w-24 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center">
-                                            <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
+
+                                    <div className="flex justify-between items-end z-10">
+                                        <div className="text-2xl font-black tracking-widest">MOTOR AMBOS</div>
+                                        <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center border border-white/10">
+                                            <div className="w-2 h-2 rounded-full bg-[#9FE870] animate-ping" />
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="lg:w-1/2 space-y-16">
-                                <div className="ambos-label">ASSET_PERFORMANCE</div>
-                                <h2 className="ambos-heading text-6xl md:text-8xl leading-[0.8] mb-12 text-foreground">
-                                    MAXIMIZE <br /> <span className="text-primary italic text-glow">RESALE_VALUE.</span>
-                                </h2>
-                                <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed font-medium uppercase tracking-tight">
+
+                            <div className="lg:w-1/2 space-y-12">
+                                <h2 className="wise-heading-section !leading-none">Maximize <br /> <span className="text-[#2D5B18] italic">resale value.</span></h2>
+                                <p className="wise-body">
                                     Africa&apos;s automotive market suffers from a trust deficit. The Ambos Passport provides buyers with immutable, hardware-verified proof of maintenance.
                                 </p>
-                                <ul className="space-y-8">
+                                <ul className="space-y-6">
                                     {[
-                                        "VERIFIED_TECHNICAL_HISTORY",
-                                        "GENUINE_COMPLIANCE_SYNC",
-                                        "TRANSPARENT_OWNERSHIP_DATA",
-                                        "UNIFIED_DOCUMENT_TERMINAL"
+                                        "Verified Technical History",
+                                        "Genuine Compliance Sync",
+                                        "Transparent Ownership Data",
+                                        "Unified Document Terminal"
                                     ].map((item, i) => (
-                                        <li key={i} className="flex items-center gap-8 mono-text text-[12px] font-black tracking-[0.3em] text-foreground">
-                                            <div className="h-[1px] w-12 bg-primary" />
+                                        <li key={i} className="flex items-center gap-4 text-sm font-black uppercase tracking-[0.2em] text-[#5D7079]">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-[#9FE870]" />
                                             {item}
                                         </li>
                                     ))}
@@ -130,48 +126,39 @@ export default function DigitalPassportPage() {
                     </div>
                 </section>
 
-                {/* Search / Verification Section */}
-                <section className="py-44 bg-foreground text-background mesh-bg !bg-none relative overflow-hidden">
-                    <div className="absolute inset-0 bg-primary/10 blur-[150px] -z-10" />
-                    <div className="container mx-auto px-6 max-w-4xl text-center space-y-16">
-                        <div className="ambos-label !bg-background !text-foreground !border-none">SYSTEM_AUDIT_TERMINAL</div>
-                        <h2 className="ambos-heading text-7xl md:text-[10vw] leading-[0.75] text-background tracking-tighter">
-                            VERIFY <br />
-                            <span className="text-primary italic text-glow">VEHICLE_UNIT.</span>
-                        </h2>
-                        <p className="text-2xl text-background/60 leading-relaxed uppercase mono-text tracking-widest font-medium">
-                            Executing a purchase? Access the verified health report via the unique Ambos Identifier.
-                        </p>
+                {/* Audit Terminal */}
+                <section className="py-44 bg-black text-white text-center">
+                    <div className="wise-container max-w-4xl space-y-16">
+                        <div className="space-y-6">
+                            <h2 className="wise-heading-hero !text-white !leading-none">Verify <br /> <span className="text-[#9FE870] italic">vehicle unit.</span></h2>
+                            <p className="text-xl font-bold opacity-60 uppercase tracking-widest leading-relaxed">
+                                Executing a purchase? Access the verified health report via the unique Ambos Identifier.
+                            </p>
+                        </div>
 
-                        <div className="relative max-w-2xl mx-auto group">
+                        <div className="relative max-w-2xl mx-auto">
                             <input
                                 type="text"
-                                placeholder="ENTER_SYSTEM_ID: XXXX-XXXX"
-                                className="w-full h-24 bg-background/5 border-b-2 border-background/20 px-10 text-3xl font-black uppercase tracking-[0.4em] text-background placeholder:text-background/20 focus:outline-none focus:border-primary transition-all duration-500 rounded-t-3xl"
+                                placeholder="ENTER SYSTEM ID: XXXX-XXXX"
+                                className="w-full bg-white/5 border-2 border-white/10 focus:border-[#9FE870] rounded-[24px] py-8 px-10 text-3xl font-black uppercase tracking-[0.2em] outline-none transition-all placeholder:text-white/10 text-center"
                             />
-                            <button className="absolute right-6 top-6 h-12 w-12 bg-primary flex items-center justify-center text-foreground hover:scale-110 transition-all rounded-xl shadow-xl">
-                                <Search size={24} />
+                            <button className="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 bg-[#9FE870] rounded-2xl flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all shadow-wise-lg">
+                                <Search size={28} />
                             </button>
                         </div>
                     </div>
                 </section>
 
                 {/* Final CTA */}
-                <section className="py-60 bg-background relative overflow-hidden">
-                    <div className="container mx-auto px-6 max-w-5xl text-center space-y-20">
-                        <div className="space-y-8">
-                            <h2 className="ambos-heading text-7xl md:text-[12vw] leading-[0.75] text-foreground tracking-tighter">
-                                TRANSFORM <br />
-                                <span className="text-primary italic text-glow">ASSET_INTEGRITY.</span>
-                            </h2>
-                            <p className="text-xl md:text-2xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
-                                The future of vehicle ownership is verified. <br /> Initialize your Digital Passport today.
-                            </p>
-                        </div>
-
-                        <div className="flex justify-center pt-8">
-                            <button className="ambos-btn-lime !py-10 !px-24 text-2xl">
-                                ORDER_TERMINAL_NOW
+                <section className="py-60 bg-white text-center">
+                    <div className="wise-container max-w-5xl space-y-16">
+                        <h2 className="wise-heading-hero !leading-[0.85]">Transform <br /> <span className="text-[#2D5B18] italic">asset integrity.</span></h2>
+                        <p className="text-xl font-bold text-[#5D7079] uppercase tracking-widest leading-relaxed max-w-2xl mx-auto">
+                            The future of vehicle ownership is verified. Initialize your Digital Passport today.
+                        </p>
+                        <div className="pt-8">
+                            <button className="wise-btn-primary !px-16 !py-6 !text-2xl shadow-[0_20px_60px_-10px_rgba(159,232,112,0.3)]">
+                                Order Terminal Now
                             </button>
                         </div>
                     </div>

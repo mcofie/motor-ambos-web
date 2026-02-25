@@ -2,8 +2,7 @@ import React from 'react';
 import Link from "next/link";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
-import { Button } from "@/components/ui/button";
-import { Wrench, Clock, CheckCircle, ArrowRight } from 'lucide-react';
+import { Wrench, Clock, CheckCircle, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 
 export const metadata = {
     title: "Mobile Mechanics | Motor Ambos",
@@ -12,106 +11,103 @@ export const metadata = {
 
 export default function MobileMechanicsPage() {
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/30">
+        <div className="min-h-screen bg-white text-[#1E1E1E] flex flex-col font-sans">
             <Navbar />
 
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-44 pb-32 overflow-hidden bg-background mesh-bg">
-                    <div className="card-circle opacity-50" />
+                <section className="relative pt-44 pb-32 overflow-hidden bg-[#F0F2F5]">
+                    <div className="wise-container relative z-10 text-center">
+                        <div className="max-w-4xl mx-auto space-y-12">
+                            <h1 className="wise-heading-hero">
+                                Expert repairs. <br />
+                                <span className="text-[#2D5B18] italic">Verified history.</span>
+                            </h1>
 
-                    <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
-                        <div className="flex flex-col items-center text-center space-y-16 lg:space-y-20">
-                            <div className="ambos-label">SERVICE_NODE: MOBILE_REPAIR_PROTOCOL_v4.2</div>
+                            <p className="wise-body text-xl max-w-2xl mx-auto">
+                                Bypass the repair shop infrastructure. Our certified mobile units deploy directly to your location. Every intervention is officially logged to your vehicle&apos;s digital passport.
+                            </p>
 
-                            <div className="space-y-8 max-w-6xl">
-                                <h1 className="ambos-heading text-[10vw] md:text-[8vw] lg:text-[7vw] leading-[0.85] text-foreground tracking-tighter">
-                                    EXPERT_REPAIRS. <br />
-                                    <span className="text-primary italic text-glow">VERIFIED_HISTORY.</span>
-                                </h1>
-
-                                <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed font-medium">
-                                    Bypass the repair shop infrastructure. Our certified mobile units deploy directly to your location. Every intervention is officially logged to your vehicle&apos;s digital passport under technical performance standards.
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-8">
-                                <button className="ambos-btn-lime !py-10 !px-24 text-2xl">
-                                    <Link href="/help">BOOK_MECHANIC_NODE</Link>
-                                </button>
-                                <button className="ambos-btn-secondary !py-10 !px-24 text-2xl">
-                                    <Link href="/digital-passport">PASSPORT_SYNC</Link>
-                                </button>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
+                                <Link href="/help">
+                                    <button className="wise-btn-primary !px-12 py-5 flex items-center gap-3">
+                                        Book Mechanic Node <ArrowRight size={20} />
+                                    </button>
+                                </Link>
+                                <Link href="/digital-passport">
+                                    <button className="wise-btn-secondary !px-12 py-5">
+                                        Passport sync
+                                    </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Benefits Section */}
-                <section className="py-44 bg-background relative overflow-hidden border-y border-white/5">
-                    <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
-                        <div className="grid md:grid-cols-3 gap-12">
+                {/* Benefits */}
+                <section className="py-44 bg-white border-y border-border">
+                    <div className="wise-container">
+                        <div className="grid md:grid-cols-3 gap-8">
                             {[
-                                { title: "Full Spectrum", icon: Wrench, desc: "From fluid diagnostics and braking systems to complex mechanical interventions. Professional grade mobile infrastructure." },
-                                { title: "Zero Friction", icon: Clock, desc: "Eliminate the drop-off queue. We maintain your asset while you execute your primary professional priorities." },
-                                { title: "Hardware Audit", icon: CheckCircle, desc: "Every component replacement is serialized on your NFC Smart Card, securing asset integrity and resale value." }
+                                { title: "Full Spectrum", icon: Wrench, color: "text-blue-600 bg-blue-50", desc: "From fluid diagnostics and braking systems to complex mechanical interventions. Professional grade mobile infrastructure." },
+                                { title: "Zero Friction", icon: Clock, color: "text-amber-600 bg-amber-50", desc: "Eliminate the drop-off queue. We maintain your asset while you execute your primary professional priorities." },
+                                { title: "Hardware Audit", icon: ShieldCheck, color: "text-[#2D5B18] bg-[#9FE870]/10", desc: "Every component replacement is serialized on your NFC Smart Card, securing asset integrity and resale value." }
                             ].map((b, i) => (
-                                <div key={i} className="ambos-card p-12 group hover:border-primary/40">
-                                    <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-10 group-hover:bg-primary group-hover:text-black transition-all duration-500">
+                                <div key={i} className="wise-card !p-12 space-y-12 group hover:border-[#9FE870]">
+                                    <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-all", b.color)}>
                                         <b.icon size={28} />
                                     </div>
-                                    <h3 className="ambos-heading text-2xl mb-6 text-foreground tracking-tight">{b.title.toUpperCase()}</h3>
-                                    <p className="mono-text text-[11px] text-muted-foreground leading-relaxed uppercase tracking-widest font-medium">
-                                        {b.desc}
-                                    </p>
+                                    <div className="space-y-6">
+                                        <h3 className="text-2xl font-black tracking-tight uppercase">{b.title}</h3>
+                                        <p className="text-sm font-bold text-[#5D7079] leading-relaxed uppercase tracking-widest">{b.desc}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                {/* How It Works */}
-                <section className="py-44 bg-background relative overflow-hidden">
-                    <div className="container mx-auto px-8 max-w-[1600px] text-center relative z-10">
-                        <div className="mb-32 space-y-8">
-                            <div className="ambos-label">DEPLOYMENT_FLOW</div>
-                            <h2 className="ambos-heading text-6xl md:text-8xl text-foreground text-glow text-balance leading-[0.85]">TECHNICAL_SEQUENCE.</h2>
+                {/* Technical Sequence */}
+                <section className="py-44 bg-[#F0F2F5]">
+                    <div className="wise-container">
+                        <div className="mb-24 space-y-6 text-center lg:text-left">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-[#5D7079]">
+                                Deployment Flow
+                            </div>
+                            <h2 className="wise-heading-section !leading-none">Technical Sequence.</h2>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-12">
+                        <div className="grid md:grid-cols-3 gap-8">
                             {[
-                                { step: "01", title: "SYSTEM_DIAGNOSTIC", desc: "Describe the anomaly or select a standard maintenance protocol for immediate evaluation." },
-                                { step: "02", title: "COST_QUOTATION", desc: "Receive instant technical cost analysis and schedule your deployment with guaranteed price locks." },
-                                { step: "03", title: "MOBILE_DEPLOY", desc: "A certified mobile unit arrives at your node to execute repairs with full industrial precision." }
+                                { step: "01", title: "Diagnostic", desc: "Describe the anomaly or select a standard maintenance protocol for immediate evaluation." },
+                                { step: "02", title: "Quotation", desc: "Receive instant technical cost analysis and schedule your deployment with guaranteed price locks." },
+                                { step: "03", title: "Deployment", desc: "A certified mobile unit arrives at your node to execute repairs with full industrial precision." }
                             ].map((s, i) => (
-                                <div key={i} className="ambos-card p-12 text-left bg-white/[0.02] border-white/5 group hover:border-primary/40">
-                                    <div className="ambos-heading text-6xl text-primary/10 mb-8 tracking-tighter group-hover:text-primary transition-colors">{s.step}</div>
-                                    <h4 className="ambos-heading text-2xl mb-6 text-foreground tracking-tight">{s.title}</h4>
-                                    <p className="mono-text text-[11px] text-muted-foreground uppercase tracking-widest leading-relaxed font-medium">{s.desc}</p>
+                                <div key={i} className="wise-card !p-12 space-y-12 border-dashed !bg-transparent">
+                                    <span className="text-5xl font-black text-[#5D7079]/10">{s.step}</span>
+                                    <div className="space-y-4">
+                                        <h4 className="text-2xl font-black tracking-tight uppercase">{s.title}</h4>
+                                        <p className="text-sm font-bold text-[#5D7079] leading-relaxed uppercase tracking-widest">{s.desc}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                {/* CTA Section */}
-                <section className="py-44 bg-foreground text-background mesh-bg !bg-none relative overflow-hidden">
-                    <div className="absolute inset-0 bg-primary/10 blur-[150px] -z-10" />
-                    <div className="container mx-auto px-8 flex flex-col items-center text-center space-y-20">
-                        <div className="ambos-label !bg-background !text-foreground !border-none">INITIALIZE_REPAIR</div>
-                        <h2 className="ambos-heading text-7xl md:text-[10vw] leading-[0.75] text-background text-center tracking-tighter uppercase">
-                            MOBILE_REPAIR <br />
-                            <span className="text-primary italic text-glow">PROTOCOL.</span>
-                        </h2>
-
-                        <p className="text-xl md:text-2xl text-background/60 max-w-4xl mx-auto uppercase mono-text tracking-[0.3em] font-black leading-relaxed">
+                {/* Final CTA */}
+                <section className="py-44 bg-black text-white text-center">
+                    <div className="wise-container max-w-4xl space-y-16">
+                        <h2 className="wise-heading-hero !text-white !leading-[0.85]">Mobile repair <br /> <span className="text-[#9FE870] italic">protocol.</span></h2>
+                        <p className="text-xl font-bold opacity-60 uppercase tracking-widest leading-relaxed max-w-2xl mx-auto">
                             Book a top-rated certified unit in real-time. Professional grade service, delivered directly to your operational coordinates.
                         </p>
-
-                        <div className="pt-10">
-                            <button className="ambos-btn-lime !py-12 !px-32 !text-3xl !tracking-[0.5em] hover:!shadow-[0_20px_60px_-10px_rgba(206,255,0,0.5)]">
-                                <Link href="/help">INITIALIZE_DEPLOYMENT</Link>
-                            </button>
+                        <div className="pt-8">
+                            <Link href="/help">
+                                <button className="wise-btn-primary !px-16 !py-6 !text-2xl shadow-[0_20px_60px_-10px_rgba(159,232,112,0.3)]">
+                                    Initialize Deployment
+                                </button>
+                            </Link>
                         </div>
                     </div>
                 </section>
@@ -119,4 +115,8 @@ export default function MobileMechanicsPage() {
             <Footer />
         </div>
     );
+}
+
+function cn(...classes: string[]) {
+    return classes.filter(Boolean).join(' ');
 }

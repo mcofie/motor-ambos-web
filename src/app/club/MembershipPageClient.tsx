@@ -12,9 +12,16 @@ import {
     Search,
     CheckCircle2,
     Activity,
-    CarFront,
+    ArrowRight,
+    Calendar,
+    Settings,
+    User
 } from "lucide-react";
 import { fetchMembershipByNumber } from "@/lib/supaFetch";
+import { Navbar } from "@/components/landing/Navbar";
+import { Footer } from "@/components/landing/Footer";
+import { MembershipPlans } from "@/components/landing/MembershipPlans";
+import { cn } from "@/lib/utils";
 
 /* ───────── Types ───────── */
 
@@ -78,48 +85,26 @@ function formatDate(str: string) {
 }
 
 function mapApiToMembership(api: MembershipApi): Membership {
-    if (!api) throw new Error("Empty membership payload");
-
     const plan = api.plan ?? {};
     const statusRaw = api.status ?? "active";
-
     const status: Membership["status"] =
-        statusRaw === "active"
-            ? "active"
-            : statusRaw === "expired"
-                ? "expired"
-                : "paused";
+        statusRaw === "active" ? "active" : statusRaw === "expired" ? "expired" : "paused";
 
     const code = (plan.code ?? "").toUpperCase();
-    const tier: MembershipTier =
-        code === "PREMIUM"
-            ? "Pro"
-            : code === "STANDARD"
-                ? "Plus"
-                : "Basic";
+    const tier: MembershipTier = code === "PREMIUM" ? "Pro" : code === "STANDARD" ? "Plus" : "Basic";
 
-    const vehiclesFromApi: MembershipVehicleApi[] = Array.isArray(api.vehicles)
-        ? api.vehicles
-        : [];
-
-    const vehicles: MembershipVehicle[] =
-        vehiclesFromApi.length > 0
-            ? vehiclesFromApi.map((v) => ({
-                plate: v.plate ?? "—",
-                model: v.model ?? "Vehicle",
-                primary: Boolean(v.primary ?? false),
-            }))
-            : [
-                {
-                    plate: "—",
-                    model: "No vehicle on file",
-                    primary: true,
-                },
-            ];
+    const vehiclesFromApi = Array.isArray(api.vehicles) ? api.vehicles : [];
+    const vehicles: MembershipVehicle[] = vehiclesFromApi.length > 0
+        ? vehiclesFromApi.map((v) => ({
+            plate: v.plate ?? "—",
+            model: v.model ?? "Vehicle",
+            primary: Boolean(v.primary ?? false),
+        }))
+        : [{ plate: "—", model: "No vehicle on file", primary: true }];
 
     return {
         id: api.membership_id,
-        memberName: api.member_name || "MotorAmbos Member",
+        memberName: api.member_name || "Ambos Member",
         tier,
         memberSince: api.starts_at,
         renewalDate: api.expires_at,
@@ -130,290 +115,209 @@ function mapApiToMembership(api: MembershipApi): Membership {
 }
 
 /* ───────── Client Component ───────── */
-import { Navbar } from "@/components/landing/Navbar";
-import { Footer } from "@/components/landing/Footer";
-import { MembershipPlans } from "@/components/landing/MembershipPlans";
 
 export function MembershipPageClient() {
     const searchParams = useSearchParams();
-    const membershipNumberParam = searchParams.get("m") || "";
+    const mNum = searchParams.get("m") || "";
 
     const [membership, setMembership] = useState<Membership | null>(null);
-    const [loading, setLoading] = useState(!!membershipNumberParam);
+    const [loading, setLoading] = useState(!!mNum);
     const [error, setError] = useState<string | null>(null);
 
-    // If there is an ID in the URL, we definitely want to try loading it.
-    // If NOT, we show the Plans page by default.
-
     useEffect(() => {
-        let cancelled = false;
-
+        if (!mNum) { setLoading(false); return; }
         async function load() {
-            if (!membershipNumberParam) {
-                setLoading(false);
-                return;
-            }
-
             try {
                 setLoading(true);
-                setError(null);
-
-                const apiData = await fetchMembershipByNumber<MembershipApi>(
-                    membershipNumberParam
-                );
-
-                if (!apiData) {
-                    if (!cancelled) {
-                        setMembership(null);
-                        setError("No active membership found for this number.");
-                        setLoading(false);
-                    }
-                    return;
-                }
-
-                const mapped = mapApiToMembership(apiData);
-                if (!cancelled) {
-                    setMembership(mapped);
-                    setLoading(false);
-                }
-            } catch (err: unknown) {
-                if (!cancelled) {
-                    const message =
-                        err instanceof Error ? err.message : "Failed to load membership.";
-                    setError(message);
-                    setLoading(false);
-                }
+                const data = await fetchMembershipByNumber<MembershipApi>(mNum);
+                if (!data) { setError("No active membership found."); setLoading(false); return; }
+                setMembership(mapApiToMembership(data));
+            } catch (err) {
+                setError("Failed to load membership record.");
+            } finally {
+                setLoading(false);
             }
         }
-
-        void load();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [membershipNumberParam]);
+        load();
+    }, [mNum]);
 
     const m = membership;
+    const primaryVehicle = useMemo(() => m?.vehicles.find(v => v.primary) ?? m?.vehicles[0], [m]);
 
-    const primaryVehicle = useMemo(() => {
-        if (!m || !m.vehicles.length) {
-            return { plate: "—", model: "No vehicle on file" };
-        }
-        return m.vehicles.find((v) => v.primary) ?? m.vehicles[0];
-    }, [m]);
+    if (loading) return (
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
+            <div className="w-16 h-1 bg-[#F0F2F5] rounded-full overflow-hidden">
+                <div className="h-full bg-[#9FE870] animate-progress-fast" />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5D7079]">Syncing Identity Node...</p>
+        </div>
+    );
 
-    const statusColor =
-        m?.status === "active"
-            ? "bg-[#9fe870]"
-            : m?.status === "paused"
-                ? "bg-amber-500"
-                : "bg-red-500";
+    if (!mNum) return (
+        <div className="bg-white">
+            <Navbar />
+            <MembershipPlans />
+            <Footer />
+        </div>
+    );
 
-    const statusLabel =
-        m?.status === "active"
-            ? "Active"
-            : m?.status === "paused"
-                ? "Paused"
-                : "Expired";
-
-    /* ───────── Loading ───────── */
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
-                <div className="w-full max-w-sm space-y-6">
-                    <div className="space-y-4 text-center">
-                        <div className="mx-auto h-2 w-24 bg-primary animate-pulse" />
-                        <div className="h-12 w-64 bg-muted/20 animate-pulse mx-auto" />
+    if (error || !m) return (
+        <div className="min-h-screen bg-[#F0F2F5] flex flex-col">
+            <Navbar />
+            <main className="flex-grow flex items-center justify-center p-8">
+                <div className="max-w-md w-full text-center space-y-10">
+                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mx-auto">
+                        <AlertCircle size={40} className="text-red-600" />
                     </div>
+                    <div className="space-y-4">
+                        <h1 className="text-3xl font-black tracking-tight uppercase">Identity Error.</h1>
+                        <p className="text-lg font-bold text-[#5D7079] leading-relaxed">
+                            {error || "Verification required. Use the link from your welcome email."}
+                        </p>
+                    </div>
+                    <Link href="/club" className="wise-btn-secondary inline-block !px-12">Return home</Link>
                 </div>
-            </div>
-        );
-    }
+            </main>
+            <Footer />
+        </div>
+    );
 
-    /* ───────── MARKETING VIEW (Default if no ID) ───────── */
-    if (!membershipNumberParam) {
-        return (
-            <>
-                <Navbar />
-                <MembershipPlans />
-                <Footer />
-            </>
-        );
-    }
-
-    /* ───────── Error / Empty (Lookup View) ───────── */
-    if (error || !m) {
-        return (
-            <div className="min-h-screen bg-background text-foreground flex flex-col">
-                <Navbar />
-                <main className="flex-grow flex items-center justify-center p-6">
-                    <div className="mx-auto flex w-full max-w-md flex-col gap-12 text-center">
-                        <div className="mx-auto flex h-24 w-24 items-center justify-center bg-onyx border-2 border-primary/20">
-                            {error ? (
-                                <AlertCircle size={40} className="text-primary" />
-                            ) : (
-                                <Search size={40} className="text-primary" />
-                            )}
-                        </div>
-
-                        <div className="space-y-6">
-                            <h1 className="ambos-heading text-4xl">
-                                {error ? "SYSTEM_ERROR" : "MEMBER_LOOKUP"}
-                            </h1>
-                            <p className="mono-text text-sm text-muted-foreground uppercase tracking-widest leading-relaxed">
-                                {error
-                                    ? error
-                                    : "Authorization required. Please utilize the unique technical link provided in your welcome protocol."}
-                            </p>
-                        </div>
-
-                        <div className="pt-8 border-t border-border">
-                            <Link
-                                href="/club"
-                                className="ambos-btn-secondary py-4 px-8 block text-center"
-                            >
-                                &larr; Return to Terminal
-                            </Link>
-                        </div>
-                    </div>
-                </main>
-                <Footer />
-            </div>
-        );
-    }
-
-    /* ───────── Main View (Digital Card) ───────── */
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/30">
+        <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-sans">
             <Navbar />
 
-            <main className="flex-grow mx-auto flex w-full max-w-[1600px] flex-col gap-24 px-8 py-44 relative">
-                <div className="card-circle opacity-30" />
-
-                {/* Header */}
-                <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 pb-12 border-b border-white/5 relative z-10">
-                    <div className="space-y-6">
-                        <div className="ambos-label">IDENTITY_PROTOCOL_v2.4.8</div>
-                        <h1 className="ambos-heading text-6xl md:text-8xl text-glow">DIGITAL_ID.</h1>
-                    </div>
-                    <div className="mono-text text-[10px] text-muted-foreground uppercase tracking-[0.4em] font-black pb-2">
-                        SYSTEM_TERMINAL_SYNC: ACTIVE
-                    </div>
-                </header>
-
-                <div className="grid lg:grid-cols-2 gap-24 relative z-10">
-                    {/* ──── THE CARD (Premium Tech) ──── */}
-                    <div className="space-y-12">
-                        <div className="ambos-card bg-zinc-950 p-12 lg:p-16 border border-white/10 aspect-[1.58/1] flex flex-col justify-between relative overflow-hidden group shadow-[0_0_100px_-20px_rgba(206,255,0,0.1)]">
-                            {/* Background Effects */}
-                            <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-primary/[0.03] to-transparent pointer-events-none" />
-                            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-primary/5 blur-[80px] rounded-full group-hover:bg-primary/10 transition-all duration-1000" />
-
-                            <div className="flex justify-between items-start z-10">
-                                <div className="h-16 w-16 bg-primary flex items-center justify-center text-black shadow-[0_0_30px_rgba(206,255,0,0.3)]">
-                                    <Car size={32} />
+            <main className="flex-grow pt-32 pb-48">
+                <div className="wise-container max-w-5xl">
+                    <div className="flex flex-col lg:flex-row gap-20">
+                        {/* Digital Card Side */}
+                        <div className="lg:w-1/2 space-y-12">
+                            <div className="space-y-4">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-[#5D7079] shadow-xs">
+                                    <ShieldCheck size={14} className="text-[#9FE870]" />
+                                    Verified Identity Node
                                 </div>
-                                <div className="text-right space-y-2">
-                                    <span className="ambos-label !bg-white/5 !text-white/40 !border-white/10 !text-[9px] !px-3 font-black">MEMBER_PROTOCOL_ID</span>
-                                    <span className="ambos-heading text-xl text-white tracking-[0.3em] block">{m.membershipNumber}</span>
-                                </div>
+                                <h1 className="wise-heading-section !leading-none">Digital <br /> Member ID.</h1>
                             </div>
 
-                            <div className="z-10 space-y-6">
-                                <div className="space-y-2">
-                                    <div className="mono-text text-[9px] text-primary/60 font-black tracking-[0.4em]">AUTHORIZED_HOLDER:</div>
-                                    <div className="ambos-heading text-4xl md:text-5xl text-white uppercase truncate drop-shadow-lg">
-                                        {m.memberName}
+                            {/* The Card */}
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-black/5 rounded-[40px] blur-3xl group-hover:bg-[#9FE870]/10 transition-colors" />
+                                <div className="relative wise-card !p-12 !rounded-[40px] aspect-[1.58/1] flex flex-col justify-between overflow-hidden !bg-black text-white shadow-wise-lg">
+                                    <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-[#9FE870]/10 to-transparent pointer-events-none" />
+
+                                    <div className="flex justify-between items-start">
+                                        <div className="w-14 h-14 bg-[#9FE870] rounded-2xl flex items-center justify-center text-black shadow-inner">
+                                            <Car size={28} strokeWidth={2.5} />
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-[#9FE870]">Protocol ID</p>
+                                            <p className="text-xl font-bold tracking-tighter">{m.membershipNumber}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Authorized Holder</p>
+                                            <p className="text-4xl font-black tracking-tighter uppercase truncate">{m.memberName}</p>
+                                        </div>
+                                        <div className="flex items-center gap-6">
+                                            <div className="flex items-center gap-2">
+                                                <div className={cn("w-2 h-2 rounded-full animate-pulse", m.status === 'active' ? 'bg-[#9FE870]' : 'bg-red-500')} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">{m.status}</span>
+                                            </div>
+                                            <div className="h-3 w-px bg-white/20" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">v2.4.8 Ledger</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-end pt-8 border-t border-white/10">
+                                        <div className="px-6 py-2 bg-[#9FE870] text-black rounded-full text-xs font-black uppercase tracking-widest">{m.tier} Protocol</div>
+                                        <div className="flex gap-1 h-6">
+                                            {[1, 0.6, 0.3, 0.1].map((o, i) => (
+                                                <div key={i} className="w-1 h-full bg-white" style={{ opacity: o }} />
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`h-2 w-2 rounded-full ${m.status === 'active' ? 'bg-primary' : 'bg-red-500'} animate-pulse shadow-[0_0_10px_rgba(206,255,0,0.5)]`} />
-                                        <span className="mono-text text-[10px] text-white font-black uppercase tracking-[0.3em]">STATUS: {statusLabel.toUpperCase()}</span>
-                                    </div>
-                                    <div className="h-px w-12 bg-white/10" />
-                                    <span className="mono-text text-[10px] text-white/40 font-black uppercase tracking-[0.3em]">SECURE_ID: MA_v0.9</span>
-                                </div>
                             </div>
 
-                            <div className="flex justify-between items-end z-10 pt-8 border-t border-white/5">
-                                <div className="ambos-label !bg-primary !text-black !border-none !text-[11px] !px-6 !py-2 font-black tracking-[0.2em]">{m.tier.toUpperCase()}_PROTOCOL</div>
-                                <div className="flex gap-2">
-                                    <div className="h-10 w-1 bg-white/5" />
-                                    <div className="h-10 w-1 bg-white/10" />
-                                    <div className="h-10 w-1 bg-white/20" />
-                                    <div className="h-10 w-1 bg-white/40" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-center gap-4 py-8 border-y border-white/5 px-4">
-                            <Activity size={16} className="text-primary animate-pulse" />
-                            <p className="mono-text text-[10px] text-center text-muted-foreground uppercase tracking-[0.4em] font-black">
-                                PRESENT_THIS_TERMINAL_IDENTITY_TO_PROVIDER_FOR_AUTH.
+                            <p className="text-xs font-bold text-[#5D7079] text-center uppercase tracking-widest opacity-60">
+                                Present this terminal identity <br /> to authorized providers for authentication.
                             </p>
                         </div>
-                    </div>
 
-                    {/* ──── DETAILS SECTION ──── */}
-                    <div className="space-y-16">
-                        {/* Primary Vehicle Info */}
-                        <div className="grid grid-cols-2 gap-8">
-                            <div className="ambos-card bg-white/[0.02] p-10 space-y-6 border border-white/5">
-                                <div className="ambos-label !bg-foreground !text-background !border-none !text-[9px] font-black">REGISTERED_UNIT</div>
-                                <div className="space-y-2">
-                                    <p className="ambos-heading text-2xl text-foreground truncate">{primaryVehicle.model.toUpperCase()}</p>
-                                    <p className="mono-text text-[10px] text-primary font-black uppercase tracking-[0.3em]">TELEMETRICS: ACTIVE</p>
+                        {/* Details Side */}
+                        <div className="lg:w-1/2 space-y-12 pt-12">
+                            <div className="grid grid-cols-2 gap-6">
+                                <DetailBox label="Registered Unit" value={primaryVehicle?.model || "No Unit"} icon={<Car size={18} />} />
+                                <DetailBox label="Plate Identification" value={primaryVehicle?.plate || "No Plate"} icon={<HashIcon />} />
+                            </div>
+
+                            <div className="wise-card !p-12 space-y-10">
+                                <h3 className="text-xl font-black tracking-tight uppercase flex items-center gap-4">
+                                    <Wrench size={24} className="text-[#9FE870]" />
+                                    Active Benefits
+                                </h3>
+                                <ul className="space-y-6">
+                                    {[
+                                        "Level 1 Priority Response",
+                                        "Professional On-Site Diagnostics",
+                                        "Rapid Recovery Infrastructure",
+                                        "Emergency Operational Support",
+                                        "Verified Provider Network Access"
+                                    ].map((b, i) => (
+                                        <li key={i} className="flex items-center gap-6 text-sm font-bold text-[#5D7079] group">
+                                            <div className="w-2 h-2 rounded-full bg-[#9FE870] group-hover:scale-150 transition-transform" />
+                                            <span className="uppercase tracking-widest">{b}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="pt-8 border-t border-border flex flex-wrap gap-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-border">
+                                        <Calendar size={14} className="text-[#5D7079]" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[#5D7079]">Since</p>
+                                        <p className="text-xs font-black uppercase">{formatDate(m.memberSince)}</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="ambos-card bg-white/[0.02] p-10 space-y-6 border border-white/5">
-                                <div className="ambos-label !bg-foreground !text-background !border-none !text-[9px] font-black">PLATE_IDENTIFICATION</div>
-                                <div className="space-y-2">
-                                    <p className="ambos-heading text-2xl text-foreground font-mono">{primaryVehicle.plate.toUpperCase()}</p>
-                                    <p className="mono-text text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em]">REGION: GHANA_AO</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-border">
+                                        <MapPin size={14} className="text-[#5D7079]" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[#5D7079]">Node</p>
+                                        <p className="text-xs font-black uppercase">Metropolitan District</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Benefits List */}
-                        <div className="ambos-card p-12 bg-white/[0.02] border border-white/5 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10 group-hover:bg-primary/10 transition-all" />
-
-                            <h3 className="ambos-heading text-xl mb-12 uppercase tracking-widest flex items-center gap-6">
-                                <Wrench size={24} className="text-primary" />
-                                ACTIVE_PROTOCOLS
-                            </h3>
-                            <ul className="space-y-8">
-                                {[
-                                    "Priority roadside dispatch",
-                                    "Battery diagnostics & terminal cleanup",
-                                    "Rapid tyre replacement protocol",
-                                    "Emergency fuel synthesis dispatch",
-                                    "Heavy-duty towing infrastructure"
-                                ].map((benefit, i) => (
-                                    <li key={i} className="flex items-center gap-8 mono-text text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors group/item">
-                                        <div className="h-px w-6 bg-primary/30 group-hover/item:w-10 group-hover/item:bg-primary transition-all shrink-0" />
-                                        <span>{benefit}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Footer Meta */}
-                        <div className="flex flex-col gap-6 mono-text text-[10px] text-muted-foreground uppercase tracking-[0.4em] font-black border-t border-white/5 pt-12">
-                            <div className="flex items-center gap-6">
-                                <MapPin size={14} className="text-primary" />
-                                <span>OPERATIONAL_NODE: ACCRA_METRO</span>
-                            </div>
-                            <div className="flex items-center gap-6">
-                                <Activity size={14} className="text-primary" />
-                                <span>INITIALIZED: {formatDate(m.memberSince).toUpperCase()}</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </main>
+
             <Footer />
         </div>
+    );
+}
+
+function DetailBox({ label, value, icon }: any) {
+    return (
+        <div className="wise-card !p-8 space-y-6">
+            <div className="text-[10px] font-black uppercase tracking-widest text-[#5D7079]">{label}</div>
+            <div className="flex items-center gap-4">
+                <div className="text-black">{icon}</div>
+                <p className="text-2xl font-black tracking-tighter uppercase truncate leading-none">{value}</p>
+            </div>
+        </div>
+    );
+}
+
+function HashIcon() {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
     );
 }

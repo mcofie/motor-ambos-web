@@ -20,7 +20,10 @@ import {
     ExternalLink,
     AlertCircle,
     Hash,
+    Zap,
+    History
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Step = "serial" | "vehicle" | "confirm" | "success";
 
@@ -35,26 +38,19 @@ export default function LinkCardPage() {
     const [publicId, setPublicId] = useState("");
     const [userId, setUserId] = useState<string | null>(null);
 
-    // Get logged-in user
     useEffect(() => {
         (async () => {
             const { data } = await supabase.auth.getUser();
-            if (data?.user) {
-                setUserId(data.user.id);
-            }
+            if (data?.user) setUserId(data.user.id);
         })();
     }, []);
 
-    // Validate serial number format: MA-XX-XXXXX
-    const validateSerial = (val: string) => {
-        const pattern = /^MA-\d{2}-\d{5}$/;
-        return pattern.test(val);
-    };
+    const validateSerial = (val: string) => /^MA-\d{2}-\d{5}$/.test(val);
 
     const handleSerialSubmit = () => {
         const trimmed = serialNumber.trim().toUpperCase();
         if (!validateSerial(trimmed)) {
-            setSerialError("Please enter a valid card serial (e.g., MA-26-00451)");
+            setSerialError("ENTER VALID SERIAL (MA-26-XXXXX)");
             return;
         }
         setSerialError("");
@@ -69,11 +65,8 @@ export default function LinkCardPage() {
         try {
             const data = await listMemberVehicles(userId);
             setVehicles(data);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoadingVehicles(false);
-        }
+        } catch (err) { console.error(err); }
+        finally { setLoadingVehicles(false); }
     };
 
     const handleSelectVehicle = (v: VehicleRow) => {
@@ -88,313 +81,187 @@ export default function LinkCardPage() {
             const id = await linkSmartCardToVehicle(selectedVehicle.id, serialNumber);
             setPublicId(id);
             setStep("success");
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLinking(false);
-        }
+            window.scrollTo(0, 0);
+        } catch (err) { console.error(err); }
+        finally { setLinking(false); }
     };
 
     const passportUrl = `https://motorambos.com/v/${publicId}`;
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+        <div className="min-h-screen bg-[#F0F2F5] text-[#1E1E1E] flex flex-col font-sans">
             <Navbar />
 
-            <main className="flex-grow mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-10 pt-32">
-
-                {/* Header */}
-                <header className="space-y-2 text-center">
-                    <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm mb-2">
-                        <CreditCard className="h-3.5 w-3.5 text-primary" />
-                        <span>Smart Card Setup</span>
+            <main className="flex-grow pt-44 pb-32">
+                <div className="wise-container max-w-xl">
+                    {/* Header */}
+                    <div className="text-center space-y-4 mb-12">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-[#5D7079] shadow-xs">
+                            <Zap size={14} className="text-[#9FE870]" />
+                            Smart Card Setup
+                        </div>
+                        <h1 className="wise-heading-hero !text-5xl !leading-[0.85]">Link Card.</h1>
+                        <p className="wise-body text-sm font-bold opacity-60 uppercase tracking-widest leading-relaxed">
+                            Connect the physical card to your vehicle to create its public Digital Passport.
+                        </p>
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight">Link Your Card</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Connect the physical card to your vehicle to create its public Digital Passport.
-                    </p>
-                </header>
 
-                {/* Progress Indicator */}
-                <div className="flex items-center justify-center gap-2">
-                    {(["serial", "vehicle", "confirm", "success"] as Step[]).map((s, i) => (
-                        <React.Fragment key={s}>
-                            <div className={`h-2.5 w-2.5 rounded-full transition-all duration-500 ${step === s
-                                ? "bg-primary scale-125 shadow-[0_0_12px_rgba(var(--primary-rgb),0.4)]"
-                                : (["serial", "vehicle", "confirm", "success"].indexOf(step) > i
-                                    ? "bg-primary/50"
-                                    : "bg-muted")
-                                }`} />
-                            {i < 3 && <div className={`h-[2px] w-8 transition-all duration-500 ${["serial", "vehicle", "confirm", "success"].indexOf(step) > i
-                                ? "bg-primary/50"
-                                : "bg-muted"
-                                }`} />}
-                        </React.Fragment>
-                    ))}
-                </div>
+                    {/* Progress */}
+                    <div className="flex items-center justify-center gap-3 mb-12">
+                        {(["serial", "vehicle", "confirm", "success"] as Step[]).map((s, i) => (
+                            <div key={s} className={cn(
+                                "h-1.5 rounded-full transition-all duration-500",
+                                step === s ? "w-12 bg-[#9FE870]" : "w-1.5 bg-border"
+                            )} />
+                        ))}
+                    </div>
 
-                {/* ─── STEP 1: Enter Serial ─── */}
-                {step === "serial" && (
-                    <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-                        <div className="bg-card border border-border rounded-3xl p-8 shadow-sm space-y-6">
-                            {/* Visual Card Illustration */}
-                            <div className="relative mx-auto w-full max-w-xs aspect-[1.6/1] bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 flex flex-col justify-between overflow-hidden shadow-xl">
-                                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.03]" />
-                                <div className="flex justify-between items-start relative z-10">
-                                    <CreditCard className="h-6 w-6 text-primary" />
-                                    <span className="text-[8px] font-mono text-white/30 uppercase tracking-[0.3em]">Digital Passport</span>
-                                </div>
-                                <div className="relative z-10 space-y-1">
-                                    <div className="text-[9px] text-white/40 uppercase tracking-[0.2em] font-mono">Card Serial Number</div>
-                                    <div className="flex items-center gap-2">
-                                        <Hash className="h-4 w-4 text-primary/60" />
-                                        <span className="text-white font-mono font-bold text-lg tracking-widest">
-                                            {serialNumber || "MA-26-_____"}
-                                        </span>
+                    {/* Step Content */}
+                    <div className="wise-card !p-10 !bg-white">
+                        {step === "serial" && (
+                            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                                <div className="relative aspect-[1.58/1] bg-black rounded-[24px] p-8 flex flex-col justify-between overflow-hidden text-white shadow-wise-lg group">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#9FE870]/10 blur-[60px]" />
+                                    <div className="flex justify-between items-start z-10">
+                                        <CreditCard className="text-[#9FE870]" size={24} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">MA Protocol</span>
+                                    </div>
+                                    <div className="space-y-1 z-10">
+                                        <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Serial Identification</p>
+                                        <p className="text-3xl font-black tracking-tighter">{serialNumber || "MA-26-XXXXX"}</p>
+                                    </div>
+                                    <div className="flex justify-between items-end z-10">
+                                        <p className="text-lg font-black tracking-widest leading-none">AMBOS</p>
+                                        <div className="w-10 h-10 bg-white/10 rounded-xl border border-white/10" />
                                     </div>
                                 </div>
-                                <div className="flex justify-between items-end relative z-10">
-                                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-tight">Motor Ambos</span>
-                                    <div className="h-6 w-9 bg-white/10 rounded-md" />
-                                </div>
-                            </div>
 
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block">
-                                    Card Serial Number
-                                </label>
-                                <input
-                                    type="text"
-                                    value={serialNumber}
-                                    onChange={(e) => {
-                                        setSerialNumber(e.target.value.toUpperCase());
-                                        setSerialError("");
-                                    }}
-                                    placeholder="MA-26-00451"
-                                    className="w-full h-14 bg-muted/50 border border-border rounded-2xl px-5 text-lg font-mono font-bold tracking-wider text-center placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                                    maxLength={11}
-                                />
-                                {serialError && (
-                                    <p className="text-xs text-destructive flex items-center gap-1.5">
-                                        <AlertCircle className="h-3 w-3" />
-                                        {serialError}
-                                    </p>
-                                )}
-                                <p className="text-[11px] text-muted-foreground text-center">
-                                    Find this number printed on the back of your Motor Ambos Smart Card.
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={handleSerialSubmit}
-                                disabled={!serialNumber.trim()}
-                                className="w-full h-12 bg-primary text-primary-foreground rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                Continue
-                                <ArrowRight className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </section>
-                )}
-
-                {/* ─── STEP 2: Select Vehicle ─── */}
-                {step === "vehicle" && (
-                    <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-                        <div className="bg-card border border-border rounded-3xl p-8 shadow-sm space-y-6">
-                            <div className="text-center space-y-1">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full text-[10px] font-bold text-primary uppercase tracking-widest mx-auto">
-                                    <Hash className="h-3 w-3" />
-                                    {serialNumber}
-                                </div>
-                                <h3 className="text-lg font-bold mt-3">Select a Vehicle</h3>
-                                <p className="text-xs text-muted-foreground">
-                                    Choose the vehicle to link to this physical card.
-                                </p>
-                            </div>
-
-                            {loadingVehicles ? (
-                                <div className="flex items-center justify-center py-12">
-                                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                                </div>
-                            ) : vehicles.length === 0 ? (
-                                <div className="text-center py-8 space-y-3">
-                                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto">
-                                        <Car className="h-6 w-6 text-muted-foreground" />
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">No vehicles found on your account.</p>
-                                    <p className="text-xs text-muted-foreground">Add a vehicle in the app first, then come back to link your card.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {vehicles.map((v) => (
-                                        <button
-                                            key={v.id}
-                                            onClick={() => handleSelectVehicle(v)}
-                                            className="w-full flex items-center gap-4 p-4 rounded-2xl border border-border bg-background hover:border-primary/30 hover:bg-primary/5 transition-all group text-left"
-                                        >
-                                            <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors shrink-0">
-                                                <Car className="h-6 w-6" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-foreground capitalize truncate">
-                                                    {v.year} {v.make} {v.model}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                                                    {v.plate || "No plate registered"}
-                                                </p>
-                                            </div>
-                                            {v.nfc_card_id ? (
-                                                <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/20 uppercase">
-                                                    Has Card
-                                                </span>
-                                            ) : (
-                                                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            <button
-                                onClick={() => setStep("serial")}
-                                className="w-full text-center text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
-                            >
-                                &larr; Back to serial entry
-                            </button>
-                        </div>
-                    </section>
-                )}
-
-                {/* ─── STEP 3: Confirm ─── */}
-                {step === "confirm" && selectedVehicle && (
-                    <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-                        <div className="bg-card border border-border rounded-3xl p-8 shadow-sm space-y-6">
-                            <div className="text-center space-y-2">
-                                <h3 className="text-lg font-bold">Confirm Link</h3>
-                                <p className="text-xs text-muted-foreground">
-                                    This will create a permanent public passport for this vehicle.
-                                </p>
-                            </div>
-
-                            {/* Summary */}
-                            <div className="bg-muted/50 rounded-2xl p-6 space-y-4 border border-border/50">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Physical Card</span>
-                                    <span className="font-mono font-bold text-foreground">{serialNumber}</span>
-                                </div>
-                                <div className="h-px bg-border" />
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Vehicle</span>
-                                    <span className="font-bold text-foreground capitalize">{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</span>
-                                </div>
-                                <div className="h-px bg-border" />
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Plate</span>
-                                    <span className="font-mono font-bold text-primary">{selectedVehicle.plate || "—"}</span>
-                                </div>
-                            </div>
-
-                            {selectedVehicle.nfc_card_id && (
-                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-start gap-3">
-                                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-xs font-bold text-amber-600">This vehicle already has a linked card</p>
-                                        <p className="text-[10px] text-amber-600/70 mt-0.5">
-                                            Linking a new card will replace the existing Digital Passport URL. The old link will stop working.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setStep("vehicle")}
-                                    className="flex-1 h-12 bg-muted text-muted-foreground rounded-2xl font-bold text-sm hover:bg-muted/80 transition-all"
-                                >
-                                    Back
-                                </button>
-                                <button
-                                    onClick={handleConfirmLink}
-                                    disabled={linking}
-                                    className="flex-1 h-12 bg-primary text-primary-foreground rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                                >
-                                    {linking ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <>
-                                            <ShieldCheck className="h-4 w-4" />
-                                            Link Card
-                                        </>
+                                <div className="space-y-4">
+                                    <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079] ml-1">Card Serial Number</label>
+                                    <input
+                                        type="text"
+                                        value={serialNumber}
+                                        onChange={(e) => { setSerialNumber(e.target.value.toUpperCase()); setSerialError(""); }}
+                                        placeholder="MA-26-00451"
+                                        className="w-full bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[20px] py-6 px-8 text-3xl font-black text-center outline-none transition-all placeholder:text-[#5D7079]/20"
+                                        maxLength={11}
+                                    />
+                                    {serialError && (
+                                        <p className="text-xs font-black text-red-600 uppercase tracking-widest text-center">{serialError}</p>
                                     )}
+                                </div>
+
+                                <button
+                                    onClick={handleSerialSubmit}
+                                    disabled={!serialNumber.trim()}
+                                    className="wise-btn-primary w-full !py-6 !text-lg flex items-center justify-center gap-3 disabled:opacity-30"
+                                >
+                                    Continue <ArrowRight size={20} />
                                 </button>
                             </div>
-                        </div>
-                    </section>
-                )}
+                        )}
 
-                {/* ─── STEP 4: Success ─── */}
-                {step === "success" && selectedVehicle && (
-                    <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-                        <div className="bg-card border border-border rounded-3xl p-8 shadow-sm space-y-6 text-center">
-                            {/* Success animation */}
-                            <div className="relative mx-auto h-20 w-20">
-                                <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-30" />
-                                <div className="relative h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/30">
-                                    <CheckCircle2 className="h-10 w-10 text-primary" />
+                        {step === "vehicle" && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                                <div className="space-y-2 text-center">
+                                    <div className="inline-block px-4 py-1.5 bg-[#F0F2F5] rounded-full text-[10px] font-black uppercase tracking-widest">{serialNumber}</div>
+                                    <h3 className="text-2xl font-black tracking-tight uppercase">Select Vehicle</h3>
                                 </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-bold">Card Linked!</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Your Digital Passport is live. Anyone who taps or scans this card will see a verified profile of your vehicle.
-                                </p>
-                            </div>
+                                {loadingVehicles ? (
+                                    <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#9FE870]" size={32} /></div>
+                                ) : vehicles.length === 0 ? (
+                                    <div className="text-center py-12 space-y-4">
+                                        <p className="font-bold text-[#5D7079] uppercase tracking-widest">No units found.</p>
+                                        <Link href="/help" className="text-sm font-black text-[#9FE870] uppercase">Register a vehicle first &rarr;</Link>
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-4">
+                                        {vehicles.map((v) => (
+                                            <button
+                                                key={v.id}
+                                                onClick={() => handleSelectVehicle(v)}
+                                                className="flex items-center gap-6 p-6 bg-[#F0F2F5] rounded-[24px] border-2 border-transparent hover:border-[#9FE870] transition-all group"
+                                            >
+                                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-[#5D7079] group-hover:bg-[#9FE870] group-hover:text-black transition-colors">
+                                                    <Car size={28} />
+                                                </div>
+                                                <div className="flex-1 text-left">
+                                                    <p className="text-xl font-black tracking-tight uppercase truncate">{v.year} {v.make} {v.model}</p>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">{v.plate || "NO PLATE"}</p>
+                                                </div>
+                                                <ArrowRight size={20} className="text-[#5D7079]/30 group-hover:text-black" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
 
-                            {/* Generated URL */}
-                            <div className="bg-muted/50 rounded-2xl p-5 space-y-3 border border-border/50">
-                                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Your Public Passport URL</div>
-                                <div className="bg-background rounded-xl px-4 py-3 border border-border font-mono text-sm text-primary break-all">
-                                    {passportUrl}
+                                <button onClick={() => setStep("serial")} className="w-full text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Back to Serial</button>
+                            </div>
+                        )}
+
+                        {step === "confirm" && selectedVehicle && (
+                            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                                <h3 className="text-2xl font-black tracking-tight uppercase text-center">Confirm Protocol</h3>
+
+                                <div className="space-y-4">
+                                    <SummaryItem label="Physical Card" value={serialNumber} />
+                                    <SummaryItem label="Vehicle Unit" value={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`} />
+                                    <SummaryItem label="Registration" value={selectedVehicle.plate || "—"} color="text-[#2D5B18]" />
                                 </div>
-                                <div className="flex gap-3">
-                                    <Link
-                                        href={`/v/${publicId}`}
-                                        target="_blank"
-                                        className="flex-1 h-10 bg-primary text-primary-foreground rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-all"
-                                    >
-                                        <ExternalLink className="h-3.5 w-3.5" />
-                                        View Passport
-                                    </Link>
-                                    <button
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(passportUrl);
-                                        }}
-                                        className="flex-1 h-10 bg-muted text-muted-foreground rounded-xl font-bold text-xs hover:bg-muted/80 transition-all"
-                                    >
-                                        Copy Link
+
+                                <div className="flex gap-4">
+                                    <button onClick={() => setStep("vehicle")} className="wise-btn-secondary flex-1 !py-6 !text-lg">Back</button>
+                                    <button onClick={handleConfirmLink} className="wise-btn-primary flex-1 !py-6 !text-lg flex items-center justify-center gap-2" disabled={linking}>
+                                        {linking ? <Loader2 className="animate-spin" /> : <><ShieldCheck size={20} /> Deploy Link</>}
                                     </button>
                                 </div>
                             </div>
+                        )}
 
-                            {/* Summary */}
-                            <div className="grid grid-cols-2 gap-3 text-left">
-                                <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Card Serial</p>
-                                    <p className="font-mono font-bold text-sm mt-1">{serialNumber}</p>
+                        {step === "success" && (
+                            <div className="space-y-10 text-center animate-in fade-in slide-in-from-bottom-4">
+                                <div className="w-24 h-24 bg-[#9FE870] rounded-full flex items-center justify-center text-[#2D5B18] mx-auto shadow-wise-lg">
+                                    <CheckCircle2 size={48} strokeWidth={3} />
                                 </div>
-                                <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Vehicle</p>
-                                    <p className="font-bold text-sm mt-1 capitalize truncate">{selectedVehicle.make} {selectedVehicle.model}</p>
+
+                                <div className="space-y-2">
+                                    <h3 className="text-3xl font-black tracking-tight uppercase">Card Active.</h3>
+                                    <p className="text-sm font-bold text-[#5D7079] uppercase tracking-widest leading-relaxed">
+                                        Your Digital Passport is live. Anyone who taps this card will see a verified profile of your vehicle unit.
+                                    </p>
                                 </div>
+
+                                <div className="bg-[#F0F2F5] rounded-[24px] p-8 space-y-6 text-left">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#5D7079]">Public Assignment URL</p>
+                                    <p className="text-sm font-black text-[#2D5B18] break-all border-b border-[#9FE870]/20 pb-4">{passportUrl}</p>
+                                    <div className="flex gap-4">
+                                        <Link href={`/v/${publicId}`} className="wise-btn-primary !px-6 !py-3 !text-xs flex-1 flex items-center justify-center gap-2">
+                                            <ExternalLink size={14} /> View Passport
+                                        </Link>
+                                        <button onClick={() => { navigator.clipboard.writeText(passportUrl); toast.success("Link Coped!"); }} className="wise-btn-secondary !px-6 !py-3 !text-xs flex-1">
+                                            Copy Link
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <Link href="/digital-passport" className="inline-block text-[10px] font-black uppercase tracking-widest opacity-40">Return to Passport Terminal</Link>
                             </div>
-                        </div>
-                    </section>
-                )}
-
+                        )}
+                    </div>
+                </div>
             </main>
 
             <Footer />
+        </div>
+    );
+}
+
+function SummaryItem({ label, value, color = "text-black" }: { label: string, value: string, color?: string }) {
+    return (
+        <div className="flex justify-between items-center p-6 bg-[#F0F2F5] rounded-[20px]">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#5D7079]">{label}</span>
+            <span className={cn("text-lg font-black tracking-tight uppercase truncate max-w-[200px]", color)}>{value}</span>
         </div>
     );
 }

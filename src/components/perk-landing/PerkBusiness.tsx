@@ -1,91 +1,100 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { PieChart, TrendingUp, ShieldCheck, Map, LifeBuoy, ArrowRight } from "lucide-react";
+import React from "react";
+import { Check, ArrowRight, Table, BarChart3, Clock, LayoutDashboard } from "lucide-react";
 
 export function PerkBusiness() {
-    const [activeTab, setActiveTab] = useState(0);
-
-    const pillars = [
-        {
-            title: "Cost control & transparency",
-            icon: PieChart,
-            points: ["Eliminate Ghost receipts", "Consolidated maintenance history", "Agreed prices + verified work"]
-        },
-        {
-            title: "Leakage prevention",
-            icon: TrendingUp,
-            points: ["Fuel vs mileage reconciliation", "Stop fuel skimming", "Unauthorized use detection"]
-        },
-        {
-            title: "Operational efficiency",
-            icon: Map,
-            points: ["Fleet heatmap: Grounded/Due/Ready", "Compliance renewals dashboard", "Automated scheduling"]
-        },
-        {
-            title: "Asset protection",
-            icon: ShieldCheck,
-            points: ["Boost resale value by up to 20%", "Driver accountability scoring", "Certified history"]
-        },
-        {
-            title: "Safety & logistics",
-            icon: LifeBuoy,
-            points: ["Universal rescue (Accra to Kumasi)", "App or USSD fallback", "24/7 roadside assistance"]
-        }
+    const bullets = [
+        "Eliminate ghost receipts",
+        "Prevent fuel leakage",
+        "Automate compliance renewals",
+        "Increase resale confidence",
+        "Centralized rescue coordination"
     ];
 
     return (
-        <section id="business" className="py-32 bg-background">
-            <div className="container mx-auto px-6">
-                <div className="flex flex-col gap-6 mb-24">
-                    <div className="ambos-label">Enterprise Solution</div>
-                    <h2 className="ambos-heading text-4xl md:text-8xl text-foreground">
-                        Fleet Operations, <br /> Zero Guesswork.
-                    </h2>
-                </div>
+        <section id="business" className="wise-section bg-white border-t border-border">
+            <div className="wise-container">
+                <div className="grid lg:grid-cols-2 gap-20 items-center">
+                    {/* Left: Content */}
+                    <div className="space-y-12">
+                        <div className="space-y-8">
+                            <h2 className="wise-heading-section !leading-none">
+                                Fleet control, <br /> simplified.
+                            </h2>
+                            <p className="wise-body max-w-xl">
+                                Total visibility for corporate cars, logistics, and businesses. Manage scale without the friction of manual records and unverified spending.
+                            </p>
+                        </div>
 
-                <div className="grid lg:grid-cols-12 gap-12 items-start">
-                    <div className="lg:col-span-12 grid md:grid-cols-3 gap-6">
-                        {pillars.map((p, i) => (
-                            <button
-                                key={i}
-                                onClick={() => setActiveTab(i)}
-                                className={`ambos-card p-10 flex flex-col gap-8 text-left transition-all ${activeTab === i ? "border-primary bg-background" : "hover:border-primary/50"
-                                    }`}
-                            >
-                                <div className={`w-10 h-10 flex items-center justify-center ${activeTab === i ? "bg-primary text-black" : "bg-foreground text-background"
-                                    }`}>
-                                    <p.icon size={20} />
-                                </div>
-                                <div className="space-y-4">
-                                    <h3 className="ambos-heading text-xl tracking-wider text-foreground">{p.title}</h3>
-                                    <ul className={`space-y-2 ${activeTab === i ? "block" : "hidden md:block opacity-40"}`}>
-                                        {p.points.map((pt, j) => (
-                                            <li key={j} className="flex items-center gap-2">
-                                                <div className="w-1 h-1 bg-primary" />
-                                                <span className="mono-text text-[10px]">{pt}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                {activeTab === i && (
-                                    <div className="mt-auto flex justify-end">
-                                        <ArrowRight size={16} className="text-primary" />
+                        <ul className="space-y-6">
+                            {bullets.map((bullet, i) => (
+                                <li key={i} className="flex items-center gap-6 group cursor-default">
+                                    <div className="w-6 h-6 rounded-full bg-[#9FE870] flex items-center justify-center transition-transform group-hover:scale-110">
+                                        <Check size={14} className="text-black" strokeWidth={5} />
                                     </div>
-                                )}
+                                    <span className="font-bold text-[20px] tracking-tight transition-colors group-hover:text-black">{bullet}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        <div className="pt-8">
+                            <button className="wise-btn-primary !px-12 group">
+                                Request demo
+                                <ArrowRight size={20} className="ml-3 group-hover:translate-x-1 transition-transform" />
                             </button>
-                        ))}
+                        </div>
                     </div>
 
-                    <div className="lg:col-span-12 pt-12">
-                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                            <button className="ambos-btn-lime py-5 px-10 text-sm">
-                                Request Fleet Demo
-                            </button>
-                            <button className="ambos-btn-secondary py-5 px-10 text-sm">
-                                System Specs
-                            </button>
+                    {/* Right: Dashboard Preview (Conceptual UI) */}
+                    <div className="relative wise-fade-in lg:ml-10">
+                        <div className="relative wise-card !p-0 overflow-hidden shadow-wise-lg border border-[#E2E8F0] bg-[#FFFFFF]">
+                            <div className="p-8 space-y-8">
+                                <div className="flex justify-between items-center border-b border-[#F0F2F5] pb-6">
+                                    <div className="flex items-center gap-4">
+                                        <LayoutDashboard size={20} className="text-[#5D7079]" />
+                                        <span className="text-[12px] font-black uppercase tracking-widest text-[#5D7079]">Live Fleet Audit</span>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="w-3 h-3 rounded-full bg-[#9FE870]" />
+                                        <div className="w-3 h-3 rounded-full bg-[#F0F2F5]" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {[
+                                        { id: "NODE_01", car: "Land Rover Defender", state: "Verified", cost: "GHS 2,400" },
+                                        { id: "NODE_12", car: "Toyota Hilux (Fleet)", state: "Auditing", cost: "GHS 1,120", active: true },
+                                        { id: "NODE_09", car: "Mercedes Sprinter", state: "Verified", cost: "GHS 4,890" }
+                                    ].map((fleet, idx) => (
+                                        <div key={idx} className={`p-6 rounded-[12px] border transition-all ${fleet.active ? 'bg-[#F0F2F5] border-transparent' : 'bg-white border-[#F0F2F5] hover:border-[#E2E8F0]'}`}>
+                                            <div className="flex justify-between items-center">
+                                                <div className="space-y-1">
+                                                    <div className="text-[10px] font-black text-[#5D7079] uppercase tracking-widest opacity-60">{fleet.id}</div>
+                                                    <div className="text-lg font-black tracking-tight">{fleet.car}</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className={`text-sm font-black ${fleet.state === 'Auditing' ? 'text-amber-500' : 'text-[#9FE870]'}`}>{fleet.state}</div>
+                                                    <div className="text-[12px] font-bold text-[#5D7079]">{fleet.cost}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-[#000000] p-8 flex justify-between items-center text-white">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                                        <BarChart3 size={24} className="text-[#9FE870]" />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <div className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-40">Monthly Efficiency</div>
+                                        <div className="text-3xl font-black text-[#9FE870]">+14.2%</div>
+                                    </div>
+                                </div>
+                                <ArrowRight size={24} className="text-white/20" />
+                            </div>
                         </div>
                     </div>
                 </div>

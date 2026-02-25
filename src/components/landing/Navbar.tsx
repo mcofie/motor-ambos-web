@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,79 +15,90 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Car, Menu } from "lucide-react";
 
 export function Navbar() {
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
     const navLinks = [
         { href: "/#services", label: "Services" },
         { href: "/business", label: "Business" },
-        { href: "/for-mechanics", label: "Mechanics" },
         { href: "/roadside-assistance", label: "Rescue" },
         { href: "/about-us", label: "About" },
     ];
 
     return (
         <header
-            className="fixed top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
-            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+            className={`fixed top-0 z-50 w-full transition-all duration-700 ${isScrolled
+                ? "glass-nav py-4 shadow-2xl"
+                : "bg-transparent py-8 border-transparent"
+                }`}>
+            <div className="mx-auto flex max-w-[1600px] items-center justify-between px-8">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <span className="ambos-heading text-2xl tracking-widest text-foreground group-hover:text-primary transition-colors">
-                        Motor Ambos
+                    <span className="ambos-heading text-xl md:text-2xl tracking-[0.4em] text-foreground group-hover:text-primary transition-all duration-500 font-black">
+                        MOTOR_AMBOS
                     </span>
                 </Link>
 
                 {/* Desktop Nav */}
-                <nav className="hidden md:flex items-center gap-10">
+                <nav className="hidden lg:flex items-center gap-12">
                     {navLinks.map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}
-                            className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
+                            className="mono-text text-[10px] font-black tracking-[0.3em] text-muted-foreground hover:text-primary transition-all uppercase"
                         >
                             {link.label}
                         </Link>
                     ))}
-                    <div className="flex items-center gap-4 ml-6">
+                    <div className="flex items-center gap-10 ml-8 pl-12 border-l border-white/5">
                         <ThemeToggle />
-                        <button className="ambos-btn-secondary py-3 px-6 text-[10px]">
-                            <Link href="/club">Login</Link>
+                        <button className="text-[10px] mono-text font-black tracking-[0.3em] hover:text-primary transition-colors cursor-pointer uppercase">
+                            SYSTEM_LOGIN
                         </button>
-                        <button className="ambos-btn-lime py-3 px-6 text-[10px]">
-                            <Link href="/club">Join Club</Link>
+                        <button className="ambos-btn-lime !py-4 !px-10 !text-[10px] !tracking-[0.4em]">
+                            <Link href="/club">JOIN_GRID</Link>
                         </button>
                     </div>
                 </nav>
 
                 {/* Mobile Nav */}
-                <div className="flex items-center gap-4 md:hidden">
+                <div className="flex items-center gap-6 lg:hidden">
                     <ThemeToggle />
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-foreground">
-                                <Menu className="h-6 w-6" />
-                            </Button>
+                            <button className="p-4 bg-white/5 rounded-2xl border border-white/10 hover:border-primary/50 transition-all">
+                                <Menu className="h-6 w-6 text-foreground" />
+                            </button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="bg-background border-l-border w-full sm:w-[400px] p-0">
-                            <div className="flex flex-col h-full">
-                                <div className="p-6 border-b border-border">
-                                    <Link href="/" className="ambos-heading text-2xl tracking-widest text-foreground">
-                                        Motor Ambos
+                        <SheetContent side="right" className="bg-background/98 backdrop-blur-3xl border-l-white/5 w-full sm:w-[500px] p-0 rounded-none overflow-hidden">
+                            <div className="flex flex-col h-full bg-background relative">
+                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/[0.03] blur-[120px] -z-10" />
+                                <div className="p-12 border-b border-white/5 flex justify-between items-center">
+                                    <Link href="/" className="ambos-heading text-xl md:text-2xl tracking-[0.4em] text-foreground font-black">
+                                        MOTOR_AMBOS
                                     </Link>
                                 </div>
-                                <div className="flex-grow p-6 space-y-8">
+                                <div className="flex-grow p-12 flex flex-col justify-center space-y-12">
                                     {navLinks.map((link) => (
                                         <Link
                                             key={link.href}
                                             href={link.href}
-                                            className="block text-2xl ambos-heading text-foreground hover:text-primary transition-colors"
+                                            className="block text-6xl md:text-7xl ambos-heading text-foreground hover:text-primary transition-all duration-500 hover:translate-x-8 tracking-tighter"
                                         >
-                                            {link.label}
+                                            {link.label.toUpperCase()}
                                         </Link>
                                     ))}
                                 </div>
-                                <div className="p-6 border-t border-border grid grid-cols-2 gap-4">
-                                    <button className="ambos-btn-secondary py-5 text-sm">
-                                        Login
+                                <div className="p-12 border-t border-white/5 flex flex-col gap-6 bg-background/50">
+                                    <button className="text-sm mono-text font-black tracking-[0.4em] text-foreground/40 hover:text-primary transition-all text-left uppercase">
+                                        SYSTEM_LOGIN_PORTAL
                                     </button>
-                                    <button className="ambos-btn-lime py-5 text-sm">
-                                        Join Club
+                                    <button className="ambos-btn-lime !py-10 !text-xl !tracking-[0.5em]">
+                                        JOIN_OPERATIONAL_GRID
                                     </button>
                                 </div>
                             </div>

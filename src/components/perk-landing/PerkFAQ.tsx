@@ -1,51 +1,52 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Minus } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export function PerkFAQ() {
-    const [openIndex, setOpenIndex] = useState<number | null>(0);
+    const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     const faqs = [
-        { q: "Does it work without internet?", a: "Yes. Motor Ambos works via USSD fallback in zero-data areas, ensuring you can still request rescue and view critical vehicle data." },
-        { q: "How are records verified?", a: "Records logged via the Onyx NFC card at approved centers are digitally signed and timestamped, creating a trusted history that boosts resale value." },
-        { q: "Can any mechanic update my passport?", a: "Only verified providers in the Motor Ambos network can write to the verified history. You can manually log your own 'self-service' events separately." },
-        { q: "What docs can I store?", a: "Insurance certificates, Roadworthy documents, Driver's License, and Logbooks. We'll alert you before they expire." },
-        { q: "How do fleets manage many vehicles?", a: "Fleet owners get a master dashboard to track compliance, location, fuel efficiency, and maintenance across every unit in real-time." },
-        { q: "Is my data secure?", a: "Your data is encrypted and protected by Supabase Row Level Security. Only you (and those you explicitly share with) can access your records." }
+        {
+            q: "How does Motor Ambos protect my vehicle history?",
+            a: "We use encrypted NFC hardware and multi-party verification protocols to ensure that every record logged in your vehicle's digital passport is authentic, tamper-proof, and legally verifiable."
+        },
+        {
+            q: "Can I manage a fleet of vehicles with one account?",
+            a: "Yes. Motor Ambos for Business is designed for fleet managers, providing centralized visibility into compliance, maintenance costs, and fuel consumption across unlimited vehicle nodes."
+        },
+        {
+            q: "Do I need special hardware to use the system?",
+            a: "While the app works for general tracking, the Onyx Card (NFC) is required for high-integrity service logging and quick-tap verification at partner service centers."
+        }
     ];
 
     return (
-        <section id="faq" className="py-32 bg-background">
-            <div className="container mx-auto px-6 max-w-5xl">
-                <div className="flex flex-col gap-6 mb-20">
-                    <div className="ambos-label">Documentation</div>
-                    <h2 className="ambos-heading text-4xl md:text-8xl text-left text-foreground">FAQ</h2>
-                </div>
+        <section id="faq" className="wise-section bg-[#F0F2F5] border-t border-border">
+            <div className="wise-container">
+                <div className="max-w-4xl space-y-20">
+                    <h2 className="wise-heading-section text-center">Frequently asked questions</h2>
 
-                <div className="grid md:grid-cols-2 gap-px bg-border border border-border">
-                    {faqs.map((faq, idx) => (
-                        <div key={idx} className="bg-background p-12 space-y-6 hover:bg-secondary/50 transition-colors">
-                            <h3 className="ambos-heading text-xl text-foreground">{faq.q}</h3>
-                            <p className="text-sm text-muted-foreground uppercase tracking-wide leading-relaxed">
-                                {faq.a}
-                            </p>
-                            <div className="pt-4 flex justify-between items-center text-[10px] font-mono text-muted-foreground">
-                                <span>Ref: 0{idx + 1}</span>
-                                <span>Technical Info</span>
+                    <div className="space-y-4">
+                        {faqs.map((faq, idx) => (
+                            <div key={idx} className="bg-white border border-[#E2E8F0] rounded-[12px] overflow-hidden">
+                                <button
+                                    onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+                                    className="w-full p-8 flex justify-between items-center text-left hover:bg-[#F0F2F5]/50 transition-colors group"
+                                >
+                                    <span className="text-xl font-black tracking-tight">{faq.q}</span>
+                                    <ChevronDown size={24} className={`text-[#5D7079] transition-transform duration-300 ${openIndex === idx ? 'rotate-180' : ''}`} />
+                                </button>
+                                {openIndex === idx && (
+                                    <div className="px-8 pb-8 animate-in fade-in slide-in-from-top-2">
+                                        <p className="text-lg font-bold text-[#5D7079] leading-relaxed">
+                                            {faq.a}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Final CTA section */}
-                <div className="flex flex-wrap justify-center gap-6 mt-20">
-                    <button className="ambos-btn-lime bg-primary text-black py-6 px-12 text-lg">
-                        Get the App
-                    </button>
-                    <button className="ambos-btn-secondary border-white text-white py-6 px-12 text-lg hover:bg-white hover:text-onyx uppercase tracking-widest font-bold">
-                        Request Fleet Demo
-                    </button>
+                        ))}
+                    </div>
                 </div>
             </div>
         </section>

@@ -35,6 +35,10 @@ const nextConfig = {
                 protocol: "https",
                 hostname: "developer.apple.com",
             },
+            {
+                protocol: "https",
+                hostname: "i.pravatar.cc",
+            },
         ],
     },
     async rewrites() {

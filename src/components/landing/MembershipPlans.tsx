@@ -13,199 +13,158 @@ export function MembershipPlans({ }: MembershipPlansProps) {
     return (
         <div className="flex flex-col min-h-screen bg-background">
             {/* Hero Section */}
-            <section className="relative pt-24 pb-20 overflow-hidden">
-                <div className="absolute inset-0 -z-10">
-                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 blur-[120px] rounded-full opacity-50" />
-                    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/10 blur-[100px] rounded-full opacity-30" />
-                </div>
+            <section className="relative pt-44 pb-32 overflow-hidden bg-background mesh-bg">
+                <div className="card-circle opacity-50" />
 
-                <div className="container mx-auto px-4 max-w-6xl text-center">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <ShieldCheck className="h-4 w-4" />
-                        <span>Motor Ambos Club</span>
-                    </div>
+                <div className="container mx-auto px-8 max-w-[1600px] relative z-10 text-center">
+                    <div className="ambos-label mb-10">SYSTEM_PROTECTION_PROTOCOL</div>
 
-                    <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
-                        Drive with <br />
-                        <span className="text-primary">Absolute Confidence.</span>
+                    <h1 className="ambos-heading text-[10vw] md:text-[8vw] lg:text-[7vw] leading-[0.85] text-foreground tracking-tighter mb-10">
+                        DRIVE_WITH <br />
+                        <span className="text-primary italic text-glow">ABSOLUTE_CONFIDENCE.</span>
                     </h1>
 
-                    <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-12">
-                        Join the club that keeps you moving. Priority dispatch, exclusive discounts, and peace of mind on every journey.
+                    <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed mb-16 font-medium">
+                        Join the club that keeps you moving. Priority dispatch, exclusive discounts, and peace of mind on every journey. Secure your place in the Motor Ambos Network.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Button size="lg" className="h-14 px-8 text-lg font-bold min-w-[200px]" onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}>
-                            View Plans
-                        </Button>
-                        <Button asChild variant="outline" size="lg" className="h-14 px-8 text-base font-medium">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
+                        <button className="ambos-btn-lime !py-10 !px-24 text-2xl" onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}>
+                            VIEW_PROTOCOLS
+                        </button>
+                        <button className="ambos-btn-secondary !py-10 !px-24 text-2xl">
                             <Link href="/club/lookup">
-                                <Search className="mr-2 h-4 w-4" />
-                                Use Digital Card
+                                USE_DIGITAL_CARD
                             </Link>
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </section>
 
             {/* Benefits Grid */}
-            <section className="py-20 bg-muted/30">
-                <div className="container mx-auto px-4 max-w-6xl">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold mb-4">Why Join the Club?</h2>
-                        <p className="text-muted-foreground max-w-2xl mx-auto">
-                            It's more than just roadside assistance. It's a comprehensive car-care companion.
-                        </p>
+            <section className="py-44 bg-background relative overflow-hidden border-y border-white/5">
+                <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
+                    <div className="mb-32 space-y-8">
+                        <div className="ambos-label">CORE_UTILITIES</div>
+                        <h2 className="ambos-heading text-6xl md:text-8xl text-foreground text-glow text-balance leading-[0.85]">Why Join <br /> the Club?</h2>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8">
-                        <div className="bg-background border border-border p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                            <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 text-primary">
-                                <Zap className="h-6 w-6" />
+                    <div className="grid md:grid-cols-3 gap-12">
+                        {[
+                            { title: "Priority Response", icon: Zap, desc: "Skip the queue. Club members get top priority when dispatching roadside assistance, ensuring you're never stuck for long." },
+                            { title: "Service Discounts", icon: ShieldCheck, desc: "Enjoy exclusive discounts on labour fees for all mobile mechanics and partner workshops within our network." },
+                            { title: "Annual Diagnostics", icon: Heart, desc: "Prevention is better than cure. Get a complimentary comprehensive vehicle health check every year of membership." }
+                        ].map((b, i) => (
+                            <div key={i} className="ambos-card p-12 group hover:border-primary/40">
+                                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-10 group-hover:bg-primary group-hover:text-black transition-all duration-500">
+                                    <b.icon size={28} />
+                                </div>
+                                <h3 className="ambos-heading text-2xl mb-6 text-foreground tracking-tight">{b.title.toUpperCase()}</h3>
+                                <p className="mono-text text-[11px] text-muted-foreground leading-relaxed uppercase tracking-widest font-medium">{b.desc}</p>
                             </div>
-                            <h3 className="text-xl font-bold mb-3">Priority Response</h3>
-                            <p className="text-muted-foreground">
-                                Skip the queue. Club members get top priority when dispatching roadside assistance, ensuring you're never stuck for long.
-                            </p>
-                        </div>
-
-                        <div className="bg-background border border-border p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                            <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 text-primary">
-                                <Badge className="bg-primary text-primary-foreground">20% OFF</Badge>
-                            </div>
-                            <h3 className="text-xl font-bold mb-3">Service Discounts</h3>
-                            <p className="text-muted-foreground">
-                                Enjoy exclusive discounts on labour fees for all mobile mechanics and partner workshops within our network.
-                            </p>
-                        </div>
-
-                        <div className="bg-background border border-border p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                            <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 text-primary">
-                                <Heart className="h-6 w-6" />
-                            </div>
-                            <h3 className="text-xl font-bold mb-3">Free Annual Check</h3>
-                            <p className="text-muted-foreground">
-                                Prevention is better than cure. Get a complimentary comprehensive vehicle health check every year of membership.
-                            </p>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </section>
 
             {/* Pricing Tiers */}
-            <section id="plans" className="py-24">
-                <div className="container mx-auto px-4 max-w-6xl">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold mb-4">Simple, Transparent Plans</h2>
-                        <p className="text-muted-foreground">Choose the coverage that fits your lifestyle.</p>
+            <section id="plans" className="py-44 relative bg-background overflow-hidden">
+                <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
+                    <div className="mb-32 space-y-8">
+                        <div className="ambos-label">PRICING_STRUCTURE</div>
+                        <h2 className="ambos-heading text-6xl md:text-8xl text-foreground text-glow text-balance leading-[0.85]">SYSTEM_PLANS.</h2>
                     </div>
 
-                    <div className="grid lg:grid-cols-3 gap-8 items-start">
+                    <div className="grid lg:grid-cols-3 gap-12 items-start">
                         {/* Basic Plan */}
-                        <div className="relative rounded-3xl border border-border bg-card p-8 shadow-sm hover:border-primary/50 transition-colors">
-                            <div className="mb-8">
-                                <h3 className="text-lg font-bold mb-2">Basic</h3>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-3xl font-extrabold">Free</span>
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-4">Pay-as-you-go assistance for the occasional driver.</p>
+                        <div className="ambos-card p-12 space-y-12 group relative overflow-hidden">
+                            <div className="space-y-4">
+                                <h3 className="ambos-heading text-3xl text-foreground tracking-tight">BASIC</h3>
+                                <div className="ambos-heading text-5xl text-primary drop-shadow-[0_0_10px_rgba(206,255,0,0.3)]">FREE</div>
+                                <p className="mono-text text-[11px] text-muted-foreground font-black uppercase tracking-widest">Pay-as-you-go assistance for the occasional driver.</p>
                             </div>
-                            <ul className="space-y-4 mb-8">
-                                <li className="flex items-center gap-3 text-sm">
-                                    <CheckCircle2 className="h-5 w-5 text-muted-foreground shrink-0" />
-                                    <span>Access to verified network</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-sm">
-                                    <CheckCircle2 className="h-5 w-5 text-muted-foreground shrink-0" />
-                                    <span>Standard response times</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-sm">
-                                    <CheckCircle2 className="h-5 w-5 text-muted-foreground shrink-0" />
-                                    <span>Pay per service</span>
-                                </li>
+                            <ul className="space-y-6">
+                                {[
+                                    "Access to verified network",
+                                    "Standard response times",
+                                    "Pay per service"
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-center gap-4 mono-text text-[10px] font-black tracking-widest text-muted-foreground">
+                                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                                        <span>{item.toUpperCase()}</span>
+                                    </li>
+                                ))}
                             </ul>
-                            <Button asChild variant="outline" className="w-full h-12 font-bold">
-                                <Link href="/login">Get Started</Link>
-                            </Button>
+                            <button className="ambos-btn-secondary !w-full !py-8 !text-lg !tracking-[0.4em]">
+                                GET_STARTED
+                            </button>
                         </div>
 
                         {/* Plus Plan (Highlighted) */}
-                        <div className="relative rounded-3xl border-2 border-primary bg-card p-8 shadow-xl scale-105 z-10">
-                            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-4">
-                                <Badge className="bg-primary text-primary-foreground px-3 py-1 text-sm font-bold shadow-lg">MOST POPULAR</Badge>
+                        <div className="ambos-card p-12 space-y-12 group relative bg-primary/5 border-primary/40 shadow-[0_0_50px_rgba(206,255,0,0.1)] scale-105 z-10">
+                            <div className="absolute top-6 right-6">
+                                <span className="ambos-label !bg-primary !text-black !border-none !text-[9px]">ENHANCED_COVERAGE</span>
                             </div>
-                            <div className="mb-8">
-                                <h3 className="text-lg font-bold mb-2 text-primary">Plus</h3>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-sm font-bold text-muted-foreground">GHS</span>
-                                    <span className="text-4xl font-extrabold">50</span>
-                                    <span className="text-sm font-medium text-muted-foreground">/mo</span>
+                            <div className="space-y-4">
+                                <h3 className="ambos-heading text-3xl text-primary tracking-tight">PLUS</h3>
+                                <div className="flex items-baseline gap-4">
+                                    <span className="ambos-heading text-5xl text-foreground">GHS 50</span>
+                                    <span className="mono-text font-black text-sm">/ MONTH</span>
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-4">Essential coverage for peace of mind.</p>
+                                <p className="mono-text text-[11px] text-muted-foreground font-black uppercase tracking-widest">Essential coverage for peace of mind.</p>
                             </div>
-                            <ul className="space-y-4 mb-8">
-                                <li className="flex items-center gap-3 text-sm font-medium">
-                                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                    <span>1 Free Tow per year (20km)</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-sm font-medium">
-                                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                    <span>10% Discount on repairs</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-sm font-medium">
-                                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                    <span>Priority Dispatch</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-sm font-medium">
-                                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                    <span>Free Fuel Delivery service</span>
-                                </li>
+                            <ul className="space-y-6">
+                                {[
+                                    "1 Free Tow per year (20km)",
+                                    "10% Discount on repairs",
+                                    "Priority Dispatch",
+                                    "Free Fuel Delivery service"
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-center gap-4 mono-text text-[10px] font-black tracking-widest text-foreground">
+                                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                                        <span>{item.toUpperCase()}</span>
+                                    </li>
+                                ))}
                             </ul>
-                            <Button asChild className="w-full h-12 font-bold bg-primary text-primary-foreground hover:bg-primary/90">
-                                <Link href="/login?plan=plus">Join Plus</Link>
-                            </Button>
+                            <button className="ambos-btn-lime !w-full !py-10 !text-xl !tracking-[0.5em] !hover:shadow-[0_20px_40px_-10px_rgba(206,255,0,0.5)]">
+                                JOIN_PLUS_PROTOCOL
+                            </button>
                         </div>
 
                         {/* Pro Plan */}
-                        <div className="relative rounded-3xl border border-border bg-card p-8 shadow-sm hover:border-primary/50 transition-colors">
-                            <div className="mb-8">
-                                <h3 className="text-lg font-bold mb-2">Pro</h3>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-sm font-bold text-muted-foreground">GHS</span>
-                                    <span className="text-4xl font-extrabold">120</span>
-                                    <span className="text-sm font-medium text-muted-foreground">/mo</span>
+                        <div className="ambos-card p-12 space-y-12 group relative">
+                            <div className="space-y-4">
+                                <h3 className="ambos-heading text-3xl text-foreground tracking-tight">PRO</h3>
+                                <div className="flex items-baseline gap-4">
+                                    <span className="ambos-heading text-5xl text-primary drop-shadow-[0_0_10px_rgba(206,255,0,0.3)]">GHS 120</span>
+                                    <span className="mono-text font-black text-sm">/ MONTH</span>
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-4">Complete protection for frequent drivers.</p>
+                                <p className="mono-text text-[11px] text-muted-foreground font-black uppercase tracking-widest">Complete protection for frequent drivers.</p>
                             </div>
-                            <ul className="space-y-4 mb-8">
-                                <li className="flex items-center gap-3 text-sm">
-                                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                    <span>3 Free Tows per year</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-sm">
-                                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                    <span>20% Discount on repairs</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-sm">
-                                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                    <span>Free Annual Vehicle Check</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-sm">
-                                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                    <span>Dedicated Support Line</span>
-                                </li>
+                            <ul className="space-y-6">
+                                {[
+                                    "3 Free Tows per year",
+                                    "20% Discount on repairs",
+                                    "Free Annual Vehicle Check",
+                                    "Dedicated Support Line"
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-center gap-4 mono-text text-[10px] font-black tracking-widest text-muted-foreground">
+                                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                                        <span>{item.toUpperCase()}</span>
+                                    </li>
+                                ))}
                             </ul>
-                            <Button asChild variant="outline" className="w-full h-12 font-bold">
-                                <Link href="/login?plan=pro">Join Pro</Link>
-                            </Button>
+                            <button className="ambos-btn-secondary !w-full !py-8 !text-lg !tracking-[0.4em]">
+                                JOIN_PRO_PROTOCOL
+                            </button>
                         </div>
                     </div>
 
-                    <div className="mt-16 text-center">
-                        <p className="text-sm text-muted-foreground mb-4">Already a member but don't have your link?</p>
-                        <Button asChild variant="link" className="text-primary font-bold">
-                            <Link href="/club/lookup">Look up your Digital Card</Link>
-                        </Button>
+                    <div className="mt-40 text-center space-y-8">
+                        <p className="mono-text text-sm font-black tracking-widest text-muted-foreground uppercase opacity-60">Already a member but don&apos;t have your link?</p>
+                        <button className="text-primary ambos-heading tracking-widest text-lg hover:italic transition-all uppercase">
+                            LOOK_UP_DIGITAL_CARD &rarr;
+                        </button>
                     </div>
                 </div>
             </section>

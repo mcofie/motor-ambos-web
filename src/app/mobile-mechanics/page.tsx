@@ -12,29 +12,35 @@ export const metadata = {
 
 export default function MobileMechanicsPage() {
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/30">
             <Navbar />
 
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-44 pb-32 overflow-hidden bg-background">
-                    <div className="absolute inset-0 -z-20 h-full w-full">
-                        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.05]" />
-                    </div>
-                    <div className="container mx-auto px-6 max-w-7xl relative z-10">
-                        <div className="max-w-3xl">
-                            <div className="ambos-label mb-8">SERVICE_NODE: MOBILE_REPAIR_PROTOCOL</div>
-                            <h1 className="ambos-heading text-5xl md:text-9xl mb-8 leading-[0.85] text-foreground uppercase">
-                                EXPERT REPAIRS, <br />
-                                <span className="text-primary italic">VERIFIED HISTORY.</span>
-                            </h1>
-                            <p className="text-xl md:text-2xl text-muted-foreground mb-16 leading-relaxed max-w-2xl uppercase tracking-tight">
-                                Bypass the repair shop infrastructure. Our certified mobile units deploy directly to your location.
-                                Every intervention is officially logged to your vehicle&apos;s <span className="text-foreground font-bold italic">Digital Passport</span>.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <button className="ambos-btn-lime py-6 px-12 text-lg">
-                                    <Link href="/help">Book a Mechanic</Link>
+                <section className="relative pt-44 pb-32 overflow-hidden bg-background mesh-bg">
+                    <div className="card-circle opacity-50" />
+
+                    <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
+                        <div className="flex flex-col items-center text-center space-y-16 lg:space-y-20">
+                            <div className="ambos-label">SERVICE_NODE: MOBILE_REPAIR_PROTOCOL_v4.2</div>
+
+                            <div className="space-y-8 max-w-6xl">
+                                <h1 className="ambos-heading text-[10vw] md:text-[8vw] lg:text-[7vw] leading-[0.85] text-foreground tracking-tighter">
+                                    EXPERT_REPAIRS. <br />
+                                    <span className="text-primary italic text-glow">VERIFIED_HISTORY.</span>
+                                </h1>
+
+                                <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed font-medium">
+                                    Bypass the repair shop infrastructure. Our certified mobile units deploy directly to your location. Every intervention is officially logged to your vehicle&apos;s digital passport under technical performance standards.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-8">
+                                <button className="ambos-btn-lime !py-10 !px-24 text-2xl">
+                                    <Link href="/help">BOOK_MECHANIC_NODE</Link>
+                                </button>
+                                <button className="ambos-btn-secondary !py-10 !px-24 text-2xl">
+                                    <Link href="/digital-passport">PASSPORT_SYNC</Link>
                                 </button>
                             </div>
                         </div>
@@ -42,79 +48,69 @@ export default function MobileMechanicsPage() {
                 </section>
 
                 {/* Benefits Section */}
-                <section className="py-32">
-                    <div className="container mx-auto px-6 max-w-7xl">
-                        <div className="grid md:grid-cols-3 gap-0 border border-border">
-                            <div className="flex flex-col items-start p-12 border-r border-b md:border-b-0 border-border bg-background hover:bg-muted/5 transition-colors">
-                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
-                                    <Wrench size={28} />
+                <section className="py-44 bg-background relative overflow-hidden border-y border-white/5">
+                    <div className="container mx-auto px-8 max-w-[1600px] relative z-10">
+                        <div className="grid md:grid-cols-3 gap-12">
+                            {[
+                                { title: "Full Spectrum", icon: Wrench, desc: "From fluid diagnostics and braking systems to complex mechanical interventions. Professional grade mobile infrastructure." },
+                                { title: "Zero Friction", icon: Clock, desc: "Eliminate the drop-off queue. We maintain your asset while you execute your primary professional priorities." },
+                                { title: "Hardware Audit", icon: CheckCircle, desc: "Every component replacement is serialized on your NFC Smart Card, securing asset integrity and resale value." }
+                            ].map((b, i) => (
+                                <div key={i} className="ambos-card p-12 group hover:border-primary/40">
+                                    <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-10 group-hover:bg-primary group-hover:text-black transition-all duration-500">
+                                        <b.icon size={28} />
+                                    </div>
+                                    <h3 className="ambos-heading text-2xl mb-6 text-foreground tracking-tight">{b.title.toUpperCase()}</h3>
+                                    <p className="mono-text text-[11px] text-muted-foreground leading-relaxed uppercase tracking-widest font-medium">
+                                        {b.desc}
+                                    </p>
                                 </div>
-                                <h3 className="ambos-heading text-2xl mb-6">Full Spectrum</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
-                                    From fluid diagnostics and braking systems to complex mechanical interventions. Professional grade mobile infrastructure.
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col items-start p-12 border-r border-b md:border-b-0 border-border bg-background hover:bg-muted/5 transition-colors">
-                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
-                                    <Clock size={28} />
-                                </div>
-                                <h3 className="ambos-heading text-2xl mb-6">Zero Friction</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
-                                    Eliminate the drop-off queue. We maintain your asset while you execute your primary professional priorities.
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col items-start p-12 bg-background hover:bg-muted/5 transition-colors">
-                                <div className="h-16 w-16 bg-foreground text-background flex items-center justify-center mb-10">
-                                    <CheckCircle size={28} />
-                                </div>
-                                <h3 className="ambos-heading text-2xl mb-6">Hardware Audit</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed uppercase tracking-widest">
-                                    Every component replacement is serialized on your NFC Smart Card, securing asset integrity and resale value.
-                                </p>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </section>
 
                 {/* How It Works */}
-                <section className="py-32 bg-muted/5 border-y border-border">
-                    <div className="container mx-auto px-6 max-w-4xl text-center">
-                        <div className="ambos-label mb-8 mx-auto">DEPLOYMENT_FLOW</div>
-                        <h2 className="ambos-heading text-4xl md:text-7xl mb-24 uppercase">Technical Sequence.</h2>
-                        <div className="grid md:grid-cols-3 gap-0 border border-border">
-                            <div className="bg-background p-10 border-r border-b md:border-b-0 border-border text-left">
-                                <div className="mono-text text-5xl font-black text-primary/10 mb-6 tracking-tighter">01</div>
-                                <h4 className="ambos-heading text-lg mb-4 uppercase">SYSTEM_DIAGNOSTIC</h4>
-                                <p className="mono-text text-[10px] text-muted-foreground uppercase tracking-widest leading-relaxed">Describe the anomaly or select a standard maintenance protocol.</p>
-                            </div>
-                            <div className="bg-background p-10 border-r border-b md:border-b-0 border-border text-left">
-                                <div className="mono-text text-5xl font-black text-primary/10 mb-6 tracking-tighter">02</div>
-                                <h4 className="ambos-heading text-lg mb-4 uppercase">COST_QUOTATION</h4>
-                                <p className="mono-text text-[10px] text-muted-foreground uppercase tracking-widest leading-relaxed">Receive instant technical cost analysis and schedule your deployment.</p>
-                            </div>
-                            <div className="bg-background p-10 text-left">
-                                <div className="mono-text text-5xl font-black text-primary/10 mb-6 tracking-tighter">03</div>
-                                <h4 className="ambos-heading text-lg mb-4 uppercase">MOBILE_DEPLOY</h4>
-                                <p className="mono-text text-[10px] text-muted-foreground uppercase tracking-widest leading-relaxed">A certified mobile unit arrives at your node to execute repairs.</p>
-                            </div>
+                <section className="py-44 bg-background relative overflow-hidden">
+                    <div className="container mx-auto px-8 max-w-[1600px] text-center relative z-10">
+                        <div className="mb-32 space-y-8">
+                            <div className="ambos-label">DEPLOYMENT_FLOW</div>
+                            <h2 className="ambos-heading text-6xl md:text-8xl text-foreground text-glow text-balance leading-[0.85]">TECHNICAL_SEQUENCE.</h2>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-12">
+                            {[
+                                { step: "01", title: "SYSTEM_DIAGNOSTIC", desc: "Describe the anomaly or select a standard maintenance protocol for immediate evaluation." },
+                                { step: "02", title: "COST_QUOTATION", desc: "Receive instant technical cost analysis and schedule your deployment with guaranteed price locks." },
+                                { step: "03", title: "MOBILE_DEPLOY", desc: "A certified mobile unit arrives at your node to execute repairs with full industrial precision." }
+                            ].map((s, i) => (
+                                <div key={i} className="ambos-card p-12 text-left bg-white/[0.02] border-white/5 group hover:border-primary/40">
+                                    <div className="ambos-heading text-6xl text-primary/10 mb-8 tracking-tighter group-hover:text-primary transition-colors">{s.step}</div>
+                                    <h4 className="ambos-heading text-2xl mb-6 text-foreground tracking-tight">{s.title}</h4>
+                                    <p className="mono-text text-[11px] text-muted-foreground uppercase tracking-widest leading-relaxed font-medium">{s.desc}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
 
                 {/* CTA Section */}
-                <section className="py-32 bg-onyx text-white">
-                    <div className="container mx-auto px-6 max-w-4xl text-center">
-                        <h2 className="ambos-heading text-4xl md:text-8xl mb-8 leading-[0.9]">Initialize <br /> Mobile Repair</h2>
-                        <p className="text-xl mb-16 text-white/50 uppercase tracking-widest font-medium">
-                            Book a top-rated certified unit in real-time. <br /> Professional grade service, delivered.
+                <section className="py-44 bg-foreground text-background mesh-bg !bg-none relative overflow-hidden">
+                    <div className="absolute inset-0 bg-primary/10 blur-[150px] -z-10" />
+                    <div className="container mx-auto px-8 flex flex-col items-center text-center space-y-20">
+                        <div className="ambos-label !bg-background !text-foreground !border-none">INITIALIZE_REPAIR</div>
+                        <h2 className="ambos-heading text-7xl md:text-[10vw] leading-[0.75] text-background text-center tracking-tighter uppercase">
+                            MOBILE_REPAIR <br />
+                            <span className="text-primary italic text-glow">PROTOCOL.</span>
+                        </h2>
+
+                        <p className="text-xl md:text-2xl text-background/60 max-w-4xl mx-auto uppercase mono-text tracking-[0.3em] font-black leading-relaxed">
+                            Book a top-rated certified unit in real-time. Professional grade service, delivered directly to your operational coordinates.
                         </p>
-                        <div className="flex justify-center">
-                            <button className="ambos-btn-lime py-8 px-16 text-xl">
-                                <Link href="/help">
-                                    Book Deployment
-                                </Link>
+
+                        <div className="pt-10">
+                            <button className="ambos-btn-lime !py-12 !px-32 !text-3xl !tracking-[0.5em] hover:!shadow-[0_20px_60px_-10px_rgba(206,255,0,0.5)]">
+                                <Link href="/help">INITIALIZE_DEPLOYMENT</Link>
                             </button>
                         </div>
                     </div>

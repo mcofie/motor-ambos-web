@@ -1,71 +1,81 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Shield, CheckCircle, Clock, Wrench, Activity } from "lucide-react";
 
 export function PerkHero() {
     return (
-        <section className="relative pt-44 pb-32 overflow-hidden bg-background">
-            <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center">
-                <div className="lg:col-span-12 flex flex-col items-center text-center space-y-12 mb-20">
-                    <div className="ambos-label">Industrial Vehicle Infrastructure</div>
-                    <h1 className="ambos-heading text-6xl md:text-[10vw] leading-[0.8] max-w-7xl mx-auto text-foreground">
-                        The Digital <br /> Passport <br /> For Your Car.
-                    </h1>
+        <section className="wise-section pb-20 pt-40 md:pt-48 bg-white overflow-hidden">
+            <div className="wise-container">
+                <div className="grid lg:grid-cols-2 gap-20 items-center">
+                    {/* Left: Content */}
+                    <div className="space-y-12 wise-fade-in relative z-10">
+                        <div className="space-y-8">
+                            <h1 className="wise-heading-hero">
+                                The digital glovebox <br className="hidden md:block" /> for your car.
+                            </h1>
+                            <p className="wise-body max-w-xl text-balance">
+                                Your vehicle's digital passport. Manage compliance, verified service records, and roadside rescue — all in one high-integrity system.
+                            </p>
+                        </div>
 
-                    <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                        Operating system for car ownership in Ghana. Compliance, verified maintenance history, and 24/7 rescue.
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
-                        <button className="ambos-btn-lime py-6 px-12 text-lg">
-                            Get the App
-                        </button>
-                        <button className="ambos-btn-secondary py-6 px-12 text-lg">
-                            Request Fleet Demo
-                        </button>
-                    </div>
-
-                    <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-4 pt-12">
-                        {["USSD fallback", "NFC verified", "Secure glovebox", "24/7 rescue"].map((feat) => (
-                            <div key={feat} className="flex items-center gap-3">
-                                <div className="w-1.5 h-1.5 bg-primary" />
-                                <span className="mono-text text-[10px] text-muted-foreground">{feat}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="lg:col-span-12 relative w-full max-w-6xl mx-auto">
-                    <div className="ambos-card bg-secondary/30 relative overflow-hidden aspect-video">
-                        <iframe
-                            className="absolute inset-0 w-full h-[120%] top-[-10%] grayscale hover:grayscale-0 transition-all duration-1000 pointer-events-none"
-                            src="https://www.youtube.com/embed/mTYqUCVy-wc?autoplay=1&mute=1&loop=1&playlist=mTYqUCVy-wc&controls=0&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&enablejsapi=1&origin=http://localhost:3000"
-                            title="Motor Ambos Infrastructure"
-                            allow="autoplay; encrypted-media; picture-in-picture"
-                            allowFullScreen
-                        />
-                        <div className="absolute inset-0 bg-onyx/20 pointer-events-none" />
-                        <div className="absolute top-4 right-4 ambos-label bg-primary text-black z-10">
-                            SYSTEM_LIVE: 24.0.1
+                        <div className="flex flex-wrap gap-6">
+                            <button className="wise-btn-primary group">
+                                Get the app
+                                <ArrowRight size={20} className="ml-3 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                            <button className="wise-btn-secondary">
+                                Request fleet demo
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Social Proof Row */}
-            <div className="mt-24 border-y border-slate-100 py-12 bg-warm-grey/30">
-                <div className="container mx-auto px-6">
-                    <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">
-                        Trusted by providers and partners
-                    </p>
-                    <div className="flex flex-wrap justify-center items-center gap-x-16 gap-y-8 opacity-40 grayscale contrast-125">
-                        {["Insurers", "Auto Shops", "Fleet Operators", "Roadworthy Centres", "Towing Partners"].map((logo) => (
-                            <span key={logo} className="text-2xl font-black text-slate-900 tracking-tighter font-syne">
-                                {logo}
-                            </span>
-                        ))}
+                    {/* Right: Vehicle Control Panel (Wise-style Widget) */}
+                    <div className="relative wise-fade-in lg:ml-10">
+                        <div className="absolute -inset-10 bg-[#9FE870]/5 rounded-full blur-[100px] -z-10" />
+
+                        <div className="wise-card !p-0 overflow-hidden shadow-wise-lg border-2 border-[#9FE870]/20">
+                            <div className="bg-[#FFFFFF] p-8 space-y-8">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[12px] font-black uppercase tracking-widest text-[#5D7079]">Vehicle Control Panel</span>
+                                    <div className="px-3 py-1 bg-[#9FE870]/20 text-[#2D5B18] text-[11px] font-black rounded-full uppercase tracking-tighter">Live Node_2024</div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {[
+                                        { label: "Your car", value: "Land Rover Defender", icon: Shield },
+                                        { label: "Insurance expiry", value: "12 Oct 2024", icon: Clock },
+                                        { label: "Roadworthy expiry", value: "24 Nov 2024", icon: CheckCircle },
+                                        { label: "Latest service", value: "GHS 1,200", icon: Wrench },
+                                        { label: "Total spend (YTD)", value: "GHS 8,400", icon: Activity, bold: true },
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex items-center justify-between p-4 bg-[#F0F2F5] rounded-[12px] group hover:bg-[#FFFFFF] hover:shadow-sm border border-transparent hover:border-[#E2E8F0] transition-all cursor-default">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#5D7079] group-hover:text-black">
+                                                    <item.icon size={18} />
+                                                </div>
+                                                <span className="text-sm font-bold text-[#5D7079]">{item.label}</span>
+                                            </div>
+                                            <span className={`text-[15px] ${item.bold ? 'font-black text-black' : 'font-bold text-[#000000]'}`}>{item.value}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button className="w-full bg-[#9FE870] text-black py-5 rounded-[12px] font-black text-lg transition-transform active:scale-[0.98] shadow-sm">
+                                    Stay compliant
+                                </button>
+                            </div>
+
+                            <div className="bg-[#000000] p-6 flex justify-between items-center text-white">
+                                <div className="space-y-1">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Safety Score</span>
+                                    <div className="text-3xl font-black text-[#9FE870]">98.2%</div>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/10">
+                                    <Shield size={24} className="text-[#9FE870]" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

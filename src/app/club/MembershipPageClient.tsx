@@ -284,104 +284,134 @@ export function MembershipPageClient() {
 
     /* ───────── Main View (Digital Card) ───────── */
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/30">
             <Navbar />
 
-            <main className="flex-grow mx-auto flex w-full max-w-lg flex-col gap-12 px-6 py-44">
+            <main className="flex-grow mx-auto flex w-full max-w-[1600px] flex-col gap-24 px-8 py-44 relative">
+                <div className="card-circle opacity-30" />
 
                 {/* Header */}
-                <header className="flex justify-between items-end pb-8 border-b border-border">
-                    <div className="space-y-4">
-                        <div className="ambos-label">IDENTITY_PROTOCOL</div>
-                        <h1 className="ambos-heading text-5xl">Digital Card</h1>
+                <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 pb-12 border-b border-white/5 relative z-10">
+                    <div className="space-y-6">
+                        <div className="ambos-label">IDENTITY_PROTOCOL_v2.4.8</div>
+                        <h1 className="ambos-heading text-6xl md:text-8xl text-glow">DIGITAL_ID.</h1>
                     </div>
-                    <div className="mono-text text-[10px] text-muted-foreground uppercase tracking-widest">
-                        v2.0.48
+                    <div className="mono-text text-[10px] text-muted-foreground uppercase tracking-[0.4em] font-black pb-2">
+                        SYSTEM_TERMINAL_SYNC: ACTIVE
                     </div>
                 </header>
 
-                {/* ──── THE CARD (Industrial) ──── */}
-                <section className="space-y-8">
-                    <div className="ambos-card bg-onyx p-10 border-2 border-primary/20 aspect-[1.58/1] flex flex-col justify-between relative overflow-hidden">
-                        <div className="flex justify-between items-start z-10">
-                            <div className="h-12 w-12 bg-primary flex items-center justify-center text-black">
-                                <Car size={24} />
+                <div className="grid lg:grid-cols-2 gap-24 relative z-10">
+                    {/* ──── THE CARD (Premium Tech) ──── */}
+                    <div className="space-y-12">
+                        <div className="ambos-card bg-zinc-950 p-12 lg:p-16 border border-white/10 aspect-[1.58/1] flex flex-col justify-between relative overflow-hidden group shadow-[0_0_100px_-20px_rgba(206,255,0,0.1)]">
+                            {/* Background Effects */}
+                            <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-primary/[0.03] to-transparent pointer-events-none" />
+                            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-primary/5 blur-[80px] rounded-full group-hover:bg-primary/10 transition-all duration-1000" />
+
+                            <div className="flex justify-between items-start z-10">
+                                <div className="h-16 w-16 bg-primary flex items-center justify-center text-black shadow-[0_0_30px_rgba(206,255,0,0.3)]">
+                                    <Car size={32} />
+                                </div>
+                                <div className="text-right space-y-2">
+                                    <span className="ambos-label !bg-white/5 !text-white/40 !border-white/10 !text-[9px] !px-3 font-black">MEMBER_PROTOCOL_ID</span>
+                                    <span className="ambos-heading text-xl text-white tracking-[0.3em] block">{m.membershipNumber}</span>
+                                </div>
                             </div>
-                            <div className="text-right">
-                                <span className="ambos-label text-[10px] block mb-2 px-2">MEMBER_ID</span>
-                                <span className="mono-text text-white text-sm tracking-[0.2em]">{m.membershipNumber}</span>
+
+                            <div className="z-10 space-y-6">
+                                <div className="space-y-2">
+                                    <div className="mono-text text-[9px] text-primary/60 font-black tracking-[0.4em]">AUTHORIZED_HOLDER:</div>
+                                    <div className="ambos-heading text-4xl md:text-5xl text-white uppercase truncate drop-shadow-lg">
+                                        {m.memberName}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`h-2 w-2 rounded-full ${m.status === 'active' ? 'bg-primary' : 'bg-red-500'} animate-pulse shadow-[0_0_10px_rgba(206,255,0,0.5)]`} />
+                                        <span className="mono-text text-[10px] text-white font-black uppercase tracking-[0.3em]">STATUS: {statusLabel.toUpperCase()}</span>
+                                    </div>
+                                    <div className="h-px w-12 bg-white/10" />
+                                    <span className="mono-text text-[10px] text-white/40 font-black uppercase tracking-[0.3em]">SECURE_ID: MA_v0.9</span>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-end z-10 pt-8 border-t border-white/5">
+                                <div className="ambos-label !bg-primary !text-black !border-none !text-[11px] !px-6 !py-2 font-black tracking-[0.2em]">{m.tier.toUpperCase()}_PROTOCOL</div>
+                                <div className="flex gap-2">
+                                    <div className="h-10 w-1 bg-white/5" />
+                                    <div className="h-10 w-1 bg-white/10" />
+                                    <div className="h-10 w-1 bg-white/20" />
+                                    <div className="h-10 w-1 bg-white/40" />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="z-10 space-y-4">
-                            <div className="ambos-heading text-3xl text-white uppercase truncate">
-                                {m.memberName}
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className={`h-2 w-2 ${m.status === 'active' ? 'bg-primary' : 'bg-red-500'}`} />
-                                <span className="mono-text text-[10px] text-white/50 uppercase tracking-[0.3em] font-bold">STATUS: {statusLabel}</span>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-end z-10">
-                            <div className="ambos-label bg-primary text-black px-4 py-1 text-xs">{m.tier} PROTOCOL</div>
-                            <div className="h-8 w-12 bg-white/5 border border-white/10" />
+                        <div className="flex items-center justify-center gap-4 py-8 border-y border-white/5 px-4">
+                            <Activity size={16} className="text-primary animate-pulse" />
+                            <p className="mono-text text-[10px] text-center text-muted-foreground uppercase tracking-[0.4em] font-black">
+                                PRESENT_THIS_TERMINAL_IDENTITY_TO_PROVIDER_FOR_AUTH.
+                            </p>
                         </div>
                     </div>
-                    <p className="mono-text text-[10px] text-center text-muted-foreground uppercase tracking-widest">
-                        Present this terminal identity to provider for authentication.
-                    </p>
-                </section>
 
-                {/* ──── DETAILS SECTION ──── */}
-                <section className="grid gap-8">
-
-                    {/* Primary Vehicle Info */}
-                    <div className="grid grid-cols-2 gap-0 border border-border">
-                        <div className="bg-muted/5 p-8 border-r border-border">
-                            <div className="ambos-label mb-6 bg-foreground text-background inline-block">VEHICLE</div>
-                            <p className="ambos-heading text-xl text-foreground truncate">{primaryVehicle.model}</p>
-                            <p className="mono-text text-[10px] text-muted-foreground mt-2 uppercase">Telematics: Active</p>
+                    {/* ──── DETAILS SECTION ──── */}
+                    <div className="space-y-16">
+                        {/* Primary Vehicle Info */}
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="ambos-card bg-white/[0.02] p-10 space-y-6 border border-white/5">
+                                <div className="ambos-label !bg-foreground !text-background !border-none !text-[9px] font-black">REGISTERED_UNIT</div>
+                                <div className="space-y-2">
+                                    <p className="ambos-heading text-2xl text-foreground truncate">{primaryVehicle.model.toUpperCase()}</p>
+                                    <p className="mono-text text-[10px] text-primary font-black uppercase tracking-[0.3em]">TELEMETRICS: ACTIVE</p>
+                                </div>
+                            </div>
+                            <div className="ambos-card bg-white/[0.02] p-10 space-y-6 border border-white/5">
+                                <div className="ambos-label !bg-foreground !text-background !border-none !text-[9px] font-black">PLATE_IDENTIFICATION</div>
+                                <div className="space-y-2">
+                                    <p className="ambos-heading text-2xl text-foreground font-mono">{primaryVehicle.plate.toUpperCase()}</p>
+                                    <p className="mono-text text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em]">REGION: GHANA_AO</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="bg-muted/5 p-8">
-                            <div className="ambos-label mb-6 bg-foreground text-background inline-block">PLATE</div>
-                            <p className="ambos-heading text-xl text-foreground font-mono">{primaryVehicle.plate}</p>
-                            <p className="mono-text text-[10px] text-muted-foreground mt-2 uppercase">Region: GHANA</p>
+
+                        {/* Benefits List */}
+                        <div className="ambos-card p-12 bg-white/[0.02] border border-white/5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10 group-hover:bg-primary/10 transition-all" />
+
+                            <h3 className="ambos-heading text-xl mb-12 uppercase tracking-widest flex items-center gap-6">
+                                <Wrench size={24} className="text-primary" />
+                                ACTIVE_PROTOCOLS
+                            </h3>
+                            <ul className="space-y-8">
+                                {[
+                                    "Priority roadside dispatch",
+                                    "Battery diagnostics & terminal cleanup",
+                                    "Rapid tyre replacement protocol",
+                                    "Emergency fuel synthesis dispatch",
+                                    "Heavy-duty towing infrastructure"
+                                ].map((benefit, i) => (
+                                    <li key={i} className="flex items-center gap-8 mono-text text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors group/item">
+                                        <div className="h-px w-6 bg-primary/30 group-hover/item:w-10 group-hover/item:bg-primary transition-all shrink-0" />
+                                        <span>{benefit}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Footer Meta */}
+                        <div className="flex flex-col gap-6 mono-text text-[10px] text-muted-foreground uppercase tracking-[0.4em] font-black border-t border-white/5 pt-12">
+                            <div className="flex items-center gap-6">
+                                <MapPin size={14} className="text-primary" />
+                                <span>OPERATIONAL_NODE: ACCRA_METRO</span>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <Activity size={14} className="text-primary" />
+                                <span>INITIALIZED: {formatDate(m.memberSince).toUpperCase()}</span>
+                            </div>
                         </div>
                     </div>
-
-                    {/* Benefits List */}
-                    <div className="ambos-card p-8 bg-muted/5 border-2 border-border">
-                        <h3 className="ambos-heading text-lg mb-8 uppercase tracking-widest flex items-center gap-4">
-                            <Wrench size={18} className="text-primary" />
-                            Active Protocols
-                        </h3>
-                        <ul className="space-y-6">
-                            {[
-                                "Priority roadside dispatch",
-                                "Battery diagnostics & terminal cleanup",
-                                "Rapid tyre replacement protocol",
-                                "Emergency fuel synthesis dispatch",
-                                "Heavy-duty towing infrastructure"
-                            ].map((benefit, i) => (
-                                <li key={i} className="flex items-center gap-6 mono-text text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                                    <div className="h-1 w-4 bg-primary shrink-0" />
-                                    <span>{benefit}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Footer Meta */}
-                    <div className="flex flex-col gap-4 mono-text text-[10px] text-muted-foreground uppercase tracking-[0.3em] border-t border-border pt-8">
-                        <div className="flex items-center gap-4">
-                            <MapPin size={12} className="text-primary" />
-                            <span>Operational Node: Accra</span>
-                        </div>
-                        <div>Initialized: {formatDate(m.memberSince)}</div>
-                    </div>
-
-                </section>
+                </div>
             </main>
             <Footer />
         </div>

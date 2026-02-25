@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { insertProvider, getUser, uploadProviderAsset } from "@/lib/supaFetch";
 import { toast } from "sonner";
 import { Upload, ImageIcon, Loader2, CheckCircle2, AlertCircle, MapPin, Camera, ArrowRight, User, Wrench, Wallet } from "lucide-react";
@@ -96,10 +97,10 @@ export function ProviderSignupForm() {
                     </p>
                 </div>
                 <button
-                    className="wise-btn-primary !px-12 flex items-center gap-3"
+                    className="btn-primary !px-12 flex items-center gap-3"
                     onClick={() => setSuccess(false)}
                 >
-                    Submit another application <ArrowRight size={20} />
+                    SUBMIT ANOTHER APPLICATION <ArrowRight size={24} />
                 </button>
             </div>
         );
@@ -126,9 +127,9 @@ export function ProviderSignupForm() {
                         )}
                     </div>
                     <div className="flex-1 space-y-4">
-                        <label htmlFor="logo-upload" className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#9FE870] hover:text-black transition-all active:scale-95">
+                        <label htmlFor="logo-upload" className="inline-flex items-center gap-3 px-6 py-3 border-2 border-black bg-black text-white text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#9FE870] hover:text-black transition-all active:translate-x-1 active:translate-y-1">
                             {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                            {isUploading ? "Uploading..." : "Upload Logo"}
+                            {isUploading ? "UPLOADING..." : "UPLOAD LOGO"}
                             <input
                                 id="logo-upload"
                                 type="file"
@@ -164,7 +165,7 @@ export function ProviderSignupForm() {
                         <select
                             name="providerType"
                             required
-                            className="w-full bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[20px] py-5 px-6 text-xl font-bold outline-none transition-all appearance-none"
+                            className="w-full bg-[#F5F5F5] border-2 border-black rounded-[4px] py-5 px-6 text-xl font-bold outline-none transition-all appearance-none uppercase"
                         >
                             <option value="">Select a category</option>
                             <option value="mechanic">Mechanic (General)</option>
@@ -190,7 +191,7 @@ export function ProviderSignupForm() {
                     <div className="flex gap-4">
                         <select
                             name="countryCode"
-                            className="w-32 bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[20px] py-5 px-6 text-xl font-bold outline-none transition-all appearance-none"
+                            className="w-32 bg-[#F5F5F5] border-2 border-black rounded-[4px] py-5 px-6 text-xl font-bold outline-none transition-all appearance-none"
                             defaultValue="+233"
                         >
                             <option value="+233">+233</option>
@@ -204,7 +205,7 @@ export function ProviderSignupForm() {
                             placeholder="XX XXX XXXX"
                             required
                             minLength={9}
-                            className="flex-1 bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[20px] py-5 px-6 text-xl font-bold outline-none transition-all"
+                            className="flex-1 bg-[#F5F5F5] border-2 border-black rounded-[4px] py-5 px-6 text-xl font-bold outline-none transition-all"
                         />
                     </div>
                 </div>
@@ -222,15 +223,15 @@ export function ProviderSignupForm() {
                     <button
                         type="button"
                         onClick={() => {
-                            if (!navigator.geolocation) { toast.error("Geolocation not supported"); return; }
+                            if (!navigator.geolocation) { toast.error("GEOLOCATION NOT SUPPORTED"); return; }
                             navigator.geolocation.getCurrentPosition(
-                                (pos) => { setLat(pos.coords.latitude); setLng(pos.coords.longitude); toast.success("Location fetched!"); },
-                                () => { toast.error("Unable to retrieve location"); }
+                                (pos) => { setLat(pos.coords.latitude); setLng(pos.coords.longitude); toast.success("LOCATION FETCHED!"); },
+                                () => { toast.error("UNABLE TO RETRIEVE LOCATION"); }
                             );
                         }}
-                        className="text-[10px] font-black uppercase tracking-widest text-[#9FE870] bg-black px-4 py-2 rounded-full hover:bg-black/90 active:scale-95 transition-all"
+                        className="text-[10px] font-black uppercase tracking-widest text-black bg-[#9FE870] border-2 border-black px-4 py-2 hover:translate-x-1 hover:translate-y-1 transition-all"
                     >
-                        Fetch GPS
+                        FETCH GPS
                     </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -255,16 +256,16 @@ export function ProviderSignupForm() {
                 <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079] ml-1">About Your Business</label>
                 <textarea
                     name="about"
-                    placeholder="Tell us about your services, history, and why users should trust you..."
-                    className="w-full h-40 bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[24px] p-8 text-lg font-bold outline-none transition-all resize-none"
+                    placeholder="TELL US ABOUT YOUR SERVICES, HISTORY, AND WHY USERS SHOULD TRUST YOU..."
+                    className="w-full h-40 bg-[#F5F5F5] border-2 border-black rounded-[4px] p-8 text-lg font-bold outline-none transition-all resize-none uppercase"
                 />
             </div>
 
             <div className="pt-8">
-                <button type="submit" className="wise-btn-primary w-full !py-8 !text-2xl flex items-center justify-center gap-4 shadow-wise-lg disabled:opacity-30" disabled={isPending}>
+                <button type="submit" className="btn-primary w-full !py-8 !text-2xl flex items-center justify-center gap-4 disabled:opacity-30" disabled={isPending}>
                     {isPending ? <Loader2 className="animate-spin" size={24} /> : (
                         <>
-                            Submit Application <ArrowRight size={24} />
+                            SUBMIT APPLICATION <ArrowRight size={24} />
                         </>
                     )}
                 </button>
@@ -282,10 +283,10 @@ function WiseInput({ label, icon, ...props }: any) {
         <div className="space-y-2 w-full">
             <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079] ml-1">{label}</label>
             <div className="relative group">
-                {icon && <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#5D7079]">{icon}</div>}
+                {icon && <div className="absolute left-6 top-1/2 -translate-y-1/2 text-black">{icon}</div>}
                 <input
                     className={cn(
-                        "w-full bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[20px] py-5 px-6 text-xl font-bold outline-none transition-all placeholder:text-[#5D7079]/30",
+                        "w-full bg-[#F5F5F5] border-2 border-black rounded-[4px] py-5 px-6 text-xl font-bold outline-none transition-all placeholder:text-black/10 uppercase",
                         icon && "pl-14"
                     )}
                     {...props}

@@ -206,10 +206,10 @@ export function ServicePortalForm() {
                     Maintenance history for <span className="text-black">{plateNumber}</span> has been securely updated.
                 </p>
                 <button
-                    className="wise-btn-primary !px-12 flex items-center gap-3"
+                    className="btn-primary !px-12 flex items-center gap-3"
                     onClick={() => window.location.reload()}
                 >
-                    Log another vehicle <ArrowRight size={20} />
+                    LOG ANOTHER VEHICLE <ArrowRight size={24} />
                 </button>
             </div>
         );
@@ -219,21 +219,21 @@ export function ServicePortalForm() {
         <div className="min-h-screen bg-[#F0F2F5] pb-40">
             {/* Header */}
             <header className="sticky top-0 z-50 bg-white border-b border-border py-4">
-                <div className="wise-container flex items-center justify-between">
+                <div className="fintech-container flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         {step !== "PLATE" && (
-                            <button onClick={() => setStep(step === "LOG" ? "OTP" : "PLATE")} className="p-2 hover:bg-[#F0F2F5] rounded-full transition-colors">
-                                <ChevronLeft size={24} className="text-[#5D7079]" />
+                            <button onClick={() => setStep(step === "LOG" ? "OTP" : "PLATE")} className="p-2 border-2 border-black hover:bg-[#9FE870] transition-colors">
+                                <ChevronLeft size={24} />
                             </button>
                         )}
                         <div className="flex flex-col">
-                            <span className="text-lg font-black tracking-tighter">ambos</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#5D7079]">
+                            <span className="text-xl font-black tracking-tighter uppercase">ambos</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
                                 {step === "PLATE" ? "Identify" : step === "OTP" ? "Verify" : "Log Service"}
                             </span>
                         </div>
                     </div>
-                    <div className="w-32 h-2 bg-[#F0F2F5] rounded-full overflow-hidden">
+                    <div className="w-32 h-3 border-2 border-black bg-[#F5F5F5] overflow-hidden">
                         <div className="h-full bg-[#9FE870] transition-all duration-700" style={{ width: `${progressPercent}%` }} />
                     </div>
                 </div>
@@ -250,16 +250,16 @@ export function ServicePortalForm() {
 
                     {/* Vehicle Identity */}
                     {(step === "OTP" || step === "LOG") && vehicleDetails && (
-                        <div className="bg-black text-white p-8 rounded-[24px] flex items-center gap-6 shadow-wise-lg">
-                            <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center">
+                        <div className="bg-black text-white p-8 border-4 border-black flex items-center gap-6">
+                            <div className="w-16 h-16 border-2 border-[#9FE870] bg-[#9FE870]/10 flex items-center justify-center">
                                 <Car size={32} className="text-[#9FE870]" />
                             </div>
                             <div className="space-y-1">
                                 <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Logging for</span>
-                                <h3 className="text-2xl font-black tracking-tight leading-none uppercase">
+                                <h3 className="text-3xl font-black tracking-tight leading-none uppercase italic">
                                     {vehicleDetails.color} {vehicleDetails.make} {vehicleDetails.model}
                                 </h3>
-                                <p className="text-xs font-bold text-[#9FE870]">{plateNumber} • {vehicleDetails.year}</p>
+                                <p className="text-xs font-bold text-[#9FE870] uppercase">{plateNumber} • {vehicleDetails.year}</p>
                             </div>
                         </div>
                     )}
@@ -271,18 +271,18 @@ export function ServicePortalForm() {
                                 <p className="wise-body">Enter the vehicle plate number to initialize the maintenance ledger.</p>
                             </div>
 
-                            <div className="wise-card !p-10 space-y-8 shadow-sm">
+                            <div className="fintech-card !p-10 space-y-8">
                                 <WiseInput
                                     label="Vehicle Plate Number"
                                     placeholder="GW-1234-22"
                                     value={plateNumber}
-                                    onChange={e => setPlateNumber(e.target.value)}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlateNumber(e.target.value)}
                                     autoFocus
                                 />
-                                <div className="flex gap-4 p-5 bg-[#F0F2F5] rounded-[16px] border border-border">
+                                <div className="flex gap-4 p-5 bg-[#F5F5F5] border-2 border-black">
                                     <ShieldCheck className="text-[#9FE870] shrink-0" size={24} />
-                                    <p className="text-sm font-bold text-[#5D7079] leading-relaxed">
-                                        We'll require the driver to verify this entry via a secure OTP protocol.
+                                    <p className="text-sm font-bold text-black uppercase leading-relaxed">
+                                        WE'LL REQUIRE THE DRIVER TO VERIFY THIS ENTRY VIA A SECURE OTP PROTOCOL.
                                     </p>
                                 </div>
                             </div>
@@ -296,18 +296,18 @@ export function ServicePortalForm() {
                                 <p className="wise-body">A secure code was sent to {phoneLabel}.</p>
                             </div>
 
-                            <div className="wise-card !p-10 space-y-10">
+                            <div className="fintech-card !p-10 space-y-10">
                                 <div className="space-y-4 text-center">
-                                    <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079]">Verification Code</label>
+                                    <label className="text-[12px] font-black uppercase tracking-widest opacity-40">Verification Code</label>
                                     <div className="flex justify-center gap-3">
                                         {[0, 1, 2, 3].map((i) => (
                                             <input
                                                 key={i}
                                                 type="text"
                                                 maxLength={1}
-                                                className="w-16 h-20 bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[16px] text-center text-4xl font-black outline-none transition-all"
+                                                className="w-16 h-20 bg-[#F5F5F5] border-2 border-black rounded-[4px] text-center text-4xl font-black outline-none transition-all focus:bg-[#9FE870]/10"
                                                 value={otpCode[i] || ""}
-                                                onChange={e => {
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                                     const val = e.target.value.replace(/\D/g, "");
                                                     const newOtp = otpCode.split("");
                                                     if (val) {
@@ -330,9 +330,9 @@ export function ServicePortalForm() {
                                 <button
                                     onClick={handleRequestOtp}
                                     disabled={resendTimer > 0 || loading}
-                                    className="w-full text-xs font-black uppercase tracking-widest text-[#5D7079] hover:text-black transition-colors"
+                                    className="w-full text-xs font-black uppercase tracking-widest text-black hover:bg-[#9FE870] transition-colors py-2 border-2 border-transparent hover:border-black"
                                 >
-                                    {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
+                                    {resendTimer > 0 ? `ResEND IN ${resendTimer}S` : "RESEND CODE"}
                                 </button>
                             </div>
                         </div>
@@ -353,27 +353,27 @@ export function ServicePortalForm() {
                                             key={opt.id}
                                             onClick={() => toggleService(opt.id)}
                                             className={cn(
-                                                "wise-card !p-6 flex flex-col items-center gap-4 text-center transition-all",
-                                                isSelected ? "!bg-black text-white shadow-wise-lg scale-[1.02]" : "hover:border-[#9FE870]/30"
+                                                "fintech-card !p-6 flex flex-col items-center gap-4 text-center transition-all",
+                                                isSelected ? "!bg-[#9FE870] text-black border-4" : "hover:bg-[#F5F5F5]"
                                             )}
                                         >
-                                            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-colors", isSelected ? "bg-white/10" : opt.color)}>
+                                            <div className={cn("w-12 h-12 border-2 border-black flex items-center justify-center transition-colors bg-white")}>
                                                 <opt.Icon size={24} />
                                             </div>
-                                            <span className="text-sm font-black tracking-tight">{opt.label}</span>
+                                            <span className="text-sm font-black tracking-tight uppercase">{opt.label}</span>
                                         </button>
                                     );
                                 })}
                             </div>
 
-                            <div className="wise-card !p-10 space-y-8">
+                            <div className="fintech-card !p-10 space-y-8">
                                 <div className="grid grid-cols-2 gap-6">
                                     <WiseInput
                                         label="Mileage (KM)"
                                         type="number"
                                         placeholder="0"
                                         value={logData.mileage}
-                                        onChange={e => setLogData({ ...logData, mileage: e.target.value })}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLogData({ ...logData, mileage: e.target.value })}
                                         icon={<Hash size={18} />}
                                     />
                                     <WiseInput
@@ -381,43 +381,43 @@ export function ServicePortalForm() {
                                         type="number"
                                         placeholder="0.00"
                                         value={logData.cost}
-                                        onChange={e => setLogData({ ...logData, cost: e.target.value })}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLogData({ ...logData, cost: e.target.value })}
                                         icon={<Wallet size={18} />}
                                     />
                                 </div>
 
                                 <WiseInput
                                     label="Workshop Name"
-                                    placeholder="TotalEnergies, etc."
+                                    placeholder="TOTALENERGIES, ETC."
                                     value={logData.providerName}
-                                    onChange={e => setLogData({ ...logData, providerName: e.target.value })}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLogData({ ...logData, providerName: e.target.value })}
                                     icon={<Wrench size={18} />}
                                 />
 
                                 <div className="space-y-2">
-                                    <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079]">Service Notes</label>
+                                    <label className="text-[12px] font-black uppercase tracking-widest opacity-40">Service Notes</label>
                                     <textarea
-                                        className="w-full h-32 bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[20px] p-6 text-base font-bold outline-none transition-all resize-none"
-                                        placeholder="Specific repairs, parts used..."
+                                        className="w-full h-32 bg-[#F5F5F5] border-2 border-black rounded-[4px] p-6 text-base font-bold outline-none transition-all resize-none uppercase"
+                                        placeholder="SPECIFIC REPAIRS, PARTS USED..."
                                         value={logData.notes}
-                                        onChange={e => setLogData({ ...logData, notes: e.target.value })}
+                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setLogData({ ...logData, notes: e.target.value })}
                                     />
                                 </div>
 
                                 <div className="pt-4">
                                     <input type="file" id="photo" className="hidden" accept="image/*" onChange={handleFileUpload} />
                                     {!logData.documentUrl ? (
-                                        <label htmlFor="photo" className="flex items-center justify-center gap-4 w-full h-20 rounded-[24px] border-2 border-dashed border-border bg-[#F0F2F5] cursor-pointer hover:bg-white transition-all text-[#5D7079] hover:text-black">
+                                        <label htmlFor="photo" className="flex items-center justify-center gap-4 w-full h-20 border-2 border-dashed border-black bg-[#F5F5F5] cursor-pointer hover:bg-[#9FE870] transition-all text-black hover:border-solid">
                                             {isUploading ? <Loader2 className="animate-spin" size={24} /> : <Camera size={24} />}
                                             <span className="text-sm font-black uppercase tracking-widest">Attach Photo Proof</span>
                                         </label>
                                     ) : (
-                                        <div className="flex items-center justify-between p-5 bg-[#9FE870]/10 border-2 border-[#9FE870]/20 rounded-[20px] text-[#2D5B18]">
+                                        <div className="flex items-center justify-between p-5 bg-[#9FE870] border-2 border-black text-black">
                                             <div className="flex items-center gap-4">
                                                 <FileText size={24} />
                                                 <span className="text-sm font-black tracking-tight uppercase">Document Attached</span>
                                             </div>
-                                            <button onClick={() => setLogData(prev => ({ ...prev, documentUrl: "" }))} className="p-2 hover:bg-white rounded-full transition-colors">
+                                            <button onClick={() => setLogData(prev => ({ ...prev, documentUrl: "" }))} className="p-2 border-2 border-black bg-white hover:bg-black hover:text-white transition-colors">
                                                 <X size={18} />
                                             </button>
                                         </div>
@@ -430,8 +430,8 @@ export function ServicePortalForm() {
             </main>
 
             {/* Footer Action */}
-            <div className="fixed bottom-0 left-0 right-0 p-8 bg-white/80 backdrop-blur-xl border-t border-border z-50">
-                <div className="wise-container max-w-2xl">
+            <div className="fixed bottom-0 left-0 right-0 p-8 bg-white/80 backdrop-blur-xl border-t-4 border-black z-50">
+                <div className="fintech-container max-w-2xl">
                     <button
                         onClick={() => {
                             if (step === "PLATE") handleRequestOtp();
@@ -439,12 +439,12 @@ export function ServicePortalForm() {
                             else if (step === "LOG") handleSubmitLog();
                         }}
                         disabled={loading || (step === "PLATE" && !plateNumber) || (step === "OTP" && otpCode.length < 4) || (step === "LOG" && (!logData.mileage || selectedServices.length === 0))}
-                        className="wise-btn-primary w-full !py-6 !text-xl flex items-center justify-center gap-4 active:scale-95 shadow-wise-lg disabled:opacity-30 disabled:grayscale"
+                        className="btn-primary w-full !py-8 !text-2xl flex items-center justify-center gap-4 active:translate-x-1 active:translate-y-1 disabled:opacity-30 disabled:grayscale"
                     >
                         {loading ? <Loader2 className="animate-spin" size={24} /> : (
                             <>
-                                {step === "PLATE" ? "Identify Vehicle" : step === "OTP" ? "Verify Code" : "Submit Service Log"}
-                                <ArrowRight size={24} />
+                                {step === "PLATE" ? "IDENTIFY VEHICLE" : step === "OTP" ? "VERIFY CODE" : "SUBMIT SERVICE LOG"}
+                                <ArrowRight size={28} />
                             </>
                         )}
                     </button>
@@ -456,13 +456,13 @@ export function ServicePortalForm() {
 
 function WiseInput({ label, icon, ...props }: any) {
     return (
-        <div className="space-y-2 w-full">
-            <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079] ml-1">{label}</label>
+        <div className="space-y-2 w-full text-left">
+            <label className="text-[12px] font-black uppercase tracking-widest opacity-40 ml-1">{label}</label>
             <div className="relative group">
-                {icon && <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#5D7079]">{icon}</div>}
+                {icon && <div className="absolute left-6 top-1/2 -translate-y-1/2 text-black">{icon}</div>}
                 <input
                     className={cn(
-                        "w-full bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[20px] py-5 px-6 text-xl font-bold outline-none transition-all placeholder:text-[#5D7079]/30",
+                        "w-full bg-[#F5F5F5] border-2 border-black rounded-[4px] py-5 px-6 text-xl font-bold outline-none transition-all placeholder:text-black/10 uppercase",
                         icon && "pl-14"
                     )}
                     {...props}

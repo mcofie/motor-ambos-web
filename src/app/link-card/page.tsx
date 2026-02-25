@@ -24,6 +24,7 @@ import {
     History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Step = "serial" | "vehicle" | "confirm" | "success";
 
@@ -93,16 +94,15 @@ export default function LinkCardPage() {
             <Navbar />
 
             <main className="flex-grow pt-44 pb-32">
-                <div className="wise-container max-w-xl">
+                <div className="fintech-container max-w-xl">
                     {/* Header */}
-                    <div className="text-center space-y-4 mb-12">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-[#5D7079] shadow-xs">
-                            <Zap size={14} className="text-[#9FE870]" />
+                    <div className="text-center space-y-4 mb-20">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-black bg-[#9FE870] text-[10px] font-black uppercase tracking-widest text-black">
                             Smart Card Setup
                         </div>
-                        <h1 className="wise-heading-hero !text-5xl !leading-[0.85]">Link Card.</h1>
-                        <p className="wise-body text-sm font-bold opacity-60 uppercase tracking-widest leading-relaxed">
-                            Connect the physical card to your vehicle to create its public Digital Passport.
+                        <h1 className="hero-heading !text-6xl !leading-none">Card <br /> Terminal.</h1>
+                        <p className="body-copy !text-sm border-l-4 border-black pl-6 mx-auto max-w-xs mt-8">
+                            CONNECT THE PHYSICAL CARD TO YOUR VEHICLE TO CREATE ITS PUBLIC DIGITAL PASSPORT.
                         </p>
                     </div>
 
@@ -117,33 +117,35 @@ export default function LinkCardPage() {
                     </div>
 
                     {/* Step Content */}
-                    <div className="wise-card !p-10 !bg-white">
+                    <div className="fintech-card !p-10 !bg-white">
                         {step === "serial" && (
                             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4">
-                                <div className="relative aspect-[1.58/1] bg-black rounded-[24px] p-8 flex flex-col justify-between overflow-hidden text-white shadow-wise-lg group">
+                                <div className="relative aspect-[1.58/1] bg-black border-4 border-black p-8 flex flex-col justify-between overflow-hidden text-white group">
                                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#9FE870]/10 blur-[60px]" />
                                     <div className="flex justify-between items-start z-10">
-                                        <CreditCard className="text-[#9FE870]" size={24} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">MA Protocol</span>
+                                        <div className="w-10 h-10 border-2 border-[#9FE870] bg-[#9FE870]/10 flex items-center justify-center">
+                                            <CreditCard className="text-[#9FE870]" size={20} />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#9FE870]">Ambos Protocol</span>
                                     </div>
                                     <div className="space-y-1 z-10">
                                         <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Serial Identification</p>
-                                        <p className="text-3xl font-black tracking-tighter">{serialNumber || "MA-26-XXXXX"}</p>
+                                        <p className="text-4xl font-black tracking-tighter italic">{serialNumber || "MA-26-XXXXX"}</p>
                                     </div>
                                     <div className="flex justify-between items-end z-10">
-                                        <p className="text-lg font-black tracking-widest leading-none">AMBOS</p>
-                                        <div className="w-10 h-10 bg-white/10 rounded-xl border border-white/10" />
+                                        <p className="text-2xl font-black tracking-widest leading-none">AMBOS</p>
+                                        <div className="w-12 h-12 border-2 border-white/20 bg-white/5" />
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079] ml-1">Card Serial Number</label>
+                                    <label className="text-[12px] font-black uppercase tracking-widest text-black ml-1">Card Serial Number</label>
                                     <input
                                         type="text"
                                         value={serialNumber}
                                         onChange={(e) => { setSerialNumber(e.target.value.toUpperCase()); setSerialError(""); }}
-                                        placeholder="MA-26-00451"
-                                        className="w-full bg-[#F0F2F5] border-2 border-transparent focus:border-[#9FE870] rounded-[20px] py-6 px-8 text-3xl font-black text-center outline-none transition-all placeholder:text-[#5D7079]/20"
+                                        placeholder="MA-26-XXXXX"
+                                        className="w-full bg-[#F5F5F5] border-2 border-black focus:bg-[#9FE870]/5 rounded-[4px] py-6 px-8 text-3xl font-black text-center outline-none transition-all placeholder:text-black/10"
                                         maxLength={11}
                                     />
                                     {serialError && (
@@ -154,9 +156,9 @@ export default function LinkCardPage() {
                                 <button
                                     onClick={handleSerialSubmit}
                                     disabled={!serialNumber.trim()}
-                                    className="wise-btn-primary w-full !py-6 !text-lg flex items-center justify-center gap-3 disabled:opacity-30"
+                                    className="btn-primary w-full !py-8 !text-2xl flex items-center justify-center gap-3 disabled:opacity-30"
                                 >
-                                    Continue <ArrowRight size={20} />
+                                    CONTINUE PROTOCOL <ArrowRight size={24} />
                                 </button>
                             </div>
                         )}
@@ -164,8 +166,8 @@ export default function LinkCardPage() {
                         {step === "vehicle" && (
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
                                 <div className="space-y-2 text-center">
-                                    <div className="inline-block px-4 py-1.5 bg-[#F0F2F5] rounded-full text-[10px] font-black uppercase tracking-widest">{serialNumber}</div>
-                                    <h3 className="text-2xl font-black tracking-tight uppercase">Select Vehicle</h3>
+                                    <div className="inline-block px-4 py-1.5 border-2 border-black bg-[#9FE870] text-[10px] font-black uppercase tracking-widest">{serialNumber}</div>
+                                    <h3 className="text-3xl font-black tracking-tight uppercase">Select Unit</h3>
                                 </div>
 
                                 {loadingVehicles ? (
@@ -181,16 +183,16 @@ export default function LinkCardPage() {
                                             <button
                                                 key={v.id}
                                                 onClick={() => handleSelectVehicle(v)}
-                                                className="flex items-center gap-6 p-6 bg-[#F0F2F5] rounded-[24px] border-2 border-transparent hover:border-[#9FE870] transition-all group"
+                                                className="flex items-center gap-6 p-6 border-2 border-black hover:bg-[#9FE870] transition-all group"
                                             >
-                                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-[#5D7079] group-hover:bg-[#9FE870] group-hover:text-black transition-colors">
+                                                <div className="w-14 h-14 border-2 border-black bg-white flex items-center justify-center transition-colors">
                                                     <Car size={28} />
                                                 </div>
                                                 <div className="flex-1 text-left">
                                                     <p className="text-xl font-black tracking-tight uppercase truncate">{v.year} {v.make} {v.model}</p>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">{v.plate || "NO PLATE"}</p>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">{v.plate || "NO REGISTRATION"}</p>
                                                 </div>
-                                                <ArrowRight size={20} className="text-[#5D7079]/30 group-hover:text-black" />
+                                                <ArrowRight size={24} />
                                             </button>
                                         ))}
                                     </div>
@@ -210,10 +212,10 @@ export default function LinkCardPage() {
                                     <SummaryItem label="Registration" value={selectedVehicle.plate || "—"} color="text-[#2D5B18]" />
                                 </div>
 
-                                <div className="flex gap-4">
-                                    <button onClick={() => setStep("vehicle")} className="wise-btn-secondary flex-1 !py-6 !text-lg">Back</button>
-                                    <button onClick={handleConfirmLink} className="wise-btn-primary flex-1 !py-6 !text-lg flex items-center justify-center gap-2" disabled={linking}>
-                                        {linking ? <Loader2 className="animate-spin" /> : <><ShieldCheck size={20} /> Deploy Link</>}
+                                <div className="flex flex-col gap-4">
+                                    <button onClick={() => setStep("vehicle")} className="btn-secondary !py-6 !text-lg">BACK</button>
+                                    <button onClick={handleConfirmLink} className="btn-primary !py-8 !text-2xl flex items-center justify-center gap-2" disabled={linking}>
+                                        {linking ? <Loader2 className="animate-spin" /> : <><ShieldCheck size={24} /> DEPLOY LINK</>}
                                     </button>
                                 </div>
                             </div>
@@ -221,26 +223,26 @@ export default function LinkCardPage() {
 
                         {step === "success" && (
                             <div className="space-y-10 text-center animate-in fade-in slide-in-from-bottom-4">
-                                <div className="w-24 h-24 bg-[#9FE870] rounded-full flex items-center justify-center text-[#2D5B18] mx-auto shadow-wise-lg">
-                                    <CheckCircle2 size={48} strokeWidth={3} />
+                                <div className="w-24 h-24 border-4 border-black bg-[#9FE870] flex items-center justify-center text-black mx-auto">
+                                    <CheckCircle2 size={48} strokeWidth={4} />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="text-3xl font-black tracking-tight uppercase">Card Active.</h3>
-                                    <p className="text-sm font-bold text-[#5D7079] uppercase tracking-widest leading-relaxed">
-                                        Your Digital Passport is live. Anyone who taps this card will see a verified profile of your vehicle unit.
+                                <div className="space-y-4">
+                                    <h3 className="text-4xl font-black tracking-tight uppercase">CARD ACTIVE.</h3>
+                                    <p className="body-copy !text-sm !text-black/60">
+                                        YOUR DIGITAL PASSPORT IS LIVE. ANYONE WHO TAPS THIS CARD WILL SEE A VERIFIED PROFILE OF YOUR VEHICLE UNIT.
                                     </p>
                                 </div>
 
-                                <div className="bg-[#F0F2F5] rounded-[24px] p-8 space-y-6 text-left">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#5D7079]">Public Assignment URL</p>
-                                    <p className="text-sm font-black text-[#2D5B18] break-all border-b border-[#9FE870]/20 pb-4">{passportUrl}</p>
-                                    <div className="flex gap-4">
-                                        <Link href={`/v/${publicId}`} className="wise-btn-primary !px-6 !py-3 !text-xs flex-1 flex items-center justify-center gap-2">
-                                            <ExternalLink size={14} /> View Passport
+                                <div className="border-4 border-black bg-[#F5F5F5] p-8 space-y-6 text-left">
+                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Public Assignment URL</p>
+                                    <p className="text-xl font-black text-black break-all border-b-2 border-black/10 pb-4">{passportUrl}</p>
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        <Link href={`/v/${publicId}`} className="btn-primary !px-6 !py-4 !text-xs flex-1 flex items-center justify-center gap-2">
+                                            <ExternalLink size={14} /> VIEW PASSPORT
                                         </Link>
-                                        <button onClick={() => { navigator.clipboard.writeText(passportUrl); toast.success("Link Coped!"); }} className="wise-btn-secondary !px-6 !py-3 !text-xs flex-1">
-                                            Copy Link
+                                        <button onClick={() => { navigator.clipboard.writeText(passportUrl); toast.success("LINK COPIED!"); }} className="btn-secondary !px-6 !py-4 !text-xs flex-1">
+                                            COPY LINK
                                         </button>
                                     </div>
                                 </div>
@@ -259,8 +261,8 @@ export default function LinkCardPage() {
 
 function SummaryItem({ label, value, color = "text-black" }: { label: string, value: string, color?: string }) {
     return (
-        <div className="flex justify-between items-center p-6 bg-[#F0F2F5] rounded-[20px]">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#5D7079]">{label}</span>
+        <div className="flex justify-between items-center p-6 border-2 border-black bg-[#F5F5F5]">
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{label}</span>
             <span className={cn("text-lg font-black tracking-tight uppercase truncate max-w-[200px]", color)}>{value}</span>
         </div>
     );

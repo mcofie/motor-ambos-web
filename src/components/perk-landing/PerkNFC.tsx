@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { CreditCard, ShieldCheck, Cpu, Zap, ArrowRight } from "lucide-react";
 
 export function PerkNFC() {

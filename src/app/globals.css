@@ -1,128 +1,356 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Allow `.dark` anywhere in the subtree */
+@custom-variant dark (&:is(.dark *));
+
+/* Map Tailwind design tokens to CSS variables */
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-border: var(--border);
-    --color-input: var(--input);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
     --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
 
-    /* Font families - Technical & Flat */
-    --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
-    --font-mono: "Space Mono", monospace;
+    /* Font families */
+    --font-sans: var(--font-sans-current);
+    --font-mono: var(--font-mono-current);
+    --font-serif: var(--font-serif-current);
 }
 
+/* ---------- Global Defaults ---------- */
 :root {
-    --background: #FFFFFF;
-    --foreground: #000000;
+    --font-sans-current: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+    --font-mono-current: var(--font-jakarta), monospace;
+    --font-serif-current: var(--font-jakarta), sans-serif;
 
-    /* Hard Brand Green */
+    --radius: 0.625rem;
+
+    /* Accrue Style Background */
+    --background: #F8FAFF;
+    --foreground: #163300;
+
+    /* Custom 3D Utilities */
+    --perspective: 1000px;
+    --card: #ffffff;
+    --card-foreground: #163300;
+    --popover: #ffffff;
+    --popover-foreground: #163300;
+    --primary: #163300;
+    --primary-foreground: #ffffff;
+    --accent: #f2f9ed;
+    --accent-foreground: #163300;
+    --secondary: #9FE870;
+    --secondary-foreground: #163300;
+    --muted: #f2f9ed;
+    --muted-foreground: #5d7052;
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: #e2e8e0;
+    --input: #e2e8e0;
+    --ring: #163300;
+
+    --fintech-shadow: 0 4px 20px -4px rgba(22, 51, 0, 0.05);
+    --fintech-shadow-lg: 0 10px 40px -4px rgba(22, 51, 0, 0.1);
+
+    /* Stripe Link Specific Variables (Refined) */
+    --stripe-green: #00C767;
+    --stripe-green-dark: #011E0F;
+    --stripe-gray: #F5F5F5;
+    --stripe-gray-border: #E5E5E5;
+    --stripe-red: #E22B21;
+    --stripe-text: #171717;
+    --stripe-subtext: #525252;
+}
+
+/* ---------- Platform (High-End Fintech / Maze / Stripe) ---------- */
+.platform {
+    --background: #FFFFFF;
+    --foreground: #0F172A;
+    /* Slate 900 */
+    --primary: #4F46E5;
+    /* Indigo 600 */
+    --primary-foreground: #FFFFFF;
+    --secondary: #F8FAFC;
+    --secondary-foreground: #0F172A;
+    --muted: #F1F5F9;
+    --muted-foreground: #64748B;
+    --accent: #FDF2F8;
+    /* Soft pink/purple hint from Maze */
+    --accent-foreground: #4F46E5;
+    --border: #E2E8F0;
+    --input: #FFFFFF;
+    --ring: #4F46E5;
+    --radius: 0.75rem;
+
+    --fintech-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --fintech-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* ---------- Onyx (Mobile App Sleek) ---------- */
+.onyx {
+    --background: #07090D;
+    --foreground: #F8FAFC;
     --primary: #9FE870;
     --primary-foreground: #000000;
-
-    --secondary: #000000;
+    --secondary: #1E293B;
     --secondary-foreground: #FFFFFF;
+    --muted: #13171F;
+    --muted-foreground: #94A3B8;
+    --accent: #EF4444;
+    --accent-foreground: #FFFFFF;
+    --border: rgba(255, 255, 255, 0.08);
+    --input: #111827;
+    --ring: #9FE870;
+    --radius: 1.5rem;
 
-    --muted: #F5F5F5;
-    --muted-foreground: #666666;
+    --fintech-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.5);
+    --fintech-shadow-lg: 0 16px 48px -8px rgba(0, 0, 0, 0.6);
+}
 
+/* ---------- Editorial Brutalist Theme ---------- */
+.brutalist {
+    --background: #FDFCFB;
+    --foreground: #161616;
+    --primary: #9FE870;
+    --primary-foreground: #000000;
+    --secondary: #161616;
+    --secondary-foreground: #FFFFFF;
+    --muted: #F2F1ED;
+    --muted-foreground: #5D5D5D;
     --accent: #9FE870;
     --accent-foreground: #000000;
-
-    --border: #000000;
+    --border: #161616;
     --input: #FFFFFF;
-    --ring: #000000;
-
-    /* Flat & Sharp Borders */
+    --ring: #161616;
     --radius: 4px;
 
-    /* No shadows - Flat design */
     --fintech-shadow: none;
     --fintech-shadow-lg: none;
 }
 
+/* ---------- Blueprint (Engineering Minimalist) ---------- */
+.blueprint {
+    --font-sans-current: var(--font-space), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    --font-serif-current: var(--font-mono), monospace;
+
+    --background: #F8FAFC;
+    --foreground: #0F172A;
+    --primary: #2563EB;
+    --primary-foreground: #FFFFFF;
+    --secondary: #1E293B;
+    --secondary-foreground: #FFFFFF;
+    --muted: #F1F5F9;
+    --muted-foreground: #64748B;
+    --accent: #3B82F6;
+    --accent-foreground: #FFFFFF;
+    --border: #CBD5E1;
+    --input: #FFFFFF;
+    --ring: #2563EB;
+    --radius: 2px;
+
+    --fintech-shadow: none;
+    --fintech-shadow-lg: none;
+}
+
+/* ---------- Base layer ---------- */
+@layer base {
+    * {
+        @apply border-border outline-ring/50 transition-colors duration-200;
+    }
+
+    body {
+        @apply bg-background text-foreground antialiased;
+        font-family: var(--font-sans);
+    }
+}
+
 @layer components {
+
+    /* Semantic Layouts */
     .section-white {
-        @apply py-20 md:py-32 bg-white;
+        @apply py-24 md:py-48 bg-background;
     }
 
     .section-grey {
-        @apply py-20 md:py-32 bg-[#F5F5F5] border-y border-black;
+        @apply py-24 md:py-48 bg-muted border-y border-border;
     }
 
     .section-dark {
-        @apply py-20 md:py-32 bg-black text-white;
+        @apply py-24 md:py-48 bg-foreground text-background;
+    }
+
+    .onyx .section-grey {
+        @apply bg-[#0C0F16] border-white/5;
+    }
+
+    .platform .section-grey {
+        @apply bg-slate-50/50 border-slate-200/60;
     }
 
     .fintech-container {
-        @apply container mx-auto px-6 max-w-7xl;
+        @apply container mx-auto px-8 max-w-6xl;
     }
 
-    /* Flat Typography: Sharp, Technical */
+    /* Editorial Typography */
     .hero-heading {
-        @apply text-[42px] md:text-[84px] lg:text-[110px] leading-[0.9] font-black tracking-[-0.05em] text-foreground uppercase;
+        @apply text-[56px] md:text-[110px] lg:text-[140px] leading-[0.85] font-black tracking-[-0.07em] text-foreground;
+        font-family: var(--font-serif);
+    }
+
+    .blueprint .hero-heading {
+        @apply text-[50px] md:text-[90px] lg:text-[120px] leading-none font-bold tracking-tight text-foreground uppercase;
+        font-family: var(--font-sans);
+    }
+
+    .onyx .hero-heading {
+        @apply text-[50px] md:text-[100px] lg:text-[130px] leading-[0.9] font-black tracking-tighter text-foreground text-center md:text-left;
+        font-family: var(--font-sans);
+    }
+
+    .platform .hero-heading {
+        @apply text-[48px] md:text-[88px] lg:text-[104px] leading-[1.05] font-bold tracking-[-0.04em] text-slate-900;
+        font-family: var(--font-sans);
     }
 
     .section-heading {
-        @apply text-[32px] md:text-[56px] lg:text-[72px] leading-[0.95] font-black tracking-[-0.04em] text-foreground uppercase;
+        @apply text-[40px] md:text-[84px] leading-[0.9] font-black tracking-[-0.05em] text-foreground;
+        font-family: var(--font-serif);
+    }
+
+    .blueprint .section-heading {
+        @apply text-[36px] md:text-[72px] leading-none font-bold tracking-tight text-foreground uppercase border-b-8 border-primary inline-block;
+        font-family: var(--font-sans);
+    }
+
+    .onyx .section-heading {
+        @apply text-[36px] md:text-[72px] leading-tight font-black tracking-tight text-foreground text-center md:text-left;
+        font-family: var(--font-sans);
+    }
+
+    .platform .section-heading {
+        @apply text-[32px] md:text-[64px] leading-[1.1] font-bold tracking-[-0.03em] text-slate-900;
+        font-family: var(--font-sans);
     }
 
     .body-copy {
-        @apply text-lg md:text-xl text-black leading-relaxed font-bold uppercase tracking-tight;
+        @apply text-xl md:text-2xl text-foreground/80 leading-relaxed tracking-tight max-w-2xl;
+        font-family: var(--font-sans);
     }
 
-    /* Flat Buttons: Sharp corners, solid borders */
+    .onyx .body-copy {
+        @apply text-lg md:text-xl text-foreground/60 leading-relaxed font-medium text-center md:text-left mx-auto md:mx-0;
+    }
+
+    .platform .body-copy {
+        @apply text-[17px] md:text-[20px] text-slate-600 leading-relaxed font-normal tracking-normal max-w-2xl;
+    }
+
+    .label-technical {
+        @apply text-[10px] font-black uppercase tracking-[0.25em] text-foreground/40;
+        font-family: var(--font-mono);
+    }
+
+    .onyx .label-technical {
+        @apply text-[11px] font-bold uppercase tracking-widest text-primary/80;
+    }
+
+    .platform .label-technical {
+        @apply text-[11px] font-semibold text-primary/70 tracking-[0.1em] px-2 py-0.5 bg-primary/5 rounded;
+        font-family: var(--font-sans);
+    }
+
+    /* Refined Buttons */
     .btn-primary {
-        @apply bg-[#9FE870] text-black px-8 py-4 rounded-[4px] font-black border-2 border-black transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-0 active:translate-y-0 inline-flex items-center justify-center;
-        font-size: 16px;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
+        @apply bg-primary text-primary-foreground px-10 py-5 rounded-[var(--radius)] font-black border-2 border-foreground transition-all duration-300 hover:translate-x-[4px] hover:translate-y-[4px] active:translate-x-0 active:translate-y-0 inline-flex items-center justify-center uppercase tracking-widest text-[14px];
+        box-shadow: -4px -4px 0px 0px var(--foreground);
+    }
+
+    .blueprint .btn-primary {
+        @apply bg-primary text-primary-foreground px-8 py-4 rounded-[var(--radius)] font-bold border-0 transition-all hover:bg-primary/90 hover:translate-x-0 hover:translate-y-0 active:scale-95 shadow-none uppercase tracking-widest;
+    }
+
+    .onyx .btn-primary {
+        @apply bg-primary text-primary-foreground px-8 py-4 rounded-full font-bold border-0 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20 uppercase tracking-widest text-[13px];
+        box-shadow: 0 10px 20px -5px rgba(159, 232, 112, 0.3);
+    }
+
+    .platform .btn-primary {
+        @apply bg-primary text-white px-7 py-3 rounded-full font-semibold border-0 transition-all hover:bg-primary/90 hover:shadow-md active:scale-95 shadow-none normal-case tracking-tight text-[15px];
+        box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.3);
     }
 
     .btn-secondary {
-        @apply bg-white text-black px-8 py-4 rounded-[4px] font-black border-2 border-black transition-all duration-200 hover:bg-[#F5F5F5] inline-flex items-center justify-center;
-        font-size: 16px;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
+        @apply bg-background text-foreground px-10 py-5 rounded-[var(--radius)] font-black border-2 border-foreground transition-all duration-300 hover:bg-muted inline-flex items-center justify-center uppercase tracking-widest text-[14px];
     }
 
-    /* Flat Cards: Thick borders, zero elevation */
+    .onyx .btn-secondary {
+        @apply bg-white/5 backdrop-blur-md text-foreground px-8 py-4 rounded-full font-bold border border-white/10 transition-all hover:bg-white/10 inline-flex items-center justify-center uppercase tracking-widest text-[13px];
+    }
+
+    .platform .btn-secondary {
+        @apply bg-white text-slate-700 px-7 py-3 rounded-full font-semibold border border-slate-200 transition-all hover:bg-slate-50 inline-flex items-center justify-center normal-case tracking-tight text-[15px] shadow-sm;
+    }
+
+    /* Refined Cards */
     .fintech-card {
-        @apply bg-white border-2 border-black rounded-[4px] p-8 transition-all duration-200;
+        @apply bg-background border-2 border-foreground rounded-[var(--radius)] p-12 transition-all duration-300 hover:translate-x-[-2px] hover:translate-y-[-2px];
+        box-shadow: 6px 6px 0px 0px var(--foreground);
     }
 
-    .fintech-shadow {
-        @apply shadow-none;
-    }
-}
-
-@layer base {
-    * {
-        @apply border-border;
+    .blueprint .fintech-card {
+        @apply bg-white border border-border rounded-[var(--radius)] p-10 transition-all hover:border-primary hover:translate-x-0 hover:translate-y-0 shadow-sm;
     }
 
-    body {
-        @apply bg-background text-foreground antialiased;
-        font-family: var(--font-sans);
-    }
-}
-
-@layer base {
-    * {
-        @apply border-border;
+    .onyx .fintech-card {
+        @apply bg-[#0F1219] border border-white/5 rounded-[var(--radius)] p-10 transition-all hover:scale-[1.01] hover:bg-[#13171F] shadow-none;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
     }
 
-    body {
-        @apply bg-background text-foreground antialiased;
-        font-family: var(--font-sans);
+    .platform .fintech-card {
+        @apply bg-white border border-slate-200 rounded-[16px] p-8 transition-all hover:translate-y-[-4px];
+        box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.06);
+    }
+
+    .platform .fintech-card:hover {
+        box-shadow: 0 10px 40px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Glow Effects for Onyx */
+    .onyx .glow-green {
+        box-shadow: 0 0 30px -5px rgba(159, 232, 112, 0.2);
+    }
+
+    .onyx .glow-red {
+        box-shadow: 0 0 30px -5px rgba(239, 68, 68, 0.3);
     }
 }

@@ -7,61 +7,61 @@ export function PerkProviders() {
     return (
         <section id="providers" className="section-dark">
             <div className="fintech-container">
-                <div className="space-y-20">
-                    <div className="space-y-8 max-w-4xl">
-                        <div className="inline-flex items-center px-3 py-1 border-2 border-[#9FE870] bg-[#9FE870] text-[10px] font-black uppercase tracking-widest text-black">
-                            Network Nodes & Workshops
-                        </div>
-                        <h2 className="section-heading text-white">
-                            FUELING THE <br /> SERVICE ECONOMY.
+                <div className="space-y-24">
+                    <div className="space-y-10 max-w-4xl text-center md:text-left">
+                        <div className="label-technical !text-primary">Network Nodes / Service_Workshops</div>
+                        <h2 className="section-heading !text-background">
+                            Fueling the <br /> service economy.
                         </h2>
-                        <p className="body-copy !text-white/60 max-w-2xl border-l-4 border-[#9FE870] pl-6 uppercase font-black italic">
-                            AMBOS TRANSFORMS WORKSHOPS INTO HIGH-TRUST DATA NODES. ATTRACT PREMIUM FLEETS AND PROVE YOUR SERVICE QUALITY WITH VERIFIABLE LOGS.
+                        <p className="body-copy !text-background/60">
+                            Ambos transforms workshops into high-trust data nodes. Attract premium fleets and prove your service quality with verifiable, immutable history logs.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
                             {
-                                icon: <Wrench size={32} />,
-                                title: "ACCREDITED STATUS",
-                                desc: "JOIN THE NETWORK OF VETTED WORKSHOPS. GET PRIORITIZED BY FLEET MANAGERS AND INDIVIDUAL DRIVERS."
+                                icon: <Wrench size={32} strokeWidth={2.5} />,
+                                title: "Accredited Status",
+                                desc: "Join the network of vetted workshops. Get prioritized by fleet managers and individual drivers."
                             },
                             {
-                                icon: <Zap size={32} />,
-                                title: "TAP-TO-LOG FLOW",
-                                desc: "EVERY SERVICE SIGNED PHYSICALLY. ELIMINATE REPAIR DISPUTES AND BUILD AN IMMUTABLE LOG FOR EVERY CAR."
+                                icon: <Zap size={32} strokeWidth={2.5} />,
+                                title: "Tap-to-Log Flow",
+                                desc: "Every service signed physically. Eliminate disputes and build a verifiable history for every car."
                             },
                             {
-                                icon: <BarChart3 size={32} />,
-                                title: "DEMAND ROUTING",
-                                desc: "GET AUTOMATED SERVICE REQUESTS BASED ON VEHICLE HEALTH ALERTS. KEEP YOUR BAYS FULL WITH SYSTEM-DRIVEN LEADS."
+                                icon: <BarChart3 size={32} strokeWidth={2.5} />,
+                                title: "Demand Routing",
+                                desc: "Get automated service requests based on health alerts. Keep your bays full with system-driven leads."
                             },
                             {
-                                icon: <ShieldCheck size={32} />,
-                                title: "FLEET COMPLIANCE",
-                                desc: "PROVIDERS SIGN OFF ON B2B AUDITS AUTOMATICALLY. REDUCE PAPERWORK AND ACCELERATE PAYMENT CYCLES."
+                                icon: <ShieldCheck size={32} strokeWidth={2.5} />,
+                                title: "Fleet Compliance",
+                                desc: "Providers sign off on audits automatically. Reduce paperwork and accelerate payment cycles."
                             }
                         ].map((item, i) => (
-                            <div key={i} className="fintech-card !bg-transparent !border-[#9FE870] !p-8 space-y-8 group hover:bg-[#9FE870] hover:!text-black transition-all">
-                                <div className="h-16 w-16 border-2 border-current flex items-center justify-center">
-                                    {item.icon}
+                            <div key={i} className="fintech-card !bg-transparent !border-primary !p-12 space-y-10 group hover:bg-primary hover:!text-foreground transition-all duration-500">
+                                <div className="h-20 w-20 border-2 border-primary group-hover:border-foreground flex items-center justify-center transition-colors">
+                                    <div className="text-primary group-hover:text-foreground">
+                                        {item.icon}
+                                    </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <h3 className="text-2xl font-black uppercase tracking-tighter">{item.title}</h3>
-                                    <p className="text-[11px] font-black uppercase opacity-60 leading-relaxed">{item.desc}</p>
+                                <div className="space-y-6">
+                                    <h3 className="text-3xl font-black uppercase tracking-tighter leading-none italic group-hover:text-foreground">{item.title}.</h3>
+                                    <p className="text-sm font-bold opacity-60 leading-relaxed italic group-hover:opacity-80 group-hover:text-foreground">{item.desc}</p>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    <div className="p-12 border-4 border-[#9FE870] bg-white text-black flex flex-col md:flex-row justify-between items-center gap-8">
-                        <div className="space-y-2">
-                            <div className="text-[10px] font-black uppercase tracking-widest opacity-40">Ready to join?</div>
-                            <h4 className="text-3xl font-black uppercase tracking-tight">Become an Accredited Node</h4>
+                    <div className="p-16 border-4 border-primary bg-background text-foreground flex flex-col lg:flex-row justify-between items-center gap-12 shadow-[12px_12px_0px_0px_var(--primary)] group">
+                        <div className="space-y-4 text-center lg:text-left">
+                            <div className="label-technical">Ready to join?</div>
+                            <h4 className="text-4xl font-black uppercase tracking-tight italic">Become an accredited node.</h4>
                         </div>
-                        <button className="btn-primary !px-12 !py-6 !text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]">
-                            Apply as Provider <ArrowUpRight size={20} className="ml-2" />
+                        <button className="btn-primary !px-16 !py-8 !text-2xl">
+                            Apply as Provider <ArrowUpRight size={28} className="ml-4 transition-transform group-hover:translate-x-2 group-hover:-translate-y-2" />
                         </button>
                     </div>
                 </div>

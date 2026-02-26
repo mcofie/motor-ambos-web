@@ -1,27 +1,45 @@
-import { Navbar } from "@/components/landing/Navbar";
-import { PerkHero, PerkGrid } from "@/components/perk-landing/PerkHero";
-import { PerkProblem, PerkBusiness, PerkTrust } from "@/components/perk-landing/PerkProblem";
-import { PerkNFC } from "@/components/perk-landing/PerkNFC";
-import { PerkProviders } from "@/components/perk-landing/PerkProviders";
-import { PerkFinalCTA, PerkFooter } from "@/components/perk-landing/PerkFooter";
+import {
+    StripeNavbar,
+    StripeHero,
+    StripeServiceEcosystem,
+    StripeB2CFeatureGrid,
+    StripeBusinessInfrastructure,
+    StripeNFCCardSection,
+    StripeSupportSection,
+    StripeRoadAssistance,
+    StripeFooter,
+} from "@/components/stripe-landing/Sections";
+import {
+    ImagePlaceholder
+} from "@/components/stripe-landing/UIMocks";
 
 export default function LandingPage() {
     return (
-        <div className="min-h-screen bg-white selection:bg-[#9FE870] selection:text-black">
-            <Navbar />
+        <main className="bg-white min-h-screen w-full overflow-x-hidden selection:bg-[#00C767]/20 selection:text-[#171717]">
+            <StripeNavbar />
 
-            <main className="flex flex-col">
-                <PerkHero />        {/* Centered Utility Hero */}
-                <PerkGrid />        {/* The 4-Pillar Grid */}
-                <PerkProblem />     {/* B2C Deep Dive */}
-                <PerkBusiness />    {/* B2B Deep Dive */}
-                <PerkProviders />   {/* Provider/Workshop Deep Dive */}
-                <PerkNFC />         {/* NFC Protocol & Tiers */}
-                <PerkTrust />       {/* Simple Stats/Network Trust */}
-                <PerkFinalCTA />    {/* Bold dark CTA */}
-            </main>
+            {/* Hero & Identity Layer */}
+            <StripeHero />
 
-            <PerkFooter />
-        </div>
+            {/* Provider Ecosystem Grid */}
+            <StripeServiceEcosystem />
+
+            {/* B2C: The Digital Passport */}
+            <StripeB2CFeatureGrid />
+
+            {/* B2B: Motor Ambos for Business */}
+            <StripeBusinessInfrastructure />
+
+            {/* Hardened Trust: Vector & Onyx NFC Cards */}
+            <StripeNFCCardSection />
+
+            {/* Financial Infrastructure & Marketplace Savings */}
+            <StripeSupportSection />
+
+            {/* Road Assistance Feature */}
+            <StripeRoadAssistance />
+
+            <StripeFooter />
+        </main>
     );
 }

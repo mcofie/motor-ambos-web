@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck, Loader2, Lock, Mail, ArrowRight, Globe } from "lucide-react";
+import { ShieldCheck, Loader2, Lock, Mail, ArrowRight, Globe, Car, Check } from "lucide-react";
 import { loginWithPassword } from "@/lib/supaFetch";
 import Link from "next/link";
 
@@ -42,48 +42,48 @@ export default function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F0F2F5] flex flex-col items-center pt-24 pb-12 px-6">
-            <div className="w-full max-w-lg space-y-12">
+        <div className="min-h-screen bg-white md:bg-[#F8FAFF] flex flex-col items-center justify-center p-6 selection:bg-[#00C767]/20 font-jakarta">
+            <div className="w-full max-w-[480px] space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 {/* Branding */}
-                <Link href="/" className="flex items-center justify-center gap-3 group mx-auto w-fit">
-                    <div className="w-12 h-12 rounded-[10px] bg-[#9FE870] flex items-center justify-center font-black text-2xl shadow-sm">
-                        A
+                <Link href="/" className="flex items-center justify-center gap-3 group mx-auto w-fit transition-transform hover:scale-105">
+                    <div className="w-10 h-10 bg-[#00C767] rounded-xl flex items-center justify-center transition-transform group-hover:scale-110">
+                        <Car className="w-6 h-6 text-white" />
                     </div>
-                    <span className="text-3xl font-black tracking-tighter text-foreground">ambos</span>
+                    <span className="font-extrabold text-[24px] tracking-tight text-[#171717]">motor ambos</span>
                 </Link>
 
-                <div className="wise-card !p-12 space-y-10 shadow-wise-lg">
-                    <div className="space-y-4">
-                        <h1 className="text-[32px] md:text-[40px] font-black tracking-tight leading-none">
-                            Log in
+                <div className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl shadow-slate-200/50 border border-slate-100">
+                    <div className="space-y-4 mb-10">
+                        <h1 className="text-[32px] font-extrabold text-[#171717] tracking-tight leading-none">
+                            Welcome back
                         </h1>
-                        <p className="text-lg font-bold text-[#5D7079]">
-                            Access your vehicle control panel.
+                        <p className="text-[17px] font-medium text-[#525252] opacity-70">
+                            Log in to manage your vehicle identity.
                         </p>
                     </div>
 
                     {err === "not_admin" && (
-                        <div className="p-4 bg-red-50 border border-red-100 rounded-[12px] flex items-center gap-3 text-red-600">
-                            <Lock size={18} strokeWidth={3} />
-                            <span className="text-sm font-black uppercase tracking-tight">Access denied. Admin required.</span>
+                        <div className="p-4 mb-8 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-3 text-amber-700">
+                            <Lock size={18} />
+                            <span className="text-sm font-bold uppercase tracking-tight">Access denied. Admin node required.</span>
                         </div>
                     )}
 
                     {error && (
-                        <div className="p-4 bg-red-50 border border-red-100 rounded-[12px] flex items-center gap-3 text-red-600">
-                            <ShieldCheck size={18} strokeWidth={3} />
-                            <span className="text-sm font-black uppercase tracking-tight">{error}</span>
+                        <div className="p-4 mb-8 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600">
+                            <ShieldCheck size={18} />
+                            <span className="text-sm font-bold uppercase tracking-tight">{error}</span>
                         </div>
                     )}
 
-                    <form onSubmit={signIn} className="space-y-8">
-                        <div className="space-y-6">
+                    <form onSubmit={signIn} className="space-y-6">
+                        <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079] ml-1">Email address</label>
-                                <div className="relative">
-                                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#5D7079]" />
+                                <label className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#525252] ml-1 opacity-60">Identity / Email</label>
+                                <div className="relative group">
+                                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-[#00C767] transition-colors" />
                                     <input
-                                        className="block w-full rounded-[12px] border-2 border-[#E2E8F0] bg-white pl-14 pr-6 py-5 text-lg font-bold text-black placeholder:text-[#5D7079]/40 focus:border-[#9FE870] focus:ring-0 outline-none transition-all"
+                                        className="block w-full rounded-2xl border border-slate-200 bg-white pl-14 pr-6 py-5 text-[16px] font-bold text-[#171717] placeholder:text-slate-300 focus:border-[#00C767] focus:ring-4 focus:ring-[#00C767]/5 outline-none transition-all"
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -95,13 +95,12 @@ export default function LoginForm() {
 
                             <div className="space-y-2">
                                 <div className="flex justify-between items-end mb-1">
-                                    <label className="text-[12px] font-black uppercase tracking-widest text-[#5D7079] ml-1">Password</label>
-                                    <Link href="/help" className="text-xs font-black text-[#5D7079]/60 hover:text-black hover:underline">Forgot password?</Link>
+                                    <label className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#525252] ml-1 opacity-60">Security_Key / Password</label>
                                 </div>
-                                <div className="relative">
-                                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#5D7079]" />
+                                <div className="relative group">
+                                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-[#00C767] transition-colors" />
                                     <input
-                                        className="block w-full rounded-[12px] border-2 border-[#E2E8F0] bg-white pl-14 pr-6 py-5 text-lg font-bold text-black placeholder:text-[#5D7079]/40 focus:border-[#9FE870] focus:ring-0 outline-none transition-all"
+                                        className="block w-full rounded-2xl border border-slate-200 bg-white pl-14 pr-6 py-5 text-[16px] font-bold text-[#171717] placeholder:text-slate-300 focus:border-[#00C767] focus:ring-4 focus:ring-[#00C767]/5 outline-none transition-all"
                                         type="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -112,38 +111,40 @@ export default function LoginForm() {
                             </div>
                         </div>
 
+                        <div className="flex items-center justify-between px-1">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" className="w-5 h-5 rounded-md border-slate-200 text-[#00C767] focus:ring-[#00C767]" />
+                                <span className="text-sm font-bold text-[#525252]">Remember node</span>
+                            </label>
+                            <Link href="/help" className="text-sm font-bold text-[#00C767] hover:underline">Forgot key?</Link>
+                        </div>
+
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-[#9FE870] text-black py-6 rounded-full font-black text-xl hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-sm"
+                            className="w-full bg-[#171717] text-white py-6 rounded-2xl font-bold text-lg hover:bg-black active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-xl shadow-black/10 mt-10"
                         >
                             {loading ? (
                                 <>
-                                    <Loader2 className="h-6 w-6 animate-spin" strokeWidth={3} />
-                                    <span>Loggin in...</span>
+                                    <Loader2 className="h-6 w-6 animate-spin text-[#00C767]" />
+                                    <span>Syncing...</span>
                                 </>
                             ) : (
                                 <>
                                     <span>Log in</span>
-                                    <ArrowRight className="h-6 w-6" strokeWidth={3} />
+                                    <ArrowRight className="h-5 w-5" />
                                 </>
                             )}
                         </button>
                     </form>
                 </div>
 
-                <div className="text-center space-y-8">
-                    <p className="text-sm font-bold text-[#5D7079]">
-                        New to Ambos? <Link href="/signup" className="text-black hover:underline underline-offset-4">Create an account</Link>
-                    </p>
+                <div className="text-center space-y-8 pt-4">
 
-                    <div className="flex items-center justify-center gap-6 pt-6 border-t border-[#E2E8F0]">
-                        <button className="flex items-center gap-2 text-[10px] font-black text-[#5D7079] uppercase tracking-widest">
-                            <Globe size={16} />
-                            <span>English (UK)</span>
-                        </button>
-                        <Link href="/help" className="text-[10px] font-black text-[#5D7079] uppercase tracking-widest hover:text-black">Help center</Link>
-                        <Link href="/terms" className="text-[10px] font-black text-[#5D7079] uppercase tracking-widest hover:text-black">Privacy</Link>
+                    <div className="flex items-center justify-center gap-6 pt-10 opacity-40">
+                        <Link href="/privacy-policy" className="text-[10px] font-bold uppercase tracking-[0.2em] hover:text-[#171717]">Privacy</Link>
+                        <Link href="/terms-of-service" className="text-[10px] font-bold uppercase tracking-[0.2em] hover:text-[#171717]">Terms</Link>
+                        <Link href="/help" className="text-[10px] font-bold uppercase tracking-[0.2em] hover:text-[#171717]">Protocol Help</Link>
                     </div>
                 </div>
             </div>

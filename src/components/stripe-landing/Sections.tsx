@@ -762,13 +762,17 @@ export const StripeFooter = () => (
                 <div>
                     <h5 className="font-bold text-[#171717] mb-8 text-[12px] uppercase tracking-[0.2em] opacity-40">Protocol</h5>
                     <ul className="space-y-4 text-[15px] font-bold text-[#525252]">
-                        <li><Link href="/help" className="hover:text-[#00C767] transition-colors">Safety Sequence</Link></li>
+                        <li><Link href="/smart-card" className="hover:text-[#00C767] transition-colors">Smart Card</Link></li>
+                        <li><Link href="/providers" className="hover:text-[#00C767] transition-colors">Providers</Link></li>
+                        <li><Link href="/business" className="hover:text-[#00C767] transition-colors">Business</Link></li>
                     </ul>
                 </div>
                 <div>
                     <h5 className="font-bold text-[#171717] mb-8 text-[12px] uppercase tracking-[0.2em] opacity-40">Resources</h5>
                     <ul className="space-y-4 text-[15px] font-bold text-[#525252]">
                         <li><Link href="/help" className="hover:text-[#00C767] transition-colors">Help Terminal</Link></li>
+                        <li><Link href="/service/log" className="hover:text-[#00C767] transition-colors">Service Log</Link></li>
+                        <li><Link href="/login" className="hover:text-[#00C767] transition-colors">System Login</Link></li>
                     </ul>
                 </div>
                 <div>

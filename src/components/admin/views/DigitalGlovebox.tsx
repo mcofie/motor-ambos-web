@@ -505,7 +505,7 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose, o
                                                 <div className="flex flex-col gap-1">
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
-                                                            {new Date(item.service_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                                            {item.service_date ? new Date(item.service_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'}
                                                         </span>
                                                         {item.is_verified && (
                                                             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[8px] font-bold">
@@ -543,7 +543,7 @@ export function DigitalGlovebox({ membershipId, memberName, vehicles, onClose, o
                                                                 {item.document_metadata.lastModified && (
                                                                     <span className="flex items-center gap-1 ml-1 pl-1 border-l border-indigo-200 dark:border-indigo-500/30">
                                                                         <Clock className="h-2 w-2" />
-                                                                        {new Date(item.document_metadata.lastModified).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                        {item.document_metadata.lastModified ? new Date(item.document_metadata.lastModified).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                                                                     </span>
                                                                 )}
                                                             </span>

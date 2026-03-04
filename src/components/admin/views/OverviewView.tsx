@@ -303,7 +303,7 @@ export function OverviewView() {
                             <div key={q.id} className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-2 hover:bg-muted/50 transition-colors group">
                                 <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase">
                                     <span>User Query</span>
-                                    <span>{new Date(q.created_at).toLocaleDateString()}</span>
+                                    <span>{q.created_at ? new Date(q.created_at).toLocaleDateString() : '—'}</span>
                                 </div>
                                 <p className="text-sm font-medium text-foreground line-clamp-2 italic">
                                     "{q.event_data.query}"

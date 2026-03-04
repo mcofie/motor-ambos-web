@@ -337,7 +337,7 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
                                                         {expired ? "Expired" : "Active"}
                                                     </span>
                                                     <span className="text-muted-foreground/70">
-                                                        Expires {new Date(m.membership_expiry_date).toLocaleDateString()}
+                                                        Expires {m.membership_expiry_date ? new Date(m.membership_expiry_date).toLocaleDateString() : '—'}
                                                     </span>
                                                 </div>
                                             ) : (

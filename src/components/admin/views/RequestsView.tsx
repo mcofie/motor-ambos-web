@@ -126,10 +126,10 @@ export function RequestsView() {
                             {list.map((r) => (
                                 <tr key={r.id} className="hover:bg-muted/50 transition-colors">
                                     <td className="px-6 py-4 text-muted-foreground text-xs whitespace-nowrap">
-                                        {new Date(r.created_at).toLocaleString([], {
+                                        {r.created_at ? new Date(r.created_at).toLocaleString([], {
                                             dateStyle: "short",
                                             timeStyle: "short",
-                                        })}
+                                        }) : '—'}
                                     </td>
                                     <td className="px-6 py-4">
                                         <StatusBadge status={r.status || "pending"} />
@@ -297,7 +297,7 @@ export function RequestsView() {
                                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                     <div className="w-2 h-2 rounded-full bg-primary"></div>
                                     <span className="font-medium">Created:</span>
-                                    <span>{new Date(selectedRequest.created_at).toLocaleString()}</span>
+                                    <span>{selectedRequest.created_at ? new Date(selectedRequest.created_at).toLocaleString() : '—'}</span>
                                 </div>
                             </section>
                         </div>

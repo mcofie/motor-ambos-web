@@ -57,6 +57,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { sendFleetReport } from "@/lib/supaFetch";
 
 export function OrganizationsView() {
+    const [mounted, setMounted] = useState(false);
     const [members, setMembers] = useState<MemberWithMembershipRow[]>([]);
     const [allVehicles, setAllVehicles] = useState<VehicleRow[]>([]);
     const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
@@ -134,6 +135,7 @@ export function OrganizationsView() {
     }, []);
 
     useEffect(() => {
+        setMounted(true);
         const controller = new AbortController();
         fetchData(controller.signal);
         return () => controller.abort();
@@ -610,11 +612,11 @@ export function OrganizationsView() {
                                                                         <div className="font-black text-foreground text-sm font-mono tracking-tighter">#{inv.invoice_number}</div>
                                                                     </td>
                                                                     <td className="px-8 py-5">
-                                                                        <div className="text-xs font-bold text-muted-foreground">{inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '—'}</div>
+                                                                        <div className="text-xs font-bold text-muted-foreground">{inv.created_at ? (mounted ? new Date(inv.created_at).toLocaleDateString() : '...') : '—'}</div>
                                                                     </td>
                                                                     <td className="px-8 py-5">
                                                                         <div className="text-sm font-black text-foreground italic">GHS {inv.total_amount.toLocaleString()}</div>
-                                                                        <div className="text-[10px] text-muted-foreground">Due: {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</div>
+                                                                        <div className="text-[10px] text-muted-foreground">Due: {inv.due_date ? (mounted ? new Date(inv.due_date).toLocaleDateString() : '...') : '—'}</div>
                                                                     </td>
                                                                     <td className="px-8 py-5">
                                                                         <span className={cls(
@@ -657,7 +659,7 @@ export function OrganizationsView() {
                                                                 {note.category}
                                                             </span>
                                                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                                                {note.created_at ? new Date(note.created_at).toLocaleDateString() : '—'}
+                                                                {note.created_at ? (mounted ? new Date(note.created_at).toLocaleDateString() : '...') : '—'}
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-foreground leading-relaxed font-medium">{note.content}</p>

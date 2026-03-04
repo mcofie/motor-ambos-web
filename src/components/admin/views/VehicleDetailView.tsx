@@ -566,7 +566,7 @@ export function VehicleDetailView({ vehicleId, initialVehicle, initialHistory }:
                                                     </div>
                                                     <div>
                                                         <h4 className="font-bold text-sm tracking-tight">{log.station_name || "Unknown Station"}</h4>
-                                                        <p className="text-[10px] text-muted-foreground uppercase">{new Date(log.date || log.created_at).toLocaleDateString()}</p>
+                                                        <p className="text-[10px] text-muted-foreground uppercase" suppressHydrationWarning>{new Date(log.date || log.created_at || Date.now()).toLocaleDateString()}</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
@@ -629,7 +629,7 @@ export function VehicleDetailView({ vehicleId, initialVehicle, initialHistory }:
                                                         {Math.round(trip.average_score)}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold">{new Date(trip.start_time).toLocaleDateString()}</p>
+                                                        <p className="text-sm font-bold" suppressHydrationWarning>{new Date(trip.start_time).toLocaleDateString()}</p>
                                                         <p className="text-[10px] text-muted-foreground uppercase">{trip.distance_km.toFixed(1)} km traveled</p>
                                                     </div>
                                                 </div>

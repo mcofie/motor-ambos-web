@@ -471,7 +471,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-slate-500">Expiry</span>
-                                    <span className="font-semibold">{member.membership_expiry_date ? new Date(member.membership_expiry_date).toLocaleDateString() : "—"}</span>
+                                    <span className="font-semibold" suppressHydrationWarning>{member.membership_expiry_date ? new Date(member.membership_expiry_date).toLocaleDateString() : "—"}</span>
                                 </div>
                             </div>
                         </section>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
     ArrowRight, Check, Shield, Activity, CreditCard, FileText, Settings, AlertCircle, CheckCircle2, Car,
     Wrench, Store, Truck, Cpu, Sparkles, Droplets, Zap, ShieldCheck,
-    Twitter, Linkedin, Github
+    Twitter, Linkedin, Github, Cloud, RefreshCw, Home, Clock, User, Asterisk, ChevronDown
 } from 'lucide-react';
 import {
     VehicleOverviewMock,
@@ -27,7 +27,8 @@ import {
     RoadWorthyMock,
     ServiceLogsMock,
     SmartCardMock,
-    ProviderMarketplaceMock
+    ProviderMarketplaceMock,
+    MobileAppMock
 } from './UIMocks';
 
 // --- Navbar ---
@@ -82,8 +83,44 @@ export const StripeNavbar = () => {
                 >
                     Providers <ArrowRight className="w-3.5 h-3.5 -rotate-45 opacity-50" />
                 </Link>
+
+                <div className="h-5 w-[1px] bg-slate-200 mx-2" />
+
+                {/* Country Flag Selector */}
+                <div className="flex items-center gap-2 group cursor-pointer relative">
+                    <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center transition-all group-hover:border-[#00C767] shadow-sm group-hover:shadow-md">
+                        <span className="text-[20px] leading-none select-none drop-shadow-sm">🇬🇭</span>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-[#171717] transition-all" />
+
+                    {/* Hover Dropdown for countries */}
+                    <div className="absolute top-12 right-0 pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 z-50">
+                        <div className="bg-white rounded-[24px] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 min-w-[180px] flex flex-col gap-1">
+                            <div className="flex items-center justify-between px-4 py-3 rounded-[18px] bg-[#F8FAFF] text-[#171717] font-bold text-[14px]">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl leading-none">🇬🇭</span>
+                                    <span>Ghana</span>
+                                </div>
+                                <Check className="w-4 h-4 text-[#00C767]" />
+                            </div>
+                            <div className="flex items-center justify-between px-4 py-3 rounded-[18px] hover:bg-slate-50 transition-colors cursor-pointer group/item">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl leading-none grayscale opacity-50 group-hover/item:grayscale-0 group-hover/item:opacity-100 transition-all">🇰🇪</span>
+                                    <span className="text-[14px] font-bold text-slate-500 group-hover/item:text-[#171717]">Kenya</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between px-4 py-3 rounded-[18px] hover:bg-slate-50 transition-colors cursor-pointer group/item">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xl leading-none grayscale opacity-50 group-hover/item:grayscale-0 group-hover/item:opacity-100 transition-all">🇿🇦</span>
+                                    <span className="text-[14px] font-bold text-slate-500 group-hover/item:text-[#171717]">South Africa</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <Link href="/help">
-                    <button className="group bg-[#00C767] text-white px-6 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#00B05C] shadow-lg shadow-[#00C767]/20 transition-all duration-300 active:scale-[0.98] flex items-center gap-2">
+                    <button className="group bg-[#00C767] text-white px-6 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#00B05C] shadow-lg shadow-[#00C767]/20 transition-all duration-300 active:scale-[0.98] flex items-center gap-2 ml-2">
                         Get App
                         <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </button>
@@ -130,6 +167,33 @@ export const StripeNavbar = () => {
                             Providers
                             <ArrowRight className="w-5 h-5 opacity-20 -rotate-45" />
                         </Link>
+
+                        {/* Mobile Country Selector */}
+                        <div className="mt-4 border-t border-slate-50 pt-8 pb-4">
+                            <h5 className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">Select Country</h5>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#F8FAFF] border border-slate-100">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-2xl">🇬🇭</span>
+                                        <span className="font-bold text-[#171717]">Ghana</span>
+                                    </div>
+                                    <Check className="w-5 h-5 text-[#00C767]" />
+                                </div>
+                                <div className="flex items-center justify-between p-4 rounded-2xl border border-transparent">
+                                    <div className="flex items-center gap-4 opacity-50">
+                                        <span className="text-2xl grayscale">🇰🇪</span>
+                                        <span className="font-bold text-[#171717]">Kenya</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between p-4 rounded-2xl border border-transparent">
+                                    <div className="flex items-center gap-4 opacity-50">
+                                        <span className="text-2xl grayscale">🇿🇦</span>
+                                        <span className="font-bold text-[#171717]">South Africa</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <Link href="/help" onClick={() => setIsMenuOpen(false)} className="mt-auto pb-12 pt-8">
                             <button className="group w-full bg-[#00C767] text-white py-5 rounded-2xl font-bold text-[18px] hover:bg-[#00B05C] shadow-lg shadow-[#00C767]/20 transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-3">
                                 Get App
@@ -272,13 +336,24 @@ export const StripeHero = () => (
         </div>
 
         {/* Partners */}
-        <div className="w-full border-t border-slate-100 pt-12 pb-8 max-w-5xl mx-auto animate-in fade-in duration-1000 delay-500">
-            <div className="text-[12px] font-bold text-[#525252]/50 uppercase tracking-[0.2em] mb-8">Partnered with the best</div>
-            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 grayscale opacity-40 hover:opacity-60 transition-opacity">
-                <div className="text-[20px] md:text-[24px] font-black tracking-tighter">TOTAL</div>
-                <div className="text-[20px] md:text-[24px] font-black tracking-tighter italic">DVLA</div>
-                <div className="text-[20px] md:text-[24px] font-black tracking-tighter">SHELL</div>
-                <div className="text-[20px] md:text-[24px] font-black tracking-tighter">ALLIANZ</div>
+        <div className="w-full border-t border-slate-100 pt-12 pb-8 max-w-5xl mx-auto overflow-hidden animate-in fade-in duration-1000 delay-500">
+            <div className="text-[12px] font-bold text-[#525252]/50 uppercase tracking-[0.2em] mb-12">Partnered with the best</div>
+
+            <div className="relative flex overflow-hidden group/marquee">
+                <div className="animate-marquee whitespace-nowrap flex items-center gap-20 grayscale opacity-40 group-hover:opacity-80 transition-opacity">
+                    {[
+                        "TOTAL", "DVLA", "SHELL", "ALLIANZ", "SANTAM", "MTN", "ORYX", "VODA",
+                        "TOTAL", "DVLA", "SHELL", "ALLIANZ", "SANTAM", "MTN", "ORYX", "VODA"
+                    ].map((partner, i) => (
+                        <div key={i} className="text-[20px] md:text-[24px] font-black tracking-tighter flex-shrink-0">
+                            {partner}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Gradient Masks for smooth fading on edges */}
+                <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10" />
+                <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10" />
             </div>
         </div>
     </section>
@@ -308,31 +383,32 @@ export const StripeServiceEcosystem = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 mb-16">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6 mb-16">
                     {categories.map((cat, i) => (
                         <div
                             key={i}
-                            className="p-6 md:p-8 rounded-[32px] bg-[#F8FAFF] border border-slate-100 transition-all duration-500 hover:bg-white hover:shadow-2xl hover:shadow-blue-900/5 hover:-translate-y-1 group group-hover:border-blue-100 flex flex-col items-center md:items-start text-center md:text-left"
+                            className="bg-[#FAFAFA] rounded-[32px] p-7 md:p-8 flex flex-col text-left transition-all duration-300 hover:bg-[#F3F3F3] cursor-pointer group"
                         >
-                            <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 transition-all duration-500 group-hover:bg-[#00C767] group-hover:scale-110">
-                                <cat.icon className="w-6 h-6 md:w-7 md:h-7 text-[#171717] group-hover:text-white transition-colors" />
+                            <div className="w-12 h-12 rounded-[16px] bg-white border border-slate-200/50 flex items-center justify-center mb-6 mt-1 shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:bg-[#171717] group-hover:border-[#171717]">
+                                <cat.icon className="w-5 h-5 text-[#171717] stroke-[1.5] transition-colors duration-300 group-hover:text-white" />
                             </div>
-                            <h4 className="text-[18px] md:text-[20px] font-bold text-[#171717] mb-2">{cat.name}</h4>
-                            <p className="text-[14px] text-[#525252] font-medium opacity-60 leading-relaxed group-hover:opacity-100 transition-opacity">
+                            <h4 className="text-[17px] font-bold text-[#171717] mb-[6px] tracking-tight">{cat.name}</h4>
+                            <p className="text-[14px] text-slate-500 font-medium tracking-[0.01em] leading-relaxed">
                                 {cat.desc}
                             </p>
                         </div>
                     ))}
                 </div>
 
-                <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-2 duration-1000 delay-300 mt-8">
-                    <p className="text-[#525252] font-bold text-[14px] uppercase tracking-[0.2em] opacity-50">Ready to join the network?</p>
-                    <button className="group flex items-center gap-4 bg-[#00C767] text-white px-10 py-4 md:py-5 rounded-xl md:rounded-2xl font-bold text-[16px] md:text-[17px] hover:bg-[#00B05C] transition-all active:scale-[0.98] shadow-xl shadow-[#00C767]/20">
-                        Become a Provider
-                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
+                <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-2 duration-1000 delay-300 mt-12">
+                    <p className="text-[#525252] font-bold text-[13px] uppercase tracking-[0.3em] opacity-40">Continental Network</p>
+                    <button className="group relative flex items-center gap-4 bg-[#171717] text-white px-10 py-5 rounded-2xl font-bold text-[17px] hover:bg-black transition-all active:scale-[0.98] shadow-2xl shadow-black/10">
+                        Become a Partner
+                        <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
                             <ArrowRight className="w-3.5 h-3.5 text-white" />
                         </div>
                     </button>
+                    <p className="text-[#525252] text-[14px] font-medium opacity-60">Used by 1,200+ workshops across the continent</p>
                 </div>
             </div>
         </section>
@@ -437,12 +513,12 @@ export const StripeB2CFeatureGrid = () => (
                     descColor: "text-slate-500"
                 }
             ].map((feature, i) => (
-                <div key={i} className={`${feature.bg} p-6 md:p-8 rounded-[36px] transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50 group break-inside-avoid relative overflow-hidden flex flex-col`}>
-                    <div className="mb-8 z-10 break-inside-avoid">
-                        <h3 className={`text-[20px] md:text-[22px] font-extrabold ${feature.textColor} tracking-tight mb-2 md:mb-3`}>{feature.title}</h3>
-                        <p className={`text-[15px] ${feature.descColor} leading-[1.6] font-medium`}>{feature.desc}</p>
+                <div key={i} className={`${feature.bg} p-8 md:p-10 rounded-[40px] transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/40 group break-inside-avoid relative overflow-hidden flex flex-col border border-black/5`}>
+                    <div className="mb-10 z-10 break-inside-avoid">
+                        <h3 className={`text-[22px] md:text-[24px] font-extrabold ${feature.textColor} tracking-tight mb-3`}>{feature.title}</h3>
+                        <p className={`text-[15.5px] ${feature.descColor} leading-[1.6] font-medium opacity-90`}>{feature.desc}</p>
                     </div>
-                    <div className="mt-auto z-10 w-full flex justify-center">
+                    <div className="mt-auto z-10 w-full flex justify-center transform transition-transform duration-700 group-hover:scale-[1.02]">
                         {feature.mock}
                     </div>
                 </div>
@@ -557,6 +633,48 @@ export const StripeSupportSection = () => (
     </section>
 );
 
+export const StripeAppDownload = () => {
+    return (
+        <section className="py-24 md:py-32 px-6 md:px-12 bg-[#F8FAFF] border-t border-slate-100 overflow-hidden relative">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-16 relative z-10">
+                <div className="max-w-xl animate-in fade-in slide-in-from-left-8 duration-1000">
+                    <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Motor Ambos App</div>
+                    <h2 className="text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em] mb-8">Take your passport everywhere.</h2>
+                    <p className="text-[20px] text-[#525252] leading-relaxed font-medium mb-12">
+                        Available on iOS and Android. Monitor your fleet burn rates, request instant roadside recovery, and verify histories directly from your pocket.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <button className="bg-[#171717] text-white px-8 py-4 rounded-[16px] flex items-center justify-center gap-4 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-1 transition-all group">
+                            <div className="w-8 h-8 flex items-center justify-center">
+                                <svg className="w-7 h-7 fill-white" viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" /></svg>
+                            </div>
+                            <div className="text-left">
+                                <div className="text-[11px] font-bold text-white/60 mb-0.5">Download on the</div>
+                                <div className="text-[20px] font-extrabold leading-none tracking-tight">App Store</div>
+                            </div>
+                        </button>
+
+                        <button className="bg-white text-[#171717] border border-slate-200 px-8 py-4 rounded-[16px] flex items-center justify-center gap-4 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all group">
+                            <div className="w-8 h-8 flex items-center justify-center">
+                                <svg className="w-7 h-7" viewBox="0 0 512 512"><path fill="#00C767" d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zM405.2 317.5l-60.6-60.6-60.2 60.2 281.3 162.1c11.9 5.8 24.2 1 30.5-5.2l-191-156.5zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z" /></svg>
+                            </div>
+                            <div className="text-left">
+                                <div className="text-[11px] font-bold text-[#525252] mb-0.5">GET IT ON</div>
+                                <div className="text-[20px] font-extrabold leading-none tracking-tight">Google Play</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-200 w-full max-w-[400px]">
+                    <MobileAppMock />
+                </div>
+            </div>
+        </section>
+    );
+};
+
 export const StripeFooter = () => (
     <footer className="py-24 px-6 md:px-12 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto">
@@ -603,20 +721,37 @@ export const StripeFooter = () => (
                     </ul>
                 </div>
             </div>
+
             <div className="pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="text-[14px] font-bold text-slate-400">
-                    © 2026 Motor Ambos. All rights reserved.
+                <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 justify-between w-full md:w-auto text-center md:text-left">
+                    <div className="text-[14px] font-bold text-slate-400">
+                        © 2026 Motor Ambos. All rights reserved.
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 px-5 py-2.5 rounded-[18px] border border-slate-100/60 shadow-sm cursor-pointer hover:shadow-md hover:border-slate-300 transition-all group">
+                        <div className="w-7 h-7 bg-[#171717] rounded-full flex flex-col items-center justify-center transition-transform group-hover:scale-105">
+                            <ArrowRight className="w-3.5 h-3.5 text-white animate-bounce" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-[#00C767] transition-colors leading-none mb-1">Available Now</span>
+                            <span className="text-[13px] font-extrabold text-[#171717] leading-none">Download the App</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex items-center gap-8 text-[14px] font-bold text-[#525252]">
-                    <span className="flex items-center gap-2 hover:text-[#171717] cursor-pointer">
-                        <div className="w-1 h-1 rounded-full bg-[#00C767]" /> Ghana
-                    </span>
-                    <span className="flex items-center gap-2 hover:text-[#171717] cursor-pointer">
-                        <div className="w-1 h-1 rounded-full bg-slate-300" /> Kenya
-                    </span>
-                    <span className="flex items-center gap-2 hover:text-[#171717] cursor-pointer">
-                        <div className="w-1 h-1 rounded-full bg-slate-300" /> South Africa
-                    </span>
+                <div className="flex items-center gap-6 md:gap-8">
+                    {[
+                        { flag: '🇬🇭', label: 'Ghana', active: true },
+                        { flag: '🇰🇪', label: 'Kenya', active: false },
+                        { flag: '🇿🇦', label: 'South Africa', active: false }
+                    ].map((country, i) => (
+                        <div key={i} className={`flex items-center gap-2.5 cursor-pointer transition-all group ${country.active ? 'opacity-100' : 'opacity-40 hover:opacity-100'}`}>
+                            <span className={`text-lg leading-none ${!country.active && 'grayscale group-hover:grayscale-0'} transition-all`}>
+                                {country.flag}
+                            </span>
+                            <span className="text-[14px] font-bold text-[#525252] group-hover:text-[#171717] transition-colors">
+                                {country.label}
+                            </span>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

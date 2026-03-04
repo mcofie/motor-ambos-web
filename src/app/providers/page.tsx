@@ -8,7 +8,19 @@ export default function ProvidersPage() {
             <StripeNavbar />
 
             {/* Providers Hero */}
-            <section className="pt-32 pb-16 md:pt-48 md:pb-32 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto overflow-hidden">
+            <section className="pt-32 pb-16 md:pt-48 md:pb-32 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto min-h-screen overflow-hidden">
+                {/* Main Hero Illustration */}
+                <div className="flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-1000 delay-200 group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0">
+                    <div className="relative w-full max-w-[500px] md:max-w-[800px] lg:max-w-5xl">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00C767]/5 rounded-full blur-[120px] opacity-70" />
+                        <img
+                            src="/images/partners_hero.png"
+                            alt="Motor Ambos Providers Ecosystem"
+                            className="relative z-10 w-full h-auto object-contain transition-all duration-1000 group-hover:scale-[1.02] drop-shadow-2xl"
+                        />
+                    </div>
+                </div>
+
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-4xl mx-auto z-10 relative">
                     <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-6">Service Ecosystem</div>
                     <h1 className="text-[48px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.0] md:leading-[0.95] tracking-[-0.04em] mb-8 md:mb-10 text-balance">
@@ -21,19 +33,6 @@ export default function ProvidersPage() {
                         <button className="bg-[#171717] text-white px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-black transition-all active:scale-[0.98] shadow-xl shadow-black/10 flex items-center justify-center gap-3 group/btn">
                             Apply as a Provider <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
                         </button>
-                    </div>
-                </div>
-
-                <div className="w-full flex justify-center animate-in fade-in zoom-in-95 duration-1000 delay-200">
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 grayscale opacity-40">
-                        <Wrench className="w-16 h-16" />
-                        <Store className="w-16 h-16" />
-                        <Truck className="w-16 h-16" />
-                        <Cpu className="w-16 h-16" />
-                        <ShieldCheck className="w-16 h-16" />
-                        <Sparkles className="w-16 h-16" />
-                        <Droplets className="w-16 h-16" />
-                        <Zap className="w-16 h-16" />
                     </div>
                 </div>
             </section>

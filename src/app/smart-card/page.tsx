@@ -8,13 +8,14 @@ export default function SmartCardPage() {
             <StripeNavbar />
 
             {/* Smart Card Hero */}
-            <section className="pt-32 pb-16 md:pt-48 md:pb-32 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto overflow-hidden">
+            <section className="pt-32 pb-16 md:pt-48 md:pb-32 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto min-h-screen overflow-hidden">
+                {/* Main Hero Illustration */}
                 <div className="flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-1000 delay-200 group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0">
-                    <div className="relative w-full max-w-[500px] md:max-w-[700px]">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00C767]/10 rounded-full blur-[120px] opacity-70" />
+                    <div className="relative w-full max-w-[500px] md:max-w-[800px] lg:max-w-5xl">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00C767]/5 rounded-full blur-[120px] opacity-70" />
                         <img
-                            src="/images/nfc_card.png"
-                            alt="Motor Ambos NFC Ecosystem"
+                            src="/images/smart_card_hero.png"
+                            alt="Motor Ambos Smart Card"
                             className="relative z-10 w-full h-auto object-contain transition-all duration-1000 group-hover:scale-[1.02] drop-shadow-2xl"
                         />
                     </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StripeNavbar, StripeFooter } from "@/components/stripe-landing/Sections";
 import { ArrowRight, CheckCircle2, Shield, Activity, Users } from 'lucide-react';
-import { StackedUIMocks } from "@/components/stripe-landing/UIMocks";
+import { StackedUIMocks, FleetReportMock } from "@/components/stripe-landing/UIMocks";
 
 export default function BusinessPage() {
     return (
@@ -9,7 +9,20 @@ export default function BusinessPage() {
             <StripeNavbar />
 
             {/* Business Hero */}
-            <section className="pt-32 pb-16 md:pt-48 md:pb-32 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto overflow-hidden">
+            <section className="pt-32 pb-16 md:pt-48 md:pb-32 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto min-h-screen overflow-hidden">
+                {/* Main Hero Illustration */}
+                <div className="flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-1000 delay-200 group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0">
+                    <div className="relative w-full max-w-[500px] md:max-w-[800px] lg:max-w-5xl">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00C767]/5 rounded-full blur-[120px] opacity-70" />
+                        <img
+                            src="/images/businesses_hero.png"
+                            alt="Motor Ambos for Business"
+                            className="relative z-10 w-full h-auto object-contain transition-all duration-1000 group-hover:scale-[1.02] drop-shadow-2xl"
+                        />
+                    </div>
+                </div>
+
+                {/* Text content */}
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-4xl mx-auto z-10 relative">
                     <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-6">Motor Ambos for Business</div>
                     <h1 className="text-[48px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.0] md:leading-[0.95] tracking-[-0.04em] mb-8 md:mb-10 text-balance">
@@ -26,10 +39,44 @@ export default function BusinessPage() {
                             Contact Sales
                         </button>
                     </div>
-                </div>
 
-                <div className="w-full flex justify-center animate-in fade-in zoom-in-95 duration-1000 delay-200">
-                    <StackedUIMocks />
+                    <div className="w-full flex justify-center animate-in fade-in zoom-in-95 duration-1000 delay-400">
+                        <StackedUIMocks />
+                    </div>
+                </div>
+            </section>
+
+            {/* Reporting Section */}
+            <section className="py-24 md:py-40 px-6 md:px-12 bg-white overflow-hidden border-t border-slate-50">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+                    <div className="order-2 lg:order-1 relative animate-in fade-in slide-in-from-left-8 duration-1000">
+                        <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-[#00C767]/5 blur-[100px] rounded-full" />
+                        <FleetReportMock />
+                    </div>
+                    <div className="order-1 lg:order-2 max-w-xl animate-in fade-in slide-in-from-right-8 duration-1000">
+                        <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Actionable Insights</div>
+                        <h2 className="text-[36px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.04em] mb-8">
+                            Periodic audits <br className="hidden md:block" /> for total control.
+                        </h2>
+                        <p className="text-[20px] text-[#525252] leading-relaxed font-medium mb-10 opacity-80">
+                            Our platform automatically generates cross-continental fleet audits. Get deep visibility into driver behavior trends, maintenance cost projections, and real-time compliance status delivered to your inbox.
+                        </p>
+                        <ul className="space-y-4">
+                            {[
+                                "Automated weekly/monthly PDF reports",
+                                "Predictive maintenance cost analysis",
+                                "Driver safety & performance ranking",
+                                "Compliance expiry forecasts"
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-center gap-3 text-[16px] font-bold text-[#171717]">
+                                    <div className="w-5 h-5 rounded-full bg-[#00C767]/10 flex items-center justify-center">
+                                        <CheckCircle2 className="w-3 h-3 text-[#00C767]" />
+                                    </div>
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
             </section>
 

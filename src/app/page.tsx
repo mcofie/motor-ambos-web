@@ -8,6 +8,7 @@ import {
     StripeSupportSection,
     StripeRoadAssistance,
     StripeFooter,
+    StripeAppDownload
 } from "@/components/stripe-landing/Sections";
 import {
     ImagePlaceholder
@@ -38,6 +39,9 @@ export default function LandingPage() {
 
             {/* Road Assistance Feature */}
             <StripeRoadAssistance />
+
+            {/* App Download Prompt */}
+            <StripeAppDownload />
 
             <StripeFooter />
         </main>

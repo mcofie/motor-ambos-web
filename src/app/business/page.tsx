@@ -1,7 +1,9 @@
+"use client";
+
 import React from 'react';
 import Image from 'next/image';
 import { StripeNavbar, StripeFooter } from "@/components/stripe-landing/Sections";
-import { ArrowRight, CheckCircle2, Shield, Activity, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Shield, Activity } from 'lucide-react';
 import { StackedUIMocks, FleetReportMock } from "@/components/stripe-landing/UIMocks";
 
 export default function BusinessPage() {

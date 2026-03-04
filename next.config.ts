@@ -14,7 +14,7 @@ const nextConfig = {
                             "style-src 'self' 'unsafe-inline' https:",
                             "script-src 'self' 'unsafe-eval' 'unsafe-inline' https: https://www.youtube.com",
                             "frame-src 'self' https://www.youtube.com https://*.youtube.com",
-                            "connect-src 'self' https://*.supabase.co https://*.youtube.com https://*.google.com", // allow Supabase & YouTube
+                            "connect-src 'self' https://*.supabase.co https://*.youtube.com https://*.google.com https://*.posthog.com https://*.i.posthog.com", // allow Supabase & YouTube & PostHog
                         ].join("; "),
                     },
                 ],
@@ -46,6 +46,14 @@ const nextConfig = {
             {
                 source: "/ingest/static/:path*",
                 destination: "https://us-assets.i.posthog.com/static/:path*",
+            },
+            {
+                source: "/ingest/e/:path*",
+                destination: "https://us.i.posthog.com/e/:path*",
+            },
+            {
+                source: "/ingest/decide/:path*",
+                destination: "https://us.i.posthog.com/decide/:path*",
             },
             {
                 source: "/ingest/:path*",

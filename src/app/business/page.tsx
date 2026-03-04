@@ -49,11 +49,11 @@ export default function BusinessPage() {
             {/* Reporting Section */}
             <section className="py-24 md:py-40 px-6 md:px-12 bg-white overflow-hidden border-t border-slate-50">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-                    <div className="order-2 lg:order-1 relative animate-in fade-in slide-in-from-left-8 duration-1000">
+                    <div className="relative animate-in fade-in slide-in-from-left-8 duration-1000">
                         <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-[#00C767]/5 blur-[100px] rounded-full" />
                         <FleetReportMock />
                     </div>
-                    <div className="order-1 lg:order-2 max-w-xl animate-in fade-in slide-in-from-right-8 duration-1000">
+                    <div className="max-w-xl animate-in fade-in slide-in-from-right-8 duration-1000">
                         <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Actionable Insights</div>
                         <h2 className="text-[36px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.04em] mb-8">
                             Periodic audits <br className="hidden md:block" /> for total control.

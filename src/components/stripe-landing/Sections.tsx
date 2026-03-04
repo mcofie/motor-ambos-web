@@ -2,6 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowRight, Check, Shield, Activity, CreditCard, FileText, Settings, AlertCircle, CheckCircle2, Car,
     Wrench, Store, Truck, Cpu, Sparkles, Droplets, Zap, ShieldCheck,
@@ -10,6 +12,7 @@ import {
 import {
     VehicleOverviewMock,
     ComplianceNodes,
+    DailyDriverMock,
     StackedUIMocks,
     LifecycleTimeline,
     WalletUpgradeMock,
@@ -55,7 +58,7 @@ export const StripeNavbar = () => {
     };
 
     return (
-        <nav className={`fixed top-0 w-full z-50 px-6 h-20 flex items-center justify-between transition-all duration-300 ${isMenuOpen ? 'bg-white' : 'bg-white/80 backdrop-blur-xl border-b border-slate-100'}`}>
+        <nav className={`fixed top-0 w-full z-50 px-6 h-20 flex items-center justify-between transition-all duration-300 ${isMenuOpen ? 'bg-white' : 'bg-white border-b border-slate-100/50 shadow-sm'}`}>
             <Link href="/" className="flex items-center gap-3 group cursor-pointer lg:pl-6 transition-opacity hover:opacity-80">
                 <div className="w-7 h-7 bg-[#00C767] rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
                     <Car className="w-4 h-4 text-white" />
@@ -86,32 +89,38 @@ export const StripeNavbar = () => {
 
                 <div className="h-5 w-[1px] bg-slate-200 mx-2" />
 
-                {/* Country Flag Selector */}
+                {/* Country Abbreviation Selector */}
                 <div className="flex items-center gap-2 group cursor-pointer relative">
-                    <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center transition-all group-hover:border-[#00C767] shadow-sm group-hover:shadow-md">
-                        <span className="text-[20px] leading-none select-none drop-shadow-sm">🇬🇭</span>
+                    <div className="w-10 h-10 rounded-full bg-[#171717] flex items-center justify-center transition-all group-hover:ring-4 group-hover:ring-[#00C767]/10 shadow-lg">
+                        <span className="text-[11px] font-black text-white tracking-widest">GHA</span>
                     </div>
                     <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-[#171717] transition-all" />
 
                     {/* Hover Dropdown for countries */}
                     <div className="absolute top-12 right-0 pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 z-50">
-                        <div className="bg-white rounded-[24px] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 min-w-[180px] flex flex-col gap-1">
+                        <div className="bg-white rounded-[24px] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 min-w-[200px] flex flex-col gap-1">
                             <div className="flex items-center justify-between px-4 py-3 rounded-[18px] bg-[#F8FAFF] text-[#171717] font-bold text-[14px]">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xl leading-none">🇬🇭</span>
+                                    <div className="w-7 h-7 rounded-full bg-[#171717] flex items-center justify-center shrink-0">
+                                        <span className="text-[8px] font-black text-white tracking-tighter">GHA</span>
+                                    </div>
                                     <span>Ghana</span>
                                 </div>
                                 <Check className="w-4 h-4 text-[#00C767]" />
                             </div>
                             <div className="flex items-center justify-between px-4 py-3 rounded-[18px] hover:bg-slate-50 transition-colors cursor-pointer group/item">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xl leading-none grayscale opacity-50 group-hover/item:grayscale-0 group-hover/item:opacity-100 transition-all">🇰🇪</span>
+                                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-hover/item:bg-[#171717] transition-colors">
+                                        <span className="text-[8px] font-black text-slate-400 tracking-tighter group-hover/item:text-white">KEN</span>
+                                    </div>
                                     <span className="text-[14px] font-bold text-slate-500 group-hover/item:text-[#171717]">Kenya</span>
                                 </div>
                             </div>
                             <div className="flex items-center justify-between px-4 py-3 rounded-[18px] hover:bg-slate-50 transition-colors cursor-pointer group/item">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xl leading-none grayscale opacity-50 group-hover/item:grayscale-0 group-hover/item:opacity-100 transition-all">🇿🇦</span>
+                                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-hover/item:bg-[#171717] transition-colors">
+                                        <span className="text-[8px] font-black text-slate-400 tracking-tighter group-hover/item:text-white">RSA</span>
+                                    </div>
                                     <span className="text-[14px] font-bold text-slate-500 group-hover/item:text-[#171717]">South Africa</span>
                                 </div>
                             </div>
@@ -174,20 +183,26 @@ export const StripeNavbar = () => {
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center justify-between p-4 rounded-2xl bg-[#F8FAFF] border border-slate-100">
                                     <div className="flex items-center gap-4">
-                                        <span className="text-2xl">🇬🇭</span>
+                                        <div className="w-10 h-10 rounded-full bg-[#171717] flex items-center justify-center shrink-0">
+                                            <span className="text-[10px] font-black text-white tracking-widest">GHA</span>
+                                        </div>
                                         <span className="font-bold text-[#171717]">Ghana</span>
                                     </div>
                                     <Check className="w-5 h-5 text-[#00C767]" />
                                 </div>
                                 <div className="flex items-center justify-between p-4 rounded-2xl border border-transparent">
                                     <div className="flex items-center gap-4 opacity-50">
-                                        <span className="text-2xl grayscale">🇰🇪</span>
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                            <span className="text-[10px] font-black text-slate-400 tracking-widest">KEN</span>
+                                        </div>
                                         <span className="font-bold text-[#171717]">Kenya</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between p-4 rounded-2xl border border-transparent">
                                     <div className="flex items-center gap-4 opacity-50">
-                                        <span className="text-2xl grayscale">🇿🇦</span>
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                            <span className="text-[10px] font-black text-slate-400 tracking-widest">RSA</span>
+                                        </div>
                                         <span className="font-bold text-[#171717]">South Africa</span>
                                     </div>
                                 </div>
@@ -208,17 +223,29 @@ export const StripeNavbar = () => {
 };
 
 export const StripeNFCCardSection = () => (
-    <section className="py-24 md:py-40 px-6 md:px-12 bg-white overflow-hidden">
+    <section className="py-16 md:py-24 px-6 md:px-12 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto">
             {/* Split Feature Layout - Accrue Style */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center mb-32">
-                <div className="relative animate-in fade-in slide-in-from-left-8 duration-1000">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+                    className="relative"
+                >
                     <div className="absolute inset-0 bg-slate-100/50 rounded-full blur-[100px] -z-10" />
-                    <img src="/images/nfc_card.png" alt="Motor Ambos NFC Ecosystem" className="w-full h-auto object-contain max-w-[500px] md:max-w-[600px] mx-auto drop-shadow-2xl" />
-                </div>
-                <div className="max-w-xl animate-in fade-in slide-in-from-right-8 duration-1000">
-                    <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Verification Layer</div>
-                    <h2 className="text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em] mb-8">Proof you can tap.</h2>
+                    <Image src="/images/nfc_card.png" alt="Motor Ambos NFC Ecosystem" width={600} height={500} className="w-full h-auto object-contain max-w-[500px] md:max-w-[600px] mx-auto drop-shadow-[0_32px_64px_rgba(0,0,0,0.15)]" />
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="max-w-xl"
+                >
+                    <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.25em] mb-4">Verification Layer</div>
+                    <h2 className="text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.05em] mb-8">Proof you can tap.</h2>
                     <div className="space-y-6">
                         <p className="text-[20px] text-[#525252] leading-relaxed font-medium">
                             Expanding vehicle trust into new markets is already hard enough. Verifying history shouldn't add to your worries.
@@ -230,7 +257,7 @@ export const StripeNFCCardSection = () => (
                             <span className="text-[12px] font-bold text-[#171717] uppercase tracking-wide">Available in GH, NG, ZA, KE.</span>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* Product Detail Grid */}
@@ -241,9 +268,11 @@ export const StripeNFCCardSection = () => (
                         <div className="relative transform-gpu transition-all duration-700 group-hover:rotate-y-12 group-hover:rotate-x-6 group-hover:scale-105">
                             {/* Card Shadow */}
                             <div className="absolute top-8 left-4 right-4 bottom-0 bg-black/20 blur-2xl rounded-[20px] -z-10 opacity-60 group-hover:opacity-80 transition-opacity" />
-                            <img
+                            <Image
                                 src="/images/vector.png"
                                 alt="Vector Smart Card"
+                                width={340}
+                                height={215}
                                 className="w-full h-auto object-contain aspect-[1.58/1] max-w-[340px] rounded-[20px] border border-slate-200/50"
                             />
                         </div>
@@ -273,10 +302,12 @@ export const StripeNFCCardSection = () => (
                         <div className="relative transform-gpu transition-all duration-700 group-hover:rotate-y-12 group-hover:rotate-x-6 group-hover:scale-105">
                             {/* Card Shadow */}
                             <div className="absolute top-8 left-4 right-4 bottom-0 bg-black/40 blur-2xl rounded-[20px] -z-10 opacity-60 group-hover:opacity-80 transition-opacity" />
-                            <img
+                            <Image
                                 src="/images/onyx.png"
                                 alt="Onyx Smart Card"
-                                className="w-full h-auto object-contain aspect-[1.58/1] max-w-[340px] rounded-[20px] border border-white/10"
+                                width={340}
+                                height={215}
+                                className="w-full h-auto object-contain aspect-[1.58/1] max-w-[340px] rounded-[20px] border border-white/10 relative z-10"
                             />
                         </div>
                     </div>
@@ -304,36 +335,49 @@ export const StripeNFCCardSection = () => (
 );
 
 export const StripeHero = () => (
-    <section className="pt-32 pb-16 md:pt-48 md:pb-32 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto min-h-screen overflow-hidden">
+    <section className="pt-24 pb-12 md:pt-32 md:pb-24 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto min-h-[80vh] overflow-hidden">
         {/* Main Hero Illustration */}
-        <div className="flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-1000 delay-200 group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, type: "spring", bounce: 0.5, delay: 0.3 }}
+            className="flex items-center justify-center w-full group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0"
+        >
             <div className="relative w-full max-w-[500px] md:max-w-[800px] lg:max-w-5xl">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00C767]/5 rounded-full blur-[120px] opacity-70" />
-                <img
+                <Image
                     src="/images/hero_image.png"
                     alt="Motor Ambos Vehicle Digital Passport"
-                    className="relative z-10 w-full h-auto object-contain transition-all duration-1000 group-hover:scale-[1.02] drop-shadow-2xl"
+                    width={1000}
+                    height={800}
+                    priority
+                    className="relative z-10 w-full h-auto object-contain transition-transform duration-1000 group-hover:scale-[1.02] drop-shadow-[0_40px_80px_rgba(0,0,0,0.15)]"
                 />
             </div>
-        </div>
+        </motion.div>
 
         {/* Text content */}
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-3xl mx-auto z-10 relative">
-            <h1 className="text-[48px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.0] md:leading-[0.95] tracking-[-0.04em] mb-8 md:mb-10 text-balance">
+        <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="max-w-3xl mx-auto z-10 relative"
+        >
+            <h1 className="text-[44px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.1] md:leading-[0.95] tracking-[-0.06em] mb-8 md:mb-10 text-balance">
                 The digital passport <br className="hidden md:block" /> for your car.
             </h1>
             <p className="text-[18px] sm:text-[20px] md:text-[22px] text-[#525252] leading-[1.6] mb-10 md:mb-14 font-medium text-balance opacity-80">
                 Standardizing vehicle identity and trust across Africa through a single infrastructure layer. Built for individual drivers and continental fleets.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-5 mb-16 md:mb-24">
-                <button className="bg-[#00C767] text-white px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-[#00B05C] transition-all active:scale-[0.98] shadow-xl shadow-[#00C767]/20 flex items-center justify-center gap-3 group/btn">
+                <button className="bg-[#00C767] text-white px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-[#00B05C] transition-all active:scale-[0.98] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,199,103,0.3)] flex items-center justify-center gap-3 group/btn">
                     Get Started <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
                 </button>
                 <button className="flex items-center justify-center gap-3 text-[#171717] bg-white border border-slate-200 px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-slate-50 transition-all active:scale-[0.98] shadow-sm">
                     Contact Sales
                 </button>
             </div>
-        </div>
+        </motion.div>
 
         {/* Partners */}
         <div className="w-full border-t border-slate-100 pt-12 pb-8 max-w-5xl mx-auto overflow-hidden animate-in fade-in duration-1000 delay-500">
@@ -372,9 +416,9 @@ export const StripeServiceEcosystem = () => {
     ];
 
     return (
-        <section id="providers" className="py-24 md:py-32 px-6 md:px-12 bg-white overflow-hidden scroll-mt-20">
+        <section id="providers" className="py-16 md:py-24 px-6 md:px-12 bg-white overflow-hidden scroll-mt-20">
             <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-16 md:mb-24 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <div className="text-center mb-12 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                     <h2 className="text-[36px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.04em] mb-6">
                         One protocol. <br className="md:hidden" /> Every provider.
                     </h2>
@@ -383,17 +427,17 @@ export const StripeServiceEcosystem = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6 mb-16">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 lg:gap-6 mb-16">
                     {categories.map((cat, i) => (
                         <div
                             key={i}
-                            className="bg-[#FAFAFA] rounded-[32px] p-7 md:p-8 flex flex-col text-left transition-all duration-300 hover:bg-[#F3F3F3] cursor-pointer group"
+                            className="bg-[#FAFAFA] rounded-[24px] md:rounded-[32px] p-5 md:p-8 flex flex-col text-left transition-all duration-300 hover:bg-[#F3F3F3] cursor-pointer group"
                         >
-                            <div className="w-12 h-12 rounded-[16px] bg-white border border-slate-200/50 flex items-center justify-center mb-6 mt-1 shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:bg-[#171717] group-hover:border-[#171717]">
-                                <cat.icon className="w-5 h-5 text-[#171717] stroke-[1.5] transition-colors duration-300 group-hover:text-white" />
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-[12px] md:rounded-[16px] bg-white border border-slate-200/50 flex items-center justify-center mb-4 md:mb-6 md:mt-1 shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:bg-[#171717] group-hover:border-[#171717]">
+                                <cat.icon className="w-4 h-4 md:w-5 md:h-5 text-[#171717] stroke-[1.5] transition-colors duration-300 group-hover:text-white" />
                             </div>
-                            <h4 className="text-[17px] font-bold text-[#171717] mb-[6px] tracking-tight">{cat.name}</h4>
-                            <p className="text-[14px] text-slate-500 font-medium tracking-[0.01em] leading-relaxed">
+                            <h4 className="text-[15px] md:text-[17px] font-bold text-[#171717] mb-1 md:mb-[6px] tracking-tight">{cat.name}</h4>
+                            <p className="text-[12px] md:text-[14px] text-slate-500 font-medium tracking-[0.01em] leading-relaxed">
                                 {cat.desc}
                             </p>
                         </div>
@@ -416,8 +460,8 @@ export const StripeServiceEcosystem = () => {
 };
 
 export const StripeB2CFeatureGrid = () => (
-    <section className="py-24 md:py-40 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center mb-32">
+    <section className="py-16 md:py-24 px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-20">
             <div className="max-w-xl">
                 <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Digital Glovebox</div>
                 <h2 className="text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em] mb-8">Manage every detail <br className="hidden md:block" /> from your phone</h2>
@@ -433,8 +477,8 @@ export const StripeB2CFeatureGrid = () => (
                     </div>
                 </div>
             </div>
-            <div className="bg-white rounded-[32px] p-8 md:p-12 border border-slate-100 shadow-xl shadow-slate-200/50">
-                <WalletUpgradeMock />
+            <div className="bg-white rounded-[32px] p-4 md:p-6 border border-slate-100 shadow-xl shadow-slate-200/50 flex justify-center">
+                <DailyDriverMock />
             </div>
         </div>
 
@@ -555,7 +599,7 @@ export const StripeBusinessInfrastructure = () => (
 );
 
 export const StripeRoadAssistance = () => (
-    <section className="py-24 md:py-48 px-6 md:px-12 bg-[#E22B21] overflow-hidden relative">
+    <section className="py-16 md:py-24 px-6 md:px-12 bg-[#E22B21] overflow-hidden relative">
         {/* Background Patterns & Textures */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#FF3B30] via-[#E22B21] to-[#B11B14] pointer-events-none" />
         <div className="absolute inset-0 opacity-[0.15] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }} />
@@ -564,9 +608,27 @@ export const StripeRoadAssistance = () => (
         <div className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] bg-white opacity-[0.03] rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute -bottom-[10%] -left-[5%] w-[400px] h-[400px] bg-black opacity-[0.1] rounded-full blur-[80px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center relative z-10">
-            <div className="animate-in fade-in slide-in-from-left-8 duration-1000 max-w-xl">
-                <h2 className="text-[48px] sm:text-[64px] md:text-[72px] font-extrabold text-white leading-[1.0] tracking-[-0.04em] mb-10">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24 relative z-10">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.8, type: "spring" }}
+                className="relative lg:scale-110 xl:scale-125 transform-gpu lg:translate-x-12 order-2 lg:order-1"
+            >
+                {/* Intense light source behind image */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/20 rounded-full blur-[140px] opacity-40 animate-pulse" />
+                <Image
+                    src="/images/sos.png"
+                    alt="Motor Ambos SOS Interface"
+                    width={600}
+                    height={800}
+                    className="relative z-10 w-full h-auto object-contain max-w-[600px] lg:max-w-none mx-auto drop-shadow-[0_48px_96px_rgba(0,0,0,0.4)]"
+                />
+            </motion.div>
+
+            <div className="animate-in fade-in slide-in-from-left-8 duration-1000 max-w-xl order-1 lg:order-2">
+                <h2 className="text-[44px] sm:text-[64px] md:text-[72px] font-extrabold text-white leading-[1.1] md:leading-[1.0] tracking-[-0.04em] mb-10">
                     Rescue is <br className="hidden md:block" /> never a tap <br className="hidden md:block" /> too far.
                 </h2>
                 <p className="text-[20px] text-white/95 leading-relaxed font-medium mb-14">
@@ -578,7 +640,7 @@ export const StripeRoadAssistance = () => (
                         { title: "Real-time Tracking", desc: "Watch help arrive with precise coordination." },
                         { title: "USSD Fallback", desc: "No data? No problem. Dial *714# instantly." }
                     ].map((feature, i) => (
-                        <div key={i} className="bg-white/10 border border-white/10 p-8 rounded-[32px] backdrop-blur-md transition-transform hover:-translate-y-1">
+                        <div key={i} className="bg-[#B11B14] border border-[#B11B14] shadow-inner shadow-white/10 p-8 rounded-[32px] transition-transform hover:-translate-y-1">
                             <h4 className="font-bold text-white text-[20px] mb-3">{feature.title}</h4>
                             <p className="text-white/80 text-[16px] font-medium leading-relaxed">{feature.desc}</p>
                         </div>
@@ -589,28 +651,24 @@ export const StripeRoadAssistance = () => (
                     Launch Rescue App <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </button>
             </div>
-
-            <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-200 lg:scale-110 xl:scale-125 transform-gpu lg:translate-x-12">
-                {/* Intense light source behind image */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/20 rounded-full blur-[140px] opacity-40 animate-pulse" />
-                <img
-                    src="/images/sos.png"
-                    alt="Motor Ambos SOS Interface"
-                    className="relative z-10 w-full h-auto object-contain max-w-[600px] lg:max-w-none mx-auto drop-shadow-[0_48px_96px_rgba(0,0,0,0.4)]"
-                />
-            </div>
         </div>
     </section>
 );
 
 export const StripeSupportSection = () => (
     <section className="py-24 md:py-40 px-6 md:px-12 bg-white border-t border-slate-100">
-        <div className="max-w-7xl mx-auto text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
+            className="max-w-7xl mx-auto text-center"
+        >
             <div className="mb-12 md:mb-16 flex justify-center relative">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-[#00C767]/5 rounded-full blur-[100px] opacity-50" />
-                <img src="/images/fleet_management.png" alt="Fleet Management Interface" className="relative z-10 w-full max-w-[800px] h-auto object-contain rounded-[32px] drop-shadow-2xl" />
+                <Image src="/images/fleet_management.png" alt="Fleet Management Interface" width={800} height={600} className="relative z-10 w-full max-w-[800px] h-auto object-contain rounded-[32px] drop-shadow-[0_48px_96px_rgba(0,0,0,0.15)]" />
             </div>
-            <h2 className="text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em] mb-8">Ready to modernize your fleet?</h2>
+            <h2 className="text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.05em] mb-8">Ready to modernize your fleet?</h2>
             <p className="text-[19px] sm:text-[21px] text-[#525252] max-w-2xl mx-auto mb-12 font-medium leading-[1.6]">
                 Join thousands of drivers and businesses standardizing vehicle trust across the continent. Built for the future of African logistics.
             </p>
@@ -629,15 +687,19 @@ export const StripeSupportSection = () => (
                 <div className="text-[20px] font-black uppercase tracking-tighter">Bolt</div>
                 <div className="text-[20px] font-black uppercase tracking-tighter italic">Enterprise</div>
             </div>
-        </div>
+        </motion.div>
     </section>
 );
 
 export const StripeAppDownload = () => {
     return (
-        <section className="py-24 md:py-32 px-6 md:px-12 bg-[#F8FAFF] border-t border-slate-100 overflow-hidden relative">
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-16 relative z-10">
-                <div className="max-w-xl animate-in fade-in slide-in-from-left-8 duration-1000">
+        <section className="py-16 md:py-24 px-6 md:px-12 bg-[#F8FAFF] border-t border-slate-100 overflow-hidden relative">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+                <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-200 w-full max-w-[400px] order-2 md:order-1">
+                    <MobileAppMock />
+                </div>
+
+                <div className="max-w-xl animate-in fade-in slide-in-from-left-8 duration-1000 order-1 md:order-2">
                     <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Motor Ambos App</div>
                     <h2 className="text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em] mb-8">Take your passport everywhere.</h2>
                     <p className="text-[20px] text-[#525252] leading-relaxed font-medium mb-12">
@@ -665,10 +727,6 @@ export const StripeAppDownload = () => {
                             </div>
                         </button>
                     </div>
-                </div>
-
-                <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-200 w-full max-w-[400px]">
-                    <MobileAppMock />
                 </div>
             </div>
         </section>
@@ -737,16 +795,18 @@ export const StripeFooter = () => (
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-6 md:gap-8">
+                <div className="flex flex-wrap items-center justify-center gap-y-4 gap-x-6 md:gap-x-8">
                     {[
-                        { flag: '🇬🇭', label: 'Ghana', active: true },
-                        { flag: '🇰🇪', label: 'Kenya', active: false },
-                        { flag: '🇿🇦', label: 'South Africa', active: false }
+                        { flag: 'GHA', label: 'Ghana', active: true },
+                        { flag: 'KEN', label: 'Kenya', active: false },
+                        { flag: 'RSA', label: 'South Africa', active: false }
                     ].map((country, i) => (
                         <div key={i} className={`flex items-center gap-2.5 cursor-pointer transition-all group ${country.active ? 'opacity-100' : 'opacity-40 hover:opacity-100'}`}>
-                            <span className={`text-lg leading-none ${!country.active && 'grayscale group-hover:grayscale-0'} transition-all`}>
-                                {country.flag}
-                            </span>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${country.active ? 'bg-[#171717]' : 'bg-slate-100 group-hover:bg-[#171717]'}`}>
+                                <span className={`text-[8px] font-black tracking-tighter ${country.active ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>
+                                    {country.flag}
+                                </span>
+                            </div>
                             <span className="text-[14px] font-bold text-[#525252] group-hover:text-[#171717] transition-colors">
                                 {country.label}
                             </span>

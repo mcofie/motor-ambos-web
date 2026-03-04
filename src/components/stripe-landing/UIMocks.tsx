@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { Shield, Clock, Search, MapPin, CreditCard, CheckCircle2, AlertCircle, FileText, Settings, Activity, ArrowRight, ChevronDown, Home, Car, Wrench, Cloud, RefreshCw, User, Asterisk, Sparkles, Zap, Check, Edit3, Heart, LogOut, ChevronRight, ChevronLeft, ScanFace, SlidersHorizontal, AlertTriangle, BatteryMedium, Thermometer, CarFront, X } from 'lucide-react';
 
 export const VehicleOverviewMock = () => (
@@ -35,7 +36,7 @@ export const ComplianceNodes = () => (
 );
 
 export const StackedUIMocks = () => (
-    <div className="w-full bg-[#F5F5F5] rounded-[32px] p-6 md:p-8 flex flex-col h-[520px] overflow-hidden relative border border-slate-200/50">
+    <div className="w-full bg-[#F5F5F5] rounded-[32px] p-6 md:p-8 flex flex-col h-[420px] md:h-[520px] overflow-hidden relative border border-slate-200/50">
         {/* Header */}
         <div className="flex justify-between items-center mb-6 z-10">
             <div>
@@ -239,6 +240,75 @@ export const LifecycleTimeline = () => (
     </div>
 );
 
+export const DailyDriverMock = () => (
+    <div className="bg-white rounded-[32px] p-6 shadow-[0px_24px_50px_-10px_rgba(0,0,0,0.06)] border border-[#F3F4F6] max-w-[340px] w-full relative overflow-hidden group hover:shadow-[0px_36px_60px_-16px_rgba(0,0,0,0.1)] transition-all duration-700">
+
+        {/* Soft Car Icon Background in Top Right corner */}
+        <div className="absolute top-2 right-[-24px] opacity-[0.03] transform pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+            <CarFront className="w-48 h-48 text-slate-800" strokeWidth={1} />
+        </div>
+
+        {/* Top Badges */}
+        <div className="flex justify-between items-center mb-5 relative z-10">
+            <div className="bg-[#EAF6ED] text-[#2EA053] px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase">
+                KIA
+            </div>
+            <div className="bg-[#EAF6ED] text-[#2EA053] px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                PRIMARY
+            </div>
+        </div>
+
+        <div className="relative z-10">
+            <h3 className="text-[26px] font-medium text-[#111827] mb-8 tracking-tight">Daily Driver</h3>
+
+            {/* Floating License Plate with Custom Shadow */}
+            <div className="relative mb-8 w-full">
+                <div className="bg-gradient-to-b from-[#EEEEEE] to-[#D7DADB] border-[3.5px] border-[#1C1C1C] rounded-full py-4 px-6 flex items-center shadow-[0_16px_24px_-8px_rgba(0,0,0,0.25)] group-hover:-translate-y-1 transition-transform duration-500">
+
+                    {/* License Plate Texts aligned perfectly center */}
+                    <div className="w-full flex flex-col items-center justify-center -mt-1 relative pr-10">
+                        <span className="text-[15px] font-black text-[#1C1C1C] leading-none mb-0.5 tracking-[0.15em]">GR</span>
+                        <span className="text-[26px] font-black text-[#1C1C1C] leading-none tracking-tight">9918-18</span>
+                    </div>
+
+                    {/* Ghana Flag Badge Inside Plate fixed to right side */}
+                    <div className="absolute right-5 inset-y-0 flex items-center gap-1.5">
+                        <div className="flex flex-col gap-[1.5px] border border-black/10 shadow-sm overflow-hidden rounded-[2px] bg-white h-fit my-auto pb-[0.5px]">
+                            <div className="bg-[#CE1126] w-4 h-[3.5px]" />
+                            <div className="bg-[#FCD116] w-4 h-[3.5px] flex justify-center items-center">
+                                {/* tiny black star representation */}
+                                <div className="w-[3px] h-[3px] bg-black rotate-45 transform scale-75 pt-[0.5px]" />
+                            </div>
+                            <div className="bg-[#006B3F] w-4 h-[3.5px]" />
+                        </div>
+                        <span className="text-[12px] font-black text-[#1C1C1C] tracking-tighter">GH</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tiny faint divider to match app UI */}
+            <div className="w-full h-[1px] bg-[#F1F3F5] mb-5" />
+
+            {/* Bottom Metrics aligned horizontally */}
+            <div className="flex justify-between items-center px-1">
+                <div className="flex flex-col gap-1.5">
+                    <span className="text-[11px] font-semibold text-[#8B95A5] uppercase tracking-[0.1em]">Health</span>
+                    <span className="text-[19px] font-medium text-[#2EA053] tracking-tight">100%</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                    <span className="text-[11px] font-semibold text-[#8B95A5] uppercase tracking-[0.1em]">Year</span>
+                    <span className="text-[19px] font-medium text-[#111827] tracking-tight">2010</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                    <span className="text-[11px] font-semibold text-[#8B95A5] uppercase tracking-[0.1em]">Status</span>
+                    <span className="text-[19px] font-medium text-[#2EA053] tracking-tight">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
 export const WalletUpgradeMock = () => (
     <div className="bg-white rounded-[32px] p-10 w-full max-w-[460px] shadow-[0px_48px_80px_-16px_rgba(0,0,0,0.14)] border border-white">
         <div className="space-y-4">
@@ -355,9 +425,11 @@ export const FuelBurnRateMock = () => (
 
 export const VectorCardMock = () => (
     <div className="relative w-full max-w-[400px] aspect-square rounded-[24px] overflow-hidden group transition-all duration-700">
-        <img
+        <Image
             src="/images/vector-card-real.jpg"
             alt="Vector NFC Card"
+            width={400}
+            height={400}
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-1000"
         />
     </div>
@@ -365,9 +437,11 @@ export const VectorCardMock = () => (
 
 export const OnyxCardMock = () => (
     <div className="relative w-full max-w-[400px] aspect-square rounded-[24px] overflow-hidden group transition-all duration-700">
-        <img
+        <Image
             src="/images/onyx-card-real.jpg"
             alt="Onyx NFC Card"
+            width={400}
+            height={400}
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-1000"
         />
     </div>
@@ -409,7 +483,7 @@ export const RescueMapMock = () => (
         <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-white/40 rounded-full" />
 
         {/* Responder Badge */}
-        <div className="absolute bottom-6 left-6 right-6 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 animate-in fade-in slide-in-from-bottom-2">
+        <div className="absolute bottom-6 left-6 right-6 bg-[#171717] rounded-2xl p-4 shadow-xl border border-white/10 animate-in fade-in slide-in-from-bottom-2">
             <div className="flex justify-between items-center mb-1">
                 <span className="text-[11px] font-bold text-white uppercase tracking-wider">Dispatch Incoming</span>
                 <span className="text-[11px] font-bold text-[#00C767]">4 min</span>
@@ -525,7 +599,7 @@ export const ServiceLogsMock = () => (
 export const SmartCardMock = () => (
     <div className="bg-[#171717] rounded-[32px] p-8 shadow-xl border border-white/5 w-full max-w-sm relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
-        <div className="w-12 h-12 bg-white/10 rounded-xl mb-12 flex items-center justify-center backdrop-blur-md">
+        <div className="w-12 h-12 bg-white/20 rounded-xl mb-12 flex items-center justify-center">
             <CreditCard className="w-6 h-6 text-white" />
         </div>
         <p className="text-[12px] text-zinc-400 font-bold uppercase tracking-widest mb-2">Digital Pass</p>
@@ -622,7 +696,7 @@ export const MobileAppMock = () => {
                                 </div>
 
                                 {/* System Ready Card */}
-                                <div className="bg-gradient-to-b from-[#C4EFDB]/60 to-white/70 border border-[#A3E5C8]/40 rounded-[28px] p-5 mb-8 relative overflow-hidden backdrop-blur-md shadow-sm">
+                                <div className="bg-[#E6F8F0] border border-[#00C767]/20 rounded-[28px] p-5 mb-8 relative overflow-hidden shadow-sm">
                                     <Check className="absolute -bottom-4 -right-4 w-36 h-36 text-white/50 stroke-[3px]" />
 
                                     <div className="flex items-center gap-4 mb-6 relative z-10">
@@ -878,7 +952,7 @@ export const MobileAppMock = () => {
 
                                     <div className="flex justify-between items-start relative z-10">
                                         <div className="text-[14px] font-bold tracking-[0.2em] text-white/90">MOTOR AMBOS</div>
-                                        <div className="w-10 h-10 border border-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm relative">
+                                        <div className="w-10 h-10 border border-white/10 bg-[#2D2E31] rounded-lg flex items-center justify-center relative">
                                             <div className="w-5 h-5 border-[2px] border-white/80 rounded-sm" />
                                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white/80 rounded-sm" />
                                             <div className="absolute bottom-1 w-2.5 h-[2px] bg-white/80" />
@@ -886,7 +960,7 @@ export const MobileAppMock = () => {
                                     </div>
 
                                     <div className="absolute top-20 right-6 z-10">
-                                        <div className="px-3 py-1 rounded-full border border-[#FFD700]/30 text-[#FFD700] text-[10px] font-extrabold tracking-widest uppercase bg-[#FFD700]/10 backdrop-blur-md">Premium</div>
+                                        <div className="px-3 py-1 rounded-full border border-[#FFD700]/30 text-[#FFD700] text-[10px] font-extrabold tracking-widest uppercase bg-[#FFD700]/20">Premium</div>
                                     </div>
 
                                     <div className="relative z-10 mt-auto">
@@ -1031,7 +1105,7 @@ export const MobileAppMock = () => {
                     </div>
 
                     {/* Floating Bottom Nav */}
-                    <div className="absolute bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl border-t border-[#E9EEF2]/50 pb-6 pt-3 px-6 flex justify-between items-end rounded-b-[44px] z-50">
+                    <div className="absolute bottom-0 left-0 w-full bg-white border-t border-[#E9EEF2] pb-6 pt-3 px-6 flex justify-between items-end rounded-b-[44px] z-50">
                         {/* Fake Home Indicator Line */}
                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[110px] h-[4px] bg-[#111A2C]/10 rounded-full" />
 

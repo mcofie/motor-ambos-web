@@ -58,95 +58,122 @@ export const StripeNavbar = () => {
     };
 
     return (
-        <nav className={`fixed top-0 w-full z-50 px-6 h-20 flex items-center justify-between transition-all duration-300 ${isMenuOpen ? 'bg-white' : 'bg-white border-b border-slate-100/50 shadow-sm'}`}>
-            <Link href="/" className="flex items-center gap-3 group cursor-pointer lg:pl-6 transition-opacity hover:opacity-80">
-                <div className="w-7 h-7 bg-[#00C767] rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
-                    <Car className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-extrabold text-[20px] tracking-tight text-[#171717]">motor ambos</span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-6 lg:gap-8 lg:pr-6">
-                <Link
-                    href="/business"
-                    className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all"
-                >
-                    Business
-                </Link>
-                <Link
-                    href="/smart-card"
-                    className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all"
-                >
-                    Smart Card
-                </Link>
-                <Link
-                    href="/providers"
-                    className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all flex items-center gap-1"
-                >
-                    Providers <ArrowRight className="w-3.5 h-3.5 -rotate-45 opacity-50" />
-                </Link>
-
-                <div className="h-5 w-[1px] bg-slate-200 mx-2" />
-
-                {/* Country Abbreviation Selector */}
-                <div className="flex items-center gap-2 group cursor-pointer relative">
-                    <div className="w-10 h-10 rounded-full bg-[#171717] flex items-center justify-center transition-all group-hover:ring-4 group-hover:ring-[#00C767]/10 shadow-lg">
-                        <span className="text-[11px] font-black text-white tracking-widest">GHA</span>
+        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isMenuOpen ? 'bg-white' : 'bg-white border-b border-slate-100/50 shadow-sm'}`}>
+            <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 h-20 flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-3 group cursor-pointer lg:pl-6 transition-opacity hover:opacity-80">
+                    <div className="w-7 h-7 bg-[#00C767] rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
+                        <Car className="w-4 h-4 text-white" />
                     </div>
-                    <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-[#171717] transition-all" />
+                    <span className="font-extrabold text-[20px] tracking-tight text-[#171717]">motor ambos</span>
+                </Link>
 
-                    {/* Hover Dropdown for countries */}
-                    <div className="absolute top-12 right-0 pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 z-50">
-                        <div className="bg-white rounded-[24px] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 min-w-[200px] flex flex-col gap-1">
-                            <div className="flex items-center justify-between px-4 py-3 rounded-[18px] bg-[#F8FAFF] text-[#171717] font-bold text-[14px]">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-7 h-7 rounded-full bg-[#171717] flex items-center justify-center shrink-0">
-                                        <span className="text-[8px] font-black text-white tracking-tighter">GHA</span>
-                                    </div>
-                                    <span>Ghana</span>
-                                </div>
-                                <Check className="w-4 h-4 text-[#00C767]" />
+                {/* Desktop Navigation */}
+                <div className="hidden md:flex items-center gap-6 lg:gap-8 lg:pr-6">
+                    <Link
+                        href="/business"
+                        className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all"
+                    >
+                        Business
+                    </Link>
+                    <Link
+                        href="/smart-card"
+                        className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all"
+                    >
+                        Smart Card
+                    </Link>
+                    <Link
+                        href="/providers"
+                        className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all flex items-center gap-1"
+                    >
+                        Providers <ArrowRight className="w-3.5 h-3.5 -rotate-45 opacity-50" />
+                    </Link>
+
+                    <div className="h-5 w-[1px] bg-slate-200 mx-2" />
+
+                    {/* Country Abbreviation Selector */}
+                    <div className="flex items-center gap-2 group cursor-pointer relative">
+                        <div className="flex items-center gap-3 py-2 px-3 rounded-full hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
+                            <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 shadow-sm border border-slate-100">
+                                <svg viewBox="0 0 6 4" className="w-full h-full object-cover">
+                                    <rect width="6" height="4" fill="#006B3F" />
+                                    <rect width="6" height="2.66" fill="#FCD116" />
+                                    <rect width="6" height="1.33" fill="#CF0921" />
+                                    <path d="M3 1.5l.235.724H4l-.618.448.235.724L3 2.948l-.618.448.235-.724L1.999 2.224h.765L3 1.5z" fill="#000" />
+                                </svg>
                             </div>
-                            <div className="flex items-center justify-between px-4 py-3 rounded-[18px] hover:bg-slate-50 transition-colors cursor-pointer group/item">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-hover/item:bg-[#171717] transition-colors">
-                                        <span className="text-[8px] font-black text-slate-400 tracking-tighter group-hover/item:text-white">KEN</span>
+                            <span className="text-[14px] font-bold text-[#171717]">Ghana</span>
+                            <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-[#171717] transition-all" />
+                        </div>
+
+                        {/* Hover Dropdown for countries */}
+                        <div className="absolute top-12 right-0 pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 z-50">
+                            <div className="bg-white rounded-[24px] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 min-w-[220px] flex flex-col gap-1">
+                                <div className="flex items-center justify-between px-4 py-3 rounded-[18px] bg-[#F8FAFF] text-[#171717] font-bold text-[14px]">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-6 h-6 rounded-full overflow-hidden shadow-sm border border-slate-100">
+                                            <svg viewBox="0 0 6 4" className="w-full h-full object-cover">
+                                                <rect width="6" height="4" fill="#006B3F" />
+                                                <rect width="6" height="2.66" fill="#FCD116" />
+                                                <rect width="6" height="1.33" fill="#CF0921" />
+                                                <path d="M3 1.5l.235.724H4l-.618.448.235.724L3 2.948l-.618.448.235-.724L1.999 2.224h.765L3 1.5z" fill="#000" />
+                                            </svg>
+                                        </div>
+                                        <span>Ghana</span>
                                     </div>
-                                    <span className="text-[14px] font-bold text-slate-500 group-hover/item:text-[#171717]">Kenya</span>
+                                    <Check className="w-4 h-4 text-[#00C767]" />
                                 </div>
-                            </div>
-                            <div className="flex items-center justify-between px-4 py-3 rounded-[18px] hover:bg-slate-50 transition-colors cursor-pointer group/item">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-hover/item:bg-[#171717] transition-colors">
-                                        <span className="text-[8px] font-black text-slate-400 tracking-tighter group-hover/item:text-white">RSA</span>
+                                <div className="flex items-center justify-between px-4 py-3 rounded-[18px] hover:bg-slate-50 transition-colors cursor-pointer group/item">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-6 h-6 rounded-full overflow-hidden shadow-sm border border-slate-100 grayscale transition-all group-hover/item:grayscale-0">
+                                            <svg viewBox="0 0 6 4" className="w-full h-full object-cover">
+                                                <rect width="6" height="4" fill="#006600" />
+                                                <rect width="6" height="2.8" fill="#FFFFFF" />
+                                                <rect width="6" height="2.3" fill="#990000" />
+                                                <rect width="6" height="1.2" fill="#FFFFFF" />
+                                                <rect width="6" height="0.7" fill="#000000" />
+                                                <path d="M3 1.2c-.44 0-.8.36-.8.8s.36.8.8.8.8-.36.8-.8-.36-.8-.8-.8z" fill="#990000" stroke="#FFFFFF" strokeWidth="0.05" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-[14px] font-bold text-slate-500 group-hover/item:text-[#171717]">Kenya</span>
                                     </div>
-                                    <span className="text-[14px] font-bold text-slate-500 group-hover/item:text-[#171717]">South Africa</span>
+                                </div>
+                                <div className="flex items-center justify-between px-4 py-3 rounded-[18px] hover:bg-slate-50 transition-colors cursor-pointer group/item">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-6 h-6 rounded-full overflow-hidden shadow-sm border border-slate-100 grayscale transition-all group-hover/item:grayscale-0">
+                                            <svg viewBox="0 0 6 4" className="w-full h-full object-cover">
+                                                <rect width="6" height="4" fill="#000C8B" />
+                                                <rect width="6" height="2" fill="#E21927" />
+                                                <path d="M0 0l3 2L0 4z" fill="#007A4D" />
+                                                <path d="M0 0l2.5 1.66v.68L0 4z" fill="#FFFFFF" stroke="#FFB612" strokeWidth="0.1" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-[14px] font-bold text-slate-500 group-hover/item:text-[#171717]">South Africa</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <Link href="/help">
+                        <button className="group bg-[#00C767] text-white px-6 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#00B05C] shadow-lg shadow-[#00C767]/20 transition-all duration-300 active:scale-[0.98] flex items-center gap-2 ml-2">
+                            Get App
+                            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        </button>
+                    </Link>
                 </div>
 
-                <Link href="/help">
-                    <button className="group bg-[#00C767] text-white px-6 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#00B05C] shadow-lg shadow-[#00C767]/20 transition-all duration-300 active:scale-[0.98] flex items-center gap-2 ml-2">
-                        Get App
-                        <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                    </button>
-                </Link>
+                {/* Mobile Menu Button */}
+                <button
+                    className="md:hidden p-2 text-[#171717]"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                    <div className="space-y-1.5 relative z-[101]">
+                        <div className={`w-6 h-0.5 bg-current transition-all ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+                        <div className={`w-6 h-0.5 bg-current transition-all ${isMenuOpen ? 'opacity-0' : ''}`} />
+                        <div className={`w-6 h-0.5 bg-current transition-all ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+                    </div>
+                </button>
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-                className="md:hidden p-2 text-[#171717]"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-                <div className="space-y-1.5 relative z-[101]">
-                    <div className={`w-6 h-0.5 bg-current transition-all ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-                    <div className={`w-6 h-0.5 bg-current transition-all ${isMenuOpen ? 'opacity-0' : ''}`} />
-                    <div className={`w-6 h-0.5 bg-current transition-all ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
-                </div>
-            </button>
 
             {/* Mobile Navigation Overlay */}
             {isMenuOpen && (
@@ -183,8 +210,13 @@ export const StripeNavbar = () => {
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center justify-between p-4 rounded-2xl bg-[#F8FAFF] border border-slate-100">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-[#171717] flex items-center justify-center shrink-0">
-                                            <span className="text-[10px] font-black text-white tracking-widest">GHA</span>
+                                        <div className="w-10 h-10 rounded-full overflow-hidden shadow-sm border border-slate-100 shrink-0">
+                                            <svg viewBox="0 0 6 4" className="w-full h-full object-cover">
+                                                <rect width="6" height="4" fill="#006B3F" />
+                                                <rect width="6" height="2.66" fill="#FCD116" />
+                                                <rect width="6" height="1.33" fill="#CF0921" />
+                                                <path d="M3 1.5l.235.724H4l-.618.448.235.724L3 2.948l-.618.448.235-.724L1.999 2.224h.765L3 1.5z" fill="#000" />
+                                            </svg>
                                         </div>
                                         <span className="font-bold text-[#171717]">Ghana</span>
                                     </div>
@@ -192,16 +224,28 @@ export const StripeNavbar = () => {
                                 </div>
                                 <div className="flex items-center justify-between p-4 rounded-2xl border border-transparent">
                                     <div className="flex items-center gap-4 opacity-50">
-                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                                            <span className="text-[10px] font-black text-slate-400 tracking-widest">KEN</span>
+                                        <div className="w-10 h-10 rounded-full overflow-hidden shadow-sm border border-slate-100 shrink-0">
+                                            <svg viewBox="0 0 6 4" className="w-full h-full object-cover">
+                                                <rect width="6" height="4" fill="#006600" />
+                                                <rect width="6" height="2.8" fill="#FFFFFF" />
+                                                <rect width="6" height="2.3" fill="#990000" />
+                                                <rect width="6" height="1.2" fill="#FFFFFF" />
+                                                <rect width="6" height="0.7" fill="#000000" />
+                                                <path d="M3 1.2c-.44 0-.8.36-.8.8s.36.8.8.8.8-.36.8-.8-.36-.8-.8-.8z" fill="#990000" stroke="#FFFFFF" strokeWidth="0.05" />
+                                            </svg>
                                         </div>
                                         <span className="font-bold text-[#171717]">Kenya</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between p-4 rounded-2xl border border-transparent">
                                     <div className="flex items-center gap-4 opacity-50">
-                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                                            <span className="text-[10px] font-black text-slate-400 tracking-widest">RSA</span>
+                                        <div className="w-10 h-10 rounded-full overflow-hidden shadow-sm border border-slate-100 shrink-0">
+                                            <svg viewBox="0 0 6 4" className="w-full h-full object-cover">
+                                                <rect width="6" height="4" fill="#000C8B" />
+                                                <rect width="6" height="2" fill="#E21927" />
+                                                <path d="M0 0l3 2L0 4z" fill="#007A4D" />
+                                                <path d="M0 0l2.5 1.66v.68L0 4z" fill="#FFFFFF" stroke="#FFB612" strokeWidth="0.1" />
+                                            </svg>
                                         </div>
                                         <span className="font-bold text-[#171717]">South Africa</span>
                                     </div>
@@ -223,8 +267,8 @@ export const StripeNavbar = () => {
 };
 
 export const StripeNFCCardSection = () => (
-    <section className="py-16 md:py-24 px-6 md:px-12 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto">
+    <section className="py-16 md:py-24 bg-white overflow-hidden">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
             {/* Split Feature Layout - Accrue Style */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center mb-32">
                 <motion.div
@@ -263,7 +307,7 @@ export const StripeNFCCardSection = () => (
             {/* Product Detail Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                 {/* Vector Card */}
-                <div className="flex flex-col bg-white p-8 md:p-12 rounded-[40px] border border-slate-100 shadow-sm transition-all duration-700 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 group">
+                <div className="flex flex-col bg-white p-6 sm:p-8 md:p-12 rounded-[40px] border border-slate-100 shadow-sm transition-all duration-700 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 group">
                     <div className="mb-12 flex justify-start perspective-1000">
                         <div className="relative transform-gpu transition-all duration-700 group-hover:rotate-y-12 group-hover:rotate-x-6 group-hover:scale-105">
                             {/* Card Shadow */}
@@ -297,7 +341,7 @@ export const StripeNFCCardSection = () => (
                 </div>
 
                 {/* Onyx Card */}
-                <div className="flex flex-col bg-white p-8 md:p-12 rounded-[40px] border border-slate-100 shadow-sm transition-all duration-700 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 group">
+                <div className="flex flex-col bg-white p-6 sm:p-8 md:p-12 rounded-[40px] border border-slate-100 shadow-sm transition-all duration-700 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 group">
                     <div className="mb-12 flex justify-start perspective-1000">
                         <div className="relative transform-gpu transition-all duration-700 group-hover:rotate-y-12 group-hover:rotate-x-6 group-hover:scale-105">
                             {/* Card Shadow */}
@@ -335,7 +379,7 @@ export const StripeNFCCardSection = () => (
 );
 
 export const StripeHero = () => (
-    <section className="pt-24 pb-12 md:pt-32 md:pb-24 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto min-h-[80vh] overflow-hidden">
+    <section className="pt-24 pb-12 md:pt-32 md:pb-24 flex flex-col items-center text-center max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 min-h-[80vh] overflow-hidden">
         {/* Main Hero Illustration */}
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -404,6 +448,7 @@ export const StripeHero = () => (
 );
 
 export const StripeServiceEcosystem = () => {
+    // ... categories definition ...
     const categories = [
         { name: "Mechanics", icon: Wrench, desc: "Certified maintenance" },
         { name: "Auto Shops", icon: Store, desc: "Verified retail nodes" },
@@ -416,8 +461,8 @@ export const StripeServiceEcosystem = () => {
     ];
 
     return (
-        <section id="providers" className="py-16 md:py-24 px-6 md:px-12 bg-white overflow-hidden scroll-mt-20">
-            <div className="max-w-7xl mx-auto">
+        <section id="providers" className="py-16 md:py-24 bg-white overflow-hidden scroll-mt-20">
+            <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
                 <div className="text-center mb-12 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                     <h2 className="text-[36px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.04em] mb-6">
                         One protocol. <br className="md:hidden" /> Every provider.
@@ -459,121 +504,162 @@ export const StripeServiceEcosystem = () => {
     );
 };
 
-export const StripeB2CFeatureGrid = () => (
-    <section className="py-16 md:py-24 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-20">
-            <div className="max-w-xl">
-                <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Digital Glovebox</div>
-                <h2 className="text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em] mb-8">Manage every detail <br className="hidden md:block" /> from your phone</h2>
-                <p className="text-[20px] text-[#525252] leading-relaxed font-medium mb-10">
-                    Motor Ambos replaces the fragmented glovebox with a unified digital infrastructure. Track insurance, roadworthy, and service history instantly.
-                </p>
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-4 bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm transition-transform hover:-translate-y-1">
-                        <div className="w-12 h-12 rounded-[14px] bg-[#00C767]/10 flex items-center justify-center">
-                            <Shield className="w-6 h-6 text-[#00C767]" />
-                        </div>
-                        <span className="font-bold text-[17px] text-[#171717]">Zero-fine compliance notifications</span>
-                    </div>
-                </div>
-            </div>
-            <div className="bg-white rounded-[32px] p-4 md:p-6 border border-slate-100 shadow-xl shadow-slate-200/50 flex justify-center">
-                <DailyDriverMock />
-            </div>
-        </div>
+export const StripeB2CFeatureGrid = () => {
+    const [status, setStatus] = React.useState<'healthy' | 'warning' | 'critical'>('healthy');
 
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-            {[
-                {
-                    title: "Driver Profile",
-                    desc: "Maintain central identity nodes connecting your vehicle registration and personal credentials.",
-                    mock: <DriverVehicleMock />,
-                    bg: "bg-[#E8FBFC]",
-                    textColor: "text-slate-800",
-                    descColor: "text-slate-500"
-                },
-                {
-                    title: "Insurance Layer",
-                    desc: "Never misplace your policy. Real-time active tracking and instant renewal connections.",
-                    mock: <InsuranceMock />,
-                    bg: "bg-[#FCF0FA]",
-                    textColor: "text-slate-800",
-                    descColor: "text-slate-500"
-                },
-                {
-                    title: "Driving Score",
-                    desc: "Safe drivers reap rewards. Unlock massive discounts on premiums based on your hard data.",
-                    mock: <DrivingScoreMock />,
-                    bg: "bg-[#F6F5FC]",
-                    textColor: "text-slate-800",
-                    descColor: "text-slate-500"
-                },
-                {
-                    title: "Roadworthy Protocol",
-                    desc: "Digital certification replaces windshield stickers. DVLA-verified compliance, always on your phone.",
-                    mock: <RoadWorthyMock />,
-                    bg: "bg-[#FCF5EB]",
-                    textColor: "text-slate-800",
-                    descColor: "text-slate-500"
-                },
-                {
-                    title: "Service Logs",
-                    desc: "Every mechanic stop, oil change, and part replacement. Stored globally and immutably.",
-                    mock: <ServiceLogsMock />,
-                    bg: "bg-[#EBFBF3]",
-                    textColor: "text-slate-800",
-                    descColor: "text-slate-500"
-                },
-                {
-                    title: "Fuel Logging",
-                    desc: "Track every cedi spent at the pump with precision history logging to understand your economy.",
-                    mock: <FuelBurnRateMock />,
-                    bg: "bg-[#F3F4FB]",
-                    textColor: "text-slate-800",
-                    descColor: "text-slate-500"
-                },
-                {
-                    title: "AI Mechanic",
-                    desc: "Describe symptoms in plain English. Our AI diagnostics pipeline detects potential issues in seconds.",
-                    mock: <AIMechanicMock />,
-                    bg: "bg-[#FDF2F2]",
-                    textColor: "text-slate-800",
-                    descColor: "text-slate-500"
-                },
-                {
-                    title: "Smart Card Vault",
-                    desc: "An NFC passport connected to your digital twin. Tap to verify history on the spot.",
-                    mock: <SmartCardMock />,
-                    bg: "bg-[#171717]",
-                    textColor: "text-white",
-                    descColor: "text-zinc-400"
-                },
-                {
-                    title: "Provider Network",
-                    desc: "Discover verified workshops and certified mechanics around your location instantly.",
-                    mock: <ProviderMarketplaceMock />,
-                    bg: "bg-[#F4F4F6]",
-                    textColor: "text-slate-800",
-                    descColor: "text-slate-500"
-                }
-            ].map((feature, i) => (
-                <div key={i} className={`${feature.bg} p-8 md:p-10 rounded-[40px] transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/40 group break-inside-avoid relative overflow-hidden flex flex-col border border-black/5`}>
-                    <div className="mb-10 z-10 break-inside-avoid">
-                        <h3 className={`text-[22px] md:text-[24px] font-extrabold ${feature.textColor} tracking-tight mb-3`}>{feature.title}</h3>
-                        <p className={`text-[15.5px] ${feature.descColor} leading-[1.6] font-medium opacity-90`}>{feature.desc}</p>
+    return (
+        <>
+            <section className="py-20 md:py-48 max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
+                <div className="bg-[#F2F9E6] rounded-[32px] md:rounded-[48px] p-6 sm:p-12 md:p-[72px] relative overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 lg:gap-32 items-center relative z-10">
+                        <div className="max-w-2xl lg:max-w-xl">
+                            <div className="text-[13px] sm:text-[14px] font-black text-[#78B600] uppercase tracking-[0.2em] mb-4 sm:mb-6">Digital Glovebox</div>
+                            <h2 className="text-[32px] sm:text-[48px] md:text-[56px] font-extrabold text-[#171717] leading-[1.1] md:leading-[1.0] tracking-[-0.03em] mb-6 sm:mb-10">
+                                Manage every detail <br className="hidden sm:block" /> <span className="text-[#78B600]">from your phone.</span>
+                            </h2>
+                            <p className="text-[18px] sm:text-[20px] md:text-[22px] text-[#525252] leading-relaxed font-semibold mb-8 sm:mb-12 opacity-90 text-balance lg:text-pretty">
+                                Motor Ambos replaces the fragmented glovebox with a unified digital infrastructure. Track insurance, roadworthy, and service history instantly.
+                            </p>
+
+                            <div className="flex flex-col gap-6">
+                                <div className="flex items-center gap-4">
+                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em]">Preview Compliance States:</span>
+                                </div>
+                                <div className="flex flex-wrap gap-4">
+                                    {[
+                                        { id: 'healthy', color: '#78B600', label: 'Active' },
+                                        { id: 'warning', color: '#F59E0B', label: 'Expiring' },
+                                        { id: 'critical', color: '#EF4444', label: 'Dead/Expired' }
+                                    ].map((s) => (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => setStatus(s.id as any)}
+                                            className={`group flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all border-2 ${status === s.id
+                                                    ? 'bg-white border-slate-500 shadow-md scale-105'
+                                                    : 'bg-white/50 border-transparent hover:bg-white hover:border-slate-100 opacity-70 hover:opacity-100'
+                                                }`}
+                                        >
+                                            <div
+                                                className="w-4 h-4 rounded-full shadow-sm group-hover:scale-110 transition-transform"
+                                                style={{ backgroundColor: s.color }}
+                                            />
+                                            <span className={`text-[13px] font-black uppercase tracking-widest ${status === s.id ? 'text-[#171717]' : 'text-slate-500'
+                                                }`}>
+                                                {s.label}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="relative flex justify-center items-center py-10 lg:py-0 h-full animate-in fade-in zoom-in-95 duration-1000 delay-300">
+                            <div className="relative w-full max-w-[340px] sm:max-w-[380px] lg:scale-110">
+                                <DailyDriverMock status={status} />
+                            </div>
+                        </div>
                     </div>
-                    <div className="mt-auto z-10 w-full flex justify-center transform transition-transform duration-700 group-hover:scale-[1.02]">
-                        {feature.mock}
-                    </div>
+
+                    {/* Patterns */}
+                    <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#78B600]/5 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#78B600]/5 rounded-full blur-[100px]" />
                 </div>
-            ))}
-        </div>
-    </section>
-);
+            </section>
+
+            <div className="px-6 md:px-12 lg:px-24 max-w-[1440px] mx-auto pb-48">
+                <div className="columns-1 md:columns-2 lg:columns-3 gap-10 space-y-10">
+                    {[
+                        {
+                            title: "Driver Profile",
+                            desc: "Maintain central identity nodes connecting your vehicle registration and personal credentials.",
+                            mock: <DriverVehicleMock />,
+                            bg: "bg-[#E8FBFC]",
+                            textColor: "text-slate-800",
+                            descColor: "text-slate-500"
+                        },
+                        {
+                            title: "Insurance Layer",
+                            desc: "Never misplace your policy. Real-time active tracking and instant renewal connections.",
+                            mock: <InsuranceMock />,
+                            bg: "bg-[#FCF0FA]",
+                            textColor: "text-slate-800",
+                            descColor: "text-slate-500"
+                        },
+                        {
+                            title: "Driving Score",
+                            desc: "Safe drivers reap rewards. Unlock massive discounts on premiums based on your hard data.",
+                            mock: <DrivingScoreMock />,
+                            bg: "bg-[#F6F5FC]",
+                            textColor: "text-slate-800",
+                            descColor: "text-slate-500"
+                        },
+                        {
+                            title: "Roadworthy Protocol",
+                            desc: "Digital certification replaces windshield stickers. DVLA-verified compliance, always on your phone.",
+                            mock: <RoadWorthyMock />,
+                            bg: "bg-[#FCF5EB]",
+                            textColor: "text-slate-800",
+                            descColor: "text-slate-500"
+                        },
+                        {
+                            title: "Service Logs",
+                            desc: "Every mechanic stop, oil change, and part replacement. Stored globally and immutably.",
+                            mock: <ServiceLogsMock />,
+                            bg: "bg-[#EBFBF3]",
+                            textColor: "text-slate-800",
+                            descColor: "text-slate-500"
+                        },
+                        {
+                            title: "Fuel Logging",
+                            desc: "Track every cedi spent at the pump with precision history logging to understand your economy.",
+                            mock: <FuelBurnRateMock />,
+                            bg: "bg-[#F3F4FB]",
+                            textColor: "text-slate-800",
+                            descColor: "text-slate-500"
+                        },
+                        {
+                            title: "AI Mechanic",
+                            desc: "Describe symptoms in plain English. Our AI diagnostics pipeline detects potential issues in seconds.",
+                            mock: <AIMechanicMock />,
+                            bg: "bg-[#FDF2F2]",
+                            textColor: "text-slate-800",
+                            descColor: "text-slate-500"
+                        },
+                        {
+                            title: "Smart Card Vault",
+                            desc: "An NFC passport connected to your digital twin. Tap to verify history on the spot.",
+                            mock: <SmartCardMock />,
+                            bg: "bg-[#171717]",
+                            textColor: "text-white",
+                            descColor: "text-zinc-400"
+                        },
+                        {
+                            title: "Provider Network",
+                            desc: "Discover verified workshops and certified mechanics around your location instantly.",
+                            mock: <ProviderMarketplaceMock />,
+                            bg: "bg-[#F4F4F6]",
+                            textColor: "text-slate-800",
+                            descColor: "text-slate-500"
+                        }
+                    ].map((feature, i) => (
+                        <div key={i} className={`${feature.bg} p-6 sm:p-8 md:p-10 rounded-[40px] transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/40 group break-inside-avoid relative overflow-hidden flex flex-col border border-black/5`}>
+                            <div className="mb-12 z-10 break-inside-avoid">
+                                <h3 className={`text-[24px] md:text-[26px] font-extrabold ${feature.textColor} tracking-tight mb-4`}>{feature.title}</h3>
+                                <p className={`text-[16px] ${feature.descColor} leading-[1.7] font-medium opacity-90`}>{feature.desc}</p>
+                            </div>
+                            <div className="mt-auto z-10 w-full flex justify-center transform transition-transform duration-700 group-hover:scale-[1.02]">
+                                {feature.mock}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </>
+    );
+};
 
 export const StripeBusinessInfrastructure = () => (
-    <section id="business" className="py-24 md:py-40 bg-[#171717] text-white px-6 md:px-12 scroll-mt-20">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+    <section id="business" className="py-20 md:py-40 bg-[#171717] text-white scroll-mt-20">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
             <div className="order-2 lg:order-1">
                 <StackedUIMocks />
             </div>
@@ -608,7 +694,7 @@ export const StripeRoadAssistance = () => (
         <div className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] bg-white opacity-[0.03] rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute -bottom-[10%] -left-[5%] w-[400px] h-[400px] bg-black opacity-[0.1] rounded-full blur-[80px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24 relative z-10">
+        <div className="max-w-screen-2xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24 relative z-10">
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -662,7 +748,7 @@ export const StripeSupportSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
-            className="max-w-7xl mx-auto text-center"
+            className="max-w-screen-2xl mx-auto text-center"
         >
             <div className="mb-12 md:mb-16 flex justify-center relative">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-[#00C767]/5 rounded-full blur-[100px] opacity-50" />
@@ -693,8 +779,8 @@ export const StripeSupportSection = () => (
 
 export const StripeAppDownload = () => {
     return (
-        <section className="py-16 md:py-24 px-6 md:px-12 bg-[#F8FAFF] border-t border-slate-100 overflow-hidden relative">
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+        <section className="py-20 md:py-24 bg-[#F8FAFF] border-t border-slate-100 overflow-hidden relative">
+            <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 flex flex-col md:flex-row items-center justify-between gap-12 md:gap-24 relative z-10">
                 <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-200 w-full max-w-[400px] order-2 md:order-1">
                     <MobileAppMock />
                 </div>
@@ -734,9 +820,9 @@ export const StripeAppDownload = () => {
 };
 
 export const StripeFooter = () => (
-    <footer className="py-24 px-6 md:px-12 bg-white border-t border-slate-100">
-        <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-16 mb-24">
+    <footer className="py-16 md:py-24 bg-white border-t border-slate-100">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12 md:gap-16 mb-24">
                 <div className="col-span-1 lg:col-span-2">
                     <Link href="/" className="flex items-center gap-3 mb-8 group cursor-pointer w-fit transition-opacity hover:opacity-80">
                         <div className="w-7 h-7 bg-[#00C767] rounded-full flex items-center justify-center transition-transform group-hover:scale-105">

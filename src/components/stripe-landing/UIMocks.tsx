@@ -36,7 +36,7 @@ export const ComplianceNodes = () => (
 );
 
 export const StackedUIMocks = () => (
-    <div className="w-full bg-[#F5F5F5] rounded-[32px] p-6 md:p-8 flex flex-col h-[420px] md:h-[520px] overflow-hidden relative border border-slate-200/50">
+    <div className="w-full bg-[#F5F5F5] rounded-[32px] p-4 sm:p-6 md:p-8 flex flex-col h-[420px] md:h-[520px] overflow-hidden relative border border-slate-200/50">
         {/* Header */}
         <div className="flex justify-between items-center mb-6 z-10">
             <div>
@@ -146,11 +146,10 @@ export const StackedUIMocks = () => (
 );
 
 export const FleetReportMock = () => (
-    <div className="w-full bg-white rounded-[32px] p-6 shadow-[0px_20px_40px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col relative overflow-hidden group">
+    <div className="w-full bg-white rounded-[32px] p-4 sm:p-6 shadow-[0px_20px_40px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col relative overflow-hidden group">
         {/* Header with Period */}
         <div className="flex justify-between items-start mb-8">
             <div>
-                <span className="text-[10px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-1 block">Monthly Audit</span>
                 <h4 className="font-extrabold text-[#171717] text-[20px] tracking-tight">Fleet Performance</h4>
                 <p className="text-[12px] font-medium text-slate-400">Feb 1, 2026 - Mar 1, 2026</p>
             </div>
@@ -240,74 +239,98 @@ export const LifecycleTimeline = () => (
     </div>
 );
 
-export const DailyDriverMock = () => (
-    <div className="bg-white rounded-[32px] p-6 shadow-[0px_24px_50px_-10px_rgba(0,0,0,0.06)] border border-[#F3F4F6] max-w-[340px] w-full relative overflow-hidden group hover:shadow-[0px_36px_60px_-16px_rgba(0,0,0,0.1)] transition-all duration-700">
+export const DailyDriverMock = ({ status = 'healthy' }: { status?: 'healthy' | 'warning' | 'critical' }) => {
+    const config = {
+        healthy: {
+            color: '#78B600',
+            bg: 'bg-[#78B600]/10',
+            score: '100%',
+            service: 'Active',
+            insurance: 'Active',
+            badge: 'PRIMARY',
+            icon: <CheckCircle2 className="w-3.5 h-3.5" />
+        },
+        warning: {
+            color: '#F59E0B',
+            bg: 'bg-[#F59E0B]/10',
+            score: '72%',
+            service: 'Pending',
+            insurance: 'Expiring',
+            badge: 'WARNING',
+            icon: <AlertCircle className="w-3.5 h-3.5" />
+        },
+        critical: {
+            color: '#EF4444',
+            bg: 'bg-[#EF4444]/10',
+            score: '24%',
+            service: 'Grounded',
+            insurance: 'Dead',
+            badge: 'URGENT',
+            icon: <AlertTriangle className="w-3.5 h-3.5" />
+        }
+    }[status];
 
-        {/* Soft Car Icon Background in Top Right corner */}
-        <div className="absolute top-2 right-[-24px] opacity-[0.03] transform pointer-events-none group-hover:scale-110 transition-transform duration-1000">
-            <CarFront className="w-48 h-48 text-slate-800" strokeWidth={1} />
-        </div>
-
-        {/* Top Badges */}
-        <div className="flex justify-between items-center mb-5 relative z-10">
-            <div className="bg-[#EAF6ED] text-[#2EA053] px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase">
-                KIA
+    return (
+        <div className="bg-white rounded-[40px] p-6 sm:p-8 shadow-[0px_30px_60px_-15px_rgba(0,0,0,0.08)] border border-slate-100/10 max-w-[360px] w-full relative overflow-hidden group hover:shadow-[0px_40px_80px_-20px_rgba(0,0,0,0.12)] transition-all duration-700 transform-gpu">
+            {/* Soft Car Icon Background */}
+            <div className="absolute top-2 right-[-24px] opacity-[0.03] transform pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                <CarFront className="w-48 h-48 text-slate-800" strokeWidth={1} />
             </div>
-            <div className="bg-[#EAF6ED] text-[#2EA053] px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                PRIMARY
+
+            {/* Top Badges */}
+            <div className="flex justify-between items-center mb-10 relative z-10">
+                <div className={`px-4 py-2 rounded-full text-[10px] font-black tracking-[0.15em] uppercase`} style={{ backgroundColor: `${config.color}15`, color: config.color }}>
+                    KIA
+                </div>
+                <div className={`px-3.5 py-2 rounded-full text-[10px] font-black tracking-widest flex items-center gap-1.5 uppercase transition-colors duration-500`} style={{ backgroundColor: `${config.color}15`, color: config.color }}>
+                    {config.icon}
+                    {config.badge}
+                </div>
             </div>
-        </div>
 
-        <div className="relative z-10">
-            <h3 className="text-[26px] font-medium text-[#111827] mb-8 tracking-tight">Daily Driver</h3>
+            <div className="relative z-10">
+                <h3 className="text-[32px] font-black text-[#111A2C] mb-10 tracking-[-0.03em] leading-tight">Daily Driver</h3>
 
-            {/* Floating License Plate with Custom Shadow */}
-            <div className="relative mb-8 w-full">
-                <div className="bg-gradient-to-b from-[#EEEEEE] to-[#D7DADB] border-[3.5px] border-[#1C1C1C] rounded-full py-4 px-6 flex items-center shadow-[0_16px_24px_-8px_rgba(0,0,0,0.25)] group-hover:-translate-y-1 transition-transform duration-500">
-
-                    {/* License Plate Texts aligned perfectly center */}
-                    <div className="w-full flex flex-col items-center justify-center -mt-1 relative pr-10">
-                        <span className="text-[15px] font-black text-[#1C1C1C] leading-none mb-0.5 tracking-[0.15em]">GR</span>
-                        <span className="text-[26px] font-black text-[#1C1C1C] leading-none tracking-tight">9918-18</span>
-                    </div>
-
-                    {/* Ghana Flag Badge Inside Plate fixed to right side */}
-                    <div className="absolute right-5 inset-y-0 flex items-center gap-1.5">
-                        <div className="flex flex-col gap-[1.5px] border border-black/10 shadow-sm overflow-hidden rounded-[2px] bg-white h-fit my-auto pb-[0.5px]">
-                            <div className="bg-[#CE1126] w-4 h-[3.5px]" />
-                            <div className="bg-[#FCD116] w-4 h-[3.5px] flex justify-center items-center">
-                                {/* tiny black star representation */}
-                                <div className="w-[3px] h-[3px] bg-black rotate-45 transform scale-75 pt-[0.5px]" />
-                            </div>
-                            <div className="bg-[#006B3F] w-4 h-[3.5px]" />
+                {/* License Plate */}
+                <div className="relative mb-8 w-full">
+                    <div className="bg-gradient-to-b from-[#EEEEEE] to-[#D7DADB] border-[3.5px] border-[#1C1C1C] rounded-full py-4 px-6 flex items-center shadow-[0_16px_24px_-8px_rgba(0,0,0,0.25)] group-hover:-translate-y-1 transition-transform duration-500">
+                        <div className="w-full flex flex-col items-center justify-center -mt-1 relative pr-10">
+                            <span className="text-[15px] font-black text-[#1C1C1C] leading-none mb-0.5 tracking-[0.15em]">GR</span>
+                            <span className="text-[26px] font-black text-[#1C1C1C] leading-none tracking-tight">9918-18</span>
                         </div>
-                        <span className="text-[12px] font-black text-[#1C1C1C] tracking-tighter">GH</span>
+                        <div className="absolute right-5 inset-y-0 flex items-center gap-1.5">
+                            <div className="flex flex-col gap-[1.5px] border border-black/10 shadow-sm overflow-hidden rounded-[2px] bg-white h-fit my-auto pb-[0.5px]">
+                                <div className="bg-[#CE1126] w-4 h-[3.5px]" />
+                                <div className="bg-[#FCD116] w-4 h-[3.5px] flex justify-center items-center">
+                                    <div className="w-[3px] h-[3px] bg-black rotate-45 transform scale-75 pt-[0.5px]" />
+                                </div>
+                                <div className="bg-[#006B3F] w-4 h-[3.5px]" />
+                            </div>
+                            <span className="text-[12px] font-black text-[#1C1C1C] tracking-tighter">GH</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="w-full h-[1px] bg-[#F1F3F5] mb-5" />
+
+                <div className="space-y-4 pt-6 border-t border-dashed border-slate-100">
+                    <div className="flex justify-between items-center transition-all duration-500">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Health Score</span>
+                        <span className="text-[15px] font-black transition-colors duration-500" style={{ color: config.color }}>{config.score}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Insurance</span>
+                        <span className="text-[15px] font-black transition-colors duration-500" style={{ color: config.color }}>{config.insurance}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Service Status</span>
+                        <span className="text-[15px] font-black transition-colors duration-500" style={{ color: config.color }}>{config.service}</span>
                     </div>
                 </div>
             </div>
-
-            {/* Tiny faint divider to match app UI */}
-            <div className="w-full h-[1px] bg-[#F1F3F5] mb-5" />
-
-            {/* Bottom Metrics aligned horizontally */}
-            <div className="flex justify-between items-center px-1">
-                <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] font-semibold text-[#8B95A5] uppercase tracking-[0.1em]">Health</span>
-                    <span className="text-[19px] font-medium text-[#2EA053] tracking-tight">100%</span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] font-semibold text-[#8B95A5] uppercase tracking-[0.1em]">Year</span>
-                    <span className="text-[19px] font-medium text-[#111827] tracking-tight">2010</span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] font-semibold text-[#8B95A5] uppercase tracking-[0.1em]">Status</span>
-                    <span className="text-[19px] font-medium text-[#2EA053] tracking-tight">Active</span>
-                </div>
-            </div>
         </div>
-    </div>
-);
+    );
+};
 
 export const WalletUpgradeMock = () => (
     <div className="bg-white rounded-[32px] p-10 w-full max-w-[460px] shadow-[0px_48px_80px_-16px_rgba(0,0,0,0.14)] border border-white">

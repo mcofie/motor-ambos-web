@@ -12,7 +12,7 @@ export default function BusinessPage() {
             <StripeNavbar />
 
             {/* Business Hero */}
-            <section className="pt-24 pb-16 md:pt-36 md:pb-24 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto min-h-screen overflow-hidden">
+            <section className="pt-24 pb-16 md:pt-48 md:pb-36 flex flex-col items-center text-center max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 min-h-screen overflow-hidden">
                 {/* Main Hero Illustration */}
                 <div className="flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-1000 delay-200 group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0">
                     <div className="relative w-full max-w-[500px] md:max-w-[800px] lg:max-w-5xl">
@@ -31,10 +31,10 @@ export default function BusinessPage() {
                 {/* Text content */}
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-4xl mx-auto z-10 relative mb-12 md:mb-16">
                     <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-6">Motor Ambos for Business</div>
-                    <h1 className="text-[48px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.0] md:leading-[0.95] tracking-[-0.02em] mb-8 md:mb-10 text-balance">
+                    <h1 className="text-[40px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.1] md:leading-[0.95] tracking-[-0.02em] mb-6 md:mb-10 text-balance">
                         Enterprise mobility, <br className="hidden md:block" /> instantly verifiable.
                     </h1>
-                    <p className="text-[18px] sm:text-[20px] md:text-[22px] text-[#525252] leading-[1.6] mb-10 md:mb-14 font-medium text-balance opacity-80 max-w-3xl mx-auto">
+                    <p className="text-[16px] sm:text-[20px] md:text-[22px] text-[#525252] leading-relaxed mb-8 md:mb-14 font-medium text-balance opacity-80 max-w-3xl mx-auto px-4 md:px-0">
                         Powering high-growth fleets, logistics companies, and corporate teams with a unified infrastructure for compliance, driver accountability, and real-time maintenance routing.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-5">
@@ -54,18 +54,18 @@ export default function BusinessPage() {
             </section>
 
             {/* Reporting Section */}
-            <section className="py-24 md:py-40 px-6 md:px-12 bg-white overflow-hidden border-t border-slate-50">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            <section className="py-20 md:py-56 bg-white overflow-hidden border-t border-slate-50">
+                <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
                     <div className="relative animate-in fade-in slide-in-from-left-8 duration-1000">
                         <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-[#00C767]/5 blur-[100px] rounded-full" />
                         <FleetReportMock />
                     </div>
                     <div className="max-w-xl animate-in fade-in slide-in-from-right-8 duration-1000">
                         <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Actionable Insights</div>
-                        <h2 className="text-[36px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.02em] mb-8">
+                        <h2 className="text-[32px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.02em] mb-6 md:mb-8">
                             Periodic audits <br className="hidden md:block" /> for total control.
                         </h2>
-                        <p className="text-[20px] text-[#525252] leading-relaxed font-medium mb-10 opacity-80">
+                        <p className="text-[17px] md:text-[20px] text-[#525252] leading-relaxed font-medium mb-8 md:mb-10 opacity-80">
                             Our platform automatically generates cross-continental fleet audits. Get deep visibility into driver behavior trends, maintenance cost projections, and real-time compliance status delivered to your inbox.
                         </p>
                         <ul className="space-y-4">
@@ -88,14 +88,14 @@ export default function BusinessPage() {
             </section>
 
             {/* How to Sign Up Section */}
-            <section className="py-24 md:py-40 px-6 md:px-12 bg-slate-50 border-t border-slate-100">
-                <div className="max-w-7xl mx-auto">
+            <section className="py-20 md:py-56 bg-slate-50 border-t border-slate-100">
+                <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
                     <div className="text-center mb-16 md:mb-24">
-                        <h2 className="text-[36px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.02em] mb-6">
-                            Start onboarding your fleet today.
+                        <h2 className="text-[32px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.02em] mb-6">
+                            Start onboarding today.
                         </h2>
-                        <p className="text-[18px] md:text-[20px] text-[#525252] font-medium max-w-2xl mx-auto opacity-80">
-                            Our seamless deployment ensures you can transition from paper logs to digital compliance in days, not months.
+                        <p className="text-[17px] md:text-[20px] text-[#525252] font-medium max-w-2xl mx-auto opacity-80">
+                            Seamless deployment ensures you can transition from paper logs to digital compliance in days, not months.
                         </p>
                     </div>
 
@@ -118,10 +118,10 @@ export default function BusinessPage() {
             </section>
 
             {/* Core Features */}
-            <section className="py-24 md:py-40 px-6 md:px-12 max-w-7xl mx-auto">
+            <section className="py-20 md:py-56 max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
                     <div>
-                        <h2 className="text-[36px] md:text-[48px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.02em] mb-8">Reduce operational chaos.</h2>
+                        <h2 className="text-[32px] md:text-[48px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.02em] mb-6 md:mb-8 text-center lg:text-left">Reduce operational chaos.</h2>
                         <ul className="space-y-6">
                             {[
                                 { title: "Automated Compliance tracking", desc: "Never miss a roadworthy renewal or insurance payment. Everything is centralized." },

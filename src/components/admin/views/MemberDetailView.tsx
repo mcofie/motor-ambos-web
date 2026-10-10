@@ -37,6 +37,7 @@ import {
 import { cls, StatCard } from "../ui/AdminUI";
 import { toast } from "sonner";
 import { DigitalGlovebox } from "./DigitalGlovebox";
+import { formatPhone } from "@/lib/phone";
 
 export interface MemberDetailViewProps {
     memberId: string;
@@ -52,7 +53,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
     const [isGloveboxOpen, setIsGloveboxOpen] = useState(false);
     const [drivers, setDrivers] = useState<any[]>([]);
     const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
-    const [newDriver, setNewDriver] = useState({ name: "", phone: "", vehicle_id: "" });
+    const [newDriver, setNewDriver] = useState({ name: "", phone: "", email: "", vehicle_id: "" });
     const [addingDriver, setAddingDriver] = useState(false);
 
     const fetchData = useCallback(async (signal?: AbortSignal) => {
@@ -92,16 +93,16 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
     }, [memberId, router, initialMember]);
 
     const handleAddDriver = async () => {
-        if (!member?.id || !newDriver.name || !newDriver.phone) {
-            toast.error("Please fill in name and phone");
+        if (!member?.id || !newDriver.name || !newDriver.phone || !newDriver.email) {
+            toast.error("Please fill in name, phone, and email");
             return;
         }
         setAddingDriver(true);
         try {
-            await addOrgDriver(member.id, newDriver.name, newDriver.phone, newDriver.vehicle_id || undefined);
+            await addOrgDriver(member.id, newDriver.name, newDriver.phone, newDriver.email, newDriver.vehicle_id || undefined);
             toast.success("Driver added and notified");
             setIsAddDriverOpen(false);
-            setNewDriver({ name: "", phone: "", vehicle_id: "" });
+            setNewDriver({ name: "", phone: "", email: "", vehicle_id: "" });
             // Refresh list
             const d = await listOrgDrivers(member.id);
             setDrivers(d);
@@ -181,7 +182,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                     {member.is_business && (
                                         <div className="pt-2">
                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Person</label>
-                                            <p className="text-sm text-slate-700 dark:text-slate-300">{member.full_name}</p>
+                                            <p className="text-sm text-slate-700 dark:text-slate-300">{member.contact_name || member.full_name || "—"}</p>
                                         </div>
                                     )}
                                 </div>
@@ -190,12 +191,12 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
                                             <Phone className="h-4 w-4 opacity-70" />
-                                            {member.phone}
+                                            {formatPhone(member.is_business ? member.contact_phone || member.phone : member.phone) || "—"}
                                         </div>
-                                        {member.email && (
+                                        {(member.is_business ? member.contact_email || member.email : member.email) && (
                                             <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
                                                 <Mail className="h-4 w-4 opacity-70" />
-                                                {member.email}
+                                                {member.is_business ? member.contact_email || member.email : member.email}
                                             </div>
                                         )}
                                     </div>
@@ -405,7 +406,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                 </div>
                                 <div className="p-6 space-y-4">
                                     <p className="text-sm text-muted-foreground mb-4">
-                                        Enter driver details. They will receive an SMS invite to download the app and join this fleet.
+                                        Enter driver details. They will receive an SMS with the web sign-up link.
                                     </p>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold uppercase text-muted-foreground">Driver Name</label>
@@ -420,9 +421,20 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                         <label className="text-xs font-bold uppercase text-muted-foreground">Phone Number</label>
                                         <input
                                             className="w-full p-2 rounded-lg border border-input bg-background"
-                                            placeholder="055XXXXXXX"
+                                            placeholder="+233558508306"
                                             value={newDriver.phone}
                                             onChange={e => setNewDriver({ ...newDriver, phone: e.target.value })}
+                                            onBlur={() => setNewDriver((current) => ({ ...current, phone: formatPhone(current.phone) }))}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold uppercase text-muted-foreground">Email Address</label>
+                                        <input
+                                            className="w-full p-2 rounded-lg border border-input bg-background"
+                                            placeholder="driver@example.com"
+                                            type="email"
+                                            value={newDriver.email}
+                                            onChange={e => setNewDriver({ ...newDriver, email: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-1">

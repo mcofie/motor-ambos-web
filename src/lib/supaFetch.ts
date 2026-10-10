@@ -10,6 +10,7 @@ const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 import { getSupabaseBrowser } from "./supabaseBrowser";
+import { formatPhone, normalizePhone } from "./phone";
 
 if (!URL || !ANON) throw new Error("Missing environment variables");
 
@@ -271,6 +272,10 @@ export type MemberWithMembershipRow = {
     id?: string;
     is_business?: boolean;
     business_name?: string | null;
+    contact_member_id?: string | null;
+    contact_name?: string | null;
+    contact_phone?: string | null;
+    contact_email?: string | null;
 };
 
 export type VehicleRow = {
@@ -700,9 +705,9 @@ export async function listProviders(q?: string, signal?: AbortSignal): Promise<P
     return rows.map((r) => {
         if ((!r.lat || !r.lng) && r.location?.coordinates) {
             const [lng, lat] = r.location.coordinates;
-            return { ...r, lat, lng };
+            return { ...r, phone_business: formatPhone(r.phone_business), lat, lng };
         }
-        return r;
+        return { ...r, phone_business: formatPhone(r.phone_business) };
     });
 }
 
@@ -732,9 +737,10 @@ export type InsertProviderParams = {
 export async function insertProvider(
     p: InsertProviderParams
 ): Promise<ProviderRow | null> {
+    if (p.phone_business && !normalizePhone(p.phone_business)) throw new Error("Enter a valid phone number, such as +233558508306.");
     const payload: Record<string, unknown> = {
         display_name: p.display_name,
-        phone_business: p.phone_business ?? null,
+        phone_business: p.phone_business ? normalizePhone(p.phone_business) : null,
         about: p.about ?? null,
         address_line: p.address_line ?? null,
         is_active: p.is_active,
@@ -795,7 +801,9 @@ export async function updateProvider(
     id: string,
     patch: UpdateProviderPatch
 ): Promise<ProviderRow | null> {
+    if (patch.phone_business && !normalizePhone(patch.phone_business)) throw new Error("Enter a valid phone number, such as +233558508306.");
     const clean: Record<string, unknown> = { ...patch };
+    if (typeof patch.phone_business === "string") clean.phone_business = normalizePhone(patch.phone_business);
     delete clean.lat;
     delete clean.lng;
 
@@ -860,7 +868,7 @@ export async function listRequestsByProvider(
     });
 
     await throwIfNotOk(res);
-    return (await readJSONSafe<RequestsListRow[]>(res)) ?? [];
+    return ((await readJSONSafe<RequestsListRow[]>(res)) ?? []).map((row) => ({ ...row, driver_phone: formatPhone(row.driver_phone) }));
 }
 
 
@@ -983,7 +991,7 @@ export async function listMembers(signal?: AbortSignal): Promise<MemberWithMembe
         member_id: r.id,
         auth_user_id: r.auth_user_id,
         full_name: r.full_name,
-        phone: r.phone,
+        phone: formatPhone(r.phone),
         email: r.email,
         membership_tier: r.membership_tier,
         membership_number: r.membership_number,
@@ -995,6 +1003,7 @@ export async function listMembers(signal?: AbortSignal): Promise<MemberWithMembe
         id: r.id,
         is_business: r.is_business || false,
         business_name: r.business_name,
+        contact_member_id: r.contact_member_id,
     }));
 }
 export async function getMemberById(id: string, signal?: AbortSignal): Promise<MemberWithMembershipRow | null> {
@@ -1026,11 +1035,18 @@ export async function getMemberById(id: string, signal?: AbortSignal): Promise<M
     }
     if (!data) return null;
 
+    const { data: contact } = data.contact_member_id
+        ? await supabase.schema("motorambos").from("members")
+            .select("full_name,phone,email")
+            .eq("id", data.contact_member_id)
+            .maybeSingle()
+        : { data: null };
+
     return {
         member_id: data.id,
         auth_user_id: data.auth_user_id,
         full_name: data.full_name,
-        phone: data.phone,
+        phone: formatPhone(data.phone),
         email: data.email,
         membership_tier: data.membership_tier,
         membership_number: data.membership_number,
@@ -1042,6 +1058,10 @@ export async function getMemberById(id: string, signal?: AbortSignal): Promise<M
         id: data.id,
         is_business: data.is_business || false,
         business_name: data.business_name,
+        contact_member_id: data.contact_member_id,
+        contact_name: contact?.full_name,
+        contact_phone: formatPhone(contact?.phone),
+        contact_email: contact?.email,
     };
 }
 
@@ -1088,14 +1108,15 @@ export async function upsertMemberMembership(params: {
 export async function listOrgDrivers(orgId: string, signal?: AbortSignal): Promise<any[]> {
     const res = await fetch(`/api/admin-org-drivers?org_id=${orgId}`, { signal });
     if (!res.ok) throw new Error("Failed to list drivers");
-    return res.json();
+    const rows = await res.json();
+    return rows.map((row: any) => ({ ...row, member: row.member && { ...row.member, phone: formatPhone(row.member.phone) }, full_name: row.member?.full_name, phone: formatPhone(row.member?.phone), vehicle_reg: row.vehicle?.plate }));
 }
 
-export async function addOrgDriver(orgId: string, fullName: string, phone: string, vehicleId?: string): Promise<void> {
+export async function addOrgDriver(orgId: string, fullName: string, phone: string, email: string, vehicleId?: string): Promise<void> {
     const res = await fetch("/api/admin-org-drivers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ org_id: orgId, full_name: fullName, phone, vehicle_id: vehicleId })
+        body: JSON.stringify({ org_id: orgId, full_name: fullName, phone, email, vehicle_id: vehicleId })
     });
     if (!res.ok) {
         const err = await res.json();
@@ -1250,7 +1271,7 @@ export async function getPublicMemberByUserId(userId: string): Promise<MemberWit
         member_id: r.id,
         auth_user_id: r.auth_user_id,
         full_name: r.full_name,
-        phone: r.phone,
+        phone: formatPhone(r.phone),
         email: r.email,
         membership_tier: null,
         membership_number: null,
@@ -1296,6 +1317,8 @@ export async function createRequest(payload: {
     provider_id?: string | null;
     status?: "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
 }): Promise<RequestRow | null> {
+    const driverPhone = normalizePhone(payload.driver_phone);
+    if (!driverPhone) throw new Error("Enter a valid phone number, such as +233558508306.");
     const service_id = await lookupServiceIdByCode(payload.helpType);
 
     const body = {
@@ -1304,7 +1327,7 @@ export async function createRequest(payload: {
         service_id,
         status: payload.status ?? "pending",
         driver_name: payload.driver_name,
-        driver_phone: payload.driver_phone,
+        driver_phone: driverPhone,
         details: payload.details ?? null,
         address_line: payload.address_line ?? null,
         location: ewktFromLatLng(payload.lat, payload.lng),
@@ -1369,7 +1392,7 @@ function mapRpcProvider(r: RpcProviderRow): Provider {
     return {
         id: r.id,
         name: r.name ?? r.display_name ?? "",
-        phone: r.phone_business ?? r.phone ?? "",
+        phone: formatPhone(r.phone_business ?? r.phone),
         address_line: r.address_line ?? "",
         distance_km: Number(r.distance_km ?? 0),
         rating: r.rating ?? undefined,
@@ -1447,7 +1470,7 @@ export async function listRequests(status?: string, signal?: AbortSignal): Promi
 
     await throwIfNotOk(res);
     const rows = (await readJSONSafe<RequestsListRow[]>(res)) ?? [];
-    return rows;
+    return rows.map((row) => ({ ...row, driver_phone: formatPhone(row.driver_phone) }));
 }
 
 // ─────────────────────────────────────────
@@ -1461,6 +1484,7 @@ export async function submitProviderReview(params: {
     driverPhone?: string | null;
     outcome?: string | null;
 }): Promise<void> {
+    if (params.driverPhone && !normalizePhone(params.driverPhone)) throw new Error("Enter a valid phone number, such as +233558508306.");
     const res = await fetch(`${URL}/rest/v1/rpc/add_provider_review`, {
         method: "POST",
         headers: anonHeaders(),
@@ -1468,7 +1492,7 @@ export async function submitProviderReview(params: {
             p_request_id: params.requestId,
             p_rating: params.rating,
             p_review: params.review,
-            p_driver_phone: params.driverPhone ?? null,
+            p_driver_phone: params.driverPhone ? normalizePhone(params.driverPhone) : null,
             p_outcome: params.outcome ?? "other",
         }),
     });
@@ -1517,7 +1541,7 @@ export async function getRequestReviewContext(
 
     await throwIfNotOk(res);
     const rows = (await readJSONSafe<RequestReviewContext[]>(res)) ?? [];
-    return rows[0] ?? null;
+    return rows[0] ? { ...rows[0], driver_phone: formatPhone(rows[0].driver_phone), provider_phone: formatPhone(rows[0].provider_phone) } : null;
 }
 
 /* ─────────────────────────────────────────
@@ -1630,7 +1654,8 @@ export async function listNfcRequests(signal?: AbortSignal): Promise<NfcRequestR
         console.error("Error listing NFC requests:", res.statusText);
         return [];
     }
-    return res.json();
+    const rows = await res.json();
+    return rows.map((row: NfcRequestRow) => ({ ...row, member: row.member && { ...row.member, phone: formatPhone(row.member.phone) } }));
 }
 
 export async function updateNfcRequestStatus(id: string, status: string, notes?: string): Promise<void> {
@@ -1757,38 +1782,23 @@ export async function sendFleetReport(orgId: string, options: {
 export async function upsertOrganization(payload: {
     id?: string;
     business_name: string;
-    full_name: string;
+    contact_member_id: string;
     email?: string;
-    phone: string;
+    phone?: string;
     membership_tier?: string;
     membership_expiry_date?: string;
     membership_is_active?: boolean;
 }): Promise<void> {
     const isNew = !payload.id;
-    const url = isNew
-        ? `${URL}/rest/v1/members`
-        : `${URL}/rest/v1/members?id=eq.${payload.id}`;
-
-    // Clean payload of optional empties
-    const body: any = {
-        ...payload,
-        is_business: true,
-        updated_at: new Date().toISOString()
-    };
-    if (body.id) delete body.id;
-
-    const res = await fetch(url, {
+    const res = await fetch("/api/admin-organizations", {
         method: isNew ? "POST" : "PATCH",
-        headers: {
-            ...authHeaders(),
-            ...(isNew ? { Prefer: "return=representation" } : {})
-        },
-        body: JSON.stringify(body)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
     });
 
     if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to save organization");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to save organization");
     }
 }
 

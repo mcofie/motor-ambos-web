@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizePhone } from "@/lib/phone";
 import { createClient } from "@supabase/supabase-js";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
         // 1. Find Vehicle and Owner Phone
         const { data: vehicle, error: vError } = await supabase
             .from("vehicles")
-            .select("*, members(phone, full_name, business_name)")
+            .select("*, members(*)")
             .or(`plate.eq.${cleanedPlate},plate.ilike.${cleanedPlate},plate.eq.${alternatePlate},plate.ilike.${alternatePlate}`)
             .single();
 
@@ -39,7 +40,15 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Vehicle not found. Please check the plate number." }, { status: 404 });
         }
 
-        const phone = (vehicle as any).members?.phone;
+        const owner = (vehicle as any).members;
+        let phone = normalizePhone(owner?.phone);
+        if (!phone && owner?.contact_member_id) {
+            const { data: contact } = await supabase.from("members")
+                .select("phone")
+                .eq("id", owner.contact_member_id)
+                .maybeSingle();
+            phone = normalizePhone(contact?.phone);
+        }
         const ownerName = (vehicle as any).members?.business_name || (vehicle as any).members?.full_name || "Driver";
 
         if (!phone) {

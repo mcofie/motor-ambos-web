@@ -27,7 +27,7 @@ const navigation = [
     { href: "/#questions", label: "Resources" },
 ];
 
-export function LandingNav() {
+export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
 
@@ -68,9 +68,9 @@ export function LandingNav() {
                     ))}
                 </div>
 
-                <Link href="/login" className="group hidden h-[34px] items-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] font-normal text-white transition-colors hover:bg-[#0606D8] md:inline-flex">
+                {hideCta ? <span className="hidden text-[14px] text-[#777] md:block">Sign in</span> : <Link href="/login" className="group hidden h-[34px] items-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] font-normal text-white transition-colors hover:bg-[#0606D8] md:inline-flex">
                     Get started <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                </Link>}
 
                 <button
                     type="button"
@@ -93,9 +93,9 @@ export function LandingNav() {
                             </Link>
                         ))}
                     </nav>
-                    <Link href="/login" onClick={() => setMenuOpen(false)} className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[16px] text-white">
+                    {!hideCta && <Link href="/login" onClick={() => setMenuOpen(false)} className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[16px] text-white">
                         Get started <ChevronRight className="h-4 w-4" />
-                    </Link>
+                    </Link>}
                 </div>
             )}
         </header>

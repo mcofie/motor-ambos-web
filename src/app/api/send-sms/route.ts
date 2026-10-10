@@ -1,16 +1,21 @@
 // app/api/send-sms/route.ts
 import {NextResponse} from "next/server";
+import { staffApiError } from "@/lib/serverAuth";
+import { normalizePhone } from "@/lib/phone";
 
 export async function POST(req: Request) {
+    const accessError = await staffApiError();
+    if (accessError) return accessError;
     try {
         const {to, content} = (await req.json()) as {
             to: string;
             content: string;
         };
 
-        if (!to || !content) {
+        const phone = normalizePhone(to);
+        if (!phone || !content) {
             return NextResponse.json(
-                {error: "Missing `to` or `content`"},
+                {error: "Enter a valid recipient phone number and message."},
                 {status: 400}
             );
         }
@@ -25,7 +30,7 @@ export async function POST(req: Request) {
 
         const body = JSON.stringify({
             from: "MotorAmbos",
-            to,
+            to: phone,
             content,
         });
 

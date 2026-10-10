@@ -14,7 +14,7 @@ export default function NavBar({ user }: { user: User | null }) {
         } catch (e) {
             console.error("[logout] failed:", e);
         } finally {
-            window.location.href = "/login";
+            window.location.href = "/admin/login";
         }
     };
 
@@ -40,7 +40,7 @@ export default function NavBar({ user }: { user: User | null }) {
                         </>
                     ) : (
                         <button
-                            onClick={() => router.replace("/login")}
+                            onClick={() => router.replace("/admin/login")}
                             className="rounded-lg border border-input bg-background px-3 py-1.5 hover:bg-accent hover:text-accent-foreground transition-colors text-xs font-medium"
                         >
                             Log in

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { formatPhone } from "@/lib/phone";
 import { createClient } from "@supabase/supabase-js";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { staffApiError } from "@/lib/serverAuth";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -16,6 +18,8 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_KEY, {
 });
 
 export async function POST(req: Request) {
+    const accessError = await staffApiError();
+    if (accessError) return accessError;
     try {
         const body = await req.json();
         const { org_id, startDate, endDate, includeServices, includeCompliance, includeFleetStats } = body;
@@ -25,11 +29,14 @@ export async function POST(req: Request) {
         // 1. Get Organization Details
         const { data: org, error: orgError } = await supabaseAdmin
             .from("members")
-            .select("business_name, full_name, email, phone")
+            .select("*")
             .eq("id", org_id)
             .single();
 
         if (orgError) throw orgError;
+        const { data: contact } = org.contact_member_id
+            ? await supabaseAdmin.from("members").select("full_name,email,phone").eq("id", org.contact_member_id).maybeSingle()
+            : { data: null };
 
         // 2. Get All Vehicles in Fleet
         const { data: vehicles, error: vError } = await supabaseAdmin
@@ -83,11 +90,12 @@ export async function POST(req: Request) {
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
-        doc.text(`Email: ${org.email || 'N/A'}`, 14, 62);
-        doc.text(`Phone: ${org.phone || 'N/A'}`, 14, 67);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - 14, 67, { align: "right" });
+        doc.text(`Contact: ${contact?.full_name || org.full_name || 'N/A'}`, 14, 62);
+        doc.text(`Phone: ${formatPhone(contact?.phone || org.phone) || 'N/A'}`, 14, 67);
+        doc.text(`Business email: ${org.email || 'N/A'}`, 14, 72);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - 14, 72, { align: "right" });
 
-        let currentY = 80;
+        let currentY = 85;
 
         // Fleet Stats Section
         if (includeFleetStats) {

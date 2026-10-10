@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { staffApiError } from "@/lib/serverAuth";
+import { normalizePhone, phoneVariants } from "@/lib/phone";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -38,6 +40,8 @@ async function sendSMS(to: string, message: string) {
 }
 
 export async function GET(req: Request) {
+    const accessError = await staffApiError();
+    if (accessError) return accessError;
     const { searchParams } = new URL(req.url);
     const org_id = searchParams.get("org_id");
 
@@ -65,12 +69,16 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+    const accessError = await staffApiError();
+    if (accessError) return accessError;
     try {
         const body = await req.json();
-        const { org_id, full_name, phone, vehicle_id } = body;
+        const { org_id, full_name, phone, email, vehicle_id } = body;
 
-        if (!org_id || !phone || !full_name) {
-            return NextResponse.json({ error: "Organization ID, Driver Name, and Phone are required" }, { status: 400 });
+        const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+        const normalizedPhone = normalizePhone(phone);
+        if (!org_id || !normalizedPhone || !full_name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+            return NextResponse.json({ error: "Organization, driver name, phone, and valid email are required" }, { status: 400 });
         }
 
         // 1. Get Business Name
@@ -86,17 +94,38 @@ export async function POST(req: Request) {
         let member_id;
         const { data: existing } = await supabaseAdmin
             .from("members")
-            .select("id")
-            .eq("phone", phone)
-            .single();
+            .select("id,email")
+            .eq("email", normalizedEmail)
+            .maybeSingle();
 
-        if (existing) {
-            member_id = existing.id;
+        const { data: phoneMatches, error: phoneLookupError } = await supabaseAdmin
+            .from("members")
+            .select("id,email")
+            .in("phone", phoneVariants(normalizedPhone))
+            .limit(2);
+        if (phoneLookupError) return NextResponse.json({ error: "Could not check the phone number" }, { status: 500 });
+        if ((phoneMatches?.length || 0) > 1) return NextResponse.json({ error: "More than one profile uses this phone number. Resolve the duplicate before adding the driver." }, { status: 409 });
+        const samePhone = phoneMatches?.[0];
+
+        if (samePhone && existing && samePhone.id !== existing.id) {
+            return NextResponse.json({ error: "That phone and email belong to different members" }, { status: 409 });
+        }
+        if (samePhone?.email && samePhone.email.toLowerCase() !== normalizedEmail) {
+            return NextResponse.json({ error: "That phone belongs to a member with a different email" }, { status: 409 });
+        }
+
+        if (existing || samePhone) {
+            member_id = (existing || samePhone)!.id;
+            if (samePhone && !samePhone.email) {
+                const { error: updateError } = await supabaseAdmin.from("members").update({ email: normalizedEmail }).eq("id", samePhone.id).is("email", null);
+                if (updateError) throw updateError;
+            }
         } else {
             // Create new member
             const driverPayload = {
                 full_name,
-                phone,
+                phone: normalizedPhone,
+                email: normalizedEmail,
                 is_business: false,
                 membership_is_active: true,
                 membership_tier: "STANDARD",
@@ -128,12 +157,10 @@ export async function POST(req: Request) {
         if (linkError) throw linkError;
 
         // 4. Send SMS
-        const downloadLink = "https://motorambos.com"; // Replace with actual link
-        const msg = existing
-            ? `You have been added to the ${businessName} fleet on Motor Ambos. Sign in to view your assigned vehicles.`
-            : `You have been added to the ${businessName} fleet. Download Motor Ambos app to get started: ${downloadLink}`;
+        const signupLink = "https://motorambos.com/register";
+        const msg = `You have been added to the ${businessName} fleet on Motor Ambos. Use ${normalizedEmail} to sign in or create an account and view your assigned vehicle: ${signupLink}`;
 
-        await sendSMS(phone, msg);
+        await sendSMS(normalizedPhone, msg);
 
         return NextResponse.json({ success: true });
 

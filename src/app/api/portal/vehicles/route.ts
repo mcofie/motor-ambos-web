@@ -1,0 +1,43 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { canManageFleet, getAuthenticatedUser, getServiceClient } from "@/lib/serverAuth";
+
+const VehicleSchema = z.object({
+    make: z.string().trim().min(2).max(60),
+    model: z.string().trim().min(1).max(60),
+    plate: z.string().trim().min(2).max(30),
+    year: z.string().trim().regex(/^\d{4}$/).optional().or(z.literal("")),
+    color: z.string().trim().max(40).optional(),
+    orgId: z.string().uuid().optional(),
+});
+
+export async function POST(request: Request) {
+    const user = await getAuthenticatedUser();
+    if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+    const parsed = VehicleSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) return NextResponse.json({ error: "Enter a make, model, and plate number" }, { status: 400 });
+
+    const service = getServiceClient();
+    const { data: member } = await service.from("members").select("id,is_business").eq("auth_user_id", user.id).maybeSingle();
+    if (!member) return NextResponse.json({ error: "Complete your profile first" }, { status: 403 });
+
+    let ownerId = member.is_business ? user.id : member.id;
+    if (parsed.data.orgId) {
+        const orgId = parsed.data.orgId;
+        const ownFleet = member.is_business && member.id === orgId;
+        if (!await canManageFleet(service, member.id, orgId)) return NextResponse.json({ error: "Fleet manager access required" }, { status: 403 });
+        ownerId = orgId;
+    }
+
+    const { data, error } = await service.from("vehicles").insert({
+        user_id: ownerId,
+        make: parsed.data.make,
+        model: parsed.data.model,
+        plate: parsed.data.plate.toUpperCase(),
+        year: parsed.data.year || null,
+        color: parsed.data.color || null,
+        is_primary: false,
+    }).select("id").single();
+    if (error) return NextResponse.json({ error: "Could not add this vehicle" }, { status: 500 });
+    return NextResponse.json({ id: data.id }, { status: 201 });
+}

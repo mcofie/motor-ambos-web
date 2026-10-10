@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { listMemberVehicles, VehicleRow } from "@/lib/supaFetch";
 import { DigitalGlovebox } from "./DigitalGlovebox";
+import { formatPhone, phoneVariants } from "@/lib/phone";
 
 import {
     UUID,
@@ -93,7 +94,7 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
         if (filterType === "BUSINESS" && !m.is_business) return false;
 
         if (!q.trim()) return true;
-        const hay = `${m.full_name ?? ""} ${m.phone ?? ""} ${m.plan_name ?? ""} ${m.business_name ?? ""}`.toLowerCase();
+        const hay = `${m.full_name ?? ""} ${m.phone ?? ""} ${phoneVariants(m.phone || "").join(" ")} ${m.plan_name ?? ""} ${m.business_name ?? ""}`.toLowerCase();
         return hay.includes(q.toLowerCase());
     });
 
@@ -400,13 +401,18 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
                                         </td>
                                         <td className="px-6 py-4 text-right">
 
-                                            <button
-                                                onClick={() => editMembership(m)}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hover:border-secondary transition-colors"
-                                            >
-                                                <Edit2 className="w-3 h-3" />
-                                                Edit
-                                            </button>
+                                            {m.is_business ? (
+                                                <Link href="/admin/organizations" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hover:border-secondary transition-colors">
+                                                    <Edit2 className="w-3 h-3" /> Edit in Organizations
+                                                </Link>
+                                            ) : (
+                                                <button
+                                                    onClick={() => editMembership(m)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hover:border-secondary transition-colors"
+                                                >
+                                                    <Edit2 className="w-3 h-3" /> Edit
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 );
@@ -455,28 +461,7 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
                                     <UserIcon className="w-3 h-3" /> Member Info
                                 </h4>
 
-                                <div className="flex items-center gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                    <input
-                                        type="checkbox"
-                                        id="is_business"
-                                        checked={form.is_business}
-                                        onChange={(e) => setForm({ ...form, is_business: e.target.checked })}
-                                        className="h-4 w-4 accent-primary rounded"
-                                    />
-                                    <label htmlFor="is_business" className="text-sm font-medium cursor-pointer select-none">
-                                        This is a Business Account (B2B)
-                                    </label>
-                                </div>
-
-                                {form.is_business && (
-                                    <TextField
-                                        label="Business Name"
-                                        value={form.business_name}
-                                        onChange={(v) => setForm({ ...form, business_name: v })}
-                                        required
-                                        placeholder="Company Name Ltd."
-                                    />
-                                )}
+                                <p className="text-xs text-muted-foreground">Create a business in <Link href="/admin/organizations" className="font-semibold text-primary underline">Organizations</Link>, then choose this person as its contact.</p>
 
                                 {!form.is_business && (
                                     <div>
@@ -502,7 +487,7 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
                                 )}
 
                                 <TextField
-                                    label={form.is_business ? "Contact Person Name" : "Full Name"}
+                                    label="Full Name"
                                     value={form.full_name}
                                     onChange={(v) => setForm({ ...form, full_name: v })}
                                     required
@@ -511,6 +496,8 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
                                     label="Phone"
                                     value={form.phone}
                                     onChange={(v) => setForm({ ...form, phone: v })}
+                                    onBlur={() => setForm((current) => ({ ...current, phone: formatPhone(current.phone) }))}
+                                    placeholder="+233558508306"
                                     required
                                 />
                                 <TextField
@@ -581,7 +568,7 @@ export function MembershipsView({ initialPlans, initialMembers, initialAllVehicl
                             </button>
                             <button
                                 onClick={handleSave}
-                                disabled={!form.full_name.trim() || !form.phone.trim() || (form.is_business && !form.business_name.trim()) || !form.expiry_date}
+                                disabled={!form.full_name.trim() || !form.phone.trim() || !form.expiry_date}
                                 className="flex-1 flex justify-center items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Save className="h-4 w-4" /> Save Changes

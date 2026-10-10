@@ -18,6 +18,7 @@ import {
     uploadProviderAsset,
 } from "@/lib/supaFetch";
 import { getSupabaseBrowser } from "@/lib/supabaseBrowser";
+import { formatPhone } from "@/lib/phone";
 import {
     Wrench,
     TrendingUp,
@@ -973,6 +974,8 @@ export function ProvidersView() {
                                     label="Phone Number"
                                     value={form.phone_business}
                                     onChange={(v) => setForm({ ...form, phone_business: v })}
+                                    onBlur={() => setForm((current) => ({ ...current, phone_business: formatPhone(current.phone_business) }))}
+                                    placeholder="+233558508306"
                                 />
                                 <TextField
                                     label="Physical Address"

@@ -14,27 +14,32 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
     const router = useRouter();
 
     useEffect(() => {
+        if (pathname === "/admin/login") return;
         const checkAuth = async () => {
             const u = await getUser();
-            if (u) {
+            const allowed = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "").split(",").map((email) => email.trim().toLowerCase());
+            const email = (u as User | null)?.email?.toLowerCase();
+            if (u && email && allowed.includes(email)) {
                 setUser(u as User);
                 setChecking(false);
             } else {
-                router.replace("/login");
+                router.replace("/admin/login");
             }
         };
         checkAuth();
-    }, [router]);
+    }, [router, pathname]);
 
     const handleLogout = async () => {
         try {
             await logout();
-            router.push("/login");
+            router.push("/admin/login");
         } catch (error) {
             console.error(error);
             toast.error("Failed to log out");
         }
     };
+
+    if (pathname === "/admin/login") return <>{children}</>;
 
     if (checking) {
         return (

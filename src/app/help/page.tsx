@@ -31,6 +31,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { findProvidersNear, type Provider } from "@/lib/supaFetch";
 import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
+import { formatPhone, normalizePhone } from "@/lib/phone";
 
 const HelpSchema = z.object({
     helpType: z.enum(["battery", "tire", "oil", "tow", "rescue", "fuel", "roadworthy", "insurance", "detailing", "car_wash", "shop", "electrical"]),
@@ -40,7 +41,7 @@ const HelpSchema = z.object({
     carColor: z.string(),
     plateNumber: z.string().min(2, "Enter the plate number"),
     fullName: z.string().min(2, "Enter your name"),
-    phone: z.string().min(7, "Enter a valid phone number").regex(/^[0-9+\-\s()]{7,}$/, "Enter a valid phone number"),
+    phone: z.string().refine((value) => Boolean(normalizePhone(value)), "Enter a valid phone number, such as +233558508306"),
 });
 
 type HelpForm = z.infer<typeof HelpSchema>;
@@ -369,7 +370,7 @@ export default function GetHelpWizardPage() {
                                 </div>
                                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
                                     <label className="text-[14px]">Your name<input className={inputClass + " mt-2"} placeholder="Your full name" autoComplete="name" {...register("fullName")} />{errors.fullName && <span className="mt-1 block text-[12px] text-red-600">{errors.fullName.message}</span>}</label>
-                                    <label className="text-[14px]">Phone number<input className={inputClass + " mt-2"} placeholder="054..." inputMode="tel" autoComplete="tel" {...register("phone")} />{errors.phone && <span className="mt-1 block text-[12px] text-red-600">{errors.phone.message}</span>}</label>
+                                    <label className="text-[14px]">Phone number<input className={inputClass + " mt-2"} placeholder="+233558508306" inputMode="tel" autoComplete="tel" {...register("phone", { onBlur: (event) => setValue("phone", formatPhone(event.target.value), { shouldValidate: true }) })} />{errors.phone && <span className="mt-1 block text-[12px] text-red-600">{errors.phone.message}</span>}</label>
                                 </div>
                             </div>
                         )}
@@ -383,7 +384,7 @@ export default function GetHelpWizardPage() {
                                 {loadingProviders ? <div className="flex items-center gap-3 py-16 text-[15px] text-[#777]"><Loader2 className="h-5 w-5 animate-spin text-[#1111F6]" />Searching nearby providers</div> : providerError || providers.length === 0 ? <div className="mt-8 rounded-[12px] border border-[#EAEAEA] bg-[#F7F7F7] p-8 text-[15px] text-[#666]">{providerError ? "Please go back and try again." : "Try a different help type or check your location and search again."}</div> : (
                                     <div className="mt-8 grid gap-4">
                                         {providers.map((provider) => (
-                                            <ProviderCard key={provider.id} provider={provider} smsBody={"I need " + getValues("helpType") + " help. Car: " + carForMessage(getValues()) + ". Location: https://maps.google.com/?q=" + loc?.lat + "," + loc?.lng + ". My name is " + getValues("fullName") + "."} />
+                                            <ProviderCard key={provider.id} provider={provider} smsBody={"I need " + getValues("helpType") + " help. Car: " + carForMessage(getValues()) + ". Location: https://maps.google.com/?q=" + loc?.lat + "," + loc?.lng + ". My name is " + getValues("fullName") + ". Call me on " + formatPhone(getValues("phone")) + "."} />
                                         ))}
                                     </div>
                                 )}

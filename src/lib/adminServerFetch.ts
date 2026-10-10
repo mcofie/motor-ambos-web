@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { VehicleRow, MemberWithMembershipRow, MembershipPlanRow, ServiceHistoryRow } from "./supaFetch";
+import { requireStaffPage } from "./serverAuth";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -16,6 +17,7 @@ function getSupabaseAdmin() {
 
 // Server-side admin fetcher that bypasses RLS
 export async function getAdminMemberDetails(memberId: string) {
+    await requireStaffPage();
     const supabase = getSupabaseAdmin();
 
     // 1. Fetch Member
@@ -36,6 +38,10 @@ export async function getAdminMemberDetails(memberId: string) {
         return null;
     }
 
+    const { data: contact } = member.contact_member_id
+        ? await supabase.from("members").select("full_name,phone,email").eq("id", member.contact_member_id).maybeSingle()
+        : { data: null };
+
     const memberRow = {
         member_id: member.id,
         auth_user_id: member.auth_user_id,
@@ -52,6 +58,10 @@ export async function getAdminMemberDetails(memberId: string) {
         id: member.id,
         is_business: member.is_business || false,
         business_name: member.business_name,
+        contact_member_id: member.contact_member_id,
+        contact_name: contact?.full_name,
+        contact_phone: contact?.phone,
+        contact_email: contact?.email,
     } as MemberWithMembershipRow;
 
     // 2. Fetch Vehicles (by member_id OR auth_user_id)
@@ -74,6 +84,7 @@ export async function getAdminMemberDetails(memberId: string) {
 }
 
 export async function getAdminMembershipPlans(): Promise<MembershipPlanRow[]> {
+    await requireStaffPage();
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
         .from("membership_plans")
@@ -88,6 +99,7 @@ export async function getAdminMembershipPlans(): Promise<MembershipPlanRow[]> {
 }
 
 export async function getAdminAllVehicles(): Promise<VehicleRow[]> {
+    await requireStaffPage();
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
         .from("vehicles")
@@ -101,6 +113,7 @@ export async function getAdminAllVehicles(): Promise<VehicleRow[]> {
 }
 
 export async function getAdminMembersWithMemberships(): Promise<MemberWithMembershipRow[]> {
+    await requireStaffPage();
     const supabase = getSupabaseAdmin();
 
     const { data, error } = await supabase
@@ -135,10 +148,12 @@ export async function getAdminMembersWithMemberships(): Promise<MemberWithMember
         id: r.id,
         is_business: r.is_business || false,
         business_name: r.business_name,
+        contact_member_id: r.contact_member_id,
     })) as MemberWithMembershipRow[];
 }
 
 export async function getAdminVehicleDetails(vehicleId: string) {
+    await requireStaffPage();
     const supabase = getSupabaseAdmin();
 
     const { data: vehicle, error: vError } = await supabase

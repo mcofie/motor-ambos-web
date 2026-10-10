@@ -55,6 +55,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { sendFleetReport } from "@/lib/supaFetch";
+import { formatPhone, phoneVariants } from "@/lib/phone";
 
 export function OrganizationsView() {
     const [mounted, setMounted] = useState(false);
@@ -70,10 +71,11 @@ export function OrganizationsView() {
 
     // Org Form Dialog
     const [isOrgFormOpen, setIsOrgFormOpen] = useState(false);
+    const [savingOrg, setSavingOrg] = useState(false);
     const [orgForm, setOrgForm] = useState({
         id: "",
         business_name: "",
-        full_name: "",
+        contact_member_id: "",
         email: "",
         phone: "",
         membership_tier: "",
@@ -112,6 +114,8 @@ export function OrganizationsView() {
     const organizations = useMemo(() =>
         members.filter(m => m.is_business && (m.business_name || m.full_name)),
         [members]);
+    const peopleById = useMemo(() => new Map(members.filter(m => !m.is_business).map(m => [m.member_id, m])), [members]);
+    const contactFor = (org: MemberWithMembershipRow) => org.contact_member_id ? peopleById.get(org.contact_member_id) : undefined;
 
     const fetchData = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
@@ -242,12 +246,18 @@ export function OrganizationsView() {
     };
 
     const handleOrgSubmit = async () => {
+        if (savingOrg) return;
+        if (!orgForm.business_name.trim() || !orgForm.contact_member_id) {
+            toast.error("Enter the business name and choose a contact person.");
+            return;
+        }
+        setSavingOrg(true);
         const tid = toast.loading("Saving organization...");
         try {
             await upsertOrganization({
                 id: orgForm.id || undefined,
                 business_name: orgForm.business_name,
-                full_name: orgForm.full_name,
+                contact_member_id: orgForm.contact_member_id,
                 email: orgForm.email,
                 phone: orgForm.phone,
                 membership_tier: orgForm.membership_tier,
@@ -259,6 +269,8 @@ export function OrganizationsView() {
             fetchData();
         } catch (e: any) {
             toast.error(e.message || "Failed to save organization", { id: tid });
+        } finally {
+            setSavingOrg(false);
         }
     };
 
@@ -266,7 +278,7 @@ export function OrganizationsView() {
         setOrgForm({
             id: "",
             business_name: "",
-            full_name: "",
+            contact_member_id: "",
             email: "",
             phone: "",
             membership_tier: plans[0]?.code || "",
@@ -280,9 +292,9 @@ export function OrganizationsView() {
         setOrgForm({
             id: org.member_id || org.id || "",
             business_name: org.business_name || "",
-            full_name: org.full_name || "",
+            contact_member_id: org.contact_member_id || "",
             email: org.email || "",
-            phone: org.phone || "",
+            phone: formatPhone(org.phone),
             membership_tier: org.membership_tier || org.tier || "",
             membership_expiry_date: (org.membership_expiry_date || "").split('T')[0],
             membership_is_active: org.membership_is_active ?? true
@@ -304,9 +316,13 @@ export function OrganizationsView() {
 
     const filteredOrgs = organizations.filter(org => {
         const q = searchQuery.toLowerCase();
+        const contact = contactFor(org);
         return (org.business_name || org.full_name || "").toLowerCase().includes(q) ||
             (org.email || "").toLowerCase().includes(q) ||
-            (org.phone || "").toLowerCase().includes(q);
+            (org.phone || "").toLowerCase().includes(q) ||
+            phoneVariants(org.phone || "").some((phone) => phone.toLowerCase().includes(q)) ||
+            (contact?.full_name || "").toLowerCase().includes(q) ||
+            (contact?.phone || "").toLowerCase().includes(q);
     });
 
     if (loading && members.length === 0) {
@@ -448,8 +464,9 @@ export function OrganizationsView() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-xs text-muted-foreground">
-                                                    <div className="font-medium text-foreground">{org.phone}</div>
-                                                    <div className="opacity-70">{org.email}</div>
+                                                    <div className="font-medium text-foreground">{contactFor(org)?.full_name || org.full_name || "No contact selected"}</div>
+                                                    <div>{contactFor(org)?.phone || formatPhone(org.phone) || "No phone"}</div>
+                                                    <div className="opacity-70">{contactFor(org)?.email || org.email}</div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <button
@@ -555,7 +572,7 @@ export function OrganizationsView() {
                                                         </div>
                                                         <div>
                                                             <div className="font-bold text-foreground uppercase italic">{driver.full_name}</div>
-                                                            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{driver.phone}</div>
+                                                            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{formatPhone(driver.phone)}</div>
                                                         </div>
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-3">
@@ -972,7 +989,7 @@ export function OrganizationsView() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid grid-cols-2 gap-6 py-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[70vh] overflow-y-auto">
                         <div className="space-y-4">
                             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Business Details</h4>
                             <div className="space-y-2">
@@ -985,14 +1002,22 @@ export function OrganizationsView() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase text-muted-foreground">Contact Person</label>
-                                <Input
-                                    placeholder="Full name"
-                                    value={orgForm.full_name}
-                                    onChange={e => setOrgForm({ ...orgForm, full_name: e.target.value })}
-                                />
+                                <select
+                                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                                    value={orgForm.contact_member_id}
+                                    onChange={e => setOrgForm({ ...orgForm, contact_member_id: e.target.value })}
+                                >
+                                    <option value="">Choose an existing driver or person</option>
+                                    {members.filter(m => !m.is_business && m.phone).map(person => (
+                                        <option key={person.member_id} value={person.member_id}>
+                                            {person.full_name || person.email || "Unnamed person"} · {person.phone}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-muted-foreground">Their phone stays on their own account. They can manage this fleet and keep any driver assignment. Add a new person in Memberships first if they are not listed.</p>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Email Address</label>
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Separate Business Email (optional)</label>
                                 <Input
                                     type="email"
                                     placeholder="email@company.com"
@@ -1001,12 +1026,14 @@ export function OrganizationsView() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Phone Number</label>
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Separate Business Line (optional)</label>
                                 <Input
                                     placeholder="+233..."
                                     value={orgForm.phone}
                                     onChange={e => setOrgForm({ ...orgForm, phone: e.target.value })}
+                                    onBlur={() => setOrgForm((current) => ({ ...current, phone: formatPhone(current.phone) }))}
                                 />
+                                <p className="text-xs text-muted-foreground">Leave empty to use the selected contact person’s number.</p>
                             </div>
                         </div>
 
@@ -1059,8 +1086,8 @@ export function OrganizationsView() {
 
                     <DialogFooter className="mt-4 pt-4 border-t border-border">
                         <Button variant="outline" onClick={() => setIsOrgFormOpen(false)}>Cancel</Button>
-                        <Button onClick={handleOrgSubmit} className="min-w-[140px]">
-                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (orgForm.id ? "Save Changes" : "Create Organization")}
+                        <Button onClick={handleOrgSubmit} disabled={savingOrg} className="min-w-[140px]">
+                            {savingOrg ? <Loader2 className="h-4 w-4 animate-spin" /> : (orgForm.id ? "Save Changes" : "Create Organization")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { staffApiError } from "@/lib/serverAuth";
+import { normalizePhone, phoneVariants } from "@/lib/phone";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -20,6 +22,8 @@ const generateMemNum = () => {
 };
 
 export async function POST(req: Request) {
+    const accessError = await staffApiError();
+    if (accessError) return accessError;
     try {
         const body = await req.json();
         const {
@@ -35,12 +39,17 @@ export async function POST(req: Request) {
             parent_org_id // Optional
         } = body;
 
-        if (!phone || !full_name) {
-            return NextResponse.json({ error: "Phone and Full Name are required" }, { status: 400 });
+        if (is_business) {
+            return NextResponse.json({ error: "Create and edit businesses in Organizations, where the contact person is linked separately." }, { status: 400 });
+        }
+
+        const normalizedPhone = normalizePhone(phone);
+        if (!normalizedPhone || !full_name) {
+            return NextResponse.json({ error: "Enter a name and a valid phone number, such as +233558508306." }, { status: 400 });
         }
 
         const payload: any = {
-            phone,
+            phone: normalizedPhone,
             full_name,
             email,
             plan_id,
@@ -52,12 +61,13 @@ export async function POST(req: Request) {
             business_name: is_business ? business_name : null,
         };
 
-        console.log("Upsert Membership Payload:", JSON.stringify(payload, null, 2));
-
         let targetMemberId = member_id;
 
         // If member_id provided, update existing
         if (member_id) {
+            const { data: samePhone, error: phoneError } = await supabaseAdmin.from("members").select("id").in("phone", phoneVariants(normalizedPhone));
+            if (phoneError) return NextResponse.json({ error: "Could not check the phone number" }, { status: 500 });
+            if (samePhone?.some((row) => row.id !== member_id)) return NextResponse.json({ error: "That phone number is already on another profile." }, { status: 409 });
             // Check if they already have a number
             const { data: current, error: getError } = await supabaseAdmin
                 .from("members")
@@ -80,13 +90,20 @@ export async function POST(req: Request) {
             }
         } else {
             // Creating New or Find by Phone
-            const { data: existing } = await supabaseAdmin
+            const { data: matches, error: lookupError } = await supabaseAdmin
                 .from("members")
-                .select("id, membership_number")
-                .eq("phone", phone)
-                .single();
+                .select("id, membership_number, email")
+                .in("phone", phoneVariants(normalizedPhone))
+                .limit(2);
+            if (lookupError) return NextResponse.json({ error: "Could not check the phone number" }, { status: 500 });
+            if ((matches?.length || 0) > 1) return NextResponse.json({ error: "More than one profile uses this phone number. Resolve the duplicate before saving." }, { status: 409 });
+            const existing = matches?.[0];
 
             if (existing) {
+                if (existing.email && email && existing.email.trim().toLowerCase() !== String(email).trim().toLowerCase()) {
+                    return NextResponse.json({ error: "That phone belongs to a profile with a different email." }, { status: 409 });
+                }
+                if (existing.email && !email) payload.email = existing.email;
                 targetMemberId = existing.id;
                 // Update existing found by phone
                 if (!existing.membership_number) {
@@ -147,7 +164,7 @@ export async function POST(req: Request) {
                     await fetch("https://smsc.hubtel.com/v1/messages/send", {
                         method: "POST",
                         headers: { "Content-Type": "application/json", Authorization: HUBTEL_AUTH },
-                        body: JSON.stringify({ from: "MotorAmbos", to: phone, content: msg })
+                        body: JSON.stringify({ from: "MotorAmbos", to: normalizedPhone, content: msg })
                     }).catch(console.error);
                 }
             }

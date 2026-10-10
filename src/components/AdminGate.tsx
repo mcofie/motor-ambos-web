@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 const isAdmin = (email?: string | null) => {
     const csv = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "").toLowerCase();
     const list = csv.split(",").map(s => s.trim()).filter(Boolean);
-    return list.length === 0 ? true : !!email && list.includes(email.toLowerCase());
+    return !!email && list.includes(email.toLowerCase());
 };
 
 export default function AdminGate({ children }: React.PropsWithChildren) {
@@ -23,10 +23,10 @@ export default function AdminGate({ children }: React.PropsWithChildren) {
             if (error) console.warn("[AdminGate] getSession error:", error);
 
             const user = data?.session?.user ?? null;
-            if (!user) return router.replace("/login");
+            if (!user) return router.replace("/admin/login");
 
             if (!isAdmin(user.email)) {
-                return router.replace("/login?err=not_admin");
+                return router.replace("/admin/login?err=not_admin");
             }
             if (!mounted) return;
             setAllowed(true);
@@ -35,8 +35,8 @@ export default function AdminGate({ children }: React.PropsWithChildren) {
 
         const sub = supabase.auth.onAuthStateChange((_ev, session) => {
             const user = session?.user ?? null;
-            if (!user) return router.replace("/login");
-            if (!isAdmin(user.email)) return router.replace("/login?err=not_admin");
+            if (!user) return router.replace("/admin/login");
+            if (!isAdmin(user.email)) return router.replace("/admin/login?err=not_admin");
             setAllowed(true);
             setReady(true);
         });

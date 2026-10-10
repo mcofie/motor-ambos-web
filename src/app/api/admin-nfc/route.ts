@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { staffApiError } from "@/lib/serverAuth";
 
 // Using Service Role Key to bypass RLS for Admin operations
 const supabaseAdmin = createClient(
@@ -17,6 +18,8 @@ const supabaseAdmin = createClient(
 );
 
 export async function GET(request: Request) {
+    const accessError = await staffApiError();
+    if (accessError) return accessError;
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
 
@@ -89,6 +92,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+    const accessError = await staffApiError();
+    if (accessError) return accessError;
     try {
         const body = await request.json();
         const { action } = body;

@@ -165,7 +165,7 @@ export async function POST(request: Request) {
         if (new URL(request.url).searchParams.get("dryRun") === "1") {
             return NextResponse.json({ ...counts, dryRun: true }, { headers: { "Cache-Control": "no-store" } });
         }
-        const appUrl = new URL("/app", request.url).toString();
+        const appUrl = "https://motorambos.com/app";
         for (const batch of chunks(deliveries, 5)) {
             await Promise.all(batch.map(async (delivery) => {
                 const { data: claimId, error: claimError } = await service.rpc("claim_document_sms_reminder", {

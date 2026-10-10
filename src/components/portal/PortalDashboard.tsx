@@ -452,7 +452,7 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
                 <button type="button" onClick={signOut} className="inline-flex h-11 items-center gap-1.5 text-[14px] text-[#666] hover:text-[#1111F6]"><LogOut className="h-4 w-4" />Sign out</button>
             </div>
         </header>
-        <main className="mx-auto max-w-[1136px] px-4 pb-24 pt-8 sm:px-8 sm:pt-11">
+        <main className={`mx-auto max-w-[1136px] px-4 pt-8 sm:px-8 sm:pt-11 ${view === "fleet" ? "pb-10" : "pb-24"}`}>
             {loading ? <DashboardSkeleton view={view} /> : error ? <div role="alert" className="rounded-[16px] border border-[#F3D8D8] bg-white p-6"><p className="text-[15px] text-red-600">{error}</p><button type="button" onClick={() => { setLoading(true); setError(null); load().catch((reason) => { setError(reason instanceof Error ? reason.message : "Could not load your account"); setLoading(false); }); }} className="mt-4 h-11 rounded-full bg-[#1111F6] px-5 text-[14px] text-white">Try again</button></div> : data?.needsProfile ? <ProfileSetup email={data.email} initialName={data.suggestedProfile?.fullName || ""} initialPhone={data.suggestedProfile?.phone || ""} onDone={load} /> : data && <>
                 <div className="mb-7">
                     <p className="text-[13px] text-[#777]">{view === "fleet" ? "Fleet overview" : "Your account"}</p>
@@ -496,7 +496,7 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
                 <p className="mt-10 text-[12px] text-[#888]">Document dates shown here are records you enter. Check the actual policy or certificate before relying on its status.</p>
             </>}
         </main>
-        {data && !data.needsProfile && !loading && !error && <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E7E7E7] bg-white/95 px-4 pt-3 backdrop-blur-md sm:hidden" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
+        {view === "personal" && data && !data.needsProfile && !loading && !error && <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E7E7E7] bg-white/95 px-4 pt-3 backdrop-blur-md sm:hidden" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
             <Link href="/help" className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[15px] text-white">Get roadside help <ArrowRight className="h-4 w-4" /></Link>
         </div>}
     </div>;

@@ -23,13 +23,14 @@ import {
 const navigation = [
     { href: "/#how-it-works", label: "Drivers" },
     { href: "/business", label: "Fleets" },
+    { href: "/roadside-mechanics", label: "Mechanic network" },
     { href: "/help", label: "Roadside help" },
-    { href: "/#questions", label: "Resources" },
 ];
 
 export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
+    const isActive = (href: string) => href.startsWith("/#") ? pathname === "/" : pathname === href;
 
     useEffect(() => {
         if (!menuOpen) return;
@@ -39,7 +40,7 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
             if (event.key === "Escape") setMenuOpen(false);
         };
         const closeOnDesktop = () => {
-            if (window.innerWidth >= 768) setMenuOpen(false);
+            if (window.innerWidth >= 1024) setMenuOpen(false);
         };
         window.addEventListener("keydown", closeOnEscape);
         window.addEventListener("resize", closeOnDesktop);
@@ -54,21 +55,26 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
 
     return (
         <header className="fixed inset-x-0 top-0 z-50 border-b border-[#EEEEEE] bg-white">
-            <nav className="relative mx-auto flex h-16 max-w-[1536px] items-center justify-between px-5 sm:px-8 md:h-[76px] lg:px-16" aria-label="Main navigation">
+            <nav className="relative mx-auto flex h-16 max-w-[1536px] items-center justify-between px-5 sm:px-8 lg:h-[76px] lg:px-16" aria-label="Main navigation">
                 <Link href="/" aria-label="Motor Ambos home" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.035em] text-[#171717]">
                     <span className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-[#1111F6] text-white"><Car className="h-[18px] w-[18px]" /></span>
-                    <span className="md:hidden">Motor Ambos</span>
+                    <span className="lg:hidden">Motor Ambos</span>
                 </Link>
 
-                <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
+                <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 lg:flex">
                     {navigation.map((link) => (
-                        <Link key={link.label} href={link.href} className="text-[16px] font-normal text-[#171717] transition-colors hover:text-[#1111F6]">
+                        <Link
+                            key={link.label}
+                            href={link.href}
+                            aria-current={isActive(link.href) ? "page" : undefined}
+                            className={`relative flex h-[76px] items-center text-[16px] font-normal transition-colors hover:text-[#1111F6] ${isActive(link.href) ? "text-[#1111F6] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#1111F6]" : "text-[#171717]"}`}
+                        >
                             {link.label}
                         </Link>
                     ))}
                 </div>
 
-                {hideCta ? <span className="hidden text-[14px] text-[#777] md:block">Sign in</span> : <Link href="/login" className="group hidden h-[34px] items-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] font-normal text-white transition-colors hover:bg-[#0606D8] md:inline-flex">
+                {hideCta ? <span className="hidden text-[14px] text-[#777] lg:block">Sign in</span> : <Link href="/login" className="group hidden h-[34px] items-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] font-normal text-white transition-colors hover:bg-[#0606D8] lg:inline-flex">
                     Get started <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>}
 
@@ -78,18 +84,19 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
                     aria-expanded={menuOpen}
                     aria-controls="mobile-navigation"
                     onClick={() => setMenuOpen((open) => !open)}
-                    className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg border border-[#EAEAEA] text-[#171717] md:hidden"
+                    className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg border border-[#EAEAEA] text-[#171717] lg:hidden"
                 >
                     {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
             </nav>
 
             {menuOpen && (
-                <div id="mobile-navigation" className="absolute inset-x-0 top-16 z-40 flex h-[calc(100dvh-64px)] flex-col overflow-y-auto border-t border-[#EEEEEE] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5 md:hidden">
+                <div id="mobile-navigation" className="absolute inset-x-0 top-16 z-40 flex h-[calc(100dvh-64px)] flex-col overflow-y-auto border-t border-[#EEEEEE] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5 lg:hidden">
                     <nav aria-label="Mobile navigation" className="flex flex-col">
                         {navigation.map((link) => (
-                            <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} aria-current={(link.href === "/business" && pathname === "/business") || (link.href === "/help" && pathname === "/help") ? "page" : undefined} className="flex min-h-[68px] items-center justify-between border-b border-[#ECECEC] py-4 text-[20px] font-normal">
-                                {link.label}<ArrowRight className="h-5 w-5 text-[#1111F6]" />
+                            <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} aria-current={isActive(link.href) ? "page" : undefined} className={`flex min-h-[68px] items-center justify-between border-b border-[#ECECEC] py-4 text-[20px] font-normal ${isActive(link.href) ? "text-[#1111F6]" : "text-[#171717]"}`}>
+                                <span className="flex items-center gap-3">{isActive(link.href) && <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#1111F6]" />}{link.label}</span>
+                                <ArrowRight className={`h-5 w-5 ${isActive(link.href) ? "text-[#1111F6]" : "text-[#777]"}`} />
                             </Link>
                         ))}
                     </nav>
@@ -173,6 +180,26 @@ function Touchpoints() {
                         <p className="text-[16px] leading-[1.4] text-[#777]">{description}</p>
                     </Link>
                 ))}
+            </div>
+        </section>
+    );
+}
+
+function MechanicNetworkPreview() {
+    return (
+        <section className="bg-[#F7F7F7] px-5 py-16 sm:px-8 md:py-24 lg:px-16">
+            <div className="mx-auto grid max-w-[1136px] items-center gap-10 md:grid-cols-[1fr_0.9fr] md:gap-16">
+                <div>
+                    <p className="mb-5 text-[12px] uppercase tracking-[0.1em] text-[#1111F6]">Roadside mechanic network</p>
+                    <h2 className="max-w-[570px] text-[32px] font-normal leading-[1.12] tracking-[-0.04em] md:text-[42px]">Local mechanics, <span className="text-[#898989]">easier to find.</span></h2>
+                    <p className="mt-5 max-w-[510px] text-[16px] leading-[1.5] text-[#777]">Tell us what happened and share your location. Compare nearby independent providers by distance and listed call-out fee, then contact one directly.</p>
+                    <Link href="/roadside-mechanics" className="mt-7 inline-flex h-12 items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-5 text-[16px] transition-colors hover:border-[#B8B8FF]">Explore the network <ArrowRight className="h-4 w-4 text-[#1111F6]" /></Link>
+                </div>
+                <div className="rounded-[16px] border border-[#E9E9E9] bg-white p-5 sm:p-7">
+                    <div className="flex items-center justify-between border-b border-[#ECECEC] pb-5"><span className="text-[15px]">Roadside help</span><MapPin className="h-5 w-5 text-[#1111F6]" /></div>
+                    <div className="flex items-center gap-4 py-6"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] bg-[#EEEEFF] text-[#1111F6]"><Wrench className="h-6 w-6" /></span><div><span className="block text-[18px]">Find a mechanic</span><span className="mt-1 block text-[14px] text-[#777]">For a breakdown, flat tyre, battery issue, and more</span></div></div>
+                    <div className="flex flex-wrap gap-2 border-t border-[#ECECEC] pt-5 text-[12px] text-[#666]"><span className="rounded-full bg-[#F7F7F7] px-3 py-2">Nearby options</span><span className="rounded-full bg-[#F7F7F7] px-3 py-2">Call-out fee when listed</span><span className="rounded-full bg-[#F7F7F7] px-3 py-2">Call or message</span></div>
+                </div>
             </div>
         </section>
     );
@@ -343,7 +370,7 @@ export function LandingFooter() {
                     <Link href="/" aria-label="Motor Ambos home" className="mb-6 flex h-9 w-9 items-center justify-center rounded-[4px] bg-[#1111F6] text-white"><Car className="h-[18px] w-[18px]" /></Link>
                     <p className="text-[14px] text-[#777]">Keep your car ready for the road.</p>
                 </div>
-                <div><h3 className="mb-4 text-[14px] text-[#171717]">Drivers</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/login" className="hover:text-[#1111F6]">Get started</Link><Link href="/help" className="hover:text-[#1111F6]">Roadside help</Link><Link href="/#how-it-works" className="hover:text-[#1111F6]">How it works</Link></div></div>
+                <div><h3 className="mb-4 text-[14px] text-[#171717]">Drivers</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/login" className="hover:text-[#1111F6]">Get started</Link><Link href="/help" className="hover:text-[#1111F6]">Roadside help</Link><Link href="/roadside-mechanics" className="hover:text-[#1111F6]">Mechanic network</Link><Link href="/#how-it-works" className="hover:text-[#1111F6]">How it works</Link></div></div>
                 <div><h3 className="mb-4 text-[14px] text-[#171717]">Fleets</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/business" className="hover:text-[#1111F6]">Fleet access</Link><Link href="/business" className="hover:text-[#1111F6]">Web dashboard</Link></div></div>
                 <div><h3 className="mb-4 text-[14px] text-[#171717]">Resources</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/#questions" className="hover:text-[#1111F6]">Common questions</Link><Link href="/privacy-policy" className="hover:text-[#1111F6]">Privacy</Link><Link href="/terms-of-service" className="hover:text-[#1111F6]">Terms</Link></div></div>
             </div>
@@ -360,6 +387,7 @@ export default function HomeLanding() {
             <LandingNav />
             <Hero />
             <Touchpoints />
+            <MechanicNetworkPreview />
             <ProductOverview />
             <FeatureGrid />
             <Questions />

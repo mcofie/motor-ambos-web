@@ -37,6 +37,16 @@ import {
 // --- Navbar ---
 export const StripeNavbar = () => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const [isScrolled, setIsScrolled] = React.useState(false);
+
+    React.useEffect(() => {
+        const updateScrollState = () => setIsScrolled(window.scrollY > 24);
+        updateScrollState();
+        window.addEventListener('scroll', updateScrollState, { passive: true });
+        return () => window.removeEventListener('scroll', updateScrollState);
+    }, []);
+
+    const isOverlay = !isScrolled && !isMenuOpen;
 
     // Lock scroll when menu is open
     React.useEffect(() => {
@@ -58,37 +68,37 @@ export const StripeNavbar = () => {
     };
 
     return (
-        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isMenuOpen ? 'bg-white' : 'bg-white border-b border-slate-100/50 shadow-sm'}`}>
-            <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 h-20 flex items-center justify-between">
+        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isOverlay ? 'bg-transparent border-transparent' : 'bg-white/95 backdrop-blur-xl border-b border-slate-200/70'}`}>
+            <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 h-[72px] flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-3 group cursor-pointer lg:pl-6 transition-opacity hover:opacity-80">
-                    <div className="w-7 h-7 bg-[#00C767] rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
+                    <div className="w-8 h-8 bg-[#E84978] rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
                         <Car className="w-4 h-4 text-white" />
                     </div>
-                    <span className="font-extrabold text-[20px] tracking-tight text-[#171717]">motor ambos</span>
+                    <span className={`font-bold text-[19px] tracking-[-0.04em] transition-colors ${isOverlay ? 'text-white' : 'text-[#111]'}`}>motor ambos</span>
                 </Link>
 
                 {/* Desktop Navigation */}
                 <div className="hidden md:flex items-center gap-6 lg:gap-8 lg:pr-6">
                     <Link
                         href="/business"
-                        className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all"
+                        className={`text-[14px] font-bold transition-all ${isOverlay ? 'text-white/90 hover:text-white' : 'text-[#525252] hover:text-[#171717]'}`}
                     >
                         Business
                     </Link>
                     <Link
                         href="/smart-card"
-                        className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all"
+                        className={`text-[14px] font-bold transition-all ${isOverlay ? 'text-white/90 hover:text-white' : 'text-[#525252] hover:text-[#171717]'}`}
                     >
                         Smart Card
                     </Link>
                     <Link
                         href="/providers"
-                        className="text-[14px] font-bold text-[#525252] hover:text-[#171717] transition-all flex items-center gap-1"
+                        className={`text-[14px] font-bold transition-all flex items-center gap-1 ${isOverlay ? 'text-white/90 hover:text-white' : 'text-[#525252] hover:text-[#171717]'}`}
                     >
                         Providers <ArrowRight className="w-3.5 h-3.5 -rotate-45 opacity-50" />
                     </Link>
 
-                    <div className="h-5 w-[1px] bg-slate-200 mx-2" />
+                    <div className={`h-5 w-[1px] mx-2 ${isOverlay ? 'bg-white/30' : 'bg-slate-200'}`} />
 
                     {/* Country Abbreviation Selector */}
                     <div className="flex items-center gap-2 group cursor-pointer relative">
@@ -101,8 +111,8 @@ export const StripeNavbar = () => {
                                     <path d="M3 1.5l.235.724H4l-.618.448.235.724L3 2.948l-.618.448.235-.724L1.999 2.224h.765L3 1.5z" fill="#000" />
                                 </svg>
                             </div>
-                            <span className="text-[14px] font-bold text-[#171717]">Ghana</span>
-                            <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-[#171717] transition-all" />
+                            <span className={`text-[14px] font-bold ${isOverlay ? 'text-white' : 'text-[#171717]'}`}>Ghana</span>
+                            <ChevronDown className={`w-4 h-4 transition-all ${isOverlay ? 'text-white/70 group-hover:text-white' : 'text-slate-400 group-hover:text-[#171717]'}`} />
                         </div>
 
                         {/* Hover Dropdown for countries */}
@@ -155,7 +165,7 @@ export const StripeNavbar = () => {
                     </div>
 
                     <Link href="/help">
-                        <button className="group bg-[#00C767] text-white px-6 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#00B05C] shadow-lg shadow-[#00C767]/20 transition-all duration-300 active:scale-[0.98] flex items-center gap-2 ml-2">
+                        <button className="group bg-[#E84978] text-white px-5 py-2.5 rounded-full font-semibold text-[14px] hover:bg-[#D83C6A] transition-all duration-300 active:scale-[0.98] flex items-center gap-2 ml-2">
                             Get App
                             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                         </button>
@@ -164,7 +174,7 @@ export const StripeNavbar = () => {
 
                 {/* Mobile Menu Button */}
                 <button
-                    className="md:hidden p-2 text-[#171717]"
+                    className={`md:hidden p-2 ${isOverlay ? 'text-white' : 'text-[#171717]'}`}
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                 >
                     <div className="space-y-1.5 relative z-[101]">
@@ -379,70 +389,50 @@ export const StripeNFCCardSection = () => (
 );
 
 export const StripeHero = () => (
-    <section className="pt-24 pb-12 md:pt-32 md:pb-24 flex flex-col items-center text-center max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 min-h-[80vh] overflow-hidden">
-        {/* Main Hero Illustration */}
-        <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, type: "spring", bounce: 0.5, delay: 0.3 }}
-            className="flex items-center justify-center w-full group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0"
-        >
-            <div className="relative w-full max-w-[500px] md:max-w-[800px] lg:max-w-5xl">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00C767]/5 rounded-full blur-[120px] opacity-70" />
-                <Image
-                    src="/images/hero_image.png"
-                    alt="Motor Ambos Vehicle Digital Passport"
-                    width={1000}
-                    height={800}
-                    priority
-                    className="relative z-10 w-full h-auto object-contain transition-transform duration-1000 group-hover:scale-[1.02] drop-shadow-[0_40px_80px_rgba(0,0,0,0.15)]"
-                />
-            </div>
-        </motion.div>
+    <section className="relative isolate min-h-[700px] h-[100svh] max-h-[1040px] w-full overflow-hidden bg-[#171614]">
+        <Image
+            src="/images/jerry-style-hero.png"
+            alt="A driver checking her phone beside her car at sunset"
+            fill
+            priority
+            sizes="100vw"
+            className="-z-20 object-cover object-[56%_center]"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/75 via-black/20 to-black/15" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
 
-        {/* Text content */}
-        <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="max-w-3xl mx-auto z-10 relative"
-        >
-            <h1 className="text-[44px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.1] md:leading-[0.95] tracking-[-0.06em] mb-8 md:mb-10 text-balance">
-                The digital passport <br className="hidden md:block" /> for your car.
-            </h1>
-            <p className="text-[18px] sm:text-[20px] md:text-[22px] text-[#525252] leading-[1.6] mb-10 md:mb-14 font-medium text-balance opacity-80">
-                Standardizing vehicle identity and trust across Africa through a single infrastructure layer. Built for individual drivers and continental fleets.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-5 mb-16 md:mb-24">
-                <button className="bg-[#00C767] text-white px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-[#00B05C] transition-all active:scale-[0.98] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,199,103,0.3)] flex items-center justify-center gap-3 group/btn">
-                    Get Started <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                </button>
-                <button className="flex items-center justify-center gap-3 text-[#171717] bg-white border border-slate-200 px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-slate-50 transition-all active:scale-[0.98] shadow-sm">
-                    Contact Sales
-                </button>
-            </div>
-        </motion.div>
+        <div className="mx-auto flex h-full w-full max-w-[1440px] items-end justify-between gap-8 px-6 pb-16 pt-32 md:px-12 md:pb-20 lg:px-20">
+            <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.15 }}
+                className="max-w-[640px] text-white"
+            >
+                <h1 className="mb-5 max-w-[620px] text-[38px] font-bold uppercase leading-[1.03] tracking-[-0.045em] text-white sm:text-[48px] md:text-[58px] lg:text-[64px]">
+                    Know your car. <br className="hidden sm:block" />Enjoy the road.
+                </h1>
+                <p className="mb-7 max-w-[560px] text-[16px] font-normal leading-[1.5] text-white/90 sm:text-[18px]">
+                    Keep your car’s service history, documents, and support in one place with Motor Ambos.
+                </p>
+                <Link href="/login" className="group inline-flex items-center justify-center gap-3 rounded-[14px] bg-[#E84978] px-8 py-4 text-[15px] font-semibold text-white transition-colors hover:bg-[#D83C6A] active:scale-[0.98]">
+                    Get started <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+            </motion.div>
 
-        {/* Partners */}
-        <div className="w-full border-t border-slate-100 pt-12 pb-8 max-w-5xl mx-auto overflow-hidden animate-in fade-in duration-1000 delay-500">
-            <div className="text-[12px] font-bold text-[#525252]/50 uppercase tracking-[0.2em] mb-12">Partnered with the best</div>
-
-            <div className="relative flex overflow-hidden group/marquee">
-                <div className="animate-marquee whitespace-nowrap flex items-center gap-20 grayscale opacity-40 group-hover:opacity-80 transition-opacity">
-                    {[
-                        "TOTAL", "DVLA", "SHELL", "ALLIANZ", "SANTAM", "MTN", "ORYX", "VODA",
-                        "TOTAL", "DVLA", "SHELL", "ALLIANZ", "SANTAM", "MTN", "ORYX", "VODA"
-                    ].map((partner, i) => (
-                        <div key={i} className="text-[20px] md:text-[24px] font-black tracking-tighter flex-shrink-0">
-                            {partner}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Gradient Masks for smooth fading on edges */}
-                <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10" />
-                <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10" />
-            </div>
+            <Link
+                href="https://play.google.com/store/apps/details?id=com.motorambos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden shrink-0 items-center gap-4 rounded-xl bg-white px-5 py-4 text-[#171717] shadow-xl transition-transform hover:-translate-y-1 lg:flex"
+            >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F6F6F6] text-[#E84978]">
+                    <Car className="h-5 w-5" />
+                </span>
+                <span className="flex flex-col">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6A6A6A]">Get the app</span>
+                    <span className="text-[16px] font-semibold">Google Play <ArrowRight className="ml-1 inline h-3.5 w-3.5" /></span>
+                </span>
+            </Link>
         </div>
     </section>
 );
@@ -464,7 +454,7 @@ export const StripeServiceEcosystem = () => {
         <section id="providers" className="py-16 md:py-24 bg-white overflow-hidden scroll-mt-20">
             <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
                 <div className="text-center mb-12 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                    <h2 className="text-[36px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.04em] mb-6">
+                    <h2 className="text-[38px] md:text-[60px] font-semibold text-[#111] leading-[1] tracking-[-0.06em] mb-6">
                         One protocol. <br className="md:hidden" /> Every provider.
                     </h2>
                     <p className="text-[18px] md:text-[20px] text-[#525252] font-medium max-w-2xl mx-auto opacity-80">
@@ -476,10 +466,10 @@ export const StripeServiceEcosystem = () => {
                     {categories.map((cat, i) => (
                         <div
                             key={i}
-                            className="bg-[#FAFAFA] rounded-[24px] md:rounded-[32px] p-5 md:p-8 flex flex-col text-left transition-all duration-300 hover:bg-[#F3F3F3] cursor-pointer group"
+                            className="bg-[#F7F8FA] rounded-[22px] md:rounded-[28px] p-5 md:p-8 flex flex-col text-left transition-all duration-300 hover:bg-[#F0F2F5] cursor-pointer group border border-slate-100"
                         >
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-[12px] md:rounded-[16px] bg-white border border-slate-200/50 flex items-center justify-center mb-4 md:mb-6 md:mt-1 shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:bg-[#171717] group-hover:border-[#171717]">
-                                <cat.icon className="w-4 h-4 md:w-5 md:h-5 text-[#171717] stroke-[1.5] transition-colors duration-300 group-hover:text-white" />
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border border-slate-200/70 flex items-center justify-center mb-4 md:mb-6 md:mt-1 transition-transform duration-300 group-hover:scale-105 group-hover:bg-[#1652F0] group-hover:border-[#1652F0]">
+                                <cat.icon className="w-4 h-4 md:w-5 md:h-5 text-[#1652F0] stroke-[1.5] transition-colors duration-300 group-hover:text-white" />
                             </div>
                             <h4 className="text-[15px] md:text-[17px] font-bold text-[#171717] mb-1 md:mb-[6px] tracking-tight">{cat.name}</h4>
                             <p className="text-[12px] md:text-[14px] text-slate-500 font-medium tracking-[0.01em] leading-relaxed">
@@ -491,7 +481,7 @@ export const StripeServiceEcosystem = () => {
 
                 <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-2 duration-1000 delay-300 mt-12">
                     <p className="text-[#525252] font-bold text-[13px] uppercase tracking-[0.3em] opacity-40">Continental Network</p>
-                    <button className="group relative flex items-center gap-4 bg-[#171717] text-white px-10 py-5 rounded-2xl font-bold text-[17px] hover:bg-black transition-all active:scale-[0.98] shadow-2xl shadow-black/10">
+                    <button className="group relative flex items-center gap-4 bg-[#1652F0] text-white px-8 py-4 rounded-full font-semibold text-[16px] hover:bg-[#1044D3] transition-all active:scale-[0.98]">
                         Become a Partner
                         <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
                             <ArrowRight className="w-3.5 h-3.5 text-white" />
@@ -779,7 +769,7 @@ export const StripeSupportSection = () => (
 
 export const StripeAppDownload = () => {
     return (
-        <section className="py-20 md:py-24 bg-[#F8FAFF] border-t border-slate-100 overflow-hidden relative">
+        <section className="py-20 md:py-24 bg-[#F7F8FA] border-t border-slate-100 overflow-hidden relative">
             <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 flex flex-col md:flex-row items-center justify-between gap-12 md:gap-24 relative z-10">
                 <div className="relative animate-in fade-in zoom-in-95 duration-1000 delay-200 w-full max-w-[400px] order-2 md:order-1">
                     <MobileAppMock />
@@ -825,7 +815,7 @@ export const StripeFooter = () => (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12 md:gap-16 mb-24">
                 <div className="col-span-1 lg:col-span-2">
                     <Link href="/" className="flex items-center gap-3 mb-8 group cursor-pointer w-fit transition-opacity hover:opacity-80">
-                        <div className="w-7 h-7 bg-[#00C767] rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
+                        <div className="w-8 h-8 bg-[#1652F0] rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
                             <Car className="w-4 h-4 text-white" />
                         </div>
                         <span className="font-extrabold text-[20px] tracking-tight text-[#171717]">motor ambos</span>
@@ -907,4 +897,3 @@ export const StripeFooter = () => (
         </div>
     </footer>
 );
-

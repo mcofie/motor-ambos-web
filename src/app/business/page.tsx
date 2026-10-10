@@ -1,160 +1,182 @@
-"use client";
+import Link from "next/link";
+import {
+    ArrowRight,
+    Bell,
+    Check,
+    ChevronRight,
+    CircleAlert,
+    ClipboardCheck,
+    FileSpreadsheet,
+    MapPin,
+    Smartphone,
+    Truck,
+    Users,
+} from "lucide-react";
+import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
 
-import React from 'react';
-import Image from 'next/image';
-import { StripeNavbar, StripeFooter } from "@/components/stripe-landing/Sections";
-import { ArrowRight, CheckCircle2, Shield, Activity } from 'lucide-react';
-import { StackedUIMocks, FleetReportMock } from "@/components/stripe-landing/UIMocks";
+const quickCards = [
+    { icon: ClipboardCheck, title: "See what needs attention", description: "Know which vehicles are ready, renewing soon, or overdue." },
+    { icon: Smartphone, title: "Handle it from your phone", description: "Renew papers, invite drivers, and check your fleet in the app." },
+    { icon: Truck, title: "Stay close to roadside jobs", description: "See when a driver needs help and follow the request." },
+];
+
+const workflow = [
+    { number: "01", label: "Vehicle status" },
+    { number: "02", label: "Expiry alerts" },
+    { number: "03", label: "Driver access" },
+    { number: "04", label: "Roadside updates" },
+];
+
+function FleetOverviewVisual() {
+    return (
+        <div className="flex h-full items-center justify-center bg-[#FCFCFC] p-5 sm:p-8">
+            <div className="w-full max-w-[390px] rounded-[18px] border border-[#EAEAEA] bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+                <div className="mb-5 flex items-center justify-between">
+                    <div><span className="block text-[12px] text-[#777]">Fleet overview</span><span className="text-[18px] font-medium">Your vehicles</span></div>
+                    <Bell className="h-5 w-5 text-[#1111F6]" />
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-lg bg-[#EEF7F2] p-3"><span className="block text-[21px] text-[#277E62]">08</span><span className="text-[11px] text-[#555]">Ready</span></div>
+                    <div className="rounded-lg bg-[#FFF7E9] p-3"><span className="block text-[21px] text-[#A66E21]">02</span><span className="text-[11px] text-[#555]">Renew soon</span></div>
+                    <div className="rounded-lg bg-[#FBEDEF] p-3"><span className="block text-[21px] text-[#B84457]">01</span><span className="text-[11px] text-[#555]">Overdue</span></div>
+                </div>
+                <div className="mt-4 divide-y divide-[#EFEFEF] text-[12px]">
+                    <div className="flex justify-between py-2"><span>Vehicle 01</span><span className="text-[#277E62]">Ready</span></div>
+                    <div className="flex justify-between py-2"><span>Vehicle 02</span><span className="text-[#A66E21]">Renew soon</span></div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function RenewalsVisual() {
+    return (
+        <div className="flex h-full items-center justify-center bg-[#FCFCFC] p-5 sm:p-8">
+            <div className="w-full max-w-[370px] rounded-[18px] border border-[#EAEAEA] bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+                <div className="mb-4 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EEEEFF] text-[#1111F6]"><ClipboardCheck className="h-5 w-5" /></span><span className="text-[16px] font-medium">Renewal list</span></div>
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between rounded-lg bg-[#F7F7F7] px-4 py-3 text-[12px]"><span>Insurance · Vehicle 02</span><span className="text-[#A66E21]">Soon</span></div>
+                    <div className="flex items-center justify-between rounded-lg bg-[#F7F7F7] px-4 py-3 text-[12px]"><span>Roadworthy · Vehicle 05</span><span className="text-[#A66E21]">Soon</span></div>
+                    <div className="flex items-center justify-between rounded-lg bg-[#F7F7F7] px-4 py-3 text-[12px]"><span>Licence · Vehicle 08</span><Check className="h-4 w-4 text-[#277E62]" /></div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function RoadsideVisual() {
+    return (
+        <div className="relative flex h-full items-center justify-center overflow-hidden bg-[#FCFCFC] p-5 sm:p-8">
+            <div className="absolute inset-0 opacity-50" style={{ backgroundImage: "linear-gradient(#EAEAEA 1px, transparent 1px), linear-gradient(90deg, #EAEAEA 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
+            <div className="relative flex w-full max-w-[390px] items-center gap-4 rounded-[18px] border border-[#EAEAEA] bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#EEEEFF] text-[#1111F6]"><CircleAlert className="h-5 w-5" /></span>
+                <div><span className="block text-[15px] font-medium">Roadside request</span><span className="mt-1 block text-[12px] text-[#777]">A driver has asked for help</span></div>
+                <MapPin className="ml-auto h-5 w-5 shrink-0 text-[#1111F6]" />
+            </div>
+        </div>
+    );
+}
+
+function AdminVisual() {
+    return (
+        <div className="flex h-full items-center justify-center bg-[#FCFCFC] p-5 sm:p-8">
+            <div className="w-full max-w-[390px] rounded-[18px] border border-[#EAEAEA] bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+                <div className="mb-5 flex items-center justify-between"><div><span className="block text-[12px] text-[#777]">Web dashboard</span><span className="text-[17px] font-medium">Fleet admin</span></div><FileSpreadsheet className="h-5 w-5 text-[#1111F6]" /></div>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-[#EEEEEE] p-4"><FileSpreadsheet className="mb-3 h-5 w-5 text-[#1111F6]" /><span className="block text-[12px]">Bulk uploads</span></div>
+                    <div className="rounded-lg border border-[#EEEEEE] p-4"><Users className="mb-3 h-5 w-5 text-[#1111F6]" /><span className="block text-[12px]">Team roles</span></div>
+                </div>
+                <div className="mt-3 rounded-lg border border-[#EEEEEE] px-4 py-3 text-[12px]">Reports, billing, and invoices</div>
+            </div>
+        </div>
+    );
+}
+
+const features = [
+    { title: "A clear view on your phone", description: "Check every vehicle at a glance, then open its papers, reminders, and roadside history.", visual: <FleetOverviewVisual /> },
+    { title: "Renew what needs renewing", description: "See upcoming expiries, then request a renewal for one vehicle or several.", visual: <RenewalsVisual /> },
+    { title: "Know when a driver needs help", description: "Follow roadside requests and stay informed while help is being arranged.", visual: <RoadsideVisual /> },
+    { title: "Web tools for the admin work", description: "Use the dashboard for bulk uploads, reports, billing, invoices, and team setup.", visual: <AdminVisual /> },
+];
 
 export default function BusinessPage() {
     return (
-        <main className="bg-white min-h-screen w-full overflow-x-hidden selection:bg-[#00C767]/20 selection:text-[#171717]">
-            <StripeNavbar />
+        <main className="base-landing min-h-screen overflow-x-hidden bg-white text-[#171717]">
+            <LandingNav />
 
-            {/* Business Hero */}
-            <section className="pt-24 pb-16 md:pt-48 md:pb-36 flex flex-col items-center text-center max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 min-h-screen overflow-hidden">
-                {/* Main Hero Illustration */}
-                <div className="flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-1000 delay-200 group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0">
-                    <div className="relative w-full max-w-[500px] md:max-w-[800px] lg:max-w-5xl">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00C767]/5 rounded-full blur-[120px] opacity-70" />
-                        <Image
-                            src="/images/businesses_hero.png"
-                            alt="Motor Ambos for Business"
-                            width={1600}
-                            height={900}
-                            className="relative z-10 w-full h-auto object-contain transition-all duration-1000 group-hover:scale-[1.02] drop-shadow-2xl"
-                            priority
-                        />
+            <section className="relative flex flex-col items-center overflow-hidden px-5 pb-16 pt-32 text-center sm:min-h-[690px] sm:px-8 sm:pb-36 sm:pt-[168px] md:pt-[178px] lg:px-16">
+                <PixelCluster className="left-[8%] top-[38%] opacity-40" heights={[10, 18, 29, 15, 42, 25, 12]} />
+                <PixelCluster className="right-[9%] top-[44%] opacity-45" heights={[18, 38, 65, 88, 70, 43, 20]} />
+                <div className="relative z-10 mx-auto max-w-[960px]">
+                    <p className="mb-5 text-[14px] text-[#777]">Motor Ambos for fleets of 5–50 vehicles</p>
+                    <h1 className="text-[38px] font-normal leading-[1.06] tracking-[-0.04em] sm:text-[56px] md:text-[72px]">Every vehicle ready.<br />Every driver supported.</h1>
+                    <p className="mx-auto mt-5 max-w-[760px] text-[16px] leading-[1.4] tracking-[-0.025em] text-[#858585] sm:mt-6 sm:text-[18px] md:text-[20px]">Run your fleet from your phone, stay ahead of papers, and know when a driver needs roadside help.</p>
+                    <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                        <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[16px] text-white transition-colors hover:bg-[#0606D8]"><span className="h-4 w-4 rounded-[2px] bg-white" />Set up your fleet <ChevronRight className="h-4 w-4" /></Link>
+                        <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] px-5 text-[16px] transition-colors hover:bg-[#F8F8F8]">Explore roadside help</Link>
                     </div>
-                </div>
-
-                {/* Text content */}
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-4xl mx-auto z-10 relative mb-12 md:mb-16">
-                    <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-6">Motor Ambos for Business</div>
-                    <h1 className="text-[40px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.1] md:leading-[0.95] tracking-[-0.02em] mb-6 md:mb-10 text-balance">
-                        Enterprise mobility, <br className="hidden md:block" /> instantly verifiable.
-                    </h1>
-                    <p className="text-[16px] sm:text-[20px] md:text-[22px] text-[#525252] leading-relaxed mb-8 md:mb-14 font-medium text-balance opacity-80 max-w-3xl mx-auto px-4 md:px-0">
-                        Powering high-growth fleets, logistics companies, and corporate teams with a unified infrastructure for compliance, driver accountability, and real-time maintenance routing.
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-5">
-                        <button className="bg-[#171717] text-white px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-black transition-all active:scale-[0.98] shadow-xl shadow-black/10 flex items-center justify-center gap-3 group/btn">
-                            Get Business Demo <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                        </button>
-                        <button className="flex items-center justify-center gap-3 text-[#171717] bg-white border border-slate-200 px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-slate-50 transition-all active:scale-[0.98] shadow-sm">
-                            Contact Sales
-                        </button>
-                    </div>
-                </div>
-
-                {/* Stacked UI Mocks */}
-                <div className="w-full flex justify-center animate-in fade-in zoom-in-95 duration-1000 delay-400">
-                    <StackedUIMocks />
+                    <p className="mt-8 text-[13px] text-[#888]">Monthly pricing per vehicle, with roadside help included.</p>
                 </div>
             </section>
 
-            {/* Reporting Section */}
-            <section className="py-20 md:py-56 bg-white overflow-hidden border-t border-slate-50">
-                <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
-                    <div className="relative animate-in fade-in slide-in-from-left-8 duration-1000">
-                        <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-[#00C767]/5 blur-[100px] rounded-full" />
-                        <FleetReportMock />
-                    </div>
-                    <div className="max-w-xl animate-in fade-in slide-in-from-right-8 duration-1000">
-                        <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-4">Actionable Insights</div>
-                        <h2 className="text-[32px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.02em] mb-6 md:mb-8">
-                            Periodic audits <br className="hidden md:block" /> for total control.
-                        </h2>
-                        <p className="text-[17px] md:text-[20px] text-[#525252] leading-relaxed font-medium mb-8 md:mb-10 opacity-80">
-                            Our platform automatically generates cross-continental fleet audits. Get deep visibility into driver behavior trends, maintenance cost projections, and real-time compliance status delivered to your inbox.
-                        </p>
-                        <ul className="space-y-4">
-                            {[
-                                "Automated weekly/monthly PDF reports",
-                                "Predictive maintenance cost analysis",
-                                "Driver safety & performance ranking",
-                                "Compliance expiry forecasts"
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3 text-[16px] font-bold text-[#171717]">
-                                    <div className="w-5 h-5 rounded-full bg-[#00C767]/10 flex items-center justify-center">
-                                        <CheckCircle2 className="w-3 h-3 text-[#00C767]" />
-                                    </div>
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+            <section className="px-5 pb-16 sm:px-8 sm:pb-20 lg:px-16">
+                <div className="mx-auto grid max-w-[1136px] gap-4 md:grid-cols-3">
+                    {quickCards.map(({ icon: Icon, title, description }) => (
+                        <article key={title} className="min-h-[168px] rounded-[12px] border border-[#ECECEC] p-5">
+                            <Icon className="mb-5 h-7 w-7 text-[#1111F6]" strokeWidth={1.8} />
+                            <h2 className="mb-2 text-[18px] font-normal tracking-[-0.025em]">{title}</h2>
+                            <p className="text-[16px] leading-[1.4] text-[#777]">{description}</p>
+                        </article>
+                    ))}
                 </div>
             </section>
 
-            {/* How to Sign Up Section */}
-            <section className="py-20 md:py-56 bg-slate-50 border-t border-slate-100">
-                <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
-                    <div className="text-center mb-16 md:mb-24">
-                        <h2 className="text-[32px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.02em] mb-6">
-                            Start onboarding today.
-                        </h2>
-                        <p className="text-[17px] md:text-[20px] text-[#525252] font-medium max-w-2xl mx-auto opacity-80">
-                            Seamless deployment ensures you can transition from paper logs to digital compliance in days, not months.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 relative before:absolute before:top-12 before:left-[10%] before:right-[10%] before:h-1 before:bg-slate-200 before:hidden md:before:block">
-                        {[
-                            { step: "01", title: "Schedule a Demo", p: "We analyze your fleet size, compliance needs, and current maintenance pain points to provide a tailored blueprint." },
-                            { step: "02", title: "System Integration", p: "Onboarding drivers onto the Onyx standard. Deploying digital passports for every vehicle in your database." },
-                            { step: "03", title: "Instant Visibility", p: "Your dashboard goes live. Monitor burn rates, compliance expiries, and live tracking across the continent." }
-                        ].map((s, i) => (
-                            <div key={i} className="relative bg-white p-8 md:p-10 rounded-[32px] border border-slate-100 shadow-sm transition-transform hover:-translate-y-1 z-10 flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-[#00C767] text-white rounded-full flex items-center justify-center font-extrabold text-[20px] mb-8 border-4 border-white shadow-lg">
-                                    {s.step}
-                                </div>
-                                <h3 className="text-[24px] font-extrabold text-[#171717] mb-4">{s.title}</h3>
-                                <p className="text-[#525252] font-medium leading-relaxed">{s.p}</p>
+            <section className="bg-[#F7F7F7] px-5 py-16 text-center sm:px-8 md:py-28 lg:px-16">
+                <div className="mx-auto max-w-[1136px]">
+                    <h2 className="text-[30px] font-normal leading-[1.1] tracking-[-0.035em] md:text-[36px]">Daily work in the app. Admin work on the web.</h2>
+                    <p className="mt-4 text-[16px] leading-relaxed text-[#777]">One fleet view connects the vehicles, drivers, papers, and roadside updates you manage.</p>
+                    <div className="mt-14 grid grid-cols-2 gap-y-8 md:grid-cols-4 md:gap-y-0">
+                        {workflow.map((item, index) => (
+                            <div key={item.number} className={index === 0 ? "px-4" : index === 2 ? "px-4 md:border-l md:border-[#E4E4E4]" : "border-l border-[#E4E4E4] px-4"}>
+                                <div className="text-[30px] tracking-[-0.045em] md:text-[36px]">{item.number}</div>
+                                <div className="mt-2 text-[11px] uppercase tracking-[0.08em] text-[#777] md:text-[12px]">{item.label}</div>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Core Features */}
-            <section className="py-20 md:py-56 max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-                    <div>
-                        <h2 className="text-[32px] md:text-[48px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.02em] mb-6 md:mb-8 text-center lg:text-left">Reduce operational chaos.</h2>
-                        <ul className="space-y-6">
-                            {[
-                                { title: "Automated Compliance tracking", desc: "Never miss a roadworthy renewal or insurance payment. Everything is centralized." },
-                                { title: "Verified Service Routing", desc: "Direct your drivers to certified mechanic nodes for transparent, tracked servicing." },
-                                { title: "Driver Accountability", desc: "Onyx cards enforce strict access mapping so you know exactly who is driving what." }
-                            ].map((f, i) => (
-                                <li key={i} className="flex gap-5 bg-[#F8FAFF] p-6 rounded-2xl border border-blue-50/50">
-                                    <div className="w-12 h-12 bg-white text-[#00C767] rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                                        <CheckCircle2 className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-extrabold text-[18px] text-[#171717] mb-2">{f.title}</h4>
-                                        <p className="font-medium text-[#525252] opacity-80 leading-relaxed text-[15px]">{f.desc}</p>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
+            <section className="px-5 py-16 sm:px-8 md:py-28 lg:px-16">
+                <div className="mx-auto max-w-[1136px]">
+                    <div className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                        <h2 className="max-w-[650px] text-[32px] font-normal leading-[1.12] tracking-[-0.04em] md:text-[42px]">A clearer way to keep <span className="text-[#898989]">every vehicle moving.</span></h2>
+                        <Link href="/login" className="inline-flex h-12 shrink-0 items-center justify-center gap-2 self-start rounded-full border border-[#E8E8E8] px-5 text-[16px] transition-colors hover:bg-[#F8F8F8] md:self-auto">Get started <ChevronRight className="h-4 w-4" /></Link>
                     </div>
-                    <div className="bg-[#171717] rounded-[40px] p-12 text-white relative overflow-hidden shadow-2xl">
-                        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#00C767]/20 blur-[100px] rounded-full" />
-                        <Shield className="w-12 h-12 text-[#00C767] mb-8 relative z-10" />
-                        <h3 className="text-[32px] font-extrabold leading-[1.1] tracking-tight mb-6 relative z-10">Data security <br /> built for enterprise.</h3>
-                        <p className="text-zinc-400 font-medium leading-relaxed mb-10 relative z-10">
-                            Motor Ambos isolates your fleet's data using industry-leading encryption. Service histories are immutably logged and fully auditable by your management team.
-                        </p>
-                        <button className="bg-white text-[#171717] px-8 py-4 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all relative z-10">
-                            Read Security Docs <ArrowRight className="w-4 h-4" />
-                        </button>
+                    <div className="grid gap-x-8 gap-y-14 md:grid-cols-2">
+                        {features.map((feature) => (
+                            <article key={feature.title}>
+                                <div className="h-[220px] overflow-hidden rounded-[12px] border border-[#ECECEC] sm:h-[260px] md:h-[310px]">{feature.visual}</div>
+                                <h3 className="mt-6 text-[20px] font-normal tracking-[-0.025em]">{feature.title}</h3>
+                                <p className="mt-2 max-w-[520px] text-[16px] leading-[1.45] text-[#777]">{feature.description}</p>
+                            </article>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            <StripeFooter />
+            <section className="relative overflow-hidden bg-[#1111F6] px-5 py-20 text-white sm:px-8 md:py-24 lg:px-16">
+                <PixelCluster className="right-[12%] bottom-[-10%] opacity-55" heights={[24, 55, 88, 123, 156, 120, 75, 35]} />
+                <div className="relative z-10 mx-auto max-w-[1136px]">
+                    <h2 className="text-[32px] font-normal tracking-[-0.035em] md:text-[40px]">Bring your fleet together.</h2>
+                    <p className="mt-4 max-w-[470px] text-[16px] leading-[1.45] text-white/70">Start with your vehicles and drivers. Motor Ambos can help get their papers organized.</p>
+                    <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                        <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717] transition-colors hover:bg-[#F1F1F1]"><span className="h-4 w-4 rounded-[2px] bg-[#1111F6]" />Set up your fleet</Link>
+                        <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full bg-white/20 px-5 text-[16px] text-white transition-colors hover:bg-white/30">Roadside help <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                    </div>
+                </div>
+            </section>
+
+            <LandingFooter />
         </main>
     );
 }

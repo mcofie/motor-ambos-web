@@ -1,122 +1,147 @@
 "use client";
 
-import * as React from "react";
-import { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-    Dialog,
-    DialogContent,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import {
-    LucideIcon,
-    Car,
-    ArrowRight,
-    ChevronLeft,
     AlertTriangle,
+    ArrowRight,
     BatteryCharging,
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    CircleAlert,
     Disc,
     Droplets,
-    Truck,
-    Phone,
-    MapPin,
-    Star,
     Loader2,
-    BadgeCheck,
+    MapPin,
     MessageCircle,
     Navigation,
-    LocateFixed,
+    Phone,
     ShieldCheck,
     Sparkles,
+    Star,
     Store,
+    Truck,
+    Wrench,
     Zap,
-    X,
 } from "lucide-react";
-import { findProvidersNear } from "@/lib/supaFetch";
-import { StripeNavbar, StripeFooter } from "@/components/stripe-landing/Sections";
-
-/* ───────────────────────────────
-   Types & Logic
-   ─────────────────────────────── */
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { findProvidersNear, type Provider } from "@/lib/supaFetch";
+import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
 
 const HelpSchema = z.object({
     helpType: z.enum(["battery", "tire", "oil", "tow", "rescue", "fuel", "roadworthy", "insurance", "detailing", "car_wash", "shop", "electrical"]),
-    carMake: z.string().min(2, "Car make is required"),
-    carModel: z.string().min(1, "Car model is required"),
-    carYear: z.string().length(4, "4 digits").regex(/^\d{4}$/, "4 digits"),
-    carColor: z.string().min(2, "Required"),
-    plateNumber: z.string().min(2, "Required"),
-    fullName: z.string().min(2, "Required"),
-    phone: z.string().min(7, "Invalid phone").regex(/^[0-9+\-\s()]{7,}$/, "Invalid format"),
+    carMake: z.string(),
+    carModel: z.string(),
+    carYear: z.string(),
+    carColor: z.string(),
+    plateNumber: z.string().min(2, "Enter the plate number"),
+    fullName: z.string().min(2, "Enter your name"),
+    phone: z.string().min(7, "Enter a valid phone number").regex(/^[0-9+\-\s()]{7,}$/, "Enter a valid phone number"),
 });
 
 type HelpForm = z.infer<typeof HelpSchema>;
 type StepKey = "help" | "car" | "contact" | "providers";
+type GeoFix = { lat: number; lng: number; accuracy?: number; timestamp: number };
 
-type GeoFix = {
-    lat: number;
-    lng: number;
-    accuracy?: number;
-    timestamp: number;
+const helpOptions = [
+    { key: "battery", label: "Battery", hint: "Jumpstart", icon: BatteryCharging },
+    { key: "tire", label: "Flat tyre", hint: "Change or pump", icon: Disc },
+    { key: "tow", label: "Towing", hint: "Move the car", icon: Truck },
+    { key: "rescue", label: "Rescue", hint: "Stuck on the road", icon: AlertTriangle },
+    { key: "fuel", label: "Fuel", hint: "Out of fuel", icon: Droplets },
+    { key: "electrical", label: "Electrical", hint: "Wiring or AC", icon: Zap },
+    { key: "shop", label: "Auto shop", hint: "Parts or repair", icon: Store },
+    { key: "detailing", label: "Detailing", hint: "Cleaning or polish", icon: Sparkles },
+] as const;
+
+const modelsByMake: Record<string, string[]> = {
+    Toyota: ["Corolla", "Camry", "Yaris", "RAV4", "Hilux", "Land Cruiser", "Hiace"],
+    Hyundai: ["i10", "Accent", "Elantra", "Tucson", "Santa Fe", "H-100"],
+    Kia: ["Picanto", "Rio", "Cerato", "Sportage", "Sorento"],
+    Nissan: ["March", "Sunny", "Sentra", "Altima", "X-Trail", "Navara"],
+    Honda: ["Fit", "Civic", "Accord", "CR-V", "HR-V"],
+    Suzuki: ["Alto", "Swift", "Dzire", "Vitara", "Baleno"],
+    Ford: ["Focus", "Escape", "Ranger", "Explorer", "Transit"],
+    Mercedes: ["C-Class", "E-Class", "GLC", "Sprinter", "Vito"],
+    BMW: ["3 Series", "5 Series", "X3", "X5"],
 };
+const yearChoices = Array.from({ length: 26 }, (_, index) => String(new Date().getFullYear() - index));
+const colorChoices = ["White", "Black", "Silver", "Grey", "Blue", "Red", "Green", "Gold", "Brown", "Beige", "Yellow", "Orange"];
 
-export type Provider = {
-    id: string;
-    name: string;
-    phone: string;
-    address_line?: string;
-    distance_km: number;
-    rating?: number;
-    jobs?: number;
-    min_callout_fee?: number | null;
-    coverage_radius_km?: number | null;
-    services: Array<{
-        code: string;
-        name: string;
-        price?: number | null;
-        unit?: string | null;
-    }>;
-    lat: number;
-    lng: number;
-    is_verified?: boolean;
-    logo_url?: string | null;
-    backdrop_url?: string | null;
-};
+const inputClass = "h-12 w-full rounded-[10px] border border-[#E5E5E5] bg-white px-4 text-[16px] text-[#171717] outline-none transition-colors placeholder:text-[#AAA] focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/10";
 
-const HELP_OPTIONS: Array<{
-    key: HelpForm["helpType"];
-    label: string;
-    Icon: LucideIcon;
-    hint: string;
-    color: string;
-}> = [
-        { key: "battery", label: "Battery", Icon: BatteryCharging, hint: "Jumpstart", color: "text-orange-600 bg-orange-50" },
-        { key: "tire", label: "Flat Tyre", Icon: Disc, hint: "Change / Pump", color: "text-slate-600 bg-slate-50" },
-        { key: "tow", label: "Towing", Icon: Truck, hint: "Move Vehicle", color: "text-blue-600 bg-blue-50" },
-        { key: "rescue", label: "Rescue", Icon: AlertTriangle, hint: "Stuck", color: "text-red-600 bg-red-50" },
-        { key: "fuel", label: "Fuel", Icon: Droplets, hint: "Out of gas", color: "text-[#00C767] bg-[#00C767]/10" },
-        { key: "electrical", label: "Electrical", Icon: Zap, hint: "AC / Wiring", color: "text-amber-500 bg-amber-50" },
-        { key: "shop", label: "Auto Shop", Icon: Store, hint: "Parts", color: "text-amber-600 bg-amber-50" },
-        { key: "detailing", label: "Detailing", Icon: Sparkles, hint: "Polish", color: "text-purple-600 bg-purple-50" },
-    ];
+function carForMessage(values: HelpForm) {
+    const details = [values.carYear, values.carColor, values.carMake, values.carModel].filter(Boolean).join(" ");
+    return details ? `${details} (plate ${values.plateNumber})` : `plate ${values.plateNumber}`;
+}
 
-/* ───────────────────────────────
-   Main Component
-   ─────────────────────────────── */
+function ProviderCard({ provider, smsBody }: { provider: Provider; smsBody: string }) {
+    const [messageOpen, setMessageOpen] = useState(false);
+
+    return (
+        <article className="rounded-[14px] border border-[#EAEAEA] bg-white p-6 sm:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] bg-[#EEEEFF] text-[#1111F6]"><Wrench className="h-6 w-6" /></span>
+                    <div>
+                        <h3 className="text-[22px] font-normal tracking-[-0.025em]">{provider.name}</h3>
+                        <p className="mt-1 text-[14px] text-[#777]">{provider.address_line || "Nearby provider"}</p>
+                        {provider.is_verified && <span className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-[#277E62]"><ShieldCheck className="h-4 w-4" />Verified provider</span>}
+                    </div>
+                </div>
+                <span className="rounded-full bg-[#F7F7F7] px-3 py-1.5 text-[13px] text-[#555]">{provider.distance_km.toFixed(1)} km away</span>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3 border-t border-[#EFEFEF] pt-5 text-[13px] text-[#666]">
+                <span>Call-out fee: <strong className="font-medium text-[#171717]">{provider.min_callout_fee == null ? "Ask provider" : "GH₵" + provider.min_callout_fee}</strong></span>
+                {provider.rating != null && <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-[#1111F6] text-[#1111F6]" />{provider.rating}</span>}
+                {provider.services.length > 0 && <span>{provider.services.map((service) => service.name).slice(0, 2).join(" · ")}</span>}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <a href={"tel:" + provider.phone} className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#E5E5E5] px-5 text-[15px] transition-colors hover:bg-[#F8F8F8]"><Phone className="h-4 w-4" />Call provider</a>
+                <button type="button" onClick={() => setMessageOpen(true)} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[15px] text-white transition-colors hover:bg-[#0606D8]"><MessageCircle className="h-4 w-4" />Message provider</button>
+            </div>
+
+            <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+                <DialogContent className="max-w-lg rounded-[16px] border border-[#EAEAEA] bg-white p-6 sm:p-8">
+                    <h2 className="text-[28px] font-normal tracking-[-0.035em]">Message {provider.name}</h2>
+                    <p className="mt-2 text-[14px] text-[#777]">Review the request before opening your messaging app.</p>
+                    <div className="mt-6 rounded-[12px] bg-[#F7F7F7] p-4 text-[14px] leading-relaxed text-[#444]">{smsBody}</div>
+                    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                        <button type="button" onClick={() => setMessageOpen(false)} className="h-12 rounded-full border border-[#E5E5E5] px-5 text-[15px]">Cancel</button>
+                        <a href={"sms:" + provider.phone + "?body=" + encodeURIComponent(smsBody)} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[15px] text-white">Open message <ArrowRight className="h-4 w-4" /></a>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </article>
+    );
+}
+
 export default function GetHelpWizardPage() {
     const [step, setStep] = useState<StepKey>("help");
     const [loc, setLoc] = useState<GeoFix | null>(null);
     const [locBusy, setLocBusy] = useState(false);
     const [locError, setLocError] = useState<string | null>(null);
     const [loadingProviders, setLoadingProviders] = useState(false);
-    const [providers, setProviders] = useState<Provider[] | null>(null);
+    const [providers, setProviders] = useState<Provider[]>([]);
+    const [providerError, setProviderError] = useState(false);
+    const [showMoreHelp, setShowMoreHelp] = useState(false);
+    const [showMoreCar, setShowMoreCar] = useState(false);
+    const [carFromLink, setCarFromLink] = useState(false);
+    const [customMake, setCustomMake] = useState(false);
+    const [customModel, setCustomModel] = useState(false);
+    const [customYear, setCustomYear] = useState(false);
+    const [customColor, setCustomColor] = useState(false);
 
     const form = useForm<HelpForm>({
         resolver: zodResolver(HelpSchema),
         defaultValues: {
-            helpType: undefined as any,
+            helpType: undefined,
             carMake: "",
             carModel: "",
             carYear: "",
@@ -127,21 +152,47 @@ export default function GetHelpWizardPage() {
         },
         mode: "onChange",
     });
-
     const { register, setValue, handleSubmit, trigger, getValues, watch, formState: { errors } } = form;
-
     const helpType = watch("helpType");
-    const carFields = watch(["carMake", "carModel", "carYear", "carColor", "plateNumber"]);
-    const contactFields = watch(["fullName", "phone"]);
+    const carMake = watch("carMake");
+    const carModel = watch("carModel");
+    const carYear = watch("carYear");
+    const carColor = watch("carColor");
 
-    const carSectionValid = useMemo(() => carFields.every(f => f && f.length >= 1), [carFields]);
-    const contactSectionValid = useMemo(() => contactFields.every(f => f && f.length >= 2), [contactFields]);
+    useEffect(() => {
+        // A sticker can open /help with car details already in the QR URL.
+        const params = new URLSearchParams(window.location.search);
+        const fields = { plateNumber: "plate", carMake: "make", carModel: "model", carYear: "year", carColor: "color" } as const;
+        let hasCar = false;
+        for (const [field, parameter] of Object.entries(fields) as [keyof typeof fields, string][]) {
+            const value = params.get(parameter)?.trim();
+            if (value) {
+                setValue(field, value.slice(0, 80), { shouldValidate: true });
+                hasCar = true;
+            }
+        }
+        const linkedMake = params.get("make")?.trim() || "";
+        const linkedModel = params.get("model")?.trim() || "";
+        const linkedYear = params.get("year")?.trim() || "";
+        const linkedColor = params.get("color")?.trim() || "";
+        setCustomMake(Boolean(linkedMake && !modelsByMake[linkedMake]));
+        setCustomModel(Boolean(linkedModel && (!modelsByMake[linkedMake] || !modelsByMake[linkedMake].includes(linkedModel))));
+        setCustomYear(Boolean(linkedYear && !yearChoices.includes(linkedYear)));
+        setCustomColor(Boolean(linkedColor && !colorChoices.includes(linkedColor)));
+        setShowMoreCar(Boolean(linkedYear || linkedColor));
+        setCarFromLink(hasCar);
+    }, [setValue]);
 
-    async function requestLocation() {
+    function moveTo(next: StepKey) {
+        setStep(next);
+        requestAnimationFrame(() => document.getElementById("help-flow")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+
+    function requestLocation() {
         setLocBusy(true);
         setLocError(null);
         if (!navigator.geolocation) {
-            setLocError("Geolocation not supported");
+            setLocError("Location sharing is not supported by this browser.");
             setLocBusy(false);
             return;
         }
@@ -150,8 +201,8 @@ export default function GetHelpWizardPage() {
                 setLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, timestamp: pos.timestamp });
                 setLocBusy(false);
             },
-            (err) => {
-                setLocError(err.message);
+            () => {
+                setLocError("We could not get your location. Check location access and try again.");
                 setLocBusy(false);
             },
             { enableHighAccuracy: true, timeout: 15000 }
@@ -159,375 +210,217 @@ export default function GetHelpWizardPage() {
     }
 
     async function onSubmit(values: HelpForm) {
-        if (!loc) { setLocError("Location required"); return; }
+        if (!loc) {
+            setLocError("Share your location to find nearby help.");
+            return;
+        }
+        setProviderError(false);
         setLoadingProviders(true);
+        moveTo("providers");
         try {
-            const list = await findProvidersNear(values.helpType, loc.lat, loc.lng);
-            setProviders(list.sort((a, b) => a.distance_km - b.distance_km));
-            setStep("providers");
+            const found = await findProvidersNear(values.helpType, loc.lat, loc.lng);
+            setProviders(found.sort((a, b) => a.distance_km - b.distance_km));
         } catch {
             setProviders([]);
-            setStep("providers");
+            setProviderError(true);
         } finally {
             setLoadingProviders(false);
         }
     }
 
-    const onNext = async () => {
-        if (step === "help") setStep("car");
-        else if (step === "car") {
-            const ok = await trigger(["carMake", "carModel", "carYear", "carColor", "plateNumber"]);
-            if (ok) setStep("contact");
+    async function onNext() {
+        if (step === "help") {
+            if (helpType) moveTo(carFromLink && getValues("plateNumber") ? "contact" : "car");
+        } else if (step === "car") {
+            const valid = await trigger(["plateNumber"]);
+            if (valid) moveTo("contact");
         } else if (step === "contact") {
             await handleSubmit(onSubmit)();
         }
-        window.scrollTo(0, 0);
-    };
+    }
 
-    const progressValue = useMemo(() => {
-        const idx = ["help", "car", "contact", "providers"].indexOf(step);
-        return ((idx + 1) / 4) * 100;
-    }, [step]);
+    const progress = step === "help" ? 1 : step === "car" ? 2 : 3;
 
     return (
-        <main className="bg-white min-h-screen selection:bg-[#00C767]/20 w-full overflow-x-hidden font-jakarta">
-            <StripeNavbar />
+        <main className="base-landing min-h-screen overflow-x-hidden bg-white text-[#171717]">
+            <LandingNav />
 
-            {/* Wizard Navigation Progress */}
-            <div className="fixed top-[72px] inset-x-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-40 transition-all">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        {step !== "help" && (
-                            <button
-                                onClick={() => setStep(step === "providers" ? "contact" : step === "contact" ? "car" : "help")}
-                                className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors"
-                            >
-                                <ChevronLeft size={20} className="text-[#171717]" />
-                            </button>
-                        )}
-                        <h2 className="text-[14px] font-bold text-[#171717] uppercase tracking-[0.15em]">
-                            {step === "help" && "Type"}
-                            {step === "car" && "Vehicle"}
-                            {step === "contact" && "Sync"}
-                            {step === "providers" && "Nodes"}
-                        </h2>
-                    </div>
-                    <div className="flex-1 max-w-[200px] h-1.5 bg-slate-100 rounded-full mx-4 md:mx-8 overflow-hidden">
-                        <div className="h-full bg-[#00C767] transition-all duration-700" style={{ width: `${progressValue}%` }} />
-                    </div>
+            <section className="relative overflow-hidden px-5 pb-5 pt-24 text-left sm:px-8 sm:pb-12 sm:pt-28 sm:text-center md:pt-[132px] lg:px-16">
+                <PixelCluster className="hidden sm:block left-[7%] top-[43%] opacity-40" heights={[12, 24, 40, 27, 17, 31, 14]} />
+                <PixelCluster className="hidden sm:block right-[8%] top-[28%] opacity-45" heights={[15, 29, 49, 64, 47, 25, 12]} />
+                <div className="relative z-10 mx-auto max-w-[900px]">
+                    <p className="mb-2 text-[13px] text-[#777] sm:mb-5 sm:text-[14px]">Motor Ambos roadside help</p>
+                    <h1 className="text-[32px] font-normal leading-[1.08] tracking-[-0.04em] sm:text-[56px]">Help when the road stops.</h1>
+                    <p className="mx-auto mt-2 max-w-[650px] text-[15px] leading-[1.4] tracking-[-0.025em] text-[#777] sm:mt-6 sm:text-[18px] md:text-[20px]">Tell us what happened. We’ll help you find someone nearby.</p>
                 </div>
-            </div>
+            </section>
 
-            <div className="pt-40 pb-48 px-6 md:px-12 bg-white min-h-screen">
-                <div className="max-w-3xl mx-auto">
-                    <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
+            <section id="help-flow" className="scroll-mt-16 bg-[#F7F7F7] px-4 pb-28 pt-5 sm:scroll-mt-[76px] sm:px-8 sm:py-12 lg:px-16">
+                <div className="mx-auto max-w-[960px]">
+                    <div className="mb-5 flex items-center justify-between gap-3 sm:mb-10">
+                        {["What happened", "Your car", "Find help"].map((label, index) => (
+                            <div key={label} className="flex flex-1 items-center gap-2.5">
+                                <span className={index + 1 <= progress ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1111F6] text-[12px] text-white" : "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#DADADA] bg-white text-[12px] text-[#888]"}>{index + 1}</span>
+                                <span className="hidden text-[14px] text-[#555] sm:inline">{label}</span>
+                                {index < 2 && <span className="ml-auto h-px flex-1 bg-[#DADADA]" />}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="rounded-[16px] border border-[#EAEAEA] bg-white p-4 sm:p-8 md:p-10">
+                        {step !== "help" && (
+                            <button type="button" onClick={() => moveTo(step === "providers" ? "contact" : step === "contact" ? (carFromLink ? "help" : "car") : "help")} className="mb-5 inline-flex min-h-11 items-center gap-1 text-[14px] text-[#666] hover:text-[#1111F6] sm:mb-8"><ChevronLeft className="h-4 w-4" />Back</button>
+                        )}
+
                         {step === "help" && (
-                            <div className="space-y-12">
-                                <div className="space-y-4 md:space-y-6">
-                                    <h1 className="text-[32px] sm:text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em]">What do <br /> you need?</h1>
-                                    <p className="text-[17px] md:text-[19px] font-medium text-slate-500 max-w-md opacity-80">Select the type of assistance required for your vehicle unit.</p>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {HELP_OPTIONS.map((opt) => (
-                                        <button
-                                            key={opt.key}
-                                            onClick={() => setValue("helpType", opt.key, { shouldValidate: true })}
-                                            className={cn(
-                                                "p-8 flex flex-col items-start gap-8 rounded-[32px] border transition-all relative overflow-hidden text-left",
-                                                helpType === opt.key
-                                                    ? "bg-[#171717] border-[#171717] text-white shadow-2xl shadow-black/10"
-                                                    : "bg-white border-slate-100 hover:border-[#00C767]/30 shadow-sm"
-                                            )}
-                                        >
-                                            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm", helpType === opt.key ? "bg-white/10" : opt.color)}>
-                                                <opt.Icon size={28} />
-                                            </div>
-                                            <div>
-                                                <span className="text-[20px] font-extrabold tracking-tight block uppercase">{opt.label}</span>
-                                                <span className={cn("text-[11px] font-bold uppercase tracking-[0.2em]", helpType === opt.key ? "text-[#00C767]" : "text-slate-400")}>{opt.hint}</span>
-                                            </div>
-                                            {helpType === opt.key && <div className="absolute top-6 right-6 w-2.5 h-2.5 bg-[#00C767] rounded-full shadow-[0_0_12px_#00C767]" />}
+                            <div>
+                                <h2 className="text-[26px] font-normal tracking-[-0.035em] sm:text-[32px] md:text-[40px]">What happened?</h2>
+                                <p className="mt-1 text-[14px] text-[#777] sm:mt-3 sm:text-[16px]">Choose the help you need right now.</p>
+                                <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:gap-3 md:grid-cols-4">
+                                    {helpOptions.filter((option, index) => showMoreHelp || index < 4).map(({ key, label, hint, icon: Icon }) => (
+                                        <button key={key} type="button" onClick={() => setValue("helpType", key, { shouldValidate: true })} aria-pressed={helpType === key} className={helpType === key ? "min-h-[102px] rounded-[12px] border-2 border-[#1111F6] bg-[#F5F5FF] p-3 text-left sm:min-h-[150px] sm:p-4" : "min-h-[102px] rounded-[12px] border border-[#EAEAEA] bg-white p-3 text-left transition-colors hover:border-[#B8B8FF] sm:min-h-[150px] sm:p-4"}>
+                                            <Icon className="mb-2 h-6 w-6 text-[#1111F6] sm:mb-6 sm:h-7 sm:w-7" strokeWidth={1.7} />
+                                            <span className="block text-[15px] sm:text-[16px]">{label}</span>
+                                            <span className="mt-0.5 block text-[12px] text-[#777] sm:mt-1">{hint}</span>
                                         </button>
                                     ))}
                                 </div>
+                                {!showMoreHelp && <button type="button" onClick={() => setShowMoreHelp(true)} className="mt-3 inline-flex min-h-11 items-center text-[14px] text-[#1111F6]">See fuel, electrical and other help <ChevronRight className="ml-1 h-4 w-4" /></button>}
                             </div>
                         )}
 
                         {step === "car" && (
-                            <div className="space-y-12">
-                                <div className="space-y-4 md:space-y-6">
-                                    <h1 className="text-[32px] sm:text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em]">Vehicle intel.</h1>
-                                    <p className="text-[17px] md:text-[19px] font-medium text-slate-500 max-w-md opacity-80">Tell us about the vehicle that needs assistance.</p>
+                            <div>
+                                <h2 className="text-[26px] font-normal tracking-[-0.035em] sm:text-[32px] md:text-[40px]">Which car needs help?</h2>
+                                <p className="mt-2 text-[14px] text-[#777] sm:mt-3 sm:text-[16px]">Choose your car if you know it. Only the plate number is required.</p>
+                                <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                                    <label className="text-[14px] sm:col-span-2">Plate number<input className={inputClass + " mt-2"} placeholder="GW-1234-22" autoComplete="off" {...register("plateNumber")} />{errors.plateNumber && <span className="mt-1 block text-[12px] text-red-600">{errors.plateNumber.message}</span>}</label>
+                                    <label className="text-[14px]">Make <span className="text-[#888]">(optional)</span>
+                                        <select className={inputClass + " mt-2"} value={customMake ? "other" : carMake} onChange={(event) => {
+                                            const make = event.target.value;
+                                            setCustomMake(make === "other");
+                                            setCustomModel(false);
+                                            setValue("carMake", make === "other" ? "" : make);
+                                            setValue("carModel", "");
+                                        }}>
+                                            <option value="">Select make</option>
+                                            {Object.keys(modelsByMake).map((make) => <option key={make} value={make}>{make}</option>)}
+                                            <option value="other">Another make</option>
+                                        </select>
+                                    </label>
+                                    <label className="text-[14px]">Model <span className="text-[#888]">(optional)</span>
+                                        {customMake ? <input className={inputClass + " mt-2"} placeholder="Type your model" autoComplete="off" {...register("carModel")} /> : (
+                                            <select className={inputClass + " mt-2"} value={customModel ? "other" : carModel} disabled={!carMake} onChange={(event) => {
+                                                const model = event.target.value;
+                                                setCustomModel(model === "other");
+                                                setValue("carModel", model === "other" ? "" : model);
+                                            }}>
+                                                <option value="">{carMake ? "Select model" : "Choose make first"}</option>
+                                                {(modelsByMake[carMake] || []).map((model) => <option key={model} value={model}>{model}</option>)}
+                                                <option value="other">Another model</option>
+                                            </select>
+                                        )}
+                                    </label>
                                 </div>
-                                <div className="bg-white p-6 sm:p-10 md:p-12 rounded-[24px] sm:rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/40 space-y-6 md:space-y-10">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <PremiumWizardInput label="Make" placeholder="Toyota" {...register("carMake")} />
-                                        <PremiumWizardInput label="Model" placeholder="Corolla" {...register("carModel")} />
+                                {customMake && <label className="mt-4 block text-[14px]">Make name<input className={inputClass + " mt-2"} placeholder="Type your car make" autoComplete="off" {...register("carMake")} /></label>}
+                                {customModel && !customMake && <label className="mt-4 block text-[14px]">Model name<input className={inputClass + " mt-2"} placeholder="Type your car model" autoComplete="off" {...register("carModel")} /></label>}
+                                <button type="button" onClick={() => setShowMoreCar(!showMoreCar)} className="mt-4 inline-flex min-h-11 items-center text-[14px] text-[#1111F6]">{showMoreCar ? "Hide" : "Add"} year and colour <ChevronRight className="ml-1 h-4 w-4" /></button>
+                                {showMoreCar && <div className="mt-3 grid gap-5 sm:grid-cols-2">
+                                    <div>
+                                        <label htmlFor="car-year" className="text-[14px]">Year <span className="text-[#888]">(optional)</span></label>
+                                        <select id="car-year" className={inputClass + " mt-2"} value={customYear ? "other" : carYear} onChange={(event) => {
+                                            const year = event.target.value;
+                                            setCustomYear(year === "other");
+                                            setValue("carYear", year === "other" ? "" : year);
+                                        }}>
+                                            <option value="">Select year</option>
+                                            {yearChoices.map((year) => <option key={year} value={year}>{year}</option>)}
+                                            <option value="other">Older / another year</option>
+                                        </select>
+                                        {customYear && <label className="mt-3 block text-[14px]">Type year<input className={inputClass + " mt-2"} placeholder="1998" inputMode="numeric" maxLength={4} {...register("carYear")} /></label>}
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <PremiumWizardInput label="Year" placeholder="2020" {...register("carYear")} />
-                                        <PremiumWizardInput label="Color" placeholder="Silver" {...register("carColor")} />
+                                    <div>
+                                        <label htmlFor="car-color" className="text-[14px]">Colour <span className="text-[#888]">(optional)</span></label>
+                                        <select id="car-color" className={inputClass + " mt-2"} value={customColor ? "other" : carColor} onChange={(event) => {
+                                            const color = event.target.value;
+                                            setCustomColor(color === "other");
+                                            setValue("carColor", color === "other" ? "" : color);
+                                        }}>
+                                            <option value="">Select colour</option>
+                                            {colorChoices.map((color) => <option key={color} value={color}>{color}</option>)}
+                                            <option value="other">Another colour</option>
+                                        </select>
+                                        {customColor && <label className="mt-3 block text-[14px]">Type colour<input className={inputClass + " mt-2"} placeholder="Your car's colour" autoComplete="off" {...register("carColor")} /></label>}
                                     </div>
-                                    <PremiumWizardInput label="Plate Number" placeholder="GW-1234-22" {...register("plateNumber")} className="uppercase" />
-                                </div>
+                                </div>}
                             </div>
                         )}
 
                         {step === "contact" && (
-                            <div className="space-y-12">
-                                <div className="space-y-4 md:space-y-6">
-                                    <h1 className="text-[32px] sm:text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em]">Secure sync.</h1>
-                                    <p className="text-[17px] md:text-[19px] font-medium text-slate-500 max-w-md opacity-80">Enter your details and share your coordinates with the network.</p>
+                            <div>
+                                <h2 className="text-[26px] font-normal tracking-[-0.035em] sm:text-[32px] md:text-[40px]">Where should help go?</h2>
+                                <p className="mt-2 text-[14px] text-[#777] sm:mt-3 sm:text-[16px]">Share your current location to see nearby providers.</p>
+                                {carFromLink && <button type="button" onClick={() => moveTo("car")} className="mt-4 inline-flex min-h-11 items-center text-[14px] text-[#1111F6]">Car from QR link: {getValues("plateNumber")} · Edit</button>}
+                                <div className="mt-5 rounded-[12px] bg-[#F7F7F7] p-4 sm:mt-8 sm:p-5">
+                                    <div className="flex items-start gap-3"><MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#1111F6]" /><div><h3 className="text-[17px]">Share your current location</h3><p className="mt-1 text-[14px] leading-relaxed text-[#777]">Location lets us find providers nearby. You choose who to call or message.</p></div></div>
+                                    <button type="button" onClick={requestLocation} disabled={locBusy} className="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[15px] text-white disabled:opacity-60">{locBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : loc ? <Check className="h-4 w-4" /> : <Navigation className="h-4 w-4" />}{loc ? "Location shared" : "Use my location"}</button>
+                                    {loc && <p className="mt-3 text-[13px] text-[#277E62]">Location ready · accuracy about {Math.round(loc.accuracy || 0)} m</p>}
+                                    {locError && <p role="alert" className="mt-3 text-[13px] text-red-600">{locError} If you cannot share it, use the phone number printed on your sticker.</p>}
                                 </div>
-                                <div className="bg-white p-6 sm:p-10 md:p-12 rounded-[24px] sm:rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/40 space-y-8 md:space-y-10">
-                                    <div className="space-y-8">
-                                        <PremiumWizardInput label="Full Name" placeholder="John Doe" {...register("fullName")} />
-                                        <PremiumWizardInput label="Phone Number" placeholder="054..." {...register("phone")} icon={<Phone size={18} />} />
-                                    </div>
-
-                                    <div className="pt-10 border-t border-slate-100 space-y-8">
-                                        <div className="flex items-start gap-4 p-6 bg-[#F8FAFF] rounded-[24px] border border-slate-100">
-                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#00C767] shadow-sm shrink-0">
-                                                <MapPin size={22} />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-[#171717]">Geospatial Node Required</p>
-                                                <p className="text-[14px] font-medium text-slate-500 leading-relaxed">Necessary to find verified providers within your immediate sector.</p>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={requestLocation}
-                                            disabled={locBusy}
-                                            className={cn(
-                                                "w-full py-6 md:py-8 rounded-[20px] md:rounded-[24px] border-2 flex items-center justify-center gap-3 md:gap-4 transition-all active:scale-[0.98] font-bold text-[15px] md:text-[18px]",
-                                                loc
-                                                    ? "bg-white border-[#00C767] text-[#00C767]"
-                                                    : "bg-[#171717] border-[#171717] text-white shadow-xl shadow-black/10"
-                                            )}
-                                        >
-                                            {locBusy ? <Loader2 className="animate-spin" size={20} /> : loc ? <Check size={20} /> : <Navigation size={20} />}
-                                            <span className="uppercase tracking-[0.15em]">
-                                                {loc ? "Coordinates Latched" : "Share GPS Location"}
-                                            </span>
-                                        </button>
-
-                                        {loc && (
-                                            <div className="text-center">
-                                                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#00C767]">
-                                                    {loc.lat.toFixed(6)}, {loc.lng.toFixed(6)} • ±{Math.round(loc.accuracy || 0)}m
-                                                </p>
-                                            </div>
-                                        )}
-                                        {locError && <p className="text-sm text-red-600 text-center font-bold">Error: {locError}</p>}
-                                    </div>
+                                <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                                    <label className="text-[14px]">Your name<input className={inputClass + " mt-2"} placeholder="Your full name" autoComplete="name" {...register("fullName")} />{errors.fullName && <span className="mt-1 block text-[12px] text-red-600">{errors.fullName.message}</span>}</label>
+                                    <label className="text-[14px]">Phone number<input className={inputClass + " mt-2"} placeholder="054..." inputMode="tel" autoComplete="tel" {...register("phone")} />{errors.phone && <span className="mt-1 block text-[12px] text-red-600">{errors.phone.message}</span>}</label>
                                 </div>
                             </div>
                         )}
 
                         {step === "providers" && (
-                            <div className="space-y-12">
-                                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                                    <div className="space-y-3">
-                                        <h1 className="text-[32px] sm:text-[40px] md:text-[56px] font-extrabold text-[#171717] leading-[1.05] tracking-[-0.04em]">Active nodes.</h1>
-                                        <p className="text-[14px] font-bold text-[#00C767] uppercase tracking-[0.2em]">{providers?.length || 0} units nearby in sector</p>
-                                    </div>
-                                    <button onClick={() => setStep("contact")} className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-[#171717] transition-colors border-b-2 border-slate-100 pb-1 w-fit">
-                                        Adjust Scan Node
-                                    </button>
+                            <div>
+                                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                                    <div><h2 className="text-[32px] font-normal tracking-[-0.035em] md:text-[40px]">Nearby help.</h2><p className="mt-3 text-[16px] text-[#777]">{loadingProviders ? "Looking for providers near you…" : providerError ? "We could not load nearby providers." : providers.length ? providers.length + " provider" + (providers.length === 1 ? "" : "s") + " found nearby." : "No providers found nearby right now."}</p></div>
+                                    <button type="button" onClick={() => moveTo("contact")} className="self-start text-[14px] text-[#1111F6]">Change location</button>
                                 </div>
-
-                                {loadingProviders ? (
-                                    <div className="py-32 flex flex-col items-center gap-8">
-                                        <div className="relative w-24 h-24">
-                                            <div className="absolute inset-0 rounded-full border-4 border-[#00C767]/10 animate-ping opacity-20" />
-                                            <div className="absolute inset-0 rounded-full border-4 border-[#00C767] border-t-transparent animate-spin" />
-                                        </div>
-                                        <p className="text-[12px] font-bold uppercase tracking-[0.3em] text-[#00C767]">Scanning Infrastructure...</p>
-                                    </div>
-                                ) : providers?.length ? (
-                                    <div className="grid grid-cols-1 gap-8">
-                                        {providers.map(p => (
-                                            <PremiumProviderCard
-                                                key={p.id}
-                                                provider={p}
-                                                smsBody={`I need ${helpType} help. Car: ${getValues("carMake")} ${getValues("carModel")} (${getValues("plateNumber")}). Loc: https://maps.google.com/?q=${loc?.lat},${loc?.lng} — Requesting unit: ${getValues("fullName")}`}
-                                            />
+                                {loadingProviders ? <div className="flex items-center gap-3 py-16 text-[15px] text-[#777]"><Loader2 className="h-5 w-5 animate-spin text-[#1111F6]" />Searching nearby providers</div> : providerError || providers.length === 0 ? <div className="mt-8 rounded-[12px] border border-[#EAEAEA] bg-[#F7F7F7] p-8 text-[15px] text-[#666]">{providerError ? "Please go back and try again." : "Try a different help type or check your location and search again."}</div> : (
+                                    <div className="mt-8 grid gap-4">
+                                        {providers.map((provider) => (
+                                            <ProviderCard key={provider.id} provider={provider} smsBody={"I need " + getValues("helpType") + " help. Car: " + carForMessage(getValues()) + ". Location: https://maps.google.com/?q=" + loc?.lat + "," + loc?.lng + ". My name is " + getValues("fullName") + "."} />
                                         ))}
-                                    </div>
-                                ) : (
-                                    <div className="bg-slate-50 p-24 rounded-[48px] text-center border-2 border-dashed border-slate-200">
-                                        <MapPin size={48} className="mx-auto mb-8 text-slate-200" />
-                                        <p className="text-[16px] font-bold text-slate-400 uppercase tracking-[0.2em]">No providers found in this immediate sector.</p>
                                     </div>
                                 )}
                             </div>
                         )}
                     </div>
-                </div>
-            </div>
 
-            {/* Global Sticky Footer Action */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 md:p-8 bg-white/80 md:bg-white/40 backdrop-blur-3xl border-t border-slate-100 z-50 transition-all duration-500">
-                <div className="max-w-3xl mx-auto">
-                    <button
-                        onClick={onNext}
-                        disabled={step === "help" ? !helpType : step === "car" ? !carSectionValid : step === "contact" ? (!contactSectionValid || !loc) : step === "providers"}
-                        className="bg-[#171717] w-full py-5 md:py-7 text-white rounded-[20px] md:rounded-[24px] font-bold text-[16px] md:text-[20px] flex items-center justify-center gap-3 md:gap-4 active:scale-[0.98] shadow-2xl shadow-black/10 disabled:opacity-30 disabled:grayscale transition-all"
-                    >
-                        {step === "contact" && loadingProviders ? <Loader2 className="animate-spin" size={24} /> : (
-                            <>
-                                {step === "help" && "Vehicle Details"}
-                                {step === "car" && "Share Location"}
-                                {step === "contact" && "Identify Nodes"}
-                                {step === "providers" && "Select Provider"}
-                                <ArrowRight size={24} className="text-[#00C767]" />
-                            </>
-                        )}
-                    </button>
-                    {step === "providers" && (
-                        <p className="text-center mt-4 text-[11px] font-bold text-[#525252] uppercase tracking-widest opacity-40">Select a provider above to initialize protocol</p>
+                    {step !== "providers" && (
+                        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#EAEAEA] bg-white/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] backdrop-blur-sm sm:static sm:mt-6 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+                            <p className="hidden text-[13px] text-[#888] sm:block">You choose the provider before any message is sent.</p>
+                            <button type="button" onClick={onNext} disabled={step === "help" ? !helpType : step === "contact" ? !loc || loadingProviders : false} className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1111F6] px-6 text-[16px] text-white transition-colors hover:bg-[#0606D8] disabled:cursor-not-allowed disabled:opacity-40 sm:h-12 sm:w-auto">
+                                {step === "help" ? carFromLink && getValues("plateNumber") ? "Continue to location" : "Continue to vehicle" : step === "car" ? "Continue to location" : "Find nearby help"} <ChevronRight className="h-4 w-4" />
+                            </button>
+                            <p className="mt-2 text-center text-[12px] text-[#777] sm:hidden">You choose the provider before any message is sent.</p>
+                        </div>
                     )}
                 </div>
-            </div>
+            </section>
+
+            <section className="hidden px-5 py-20 sm:block sm:px-8 lg:px-16">
+                <div className="mx-auto grid max-w-[1136px] gap-5 md:grid-cols-3">
+                    <div className="rounded-[12px] border border-[#ECECEC] p-6"><CircleAlert className="mb-5 h-7 w-7 text-[#1111F6]" /><h2 className="text-[18px]">Tell us what happened</h2><p className="mt-2 text-[15px] leading-[1.45] text-[#777]">Choose the type of help, then add your car details.</p></div>
+                    <div className="rounded-[12px] border border-[#ECECEC] p-6"><MapPin className="mb-5 h-7 w-7 text-[#1111F6]" /><h2 className="text-[18px]">Find nearby providers</h2><p className="mt-2 text-[15px] leading-[1.45] text-[#777]">Share your location to see available help around you.</p></div>
+                    <div className="rounded-[12px] border border-[#ECECEC] p-6"><Phone className="mb-5 h-7 w-7 text-[#1111F6]" /><h2 className="text-[18px]">Choose how to reach out</h2><p className="mt-2 text-[15px] leading-[1.45] text-[#777]">Review the provider and call or open a prepared message.</p></div>
+                </div>
+            </section>
+
+            <section className="relative hidden overflow-hidden bg-[#1111F6] px-5 py-20 text-white sm:block sm:px-8 md:py-24 lg:px-16">
+                <PixelCluster className="right-[10%] bottom-[-10%] opacity-55" heights={[22, 54, 90, 125, 158, 123, 75, 30]} />
+                <div className="relative z-10 mx-auto max-w-[1136px]">
+                    <h2 className="text-[32px] font-normal tracking-[-0.035em] md:text-[40px]">Keep the essentials close.</h2>
+                    <p className="mt-4 max-w-[460px] text-[16px] leading-[1.45] text-white/70">The driver app brings your car papers, reminders, and roadside help together.</p>
+                    <Link href="/login" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717]"><span className="h-4 w-4 rounded-[2px] bg-[#1111F6]" />Get started <ArrowRight className="h-4 w-4" /></Link>
+                </div>
+            </section>
+
+            <div className="hidden sm:block"><LandingFooter /></div>
         </main>
-    );
-}
-
-function PremiumWizardInput({ label, icon, className, ...props }: any) {
-    return (
-        <div className="space-y-4 w-full">
-            <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#525252] ml-1 opacity-60">{label}</label>
-            <div className="relative group">
-                {icon && <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#00C767] transition-colors">{icon}</div>}
-                <input
-                    className={cn(
-                        "w-full bg-[#F8FAFF] border border-slate-100 rounded-[20px] py-5 px-6 text-[18px] font-bold text-[#171717] outline-none transition-all placeholder:text-slate-300 focus:bg-white focus:border-[#00C767] focus:ring-4 focus:ring-[#00C767]/5",
-                        icon && "pl-14",
-                        className
-                    )}
-                    {...props}
-                />
-            </div>
-        </div>
-    );
-}
-
-function PremiumProviderCard({ provider, smsBody }: { provider: Provider, smsBody: string }) {
-    const [open, setOpen] = useState(false);
-
-    return (
-        <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden group hover:shadow-2xl hover:shadow-slate-300/40 transition-all duration-500">
-            {/* Provider Visual Branding */}
-            <div className="relative h-48 bg-slate-900 overflow-hidden">
-                {provider.backdrop_url ? (
-                    <img src={provider.backdrop_url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={provider.name} />
-                ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#171717] to-slate-800" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                <div className="absolute bottom-4 left-4 md:bottom-8 md:left-10 flex flex-row items-center gap-3 md:gap-8 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                    <div className="w-16 h-16 md:w-24 md:h-24 bg-white rounded-[16px] md:rounded-[28px] p-1.5 shadow-2xl flex items-center justify-center">
-                        <img
-                            src={provider.logo_url || "https://avatar.vercel.sh/" + provider.name}
-                            className="w-full h-full object-contain rounded-[12px] md:rounded-[22px]"
-                            alt={provider.name}
-                        />
-                    </div>
-                    <div>
-                        <h3 className="text-[20px] md:text-[28px] font-extrabold text-white tracking-tight flex items-center gap-2 md:gap-3">
-                            {provider.name}
-                            {provider.is_verified && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-[#00C767]" />}
-                        </h3>
-                        <div className="flex items-center gap-5 mt-2">
-                            <div className="flex items-center gap-2 text-[#00C767]">
-                                <Star size={16} className="fill-current" />
-                                <span className="text-[14px] font-bold">{provider.rating || 'New'}</span>
-                            </div>
-                            <div className="h-4 w-px bg-white/20" />
-                            <span className="text-[12px] font-bold text-white/70 uppercase tracking-widest">{provider.distance_km.toFixed(1)} KM Range</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="p-6 md:p-10 space-y-6 md:space-y-10">
-                <div className="flex flex-wrap gap-2 md:gap-4">
-                    <div className="px-5 py-2 bg-slate-50 rounded-2xl text-[12px] font-bold uppercase tracking-[0.1em] text-slate-500 border border-slate-100">
-                        Min. Fee: <span className="text-[#171717]">GH₵{provider.min_callout_fee || '—'}</span>
-                    </div>
-                    <div className="px-5 py-2 bg-slate-50 rounded-2xl text-[12px] font-bold uppercase tracking-[0.1em] text-slate-500 border border-slate-100">
-                        Reputation: <span className="text-[#171717]">{provider.jobs || 0}+ Jobs</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a
-                        href={`tel:${provider.phone}`}
-                        className="flex-1 bg-white text-[#171717] border border-slate-200 py-5 rounded-2xl font-bold text-[16px] hover:bg-slate-50 transition-all text-center flex items-center justify-center gap-3 active:scale-[0.98]"
-                    >
-                        <Phone size={20} className="text-[#00C767]" /> Direct Call
-                    </a>
-                    <button
-                        onClick={() => setOpen(true)}
-                        className="flex-1 bg-[#171717] text-white py-5 rounded-2xl font-bold text-[16px] hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl shadow-black/10 active:scale-[0.98]"
-                    >
-                        <MessageCircle size={20} className="text-[#00C767]" /> Initialize Unit
-                    </button>
-                </div>
-            </div>
-
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="rounded-[24px] sm:rounded-[40px] p-6 sm:p-12 max-w-lg border-none shadow-2xl bg-white focus:outline-none w-[90vw] sm:w-full">
-                    <div className="space-y-6 sm:space-y-10">
-                        <div className="space-y-6">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#00C767]/10 rounded-full text-[12px] font-bold uppercase tracking-[0.15em] text-[#00C767] border border-[#00C767]/10">
-                                <ShieldCheck size={14} />
-                                L0 Dispatch Protocol
-                            </div>
-                            <h2 className="text-[32px] font-extrabold text-[#171717] tracking-tight leading-none uppercase">Transmit intel.</h2>
-                        </div>
-
-                        <div className="p-8 bg-slate-50 rounded-[32px] text-[16px] font-medium text-slate-500 leading-relaxed italic border border-slate-100 relative">
-                            <div className="absolute -top-4 -left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-[#00C767]">
-                                <MessageCircle size={20} />
-                            </div>
-                            "{smsBody}"
-                        </div>
-
-                        <div className="flex gap-4 pt-4">
-                            <button onClick={() => setOpen(false)} className="flex-1 bg-white text-[#171717] border border-slate-200 py-5 rounded-2xl font-bold hover:bg-slate-50 transition-all">Abort</button>
-                            <a
-                                href={`sms:${provider.phone}?body=${encodeURIComponent(smsBody)}`}
-                                className="flex-1 bg-[#171717] text-white py-5 rounded-2xl font-bold text-center flex items-center justify-center gap-4 hover:bg-black transition-all shadow-xl shadow-black/10"
-                            >
-                                Dispatch <ArrowRight size={20} className="text-[#00C767]" />
-                            </a>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
-        </div>
-    );
-}
-
-function Check(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <polyline points="20 6 9 17 4 12" />
-        </svg>
     );
 }

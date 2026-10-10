@@ -1,6 +1,34 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+    font-family: "Base Sans";
+    src: url("/fonts/base-sans-regular.woff") format("woff");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Base Sans";
+    src: url("/fonts/base-sans-medium.woff") format("woff");
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Base Sans";
+    src: url("/fonts/base-sans-bold.woff") format("woff");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
+.base-landing {
+    font-family: "Base Sans", var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Allow `.dark` anywhere in the subtree */
 @custom-variant dark (&:is(.dark *));
 

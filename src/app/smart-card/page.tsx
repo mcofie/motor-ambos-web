@@ -1,6 +1,10 @@
 import React from 'react';
 import { StripeNavbar, StripeFooter, StripeNFCCardSection } from "@/components/stripe-landing/Sections";
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = publicPageMetadata("Smart Car Card", "Explore the Motor Ambos car card and a simple way to connect a vehicle to its digital details.", "/smart-card");
 
 export default function SmartCardPage() {
     return (

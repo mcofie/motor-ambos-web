@@ -1,9 +1,11 @@
 import { Suspense } from "react";
 import LoginForm from "@/components/LoginForm";
+import type { Metadata } from "next";
 
-export const metadata = {
-    title: "Login",
+export const metadata: Metadata = {
+    title: "Sign in",
     description: "Sign in to your Motor Ambos account.",
+    robots: { index: false, follow: false },
 };
 
 export default function LoginPage() {

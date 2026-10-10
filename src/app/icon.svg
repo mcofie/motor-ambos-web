@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Motor Ambos">
+  <rect width="64" height="64" rx="10" fill="#1111F6"/>
+  <path d="M16.5 35.5 19.2 26a5 5 0 0 1 4.8-3.6h16a5 5 0 0 1 4.8 3.6l2.7 9.5" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.6"/>
+  <path d="M14.5 35.5h35a3 3 0 0 1 3 3v7.2a2 2 0 0 1-2 2h-37a2 2 0 0 1-2-2v-7.2a3 3 0 0 1 3-3Z" fill="none" stroke="#fff" stroke-linejoin="round" stroke-width="3.6"/>
+  <path d="M18.5 47.7v3.8m27-3.8v3.8M17.5 41.5h5m19 0h5" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="3.6"/>
+</svg>

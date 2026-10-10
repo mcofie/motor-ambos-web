@@ -3,7 +3,9 @@ import { ThemeProvider } from "@/components/ThemeProvider"
 import { CSPostHogProvider } from "@/components/PostHogProvider"
 import PostHogPageView from "@/components/PostHogPageView"
 import { Suspense } from "react"
+import type { Metadata } from "next"
 import { Inter, Space_Grotesk, Space_Mono, Newsreader, Plus_Jakarta_Sans } from 'next/font/google'
+import { siteDescription, siteTitle, siteUrl } from "@/lib/metadata"
 
 const jakarta = Plus_Jakarta_Sans({
     subsets: ['latin'],
@@ -39,12 +41,29 @@ const newsreader = Newsreader({
     style: 'italic',
 })
 
-export const metadata = {
+export const metadata: Metadata = {
+    metadataBase: new URL(siteUrl),
     title: {
-        default: "Motor Ambos — The Digital Passport for Your Car",
+        default: siteTitle,
         template: "%s | Motor Ambos",
     },
-    description: "The Operating System for car ownership in Ghana. Manage compliance, track verified maintenance history, and protect your vehicle's resale value.",
+    applicationName: "Motor Ambos",
+    description: siteDescription,
+    openGraph: {
+        type: "website",
+        locale: "en_GH",
+        siteName: "Motor Ambos",
+        title: siteTitle,
+        description: siteDescription,
+        url: "/",
+        images: [{ url: "/og-motor-ambos.png", width: 1200, height: 630, alt: "Motor Ambos — Stay legal. Get help fast." }],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: siteTitle,
+        description: siteDescription,
+        images: ["/og-motor-ambos.png"],
+    },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,10 @@
 import React from 'react';
 import { StripeNavbar, StripeFooter, StripeServiceEcosystem } from "@/components/stripe-landing/Sections";
 import { ArrowRight, CheckCircle2, Zap, Droplets, Cpu, Sparkles, Wrench, ShieldCheck, Truck, Store } from 'lucide-react';
+import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = publicPageMetadata("For Service Providers", "Learn how roadside mechanics and automotive service providers can connect with Motor Ambos drivers and fleets.", "/providers");
 
 export default function ProvidersPage() {
     return (

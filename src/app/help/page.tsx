@@ -274,7 +274,7 @@ export default function GetHelpWizardPage() {
                         )}
 
                         {step === "help" && (
-                            <div>
+                            <div className="help-step-motion">
                                 <h2 className="text-[26px] font-normal tracking-[-0.035em] sm:text-[32px] md:text-[40px]">What happened?</h2>
                                 <p className="mt-1 text-[14px] text-[#777] sm:mt-3 sm:text-[16px]">Choose the help you need right now.</p>
                                 <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:gap-3 md:grid-cols-4">
@@ -291,7 +291,7 @@ export default function GetHelpWizardPage() {
                         )}
 
                         {step === "car" && (
-                            <div>
+                            <div className="help-step-motion">
                                 <h2 className="text-[26px] font-normal tracking-[-0.035em] sm:text-[32px] md:text-[40px]">Which car needs help?</h2>
                                 <p className="mt-2 text-[14px] text-[#777] sm:mt-3 sm:text-[16px]">Choose your car if you know it. Only the plate number is required.</p>
                                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -358,7 +358,7 @@ export default function GetHelpWizardPage() {
                         )}
 
                         {step === "contact" && (
-                            <div>
+                            <div className="help-step-motion">
                                 <h2 className="text-[26px] font-normal tracking-[-0.035em] sm:text-[32px] md:text-[40px]">Where should help go?</h2>
                                 <p className="mt-2 text-[14px] text-[#777] sm:mt-3 sm:text-[16px]">Share your current location to see nearby providers.</p>
                                 {carFromLink && <button type="button" onClick={() => moveTo("car")} className="mt-4 inline-flex min-h-11 items-center text-[14px] text-[#1111F6]">Car from QR link: {getValues("plateNumber")} · Edit</button>}
@@ -376,7 +376,7 @@ export default function GetHelpWizardPage() {
                         )}
 
                         {step === "providers" && (
-                            <div>
+                            <div className="help-step-motion">
                                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                                     <div><h2 className="text-[32px] font-normal tracking-[-0.035em] md:text-[40px]">Nearby help.</h2><p className="mt-3 text-[16px] text-[#777]">{loadingProviders ? "Looking for providers near you…" : providerError ? "We could not load nearby providers." : providers.length ? providers.length + " provider" + (providers.length === 1 ? "" : "s") + " found nearby." : "No providers found nearby right now."}</p></div>
                                     <button type="button" onClick={() => moveTo("contact")} className="self-start text-[14px] text-[#1111F6]">Change location</button>

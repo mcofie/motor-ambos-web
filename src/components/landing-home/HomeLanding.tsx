@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import MarketingMotion from "@/components/landing-home/MarketingMotion";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -57,7 +59,7 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
         <header className="fixed inset-x-0 top-0 z-50 border-b border-[#EEEEEE] bg-white">
             <nav className="relative mx-auto flex h-16 max-w-[1536px] items-center justify-between px-5 sm:px-8 lg:h-[76px] lg:px-16" aria-label="Main navigation">
                 <Link href="/" aria-label="Motor Ambos home" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.035em] text-[#171717]">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-[#1111F6] text-white"><Car className="h-[18px] w-[18px]" /></span>
+                    <Image src="/icon.svg" alt="" width={36} height={36} className="h-9 w-9" priority />
                     <span className="lg:hidden">Motor Ambos</span>
                 </Link>
 
@@ -112,7 +114,7 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
 export function PixelCluster({ className, heights }: { className: string; heights: number[] }) {
     const colors = ["#B6B1FF", "#D6B6FF", "#C6F1A6", "#F6D884", "#AAA6FF"];
     return (
-        <div aria-hidden="true" className={["pointer-events-none absolute flex items-center gap-[5px]", className].join(" ")}>
+        <div aria-hidden="true" className={["pixel-cluster pointer-events-none absolute flex items-center gap-[5px]", className].join(" ")}>
             {heights.map((height, index) => (
                 <span key={index} className="block w-[5px] rounded-[1px]" style={{ height, backgroundColor: colors[index % colors.length], opacity: index % 3 === 0 ? 0.52 : 0.78 }} />
             ))}
@@ -150,10 +152,15 @@ function Hero() {
 
             <div className="relative z-10 mx-auto mt-16 w-full max-w-[1280px] px-5 sm:absolute sm:bottom-10 sm:left-0 sm:right-0 sm:mt-0 sm:px-8 lg:bottom-[14px]">
                 <p className="mb-5 text-[13px] font-normal tracking-[-0.01em] text-[#858585] md:text-[14px]">One app for drivers and fleets. Help within reach for anyone in the car.</p>
-                <div className="mx-auto flex max-w-[960px] flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[16px] font-medium tracking-[-0.03em] text-[#777] sm:gap-x-16 md:text-[20px]">
-                    <span className="flex items-center gap-2"><Smartphone className="h-5 w-5" />Driver app</span>
-                    <span className="flex items-center gap-2"><Truck className="h-5 w-5" />Fleet access</span>
-                    <span className="flex items-center gap-2"><QrCode className="h-5 w-5" />QR car sticker</span>
+                <div className="marketing-marquee mx-auto max-w-[960px] text-[16px] font-medium tracking-[-0.03em] text-[#777] md:text-[20px]">
+                    <span className="sr-only">Driver app, fleet access, and QR car sticker</span>
+                    <div className="marketing-marquee-track" aria-hidden="true">
+                        {[0, 1].map((copy) => <div key={copy} className="marketing-marquee-group">
+                            <span className="flex shrink-0 items-center gap-2"><Smartphone className="h-5 w-5" />Driver app</span>
+                            <span className="flex shrink-0 items-center gap-2"><Truck className="h-5 w-5" />Fleet access</span>
+                            <span className="flex shrink-0 items-center gap-2"><QrCode className="h-5 w-5" />QR car sticker</span>
+                        </div>)}
+                    </div>
                 </div>
             </div>
         </section>
@@ -367,7 +374,7 @@ export function LandingFooter() {
         <footer className="bg-white px-5 py-16 sm:px-8 sm:py-20 lg:px-16">
             <div className="mx-auto grid max-w-[1136px] gap-8 sm:gap-12 md:grid-cols-4">
                 <div>
-                    <Link href="/" aria-label="Motor Ambos home" className="mb-6 flex h-9 w-9 items-center justify-center rounded-[4px] bg-[#1111F6] text-white"><Car className="h-[18px] w-[18px]" /></Link>
+                    <Link href="/" aria-label="Motor Ambos home" className="mb-6 block h-9 w-9"><Image src="/icon.svg" alt="" width={36} height={36} className="h-9 w-9" /></Link>
                     <p className="text-[14px] text-[#777]">Keep your car ready for the road.</p>
                 </div>
                 <div><h3 className="mb-4 text-[14px] text-[#171717]">Drivers</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/login" className="hover:text-[#1111F6]">Get started</Link><Link href="/help" className="hover:text-[#1111F6]">Roadside help</Link><Link href="/roadside-mechanics" className="hover:text-[#1111F6]">Mechanic network</Link><Link href="/#how-it-works" className="hover:text-[#1111F6]">How it works</Link></div></div>
@@ -383,7 +390,8 @@ export function LandingFooter() {
 
 export default function HomeLanding() {
     return (
-        <main className="base-landing min-h-screen w-full overflow-x-hidden bg-white text-[#171717] selection:bg-[#DCDCFD] selection:text-[#171717]">
+        <main className="base-landing marketing-motion min-h-screen w-full overflow-x-hidden bg-white text-[#171717] selection:bg-[#DCDCFD] selection:text-[#171717]">
+            <MarketingMotion />
             <LandingNav />
             <Hero />
             <Touchpoints />

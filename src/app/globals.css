@@ -403,3 +403,131 @@
 .animate-marquee:hover {
     animation-play-state: paused;
 }
+
+/* Quiet motion for the public story pages. Content stays visible without JavaScript. */
+@keyframes marketing-rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pixel-drift {
+    from { translate: 0 -7px; }
+    to { translate: 0 9px; }
+}
+
+@keyframes marketing-rail {
+    to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .marketing-motion > section:first-of-type h1 {
+        animation: marketing-rise 680ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+    }
+
+    .marketing-motion > section:first-of-type h1 + p {
+        animation: marketing-rise 680ms 100ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+    }
+
+    .marketing-motion > section:first-of-type h1 + p + div {
+        animation: marketing-rise 680ms 190ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+    }
+
+    .marketing-motion > section:not(:first-of-type) {
+        transition: opacity 650ms ease, transform 650ms cubic-bezier(0.2, 0.75, 0.25, 1);
+    }
+
+    .marketing-motion > section.motion-waiting {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    .base-landing .pixel-cluster {
+        animation: pixel-drift 10s ease-in-out infinite alternate;
+    }
+
+    .base-landing .pixel-cluster:nth-of-type(even) {
+        animation-delay: -5s;
+        animation-duration: 13s;
+    }
+
+    .marketing-marquee-track {
+        animation: marketing-rail 35s linear infinite;
+    }
+
+    .marketing-marquee:hover .marketing-marquee-track,
+    .marketing-marquee:focus-within .marketing-marquee-track {
+        animation-play-state: paused;
+    }
+
+    .help-step-motion {
+        animation: marketing-rise 220ms ease-out both;
+    }
+
+    .base-landing #mobile-navigation {
+        animation: marketing-rise 190ms ease-out both;
+    }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .base-landing a.rounded-full {
+        transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+    }
+
+    .base-landing a.rounded-full:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.marketing-marquee {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+
+.marketing-marquee-track {
+    display: flex;
+    width: max-content;
+}
+
+.marketing-marquee-group {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-around;
+    gap: clamp(2rem, 5vw, 5rem);
+    padding-right: clamp(2rem, 5vw, 5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marketing-marquee { mask-image: none; }
+    .marketing-marquee-track { width: 100%; }
+    .marketing-marquee-group { width: 100%; flex-wrap: wrap; justify-content: center; }
+    .marketing-marquee-group + .marketing-marquee-group { display: none; }
+}
+
+@keyframes network-route-flow {
+    to { stroke-dashoffset: -52; }
+}
+
+@keyframes network-node-pulse {
+    0%, 100% { opacity: .14; transform: scale(.72); }
+    50% { opacity: .34; transform: scale(1.18); }
+}
+
+.network-map-route {
+    stroke-dasharray: 4 9;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .network-map-route { animation: network-route-flow 4s linear infinite; }
+    .network-map-pulse,
+    .network-map-driver-pulse {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: network-node-pulse 3.8s ease-in-out infinite;
+    }
+    .network-map-driver-pulse { animation-duration: 2.8s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .network-map-packet { display: none; }
+}

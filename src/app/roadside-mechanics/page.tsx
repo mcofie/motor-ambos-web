@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BatteryCharging, ChevronRight, Disc, Droplets, MapPin, MessageCircle, Phone, ShieldCheck, Truck, Wrench, Zap } from "lucide-react";
+import { ArrowRight, BatteryCharging, Disc, Droplets, MapPin, MessageCircle, Phone, ShieldCheck, Truck, Wrench, Zap } from "lucide-react";
 import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
+import MarketingMotion from "@/components/landing-home/MarketingMotion";
+import MechanicNetworkMap from "@/components/landing-home/MechanicNetworkMap";
+import { publicPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-    title: "Roadside Mechanic Network",
-    description: "Stuck on the road? Find independent roadside mechanics near you, compare distance and listed call-out fees, then call or message directly.",
-};
+export const metadata: Metadata = publicPageMetadata("Roadside Mechanic Network", "Stuck on the road? Find independent roadside mechanics near you, compare distance and listed call-out fees, then call or message directly.", "/roadside-mechanics");
 
 const helpTypes = [
     { icon: Wrench, title: "Mechanical trouble", detail: "When the car needs a mechanic at the roadside." },
@@ -23,25 +23,10 @@ const steps = [
     { number: "03", title: "Choose who to contact", detail: "Compare distance and listed call-out fees, then call or message a mechanic to confirm availability." },
 ];
 
-function NetworkVisual() {
-    return (
-        <div className="relative mx-auto w-full max-w-[480px] overflow-hidden rounded-[18px] border border-[#E9E9E9] bg-[#FAFAFA] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.05)] sm:p-7">
-            <div className="absolute inset-0 opacity-45" style={{ backgroundImage: "linear-gradient(#E8E8E8 1px, transparent 1px), linear-gradient(90deg, #E8E8E8 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-            <div className="relative rounded-[14px] border border-[#E9E9E9] bg-white p-5">
-                <div className="flex items-center justify-between"><span className="text-[13px] text-[#777]">Roadside request</span><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EEEEFF] text-[#1111F6]"><MapPin className="h-4 w-4" /></span></div>
-                <div className="mt-2 text-[23px] tracking-[-0.035em]">Find help near you</div>
-                <div className="mt-5 flex items-center gap-3 rounded-[10px] border border-[#E9E9E9] p-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-[#EEEEFF] text-[#1111F6]"><Wrench className="h-5 w-5" /></span><div className="min-w-0"><span className="block text-[14px]">Mechanic</span><span className="block text-[12px] text-[#777]">Help with a breakdown</span></div><ChevronRight className="ml-auto h-4 w-4 shrink-0 text-[#777]" /></div>
-                <div className="mt-3 flex items-center gap-3 rounded-[10px] border border-[#E9E9E9] p-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-[#EEEEFF] text-[#1111F6]"><BatteryCharging className="h-5 w-5" /></span><div className="min-w-0"><span className="block text-[14px]">Battery</span><span className="block text-[12px] text-[#777]">Get moving again</span></div><ChevronRight className="ml-auto h-4 w-4 shrink-0 text-[#777]" /></div>
-                <div className="mt-5 flex items-center gap-2 text-[12px] text-[#777]"><MapPin className="h-4 w-4 text-[#1111F6]" />See distance and listed call-out fees</div>
-            </div>
-            <div className="relative mx-5 mt-3 flex items-center justify-center gap-2 text-[12px] text-[#777]"><span className="h-2 w-2 rounded-full bg-[#1111F6]" />Illustration of the help flow</div>
-        </div>
-    );
-}
-
 export default function RoadsideMechanicsPage() {
     return (
-        <main className="base-landing min-h-screen overflow-x-hidden bg-white text-[#171717] selection:bg-[#DCDCFD]">
+        <main className="base-landing marketing-motion min-h-screen overflow-x-hidden bg-white text-[#171717] selection:bg-[#DCDCFD]">
+            <MarketingMotion />
             <LandingNav />
 
             <section className="relative overflow-hidden px-5 pb-20 pt-32 sm:px-8 md:pb-28 md:pt-[176px] lg:px-16">
@@ -56,7 +41,7 @@ export default function RoadsideMechanicsPage() {
                             <Link href="#our-approach" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E7E7E7] px-6 text-[16px] transition-colors hover:bg-[#FAFAFA]">The idea behind it</Link>
                         </div>
                     </div>
-                    <NetworkVisual />
+                    <MechanicNetworkMap />
                 </div>
             </section>
 

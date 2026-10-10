@@ -13,6 +13,11 @@ import {
     Users,
 } from "lucide-react";
 import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
+import MarketingMotion from "@/components/landing-home/MarketingMotion";
+import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = publicPageMetadata("Fleet Management", "Manage fleet vehicles, drivers, car papers, renewal reminders, and roadside requests with Motor Ambos.", "/business");
 
 const quickCards = [
     { icon: ClipboardCheck, title: "See what needs attention", description: "Know which vehicles are ready, renewing soon, or overdue." },
@@ -101,7 +106,8 @@ const features = [
 
 export default function BusinessPage() {
     return (
-        <main className="base-landing min-h-screen overflow-x-hidden bg-white text-[#171717]">
+        <main className="base-landing marketing-motion min-h-screen overflow-x-hidden bg-white text-[#171717]">
+            <MarketingMotion />
             <LandingNav />
 
             <section className="relative flex flex-col items-center overflow-hidden px-5 pb-16 pt-32 text-center sm:min-h-[690px] sm:px-8 sm:pb-36 sm:pt-[168px] md:pt-[178px] lg:px-16">

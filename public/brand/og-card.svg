@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#fff"/>
+  <rect x="80" y="70" width="56" height="56" rx="9" fill="#1111F6"/>
+  <path d="m94 101 2.5-9a4 4 0 0 1 3.8-2.8h15.4a4 4 0 0 1 3.8 2.8l2.5 9m-28 0h30a2.5 2.5 0 0 1 2.5 2.5v5.5a1.5 1.5 0 0 1-1.5 1.5h-32a1.5 1.5 0 0 1-1.5-1.5v-5.5A2.5 2.5 0 0 1 94 101Zm3 9.5v3m22-3v3m-22-8h4m15 0h4" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="154" y="109" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600" letter-spacing="-1">Motor Ambos</text>
+  <text x="80" y="282" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="86" letter-spacing="-5">Stay legal.</text>
+  <text x="80" y="378" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="86" letter-spacing="-5">Get help fast.</text>
+  <text x="84" y="440" fill="#777" font-family="Arial, Helvetica, sans-serif" font-size="27">Car papers, fleet access, and roadside help in Ghana.</text>
+  <rect x="80" y="530" width="1040" height="1" fill="#E7E7E7"/>
+  <text x="82" y="575" fill="#1111F6" font-family="Arial, Helvetica, sans-serif" font-size="20">motorambos.com</text>
+  <g opacity=".65">
+    <rect x="876" y="118" width="7" height="36" fill="#B6B1FF"/>
+    <rect x="892" y="103" width="7" height="67" fill="#D6B6FF"/>
+    <rect x="908" y="90" width="7" height="94" fill="#C6F1A6"/>
+    <rect x="924" y="116" width="7" height="42" fill="#F6D884"/>
+    <rect x="940" y="80" width="7" height="114" fill="#AAA6FF"/>
+    <rect x="956" y="100" width="7" height="73" fill="#B6B1FF"/>
+    <rect x="972" y="124" width="7" height="29" fill="#D6B6FF"/>
+  </g>
+</svg>

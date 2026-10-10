@@ -1,8 +1,12 @@
 import React from 'react';
+import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/metadata";
 import {
     StripeNavbar,
     StripeFooter
 } from "@/components/stripe-landing/Sections";
+
+export const metadata: Metadata = publicPageMetadata("Terms of Service", "Read the terms for using Motor Ambos services.", "/terms-of-service");
 
 export default function TermsOfServicePage() {
     return (

@@ -1,6 +1,7 @@
 import RegisterForm from "@/components/portal/RegisterForm";
+import type { Metadata } from "next";
 
-export const metadata = { title: "Create account" };
+export const metadata: Metadata = { title: "Create account", robots: { index: false, follow: false } };
 
 export default function RegisterPage() {
     return <RegisterForm />;

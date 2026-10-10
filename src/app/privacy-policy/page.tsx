@@ -1,8 +1,12 @@
 import React from 'react';
+import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/metadata";
 import {
     StripeNavbar,
     StripeFooter
 } from "@/components/stripe-landing/Sections";
+
+export const metadata: Metadata = publicPageMetadata("Privacy Policy", "Read the Motor Ambos privacy policy and learn how account and vehicle information is handled.", "/privacy-policy");
 
 export default function PrivacyPolicyPage() {
     return (

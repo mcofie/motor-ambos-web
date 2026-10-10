@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { staffApiError } from "@/lib/serverAuth";
 import { normalizePhone, phoneVariants } from "@/lib/phone";
+import { reportMajorActivity } from "@/lib/discordActivity";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -155,6 +156,13 @@ export async function POST(req: Request) {
             }, { onConflict: 'org_member_id, member_id' });
 
         if (linkError) throw linkError;
+
+        await reportMajorActivity("Driver added to fleet", [
+            { name: "Organization", value: businessName },
+            { name: "Fleet ID", value: org_id },
+            { name: "Driver ID", value: member_id },
+            { name: "Vehicle ID", value: vehicle_id },
+        ]);
 
         // 4. Send SMS
         const signupLink = "https://motorambos.com/register";

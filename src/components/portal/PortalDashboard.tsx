@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight, CalendarDays, Car, Check, ChevronRight, FileText, Loader2, LogOut, Pencil, Plus, ShieldCheck, Truck } from "lucide-react";
 import { logout } from "@/lib/supaFetch";
-import type { PortalData, PortalDocument, PortalVehicle } from "@/lib/portalTypes";
+import type { PortalDocument, PortalVehicle } from "@/lib/portalTypes";
 import { formatPhone } from "@/lib/phone";
+import { usePortalData } from "@/components/portal/PortalDataProvider";
+import VehicleActivity from "@/components/portal/VehicleActivity";
+import FleetIssueInbox from "@/components/portal/FleetIssueInbox";
 
 const inputClass = "h-12 w-full rounded-[10px] border border-[#DEDEDE] bg-white px-4 text-[16px] text-[#171717] outline-none focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/10";
 const modelsByMake: Record<string, string[]> = {
@@ -42,34 +45,37 @@ function formatDate(value: string | null | undefined) {
     return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("en-GH", { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
-function VehicleCard({ vehicle, documents, editable, onUpdated }: {
+function VehicleCard({ vehicle, documents, editable, documentUploadAvailable, onUpdated }: {
     vehicle: PortalVehicle;
     documents: PortalDocument[];
     editable: boolean;
+    documentUploadAvailable: boolean;
     onUpdated: () => Promise<void>;
 }) {
     const insurance = documents.find((item) => item.vehicle_id === vehicle.id && item.kind === "insurance");
     const roadworthy = documents.find((item) => item.vehicle_id === vehicle.id && item.kind === "roadworthy");
     const [editing, setEditing] = useState(false);
-    const [insuranceDate, setInsuranceDate] = useState(insurance?.expires_on || "");
-    const [roadworthyDate, setRoadworthyDate] = useState(roadworthy?.expires_on || "");
+    const [insuranceDate, setInsuranceDate] = useState(insurance?.expires_on?.slice(0, 10) || "");
+    const [roadworthyDate, setRoadworthyDate] = useState(roadworthy?.expires_on?.slice(0, 10) || "");
+    const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
+    const [roadworthyFile, setRoadworthyFile] = useState<File | null>(null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        setInsuranceDate(insurance?.expires_on || "");
-        setRoadworthyDate(roadworthy?.expires_on || "");
+        setInsuranceDate(insurance?.expires_on?.slice(0, 10) || "");
+        setRoadworthyDate(roadworthy?.expires_on?.slice(0, 10) || "");
     }, [insurance?.expires_on, roadworthy?.expires_on]);
 
     async function saveDates() {
         const changes = [
-            { kind: "insurance", value: insuranceDate, previous: insurance?.expires_on || "" },
-            { kind: "roadworthy", value: roadworthyDate, previous: roadworthy?.expires_on || "" },
+            { kind: "insurance", value: insuranceDate, previous: insurance?.expires_on?.slice(0, 10) || "" },
+            { kind: "roadworthy", value: roadworthyDate, previous: roadworthy?.expires_on?.slice(0, 10) || "" },
         ].filter((entry) => entry.value !== entry.previous);
         setError(null);
         setSaving(true);
         try {
-            for (const change of changes) {
+            await Promise.all(changes.map(async (change) => {
                 const response = await fetch("/api/portal/documents", {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -77,8 +83,19 @@ function VehicleCard({ vehicle, documents, editable, onUpdated }: {
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || "Could not save date");
+            }));
+            for (const [kind, file] of [["insurance", insuranceFile], ["roadworthy", roadworthyFile]] as const) {
+                if (!file) continue;
+                const form = new FormData();
+                form.set("vehicleId", vehicle.id);
+                form.set("kind", kind);
+                form.set("file", file);
+                const response = await fetch("/api/portal/documents", { method: "POST", body: form });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Could not upload document");
             }
             await onUpdated();
+            setInsuranceFile(null); setRoadworthyFile(null);
             setEditing(false);
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : "Could not save date");
@@ -93,7 +110,23 @@ function VehicleCard({ vehicle, documents, editable, onUpdated }: {
     const worstPriority = Math.max(insuranceState.priority, roadworthyState.priority);
     const carStatus = worstPriority === 3 ? "Check a passed date" : worstPriority === 2 ? "Date due soon" : worstPriority === 1 ? editable ? "Add expiry dates" : "Dates not recorded" : "Dates on file";
     const statusTone = worstPriority === 3 ? "bg-[#FFF0EF] text-[#AA3333]" : worstPriority === 2 ? "bg-[#FFF4DF] text-[#915C12]" : worstPriority === 1 ? "bg-[#F2F2F2] text-[#686868]" : "bg-[#EAF7F0] text-[#197252]";
-    const datesChanged = insuranceDate !== (insurance?.expires_on || "") || roadworthyDate !== (roadworthy?.expires_on || "");
+    const datesChanged = insuranceDate !== (insurance?.expires_on?.slice(0, 10) || "") || roadworthyDate !== (roadworthy?.expires_on?.slice(0, 10) || "") || Boolean(insuranceFile || roadworthyFile);
+
+    function addCalendarReminder(kind: "insurance" | "roadworthy", date: string) {
+        const day = date.slice(0, 10).replaceAll("-", "");
+        if (!/^\d{8}$/.test(day)) return;
+        const next = new Date(`${date.slice(0, 10)}T12:00:00Z`);
+        next.setUTCDate(next.getUTCDate() + 1);
+        const nextDay = next.toISOString().slice(0, 10).replaceAll("-", "");
+        const title = `${kind === "insurance" ? "Insurance" : "Roadworthy"} renewal - ${vehicle.plate || "vehicle"}`.replaceAll(/[\r\n,;]/g, " ");
+        const calendar = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Motor Ambos//Vehicle Reminders//EN", "BEGIN:VEVENT", `UID:${vehicle.id}-${kind}@motorambos.com`, `DTSTAMP:${new Date().toISOString().replaceAll(/[-:]/g, "").replace(/\.\d{3}/, "")}`, `DTSTART;VALUE=DATE:${day}`, `DTEND;VALUE=DATE:${nextDay}`, `SUMMARY:${title}`, "BEGIN:VALARM", "TRIGGER:-P30D", "ACTION:DISPLAY", `DESCRIPTION:${title}`, "END:VALARM", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+        const url = URL.createObjectURL(new Blob([calendar], { type: "text/calendar" }));
+        const anchor = window.document.createElement("a");
+        anchor.href = url;
+        anchor.download = `${kind}-${vehicle.plate || vehicle.id}.ics`;
+        anchor.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
     const helpParams = new URLSearchParams();
     if (vehicle.plate) helpParams.set("plate", vehicle.plate);
     if (vehicle.make) helpParams.set("make", vehicle.make);
@@ -119,7 +152,7 @@ function VehicleCard({ vehicle, documents, editable, onUpdated }: {
                     const state = documentState(record);
                     const fileUrl = record?.file_url;
                     return <div key={kind} className="flex min-h-[76px] items-center justify-between gap-3 border-b border-[#F0F0F0] py-3.5 last:border-b-0">
-                        <div className="min-w-0"><p className="text-[14px] capitalize">{kind}</p><p className="mt-1 text-[13px] text-[#777]">{record?.expires_on ? `Expires ${formatDate(record.expires_on)}` : "No expiry date added"}</p>{fileUrl && <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[12px] text-[#1111F6]"><FileText className="h-3.5 w-3.5" />View document</a>}</div>
+                        <div className="min-w-0"><p className="text-[14px] capitalize">{kind}</p><p className="mt-1 text-[13px] text-[#777]">{record?.expires_on ? `Expires ${formatDate(record.expires_on)}` : "No expiry date added"}</p><div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">{fileUrl && <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-[#1111F6]"><FileText className="h-3.5 w-3.5" />View document</a>}{record?.expires_on && <button type="button" onClick={() => addCalendarReminder(kind, record.expires_on!)} className="text-[12px] text-[#1111F6]">Add calendar reminder</button>}</div></div>
                         <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] ${state.tone}`}>{state.label}</span>
                     </div>;
                 })}
@@ -127,13 +160,15 @@ function VehicleCard({ vehicle, documents, editable, onUpdated }: {
             {editing && <div className="mx-5 mb-5 grid gap-3 rounded-[12px] border border-[#EAEAEA] bg-[#FAFAFA] p-4 sm:mx-6 sm:grid-cols-2">
                 <label className="text-[13px]">Insurance expiry<input className={inputClass + " mt-2"} type="date" value={insuranceDate} onChange={(event) => setInsuranceDate(event.target.value)} /></label>
                 <label className="text-[13px]">Roadworthy expiry<input className={inputClass + " mt-2"} type="date" value={roadworthyDate} onChange={(event) => setRoadworthyDate(event.target.value)} /></label>
+                {documentUploadAvailable && <><label className="text-[13px]">Insurance document <span className="text-[#888]">(PDF or image)</span><input className="mt-2 block w-full text-[13px]" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setInsuranceFile(event.target.files?.[0] || null)} /></label><label className="text-[13px]">Roadworthy document <span className="text-[#888]">(PDF or image)</span><input className="mt-2 block w-full text-[13px]" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setRoadworthyFile(event.target.files?.[0] || null)} /></label></>}
                 <p className="text-[12px] leading-relaxed text-[#777] sm:col-span-2">Dates you enter are reminders, not a verification of legal status.</p>
                 {error && <p role="alert" className="text-[13px] text-red-600 sm:col-span-2">{error}</p>}
                 <div className="flex gap-2 sm:col-span-2">
-                    <button type="button" onClick={saveDates} disabled={saving || !datesChanged} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#1111F6] px-5 text-[14px] text-white disabled:opacity-40">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Save dates</button>
+                    <button type="button" onClick={saveDates} disabled={saving || !datesChanged} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#1111F6] px-5 text-[14px] text-white disabled:opacity-40">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Save updates</button>
                     <button type="button" onClick={() => setEditing(false)} className="h-11 rounded-full border border-[#E3E3E3] px-5 text-[14px]">Cancel</button>
                 </div>
             </div>}
+            <VehicleActivity vehicle={vehicle} editable={editable} />
             <div className="flex flex-col gap-2 border-t border-[#EEEEEE] bg-[#FCFCFC] p-4 sm:flex-row sm:items-center sm:p-5">
                 <Link href={`/help?${helpParams.toString()}`} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[14px] text-white transition-colors hover:bg-[#0606D8]">Get help with this car <ArrowRight className="h-4 w-4" /></Link>
                 {editable && !editing && <button type="button" onClick={() => setEditing(true)} className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#E3E3E3] bg-white px-5 text-[14px]"><Pencil className="h-3.5 w-3.5" />{worstPriority === 1 ? "Add dates" : "Edit dates"}</button>}
@@ -403,29 +438,18 @@ function DashboardSkeleton({ view }: { view: "personal" | "fleet" }) {
 
 export default function PortalDashboard({ view }: { view: "personal" | "fleet" }) {
     const router = useRouter();
-    const [data, setData] = useState<PortalData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data, loading, error, reload, clear } = usePortalData();
     const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
 
-    const load = useCallback(async () => {
-        const response = await fetch("/api/portal/me", { cache: "no-store" });
-        if (response.status === 401) { router.replace(`/login?next=${encodeURIComponent(view === "fleet" ? "/app/fleet" : "/app")}`); return; }
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Could not load your account");
-        setData(result as PortalData);
-        if (view === "personal" && (result as PortalData).personalVehicles.length === 0 && (result as PortalData).assignedVehicles.length === 0 && (result as PortalData).organizations.some((org) => org.role !== "DRIVER")) {
+    useEffect(() => {
+        if (view === "personal" && data && !data.needsProfile && data.personalVehicles.length === 0 && data.assignedVehicles.length === 0 && data.organizations.some((org) => org.role !== "DRIVER")) {
             router.replace("/app/fleet");
         }
-        setLoading(false);
-    }, [router, view]);
-
-    useEffect(() => {
-        load().catch((reason) => { setError(reason instanceof Error ? reason.message : "Could not load your account"); setLoading(false); });
-    }, [load]);
+    }, [data, router, view]);
 
     async function signOut() {
         await logout();
+        clear();
         router.replace("/login");
     }
 
@@ -453,7 +477,7 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
             </div>
         </header>
         <main className={`mx-auto max-w-[1136px] px-4 pt-8 sm:px-8 sm:pt-11 ${view === "fleet" ? "pb-10" : "pb-24"}`}>
-            {loading ? <DashboardSkeleton view={view} /> : error ? <div role="alert" className="rounded-[16px] border border-[#F3D8D8] bg-white p-6"><p className="text-[15px] text-red-600">{error}</p><button type="button" onClick={() => { setLoading(true); setError(null); load().catch((reason) => { setError(reason instanceof Error ? reason.message : "Could not load your account"); setLoading(false); }); }} className="mt-4 h-11 rounded-full bg-[#1111F6] px-5 text-[14px] text-white">Try again</button></div> : data?.needsProfile ? <ProfileSetup email={data.email} initialName={data.suggestedProfile?.fullName || ""} initialPhone={data.suggestedProfile?.phone || ""} onDone={load} /> : data && <>
+            {loading ? <DashboardSkeleton view={view} /> : error ? <div role="alert" className="rounded-[16px] border border-[#F3D8D8] bg-white p-6"><p className="text-[15px] text-red-600">{error}</p><button type="button" onClick={() => { void reload().catch(() => undefined); }} className="mt-4 h-11 rounded-full bg-[#1111F6] px-5 text-[14px] text-white">Try again</button></div> : data?.needsProfile ? <ProfileSetup email={data.email} initialName={data.suggestedProfile?.fullName || ""} initialPhone={data.suggestedProfile?.phone || ""} onDone={reload} /> : data && <>
                 <div className="mb-7">
                     <p className="text-[13px] text-[#777]">{view === "fleet" ? "Fleet overview" : "Your account"}</p>
                     <h1 className="mt-2 text-[36px] leading-[1.08] tracking-[-0.05em] sm:text-[48px]">{view === "fleet" ? currentOrg?.name || "My fleet" : `Good to see you, ${firstName}.`}</h1>
@@ -479,19 +503,20 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
 
                 {view === "fleet" ? !currentOrg ? <div className="rounded-[16px] border border-[#E7E7E7] bg-white p-6">This account does not have fleet manager access.</div> : <>
                     {managedOrgs.length > 1 && <label className="mb-6 block max-w-[360px] text-[13px] text-[#666]">Choose a fleet<select className={inputClass + " mt-2"} value={currentOrg.id} onChange={(event) => setSelectedOrgId(event.target.value)}>{managedOrgs.map((org) => <option key={org.id} value={org.id}>{org.name}</option>)}</select></label>}
+                    <FleetIssueInbox key={currentOrg.id} orgId={currentOrg.id} />
                     <div className="mb-8 grid grid-cols-3 gap-2 sm:gap-3">
                         <div className="rounded-[16px] border border-[#EAEAEA] bg-white p-3.5 sm:p-5"><Truck className="mb-2 h-4 w-4 text-[#1111F6] sm:h-5 sm:w-5" /><span className="block text-[26px] tracking-[-0.04em] sm:text-[30px]">{fleetCars.length}</span><span className="text-[12px] text-[#777] sm:text-[13px]">Vehicles</span></div>
                         <div className="rounded-[16px] border border-[#EAEAEA] bg-white p-3.5 sm:p-5"><ShieldCheck className="mb-2 h-4 w-4 text-[#1111F6] sm:h-5 sm:w-5" /><span className="block text-[26px] tracking-[-0.04em] sm:text-[30px]">{data.fleetDrivers.filter((driver) => driver.orgId === currentOrg.id).length}</span><span className="text-[12px] text-[#777] sm:text-[13px]">Drivers</span></div>
                         <div className="rounded-[16px] border border-[#EAEAEA] bg-white p-3.5 sm:p-5"><CalendarDays className="mb-2 h-4 w-4 text-[#1111F6] sm:h-5 sm:w-5" /><span className="block text-[26px] tracking-[-0.04em] sm:text-[30px]">{passedDates.length + dueDates.length}</span><span className="text-[12px] leading-tight text-[#777] sm:text-[13px]">Dates to review</span></div>
                     </div>
                     <h2 className="mb-4 text-[23px] tracking-[-0.035em]">Fleet vehicles</h2>
-                    <div className="mb-5"><AddVehicle key={currentOrg.id} orgId={currentOrg.id} onAdded={load} /></div>
-                    {fleetCars.length ? <div className="grid gap-4 md:grid-cols-2">{fleetCars.map((vehicle) => <VehicleCard key={vehicle.id} vehicle={vehicle} documents={data.documents} editable onUpdated={load} />)}</div> : <p className="rounded-[16px] bg-white p-6 text-[15px] text-[#777]">No fleet vehicles yet. Add the first one above.</p>}
-                    <section className="mt-10"><h2 className="mb-4 text-[23px] tracking-[-0.035em]">Drivers</h2><div className="mb-5"><AddDriver key={currentOrg.id} orgId={currentOrg.id} vehicles={fleetCars} onAdded={load} /></div>{data.fleetDrivers.filter((driver) => driver.orgId === currentOrg.id).length ? <div className="grid gap-3 sm:grid-cols-2">{data.fleetDrivers.filter((driver) => driver.orgId === currentOrg.id).map((driver) => <div key={driver.id} className="rounded-[12px] border border-[#E7E7E7] bg-white p-4"><span className="block text-[16px]">{driver.name}</span><span className="mt-1 block text-[13px] text-[#777]">{driver.phone}</span><span className="mt-2 block text-[13px] text-[#777]">{driver.vehicleId ? fleetCars.find((vehicle) => vehicle.id === driver.vehicleId)?.plate || "Assigned vehicle" : "No vehicle assigned"}</span></div>)}</div> : <p className="rounded-[12px] bg-white p-5 text-[14px] text-[#777]">No drivers linked to this fleet yet. Add the first one above.</p>}</section>
+                    <div className="mb-5"><AddVehicle key={currentOrg.id} orgId={currentOrg.id} onAdded={reload} /></div>
+                    {fleetCars.length ? <div className="grid gap-4 md:grid-cols-2">{fleetCars.map((vehicle) => <VehicleCard key={vehicle.id} vehicle={vehicle} documents={data.documents} editable documentUploadAvailable={data.documentUploadAvailable} onUpdated={reload} />)}</div> : <p className="rounded-[16px] bg-white p-6 text-[15px] text-[#777]">No fleet vehicles yet. Add the first one above.</p>}
+                    <section className="mt-10"><h2 className="mb-4 text-[23px] tracking-[-0.035em]">Drivers</h2><div className="mb-5"><AddDriver key={currentOrg.id} orgId={currentOrg.id} vehicles={fleetCars} onAdded={reload} /></div>{data.fleetDrivers.filter((driver) => driver.orgId === currentOrg.id).length ? <div className="grid gap-3 sm:grid-cols-2">{data.fleetDrivers.filter((driver) => driver.orgId === currentOrg.id).map((driver) => <div key={driver.id} className="rounded-[12px] border border-[#E7E7E7] bg-white p-4"><span className="block text-[16px]">{driver.name}</span><span className="mt-1 block text-[13px] text-[#777]">{driver.phone}</span><span className="mt-2 block text-[13px] text-[#777]">{driver.vehicleId ? fleetCars.find((vehicle) => vehicle.id === driver.vehicleId)?.plate || "Assigned vehicle" : "No vehicle assigned"}</span></div>)}</div> : <p className="rounded-[12px] bg-white p-5 text-[14px] text-[#777]">No drivers linked to this fleet yet. Add the first one above.</p>}</section>
                 </> : <>
                     <div className="mb-4 flex items-baseline gap-3"><h2 className="text-[23px] tracking-[-0.035em]">{assignedOrgs.length && !data.personalVehicles.length ? "Assigned vehicle" : "My cars"}</h2><span className="text-[13px] text-[#888]">{personalCars.length} {personalCars.length === 1 ? "car" : "cars"}</span></div>
-                    <div className="mb-5"><AddVehicle onAdded={load} /></div>
-                    {personalCars.length ? <div className="grid gap-4 md:grid-cols-2">{personalCars.map((vehicle) => <VehicleCard key={vehicle.id} vehicle={vehicle} documents={data.documents} editable={data.personalVehicles.some((own) => own.id === vehicle.id)} onUpdated={load} />)}</div> : <div className="rounded-[16px] border border-[#E7E7E7] bg-white p-6"><Car className="mb-4 h-8 w-8 text-[#1111F6]" /><h3 className="text-[19px]">Your cars will appear here</h3><p className="mt-2 text-[14px] text-[#777]">Add your car to keep its details and get roadside help faster.</p></div>}
+                    <div className="mb-5"><AddVehicle onAdded={reload} /></div>
+                    {personalCars.length ? <div className="grid gap-4 md:grid-cols-2">{personalCars.map((vehicle) => <VehicleCard key={vehicle.id} vehicle={vehicle} documents={data.documents} editable={data.personalVehicles.some((own) => own.id === vehicle.id)} documentUploadAvailable={data.documentUploadAvailable} onUpdated={reload} />)}</div> : <div className="rounded-[16px] border border-[#E7E7E7] bg-white p-6"><Car className="mb-4 h-8 w-8 text-[#1111F6]" /><h3 className="text-[19px]">Your cars will appear here</h3><p className="mt-2 text-[14px] text-[#777]">Add your car to keep its details and get roadside help faster.</p></div>}
                 </>}
                 <p className="mt-10 text-[12px] text-[#888]">Document dates shown here are records you enter. Check the actual policy or certificate before relying on its status.</p>
             </>}

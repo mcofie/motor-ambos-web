@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { reportMajorActivity } from "@/lib/discordActivity";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -76,6 +77,12 @@ export async function POST(req: Request) {
             .from("service_portal_otps")
             .update({ is_used: true })
             .eq("id", otpRecord.id);
+
+        await reportMajorActivity("Service record completed", [
+            { name: "Plate", value: cleanedPlate },
+            { name: "Vehicle ID", value: vehicle.id },
+            { name: "Provider", value: serviceData.providerName },
+        ]);
 
         return NextResponse.json({
             success: true,

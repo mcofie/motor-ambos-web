@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { canManageFleet, getAuthenticatedUser, getServiceClient } from "@/lib/serverAuth";
 import { normalizePhone, phoneVariants } from "@/lib/phone";
+import { reportMajorActivity } from "@/lib/discordActivity";
 
 const DriverSchema = z.object({
     orgId: z.string().uuid(),
@@ -61,5 +62,10 @@ export async function POST(request: Request) {
         role: "DRIVER",
     }, { onConflict: "org_member_id,member_id" });
     if (linkError) return NextResponse.json({ error: "Could not assign driver" }, { status: 500 });
+    await reportMajorActivity(existingLink ? "Fleet driver assignment updated" : "Driver added to fleet", [
+        { name: "Fleet ID", value: parsed.data.orgId },
+        { name: "Driver ID", value: driverId },
+        { name: "Vehicle ID", value: parsed.data.vehicleId },
+    ]);
     return NextResponse.json({ ok: true });
 }

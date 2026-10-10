@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceClient, staffApiError } from "@/lib/serverAuth";
 import { normalizePhone, phoneVariants } from "@/lib/phone";
+import { reportMajorActivity } from "@/lib/discordActivity";
 
 const OrganizationSchema = z.object({
     id: z.string().uuid().optional(),
@@ -64,11 +65,19 @@ async function saveOrganization(request: Request, isUpdate: boolean) {
         const { data, error } = await service.from("members").update(payload).eq("id", id!).eq("is_business", true).select("id").maybeSingle();
         if (error) return databaseError(error);
         if (!data) return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+        await reportMajorActivity("Organization updated", [
+            { name: "Organization", value: values.business_name },
+            { name: "Organization ID", value: data.id },
+        ]);
         return NextResponse.json({ id: data.id });
     }
 
     const { data, error } = await service.from("members").insert(payload).select("id").single();
     if (error) return databaseError(error);
+    await reportMajorActivity("Organization created", [
+        { name: "Organization", value: values.business_name },
+        { name: "Organization ID", value: data.id },
+    ]);
     return NextResponse.json({ id: data.id }, { status: 201 });
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { staffApiError } from "@/lib/serverAuth";
+import { reportMajorActivity } from "@/lib/discordActivity";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -60,6 +61,12 @@ export async function POST(req: Request) {
 
         const { error } = await query;
         if (error) throw error;
+
+        await reportMajorActivity(id ? "Service record updated" : "Service record added", [
+            { name: "Vehicle ID", value: vehicle_id },
+            { name: "Service date", value: service_date },
+            { name: "Provider", value: provider_name },
+        ]);
 
         return NextResponse.json({ success: true });
     } catch (e: any) {

@@ -39,4 +39,5 @@ export type PortalData = {
     organizations: PortalOrganization[];
     fleetDrivers: Array<{ id: string; orgId: string; name: string; phone: string; vehicleId: string | null }>;
     documents: PortalDocument[];
+    documentUploadAvailable: boolean;
 };

@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Activity notifications
+
+Set `DISCORD_ACTIVITY_WEBHOOK_URL` as a server-side environment variable in `.env.local` and in the production host. Keep the webhook URL out of `NEXT_PUBLIC_` variables and source control. Successful vehicle, fleet, issue, document, and service actions send short operational alerts. If Discord is unavailable, the user action still succeeds.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

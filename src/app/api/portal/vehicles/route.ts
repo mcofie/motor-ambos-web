@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { canManageFleet, getAuthenticatedUser, getServiceClient } from "@/lib/serverAuth";
+import { reportMajorActivity } from "@/lib/discordActivity";
 
 const VehicleSchema = z.object({
     make: z.string().trim().min(2).max(60),
@@ -39,5 +40,11 @@ export async function POST(request: Request) {
         is_primary: false,
     }).select("id").single();
     if (error) return NextResponse.json({ error: "Could not add this vehicle" }, { status: 500 });
+    await reportMajorActivity("Vehicle added", [
+        { name: "Vehicle", value: [parsed.data.year, parsed.data.make, parsed.data.model].filter(Boolean).join(" ") },
+        { name: "Plate", value: parsed.data.plate.toUpperCase() },
+        { name: "Fleet ID", value: parsed.data.orgId || null },
+        { name: "Vehicle ID", value: data.id },
+    ]);
     return NextResponse.json({ id: data.id }, { status: 201 });
 }

@@ -1,28 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <symbol id="smiling-car" viewBox="138 20 250 210">
+      <g fill="none" stroke="#1111F6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M195 129h-36a7 7 0 0 1-7-7v-11c0-19 14-29 45-32 9-29 33-46 64-46s56 17 66 46c30 3 45 13 45 32v11a7 7 0 0 1-7 7h-32M244 129h40"/>
+        <circle cx="220" cy="128" r="23"/>
+        <circle cx="308" cy="128" r="23"/>
+        <path d="M201 183c31 36 93 36 124 0"/>
+      </g>
+      <circle cx="220" cy="128" r="4" fill="#1111F6"/>
+      <circle cx="308" cy="128" r="4" fill="#1111F6"/>
+    </symbol>
+  </defs>
+
   <rect width="1200" height="630" fill="#fff"/>
-  <svg x="80" y="70" width="56" height="56" viewBox="138 20 250 210">
-    <g fill="none" stroke="#1111F6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M195 129h-36a7 7 0 0 1-7-7v-11c0-19 14-29 45-32 9-29 33-46 64-46s56 17 66 46c30 3 45 13 45 32v11a7 7 0 0 1-7 7h-32M244 129h40"/>
-      <circle cx="220" cy="128" r="23"/>
-      <circle cx="308" cy="128" r="23"/>
-      <path d="M201 183c31 36 93 36 124 0"/>
-    </g>
-    <circle cx="220" cy="128" r="4" fill="#1111F6"/>
-    <circle cx="308" cy="128" r="4" fill="#1111F6"/>
-  </svg>
-  <text x="154" y="109" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600" letter-spacing="-1">Motor Ambos</text>
-  <text x="80" y="282" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="86" letter-spacing="-5">Stay legal.</text>
-  <text x="80" y="378" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="86" letter-spacing="-5">Get help fast.</text>
-  <text x="84" y="440" fill="#777" font-family="Arial, Helvetica, sans-serif" font-size="27">Car papers, fleet access, and roadside help in Ghana.</text>
-  <rect x="80" y="530" width="1040" height="1" fill="#E7E7E7"/>
-  <text x="82" y="575" fill="#1111F6" font-family="Arial, Helvetica, sans-serif" font-size="20">motorambos.com</text>
-  <g opacity=".65">
-    <rect x="876" y="118" width="7" height="36" fill="#B6B1FF"/>
-    <rect x="892" y="103" width="7" height="67" fill="#D6B6FF"/>
-    <rect x="908" y="90" width="7" height="94" fill="#C6F1A6"/>
-    <rect x="924" y="116" width="7" height="42" fill="#F6D884"/>
-    <rect x="940" y="80" width="7" height="114" fill="#AAA6FF"/>
-    <rect x="956" y="100" width="7" height="73" fill="#B6B1FF"/>
-    <rect x="972" y="124" width="7" height="29" fill="#D6B6FF"/>
-  </g>
+  <rect x="770" width="430" height="630" fill="#F4F5FF"/>
+  <circle cx="986" cy="306" r="178" fill="#EBEDFF"/>
+  <use href="#smiling-car" x="832" y="176" width="308" height="259"/>
+
+  <use href="#smiling-car" x="80" y="67" width="58" height="49"/>
+  <text x="155" y="105" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600" letter-spacing="-1">Motor Ambos</text>
+
+  <text x="80" y="281" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="78" letter-spacing="-4">Stay legal.</text>
+  <text x="80" y="372" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="78" letter-spacing="-4">Get help fast.</text>
+  <text x="84" y="436" fill="#696969" font-family="Arial, Helvetica, sans-serif" font-size="25">Car papers, renewal reminders,</text>
+  <text x="84" y="471" fill="#696969" font-family="Arial, Helvetica, sans-serif" font-size="25">and roadside help in Ghana.</text>
+
+  <path d="M80 537h605" stroke="#E8E8E8"/>
+  <text x="82" y="578" fill="#1111F6" font-family="Arial, Helvetica, sans-serif" font-size="20">motorambos.com</text>
 </svg>

@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { findProvidersNear, type Provider } from "@/lib/supaFetch";
-import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
+import { BrandMark, LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
 import { formatPhone, normalizePhone } from "@/lib/phone";
 
 const HelpSchema = z.object({
@@ -417,7 +417,7 @@ export default function GetHelpWizardPage() {
                 <div className="relative z-10 mx-auto max-w-[1136px]">
                     <h2 className="text-[32px] font-normal tracking-[-0.035em] md:text-[40px]">Keep the essentials close.</h2>
                     <p className="mt-4 max-w-[460px] text-[16px] leading-[1.45] text-white/70">The driver app brings your car papers, reminders, and roadside help together.</p>
-                    <Link href="/login" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717]"><span className="h-4 w-4 rounded-[2px] bg-[#1111F6]" />Get started <ArrowRight className="h-4 w-4" /></Link>
+                    <Link href="/login" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717]"><BrandMark />Get started <ArrowRight className="h-4 w-4" /></Link>
                 </div>
             </section>
 

@@ -25,6 +25,10 @@ const navigation = [
     { href: "/help", label: "Roadside help" },
 ];
 
+export function BrandMark({ inverted = false }: { inverted?: boolean }) {
+    return <Image src="/icon.svg" alt="" width={24} height={20} className={`h-5 w-6 shrink-0 ${inverted ? "brightness-0 invert" : ""}`} />;
+}
+
 export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
@@ -73,7 +77,7 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
                 </div>
 
                 {hideCta ? <span className="hidden text-[14px] text-[#777] lg:block">Sign in</span> : <Link href="/login" className="group hidden h-[34px] items-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] font-normal text-white transition-colors hover:bg-[#0606D8] lg:inline-flex">
-                    Get started <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    <BrandMark inverted />Get started
                 </Link>}
 
                 <button
@@ -102,7 +106,7 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
                         ))}
                     </nav>
                     {!hideCta && <Link href="/login" onClick={() => setMenuOpen(false)} className="mt-auto flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[16px] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1111F6] focus-visible:ring-offset-2">
-                        Get started <ChevronRight className="h-4 w-4" />
+                        <BrandMark inverted />Get started
                     </Link>}
                 </div>
             )}
@@ -139,7 +143,7 @@ function Hero() {
                     </p>
                     <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
                         <Link href="/login" className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-full bg-[#1111F6] px-5 text-[15px] font-normal tracking-[-0.01em] text-white transition-colors hover:bg-[#0606D8] md:text-[16px]">
-                            <span className="h-[18px] w-[18px] rounded-[2px] bg-white" />
+                            <BrandMark inverted />
                             Get started
                             <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Link>
@@ -362,7 +366,7 @@ function FinalCta() {
                 <h2 className="text-[32px] font-normal tracking-[-0.035em] md:text-[40px]">Start with your car.</h2>
                 <p className="mt-4 max-w-[430px] text-[16px] leading-[1.45] text-white/70">Keep your papers close and know where to turn when the road surprises you.</p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                    <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717] transition-colors hover:bg-[#F1F1F1]"><span className="h-4 w-4 rounded-[2px] bg-[#1111F6]" />Get started</Link>
+                    <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717] transition-colors hover:bg-[#F1F1F1]"><BrandMark />Get started</Link>
                     <Link href="/business" className="inline-flex h-12 items-center justify-center rounded-full bg-white/20 px-5 text-[16px] text-white transition-colors hover:bg-white/30">For fleets</Link>
                 </div>
             </div>

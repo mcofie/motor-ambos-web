@@ -11,7 +11,7 @@ import {
     Truck,
     Users,
 } from "lucide-react";
-import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
+import { BrandMark, LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
 import MarketingMotion from "@/components/landing-home/MarketingMotion";
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/metadata";
@@ -113,7 +113,7 @@ export default function BusinessPage() {
                     <h1 className="text-[38px] font-normal leading-[1.06] tracking-[-0.04em] sm:text-[56px] lg:text-[62px] xl:text-[70px]">Every vehicle ready.<br />Every driver supported.</h1>
                     <p className="mx-auto mt-5 max-w-[760px] text-[16px] leading-[1.4] tracking-[-0.025em] text-[#858585] sm:mt-6 sm:text-[18px] md:text-[20px]">Run your fleet from your phone, stay ahead of papers, and know when a driver needs roadside help.</p>
                     <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
-                        <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[16px] text-white transition-colors hover:bg-[#0606D8]"><span className="h-4 w-4 rounded-[2px] bg-white" />Set up your fleet <ChevronRight className="h-4 w-4" /></Link>
+                        <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[16px] text-white transition-colors hover:bg-[#0606D8]"><BrandMark inverted />Set up your fleet <ChevronRight className="h-4 w-4" /></Link>
                         <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] px-5 text-[16px] transition-colors hover:bg-[#F8F8F8]">Explore roadside help</Link>
                     </div>
                     <p className="mt-6 text-[13px] text-[#888]">Monthly pricing per vehicle, with roadside help included.</p>
@@ -176,7 +176,7 @@ export default function BusinessPage() {
                     <h2 className="text-[32px] font-normal tracking-[-0.035em] md:text-[40px]">Bring your fleet together.</h2>
                     <p className="mt-4 max-w-[470px] text-[16px] leading-[1.45] text-white/70">Start with your vehicles and drivers. Motor Ambos can help get their papers organized.</p>
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                        <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717] transition-colors hover:bg-[#F1F1F1]"><span className="h-4 w-4 rounded-[2px] bg-[#1111F6]" />Set up your fleet</Link>
+                        <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717] transition-colors hover:bg-[#F1F1F1]"><BrandMark />Set up your fleet</Link>
                         <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full bg-white/20 px-5 text-[16px] text-white transition-colors hover:bg-white/30">Roadside help <ArrowRight className="ml-2 h-4 w-4" /></Link>
                     </div>
                 </div>

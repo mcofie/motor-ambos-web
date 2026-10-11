@@ -5,7 +5,7 @@ import PostHogPageView from "@/components/PostHogPageView"
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import { Inter, Space_Grotesk, Space_Mono, Newsreader, Plus_Jakarta_Sans } from 'next/font/google'
-import { siteDescription, siteTitle, siteUrl } from "@/lib/metadata"
+import { siteDescription, siteOgImage, siteTitle, siteUrl } from "@/lib/metadata"
 
 const jakarta = Plus_Jakarta_Sans({
     subsets: ['latin'],
@@ -56,13 +56,13 @@ export const metadata: Metadata = {
         title: siteTitle,
         description: siteDescription,
         url: "/",
-        images: [{ url: "/og-motor-ambos.png", width: 1200, height: 630, alt: "Motor Ambos — Stay legal. Get help fast." }],
+        images: [{ url: siteOgImage, width: 1200, height: 630, alt: "Motor Ambos smiling car logo and Stay legal. Get help fast." }],
     },
     twitter: {
         card: "summary_large_image",
         title: siteTitle,
         description: siteDescription,
-        images: ["/og-motor-ambos.png"],
+        images: [siteOgImage],
     },
 }
 

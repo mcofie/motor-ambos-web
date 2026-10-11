@@ -1,10 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="138 20 250 210" role="img" aria-label="Motor Ambos smiling car">
-  <g fill="none" stroke="#242424" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M195 129h-36a7 7 0 0 1-7-7v-11c0-19 14-29 45-32 9-29 33-46 64-46s56 17 66 46c30 3 45 13 45 32v11a7 7 0 0 1-7 7h-32M244 129h40"/>
-    <circle cx="220" cy="128" r="23"/>
-    <circle cx="308" cy="128" r="23"/>
-    <path d="M201 183c31 36 93 36 124 0"/>
+  <style>
+    .car { stroke-dasharray: 520; animation: draw-car 1.1s ease-out both; }
+    .wheel { stroke-dasharray: 160; animation: draw-wheel .7s .4s ease-out both; }
+    .smile { stroke-dasharray: 180; animation: draw-smile .7s .9s ease-out both; }
+    .hub { animation: show-hub .2s 1s both; }
+    @keyframes draw-car { from { stroke-dashoffset: 520; } to { stroke-dashoffset: 0; } }
+    @keyframes draw-wheel { from { stroke-dashoffset: 160; } to { stroke-dashoffset: 0; } }
+    @keyframes draw-smile { from { stroke-dashoffset: 180; } to { stroke-dashoffset: 0; } }
+    @keyframes show-hub { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .car, .wheel, .smile, .hub { animation: none; } }
+  </style>
+  <g fill="none" stroke="#1111F6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path class="car" d="M195 129h-36a7 7 0 0 1-7-7v-11c0-19 14-29 45-32 9-29 33-46 64-46s56 17 66 46c30 3 45 13 45 32v11a7 7 0 0 1-7 7h-32M244 129h40"/>
+    <circle class="wheel" cx="220" cy="128" r="23"/>
+    <circle class="wheel" cx="308" cy="128" r="23"/>
+    <path class="smile" d="M201 183c31 36 93 36 124 0"/>
   </g>
-  <circle cx="220" cy="128" r="4" fill="#242424"/>
-  <circle cx="308" cy="128" r="4" fill="#242424"/>
+  <circle class="hub" cx="220" cy="128" r="4" fill="#1111F6"/>
+  <circle class="hub" cx="308" cy="128" r="4" fill="#1111F6"/>
 </svg>

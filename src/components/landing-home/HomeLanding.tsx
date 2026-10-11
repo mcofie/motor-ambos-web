@@ -122,14 +122,14 @@ export function PixelCluster({ className, heights }: { className: string; height
 
 function Hero() {
     return (
-        <section className="relative flex w-full flex-col items-center overflow-hidden bg-white px-5 pb-14 pt-32 text-center sm:px-8 sm:pb-16 lg:min-h-[680px] lg:px-16 lg:pt-36 lg:text-left">
+        <section className="relative flex w-full flex-col items-center overflow-hidden bg-white px-5 pb-14 pt-24 text-center sm:px-8 sm:pb-16 sm:pt-32 lg:min-h-[680px] lg:px-16 lg:pt-36 lg:text-left">
             <PixelCluster className="left-[0.5%] top-[31%] rotate-[-8deg] opacity-60" heights={[10, 16, 7, 28, 15, 42, 24, 11, 31, 18, 47, 23, 12]} />
             <PixelCluster className="left-[33%] top-[22%] rotate-[-4deg] opacity-50" heights={[10, 18, 29, 14, 39, 18, 25, 12, 33, 16, 24, 9]} />
             <PixelCluster className="right-[2%] top-[37%] rotate-[5deg] opacity-60" heights={[12, 20, 33, 18, 43, 25, 13, 39, 20, 31, 15]} />
             <PixelCluster className="right-[13%] top-[25%] opacity-65" heights={[29, 52, 73, 103, 129, 143, 136, 116, 88, 62, 38, 20]} />
 
             <div className="relative z-10 mx-auto grid w-full max-w-[1200px] items-center gap-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-2">
-                <div>
+                <div className="order-2 lg:order-1">
                     <h1 className="mb-4 text-[40px] font-normal leading-[1.1] tracking-[-0.04em] text-[#171717] sm:text-[56px] sm:leading-[1.03] lg:text-[64px] xl:text-[72px]">
                         Stay legal.<br />Get help fast.
                     </h1>
@@ -147,7 +147,7 @@ function Hero() {
                         </Link>
                     </div>
                 </div>
-                <div className="relative mx-auto w-full max-w-[720px]">
+                <div className="relative order-1 mx-auto w-full max-w-[720px] lg:order-2">
                     <div aria-hidden="true" className="absolute inset-x-[12%] bottom-[12%] h-[50%] rounded-full bg-[#E9EBFF] opacity-45 blur-[70px]" />
                     <Image src="/images/roadside-tow.webp" alt="A Motor Ambos roadside tow truck helping a car" width={1400} height={700} priority sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 680px" className="relative h-auto w-full object-contain" />
                 </div>
@@ -199,13 +199,13 @@ function MechanicNetworkPreview() {
     return (
         <section className="bg-[#F7F7F7] px-5 py-16 sm:px-8 md:py-24 lg:px-16">
             <div className="mx-auto grid max-w-[1136px] items-center gap-10 md:grid-cols-[1fr_0.9fr] md:gap-16">
-                <div>
+                <div className="order-2 md:order-1">
                     <p className="mb-5 text-[12px] uppercase tracking-[0.1em] text-[#1111F6]">Roadside mechanic network</p>
                     <h2 className="max-w-[570px] text-[32px] font-normal leading-[1.12] tracking-[-0.04em] md:text-[42px]">Local mechanics, <span className="text-[#898989]">easier to find.</span></h2>
                     <p className="mt-5 max-w-[510px] text-[16px] leading-[1.5] text-[#777]">Tell us what happened and share your location. Compare nearby independent providers by distance and listed call-out fee, then contact one directly.</p>
                     <Link href="/roadside-mechanics" className="mt-7 inline-flex h-12 items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-5 text-[16px] transition-colors hover:border-[#B8B8FF]">Explore the network <ArrowRight className="h-4 w-4 text-[#1111F6]" /></Link>
                 </div>
-                <div className="relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-[20px] border border-[#E7E9F7] bg-[#F1F3FF] p-4 sm:min-h-[400px] sm:p-6">
+                <div className="relative order-1 flex min-h-[300px] flex-col justify-end overflow-hidden rounded-[20px] border border-[#E7E9F7] bg-[#F1F3FF] p-4 sm:min-h-[400px] sm:p-6 md:order-2">
                     <Image src="/images/roadside-cables.webp" alt="Blue and silver jumper cables" width={900} height={717} sizes="(max-width: 768px) 90vw, 480px" className="pointer-events-none absolute left-1/2 top-[-8%] h-[85%] w-[90%] max-w-[480px] -translate-x-1/2 object-contain" />
                     <div className="relative z-10 flex items-center justify-between gap-3 rounded-[14px] border border-white/80 bg-white/95 px-4 py-3 shadow-[0_16px_40px_rgba(17,17,246,0.09)] backdrop-blur-sm sm:px-5 sm:py-4">
                         <div><span className="block text-[15px] text-[#171717]">Battery trouble?</span><span className="mt-1 block text-[13px] text-[#777]">Find nearby roadside help</span></div>

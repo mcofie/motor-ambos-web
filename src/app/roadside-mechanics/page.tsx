@@ -30,10 +30,10 @@ export default function RoadsideMechanicsPage() {
             <MarketingMotion />
             <LandingNav />
 
-            <section className="relative overflow-hidden px-5 pb-20 pt-32 sm:px-8 md:pb-28 md:pt-[176px] lg:px-16">
+            <section className="relative overflow-hidden px-5 pb-20 pt-24 sm:px-8 sm:pt-32 md:pb-28 md:pt-[176px] lg:px-16">
                 <PixelCluster className="right-[5%] top-[20%] opacity-45" heights={[14, 27, 42, 67, 83, 70, 46, 23]} />
                 <div className="relative mx-auto grid max-w-[1136px] items-center gap-14 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
-                    <div>
+                    <div className="order-2 lg:order-1">
                         <p className="mb-6 text-[12px] uppercase tracking-[0.11em] text-[#1111F6]">Roadside mechanic network</p>
                         <h1 className="max-w-[680px] text-[42px] font-normal leading-[1.06] tracking-[-0.045em] sm:text-[56px] md:text-[68px]">Stuck? Find a mechanic nearby.</h1>
                         <p className="mt-6 max-w-[540px] text-[18px] leading-[1.45] text-[#777] md:text-[20px]">Motor Ambos helps you find independent roadside mechanics and other providers near your location. Compare distance and listed call-out fees before you call.</p>
@@ -42,7 +42,7 @@ export default function RoadsideMechanicsPage() {
                             <Link href="#our-approach" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E7E7E7] px-6 text-[16px] transition-colors hover:bg-[#FAFAFA]">The idea behind it</Link>
                         </div>
                     </div>
-                    <MechanicNetworkMap />
+                    <div className="order-1 min-w-0 lg:order-2"><MechanicNetworkMap /></div>
                 </div>
             </section>
 

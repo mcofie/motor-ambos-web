@@ -20,10 +20,10 @@ export default function SmartCardPage() {
             <MarketingMotion />
             <LandingNav />
 
-            <section className="relative overflow-hidden px-5 pb-16 pt-32 text-center sm:px-8 sm:pb-20 lg:px-16 lg:pt-36 lg:text-left">
+            <section className="relative overflow-hidden px-5 pb-16 pt-24 text-center sm:px-8 sm:pb-20 sm:pt-32 lg:px-16 lg:pt-36 lg:text-left">
                 <PixelCluster className="right-[6%] top-[20%] opacity-45" heights={[16, 29, 48, 72, 83, 62, 33, 15]} />
                 <div className="relative z-10 mx-auto grid max-w-[1200px] items-center gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-6">
-                    <div>
+                    <div className="order-2 lg:order-1">
                         <p className="mb-5 text-[12px] uppercase tracking-[0.11em] text-[#1111F6]">Motor Ambos Smart Card</p>
                         <h1 className="text-[40px] font-normal leading-[1.07] tracking-[-0.045em] sm:text-[56px] lg:text-[68px]">Your car, one connected record.</h1>
                         <p className="mx-auto mt-6 max-w-[570px] text-[17px] leading-[1.5] text-[#777] sm:text-[19px] lg:mx-0">Keep the important details with the vehicle. A linked card gives someone a simple way to open its Motor Ambos page when you choose to share it.</p>
@@ -32,7 +32,7 @@ export default function SmartCardPage() {
                             <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] px-6 text-[16px] transition-colors hover:bg-[#F8F8F8]">Roadside help</Link>
                         </div>
                     </div>
-                    <div className="relative mx-auto w-full max-w-[650px]">
+                    <div className="relative order-1 mx-auto w-full max-w-[650px] lg:order-2">
                         <div aria-hidden="true" className="absolute inset-x-[15%] bottom-[15%] h-[45%] rounded-full bg-[#E9EBFF] opacity-50 blur-[65px]" />
                         <Image src="/images/smart-card-vehicle.webp" alt="Illustration of a blue car card beside a vehicle" width={1200} height={800} priority sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 650px" className="relative h-auto w-full object-contain" />
                     </div>

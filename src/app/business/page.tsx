@@ -104,11 +104,11 @@ export default function BusinessPage() {
             <MarketingMotion />
             <LandingNav />
 
-            <section className="relative overflow-hidden px-5 pb-16 pt-32 text-center sm:px-8 sm:pb-20 lg:px-16 lg:pt-36 lg:text-left">
+            <section className="relative overflow-hidden px-5 pb-16 pt-24 text-center sm:px-8 sm:pb-20 sm:pt-32 lg:px-16 lg:pt-36 lg:text-left">
                 <PixelCluster className="left-[8%] top-[38%] opacity-40" heights={[10, 18, 29, 15, 42, 25, 12]} />
                 <PixelCluster className="right-[9%] top-[44%] opacity-45" heights={[18, 38, 65, 88, 70, 43, 20]} />
                 <div className="relative z-10 mx-auto grid max-w-[1200px] items-center gap-8 lg:grid-cols-[0.93fr_1.07fr] lg:gap-4">
-                    <div>
+                    <div className="order-2 lg:order-1">
                     <p className="mb-5 text-[14px] text-[#777]">Motor Ambos for fleets of 5–50 vehicles</p>
                     <h1 className="text-[38px] font-normal leading-[1.06] tracking-[-0.04em] sm:text-[56px] lg:text-[62px] xl:text-[70px]">Every vehicle ready.<br />Every driver supported.</h1>
                     <p className="mx-auto mt-5 max-w-[760px] text-[16px] leading-[1.4] tracking-[-0.025em] text-[#858585] sm:mt-6 sm:text-[18px] md:text-[20px]">Run your fleet from your phone, stay ahead of papers, and know when a driver needs roadside help.</p>
@@ -118,7 +118,7 @@ export default function BusinessPage() {
                     </div>
                     <p className="mt-6 text-[13px] text-[#888]">Monthly pricing per vehicle, with roadside help included.</p>
                     </div>
-                    <div className="relative mx-auto w-full max-w-[680px]">
+                    <div className="relative order-1 mx-auto w-full max-w-[680px] lg:order-2">
                         <div aria-hidden="true" className="absolute inset-x-[15%] bottom-[12%] h-[45%] rounded-full bg-[#E9EBFF] opacity-50 blur-[65px]" />
                         <Image src="/images/fleet-vehicles.webp" alt="A small fleet of Motor Ambos vehicles" width={1400} height={933} priority sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 650px" className="relative h-auto w-full object-contain" />
                     </div>

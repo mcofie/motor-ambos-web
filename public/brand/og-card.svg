@@ -1,7 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="#fff"/>
-  <rect x="80" y="70" width="56" height="56" rx="9" fill="#1111F6"/>
-  <path d="m94 101 2.5-9a4 4 0 0 1 3.8-2.8h15.4a4 4 0 0 1 3.8 2.8l2.5 9m-28 0h30a2.5 2.5 0 0 1 2.5 2.5v5.5a1.5 1.5 0 0 1-1.5 1.5h-32a1.5 1.5 0 0 1-1.5-1.5v-5.5A2.5 2.5 0 0 1 94 101Zm3 9.5v3m22-3v3m-22-8h4m15 0h4" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <svg x="80" y="70" width="56" height="56" viewBox="138 20 250 210">
+    <g fill="none" stroke="#242424" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M195 129h-36a7 7 0 0 1-7-7v-11c0-19 14-29 45-32 9-29 33-46 64-46s56 17 66 46c30 3 45 13 45 32v11a7 7 0 0 1-7 7h-32M244 129h40"/>
+      <circle cx="220" cy="128" r="23"/>
+      <circle cx="308" cy="128" r="23"/>
+      <path d="M201 183c31 36 93 36 124 0"/>
+    </g>
+    <circle cx="220" cy="128" r="4" fill="#242424"/>
+    <circle cx="308" cy="128" r="4" fill="#242424"/>
+  </svg>
   <text x="154" y="109" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600" letter-spacing="-1">Motor Ambos</text>
   <text x="80" y="282" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="86" letter-spacing="-5">Stay legal.</text>
   <text x="80" y="378" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="86" letter-spacing="-5">Get help fast.</text>

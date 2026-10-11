@@ -57,7 +57,7 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
         <header className="fixed inset-x-0 top-0 z-50 border-b border-[#EEEEEE] bg-white">
             <nav className="relative mx-auto flex h-16 max-w-[1536px] items-center justify-between px-5 sm:px-8 lg:h-[76px] lg:px-16" aria-label="Main navigation">
                 <Link href="/" aria-label="Motor Ambos home" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.035em] text-[#171717]">
-                    <Image src="/icon.svg" alt="" width={36} height={36} className="h-9 w-9" priority />
+                    <Image src="/icon.svg" alt="" width={42} height={36} className="h-9 w-[42px]" priority />
                     <span className="lg:hidden">Motor Ambos</span>
                 </Link>
 
@@ -374,7 +374,7 @@ export function LandingFooter() {
         <footer className="bg-white px-5 py-16 sm:px-8 sm:py-20 lg:px-16">
             <div className="mx-auto grid max-w-[1136px] gap-8 sm:gap-12 md:grid-cols-4">
                 <div>
-                    <Link href="/" aria-label="Motor Ambos home" className="mb-6 block h-9 w-9"><Image src="/icon.svg" alt="" width={36} height={36} className="h-9 w-9" /></Link>
+                    <Link href="/" aria-label="Motor Ambos home" className="mb-6 block h-9 w-[42px]"><Image src="/icon.svg" alt="" width={42} height={36} className="h-9 w-[42px]" /></Link>
                     <p className="text-[14px] text-[#777]">Keep your car ready for the road.</p>
                 </div>
                 <div><h3 className="mb-4 text-[14px] text-[#171717]">Drivers</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/login" className="hover:text-[#1111F6]">Get started</Link><Link href="/help" className="hover:text-[#1111F6]">Roadside help</Link><Link href="/roadside-mechanics" className="hover:text-[#1111F6]">Mechanic network</Link><Link href="/#how-it-works" className="hover:text-[#1111F6]">How it works</Link></div></div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight, CalendarDays, Car, Check, ChevronRight, FileText, Loader2, LogOut, Pencil, Plus, ShieldCheck, Truck } from "lucide-react";
 import { logout } from "@/lib/supaFetch";
@@ -472,7 +473,7 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
     return <div className="base-landing min-h-[100svh] bg-[#F7F7F7] text-[#171717]">
         <header className="sticky top-0 z-40 border-b border-[#E9E9E9] bg-white/95 backdrop-blur-md">
             <div className="mx-auto flex h-16 max-w-[1136px] items-center justify-between px-5 sm:h-[76px] sm:px-8">
-                <Link href="/" className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.035em]"><span className="flex h-8 w-8 items-center justify-center rounded-[4px] bg-[#1111F6] text-white"><Car className="h-4 w-4" /></span>Motor Ambos</Link>
+                <Link href="/" className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.035em]"><Image src="/icon.svg" alt="" width={42} height={36} className="h-9 w-[42px]" />Motor Ambos</Link>
                 <button type="button" onClick={signOut} className="inline-flex h-11 items-center gap-1.5 text-[14px] text-[#666] hover:text-[#1111F6]"><LogOut className="h-4 w-4" />Sign out</button>
             </div>
         </header>

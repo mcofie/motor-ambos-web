@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="138 20 250 210" role="img" aria-label="Motor Ambos smiling car">
+  <g fill="none" stroke="#242424" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M195 129h-36a7 7 0 0 1-7-7v-11c0-19 14-29 45-32 9-29 33-46 64-46s56 17 66 46c30 3 45 13 45 32v11a7 7 0 0 1-7 7h-32M244 129h40"/>
+    <circle cx="220" cy="128" r="23"/>
+    <circle cx="308" cy="128" r="23"/>
+    <path d="M201 183c31 36 93 36 124 0"/>
+  </g>
+  <circle cx="220" cy="128" r="4" fill="#242424"/>
+  <circle cx="308" cy="128" r="4" fill="#242424"/>
+</svg>

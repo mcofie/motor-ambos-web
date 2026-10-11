@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Wrench, LifeBuoy, Users, LogOut, LayoutDashboard, QrCode, Building2, ShieldCheck } from "lucide-react";
 import { cls } from "./ui/AdminUI";
 
@@ -19,8 +20,8 @@ export function AdminSidebar({ activeTab, onLogout }: AdminSidebarProps) {
             <div className="hidden h-24 items-center justify-center border-b border-white/5 md:flex lg:justify-start lg:px-10 shrink-0">
                 <div className="relative group">
                     <div className="absolute -inset-2 bg-emerald-500/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-500" />
-                    <div className="h-9 w-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center text-white font-bold relative shadow-lg shadow-emerald-900/20">
-                        <LayoutDashboard className="h-5 w-5" />
+                    <div className="relative flex h-9 w-10 items-center justify-center rounded-xl bg-white">
+                        <Image src="/icon.svg" alt="" width={38} height={32} className="h-8 w-[38px]" />
                     </div>
                 </div>
                 <div className="hidden lg:block ml-4">

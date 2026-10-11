@@ -13,11 +13,9 @@ import {
     ChevronRight,
     CircleAlert,
     ClipboardCheck,
-    Menu,
     QrCode,
     Smartphone,
     Truck,
-    X,
 } from "lucide-react";
 
 const navigation = [
@@ -55,10 +53,10 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
 
     return (
         <header className="fixed inset-x-0 top-0 z-50 border-b border-[#EEEEEE] bg-white">
-            <nav className="relative mx-auto flex h-16 max-w-[1536px] items-center justify-between px-5 sm:px-8 lg:h-[76px] lg:px-16" aria-label="Main navigation">
-                <Link href="/" aria-label="Motor Ambos home" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.035em] text-[#171717]">
+            <nav className="relative mx-auto flex h-16 max-w-[1536px] items-center justify-between gap-3 px-5 sm:px-8 lg:h-[76px] lg:px-16" aria-label="Main navigation">
+                <Link href="/" aria-label="Motor Ambos home" onClick={() => setMenuOpen(false)} className="flex min-w-0 items-center gap-2.5 text-[16px] font-medium tracking-[-0.035em] text-[#171717] sm:text-[17px]">
                     <Image src="/icon.svg" alt="" width={42} height={36} className="h-9 w-[42px]" priority />
-                    <span className="lg:hidden">Motor Ambos</span>
+                    <span className="truncate lg:hidden">Motor Ambos</span>
                 </Link>
 
                 <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 lg:flex">
@@ -84,23 +82,26 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
                     aria-expanded={menuOpen}
                     aria-controls="mobile-navigation"
                     onClick={() => setMenuOpen((open) => !open)}
-                    className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg border border-[#EAEAEA] text-[#171717] lg:hidden"
+                    className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#171717] transition-colors hover:bg-[#F5F5F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1111F6] focus-visible:ring-offset-2 lg:hidden"
                 >
-                    {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                    <span aria-hidden="true" className="relative block h-6 w-6">
+                        <span className={`absolute left-0.5 top-[7px] h-[2px] w-5 rounded-full bg-current transition-transform duration-200 ${menuOpen ? "translate-y-[5px] rotate-45" : ""}`} />
+                        <span className={`absolute left-0.5 top-[17px] h-[2px] w-5 rounded-full bg-current transition-transform duration-200 ${menuOpen ? "-translate-y-[5px] -rotate-45" : ""}`} />
+                    </span>
                 </button>
             </nav>
 
             {menuOpen && (
-                <div id="mobile-navigation" className="absolute inset-x-0 top-16 z-40 flex h-[calc(100dvh-64px)] flex-col overflow-y-auto border-t border-[#EEEEEE] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5 lg:hidden">
+                <div id="mobile-navigation" className="absolute inset-x-0 top-16 z-40 flex h-[calc(100dvh-64px)] flex-col overflow-y-auto overscroll-contain border-t border-[#EEEEEE] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 sm:px-8 lg:hidden">
                     <nav aria-label="Mobile navigation" className="flex flex-col">
                         {navigation.map((link) => (
-                            <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} aria-current={isActive(link.href) ? "page" : undefined} className={`flex min-h-[68px] items-center justify-between border-b border-[#ECECEC] py-4 text-[20px] font-normal ${isActive(link.href) ? "text-[#1111F6]" : "text-[#171717]"}`}>
+                            <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} aria-current={isActive(link.href) ? "page" : undefined} className={`flex min-h-[64px] items-center justify-between border-b border-[#ECECEC] py-4 text-[19px] font-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1111F6] ${isActive(link.href) ? "text-[#1111F6]" : "text-[#171717]"}`}>
                                 <span className="flex items-center gap-3">{isActive(link.href) && <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#1111F6]" />}{link.label}</span>
-                                <ArrowRight className={`h-5 w-5 ${isActive(link.href) ? "text-[#1111F6]" : "text-[#777]"}`} />
+                                <ArrowRight className={`h-5 w-5 shrink-0 ${isActive(link.href) ? "text-[#1111F6]" : "text-[#777]"}`} strokeWidth={1.5} />
                             </Link>
                         ))}
                     </nav>
-                    {!hideCta && <Link href="/login" onClick={() => setMenuOpen(false)} className="mt-auto flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[16px] text-white">
+                    {!hideCta && <Link href="/login" onClick={() => setMenuOpen(false)} className="mt-auto flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[16px] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1111F6] focus-visible:ring-offset-2">
                         Get started <ChevronRight className="h-4 w-4" />
                     </Link>}
                 </div>

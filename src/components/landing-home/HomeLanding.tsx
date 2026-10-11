@@ -13,12 +13,10 @@ import {
     ChevronRight,
     CircleAlert,
     ClipboardCheck,
-    MapPin,
     Menu,
     QrCode,
     Smartphone,
     Truck,
-    Wrench,
     X,
 } from "lucide-react";
 
@@ -124,33 +122,38 @@ export function PixelCluster({ className, heights }: { className: string; height
 
 function Hero() {
     return (
-        <section className="relative flex w-full flex-col items-center overflow-hidden bg-white px-5 pb-14 pt-32 text-center sm:h-[100svh] sm:min-h-[700px] sm:max-h-[1120px] sm:px-8 sm:pb-[205px] sm:pt-[198px] lg:min-h-[640px]">
+        <section className="relative flex w-full flex-col items-center overflow-hidden bg-white px-5 pb-14 pt-32 text-center sm:px-8 sm:pb-16 lg:min-h-[680px] lg:px-16 lg:pt-36 lg:text-left">
             <PixelCluster className="left-[0.5%] top-[31%] rotate-[-8deg] opacity-60" heights={[10, 16, 7, 28, 15, 42, 24, 11, 31, 18, 47, 23, 12]} />
             <PixelCluster className="left-[33%] top-[22%] rotate-[-4deg] opacity-50" heights={[10, 18, 29, 14, 39, 18, 25, 12, 33, 16, 24, 9]} />
             <PixelCluster className="right-[2%] top-[37%] rotate-[5deg] opacity-60" heights={[12, 20, 33, 18, 43, 25, 13, 39, 20, 31, 15]} />
-            <PixelCluster className="right-[21%] top-[41%] opacity-65" heights={[29, 52, 73, 103, 129, 143, 136, 116, 88, 62, 38, 20]} />
-            <PixelCluster className="left-[47%] top-[66%] rotate-[4deg] opacity-50" heights={[15, 25, 11, 33, 19, 41, 21, 13, 29, 17, 35]} />
+            <PixelCluster className="right-[13%] top-[25%] opacity-65" heights={[29, 52, 73, 103, 129, 143, 136, 116, 88, 62, 38, 20]} />
 
-            <div className="relative z-10 mx-auto w-full max-w-[1120px]">
-                <h1 className="mx-auto mb-4 max-w-[960px] text-[40px] font-normal leading-[1.1] tracking-[-0.04em] text-[#171717] sm:text-[56px] sm:leading-[1.03] md:text-[72px]">
-                    Stay legal.<br />Get help fast.
-                </h1>
-                <p className="mx-auto mb-[30px] max-w-[850px] text-[18px] font-normal leading-[1.4] tracking-[-0.025em] text-[#858585] md:text-[20px] md:leading-[28px]">
-                    Car papers, renewal reminders, and trusted roadside help at an upfront price.
-                </p>
-                <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-                    <Link href="/login" className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-full bg-[#1111F6] px-5 text-[15px] font-normal tracking-[-0.01em] text-white transition-colors hover:bg-[#0606D8] md:text-[16px]">
-                        <span className="h-[18px] w-[18px] rounded-[2px] bg-white" />
-                        Get started
-                        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                    <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] bg-white px-5 text-[15px] font-normal tracking-[-0.01em] text-[#171717] transition-colors hover:bg-[#FAFAFA] md:text-[16px]">
-                        Find roadside help
-                    </Link>
+            <div className="relative z-10 mx-auto grid w-full max-w-[1200px] items-center gap-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-2">
+                <div>
+                    <h1 className="mb-4 text-[40px] font-normal leading-[1.1] tracking-[-0.04em] text-[#171717] sm:text-[56px] sm:leading-[1.03] lg:text-[64px] xl:text-[72px]">
+                        Stay legal.<br />Get help fast.
+                    </h1>
+                    <p className="mx-auto mb-[30px] max-w-[650px] text-[18px] font-normal leading-[1.4] tracking-[-0.025em] text-[#858585] md:text-[20px] md:leading-[28px] lg:mx-0">
+                        Car papers, renewal reminders, and trusted roadside help at an upfront price.
+                    </p>
+                    <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
+                        <Link href="/login" className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-full bg-[#1111F6] px-5 text-[15px] font-normal tracking-[-0.01em] text-white transition-colors hover:bg-[#0606D8] md:text-[16px]">
+                            <span className="h-[18px] w-[18px] rounded-[2px] bg-white" />
+                            Get started
+                            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                        <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] bg-white px-5 text-[15px] font-normal tracking-[-0.01em] text-[#171717] transition-colors hover:bg-[#FAFAFA] md:text-[16px]">
+                            Find roadside help
+                        </Link>
+                    </div>
+                </div>
+                <div className="relative mx-auto w-full max-w-[720px]">
+                    <div aria-hidden="true" className="absolute inset-x-[12%] bottom-[12%] h-[50%] rounded-full bg-[#E9EBFF] opacity-45 blur-[70px]" />
+                    <Image src="/images/roadside-tow.webp" alt="A Motor Ambos roadside tow truck helping a car" width={1400} height={700} priority sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 680px" className="relative h-auto w-full object-contain" />
                 </div>
             </div>
 
-            <div className="relative z-10 mx-auto mt-16 w-full max-w-[1280px] px-5 sm:absolute sm:bottom-10 sm:left-0 sm:right-0 sm:mt-0 sm:px-8 lg:bottom-[14px]">
+            <div className="relative z-10 mx-auto mt-8 w-full max-w-[1280px] px-5 text-center sm:px-8 lg:mt-auto lg:pt-12">
                 <p className="mb-5 text-[13px] font-normal tracking-[-0.01em] text-[#858585] md:text-[14px]">One app for drivers and fleets. Help within reach for anyone in the car.</p>
                 <div className="marketing-marquee mx-auto max-w-[960px] text-[16px] font-medium tracking-[-0.03em] text-[#777] md:text-[20px]">
                     <span className="sr-only">Driver app, fleet access, and QR car sticker</span>
@@ -202,10 +205,12 @@ function MechanicNetworkPreview() {
                     <p className="mt-5 max-w-[510px] text-[16px] leading-[1.5] text-[#777]">Tell us what happened and share your location. Compare nearby independent providers by distance and listed call-out fee, then contact one directly.</p>
                     <Link href="/roadside-mechanics" className="mt-7 inline-flex h-12 items-center gap-2 rounded-full border border-[#E5E5E5] bg-white px-5 text-[16px] transition-colors hover:border-[#B8B8FF]">Explore the network <ArrowRight className="h-4 w-4 text-[#1111F6]" /></Link>
                 </div>
-                <div className="rounded-[16px] border border-[#E9E9E9] bg-white p-5 sm:p-7">
-                    <div className="flex items-center justify-between border-b border-[#ECECEC] pb-5"><span className="text-[15px]">Roadside help</span><MapPin className="h-5 w-5 text-[#1111F6]" /></div>
-                    <div className="flex items-center gap-4 py-6"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] bg-[#EEEEFF] text-[#1111F6]"><Wrench className="h-6 w-6" /></span><div><span className="block text-[18px]">Find a mechanic</span><span className="mt-1 block text-[14px] text-[#777]">For a breakdown, flat tyre, battery issue, and more</span></div></div>
-                    <div className="flex flex-wrap gap-2 border-t border-[#ECECEC] pt-5 text-[12px] text-[#666]"><span className="rounded-full bg-[#F7F7F7] px-3 py-2">Nearby options</span><span className="rounded-full bg-[#F7F7F7] px-3 py-2">Call-out fee when listed</span><span className="rounded-full bg-[#F7F7F7] px-3 py-2">Call or message</span></div>
+                <div className="relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-[20px] border border-[#E7E9F7] bg-[#F1F3FF] p-4 sm:min-h-[400px] sm:p-6">
+                    <Image src="/images/roadside-cables.webp" alt="Blue and silver jumper cables" width={900} height={717} sizes="(max-width: 768px) 90vw, 480px" className="pointer-events-none absolute left-1/2 top-[-8%] h-[85%] w-[90%] max-w-[480px] -translate-x-1/2 object-contain" />
+                    <div className="relative z-10 flex items-center justify-between gap-3 rounded-[14px] border border-white/80 bg-white/95 px-4 py-3 shadow-[0_16px_40px_rgba(17,17,246,0.09)] backdrop-blur-sm sm:px-5 sm:py-4">
+                        <div><span className="block text-[15px] text-[#171717]">Battery trouble?</span><span className="mt-1 block text-[13px] text-[#777]">Find nearby roadside help</span></div>
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1111F6] text-white"><ArrowRight className="h-5 w-5" /></span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -257,13 +262,8 @@ function PapersVisual() {
 
 function HelpVisual() {
     return (
-        <div className="relative flex h-full items-center justify-center overflow-hidden bg-[#FCFCFC] p-7">
-            <div className="absolute inset-0 opacity-50" style={{ backgroundImage: "linear-gradient(#E9E9E9 1px, transparent 1px), linear-gradient(90deg, #E9E9E9 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
-            <div className="relative flex w-full max-w-[340px] items-center gap-4 rounded-[18px] border border-[#ECECEC] bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#EEEEFF] text-[#1111F6]"><Wrench className="h-6 w-6" /></span>
-                <div><span className="block text-[15px] font-medium">Roadside help</span><span className="mt-1 block text-[13px] text-[#777]">Nearby mechanic · Price upfront</span></div>
-                <MapPin className="ml-auto h-5 w-5 shrink-0 text-[#1111F6]" />
-            </div>
+        <div className="relative flex h-full items-center justify-center overflow-hidden bg-[#F1F3FF] p-3">
+            <Image src="/images/roadside-car.webp" alt="A car with a flat tyre" width={900} height={718} sizes="(max-width: 768px) 90vw, 520px" className="h-full w-full max-w-[480px] object-contain" />
         </div>
     );
 }

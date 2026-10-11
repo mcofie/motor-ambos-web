@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, BatteryCharging, Disc, Droplets, MapPin, MessageCircle, Phone, ShieldCheck, Truck, Wrench, Zap } from "lucide-react";
+import { ArrowRight, MapPin, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
 import MarketingMotion from "@/components/landing-home/MarketingMotion";
 import MechanicNetworkMap from "@/components/landing-home/MechanicNetworkMap";
@@ -10,12 +10,12 @@ import { publicPageMetadata } from "@/lib/metadata";
 export const metadata: Metadata = publicPageMetadata("Roadside Mechanic Network", "Stuck on the road? Find independent roadside mechanics near you, compare distance and listed call-out fees, then call or message directly.", "/roadside-mechanics");
 
 const helpTypes = [
-    { icon: Wrench, title: "Mechanical trouble", detail: "When the car needs a mechanic at the roadside.", illustration: null },
-    { icon: BatteryCharging, title: "Battery problems", detail: "For a flat battery or a car that will not start.", illustration: "/images/roadside-cables.webp" },
-    { icon: Disc, title: "Flat tyre", detail: "Find help to change or inflate a tyre.", illustration: "/images/roadside-car.webp" },
-    { icon: Zap, title: "Electrical issues", detail: "For wiring and other electrical faults.", illustration: null },
-    { icon: Droplets, title: "Out of fuel", detail: "Find assistance when the tank runs dry.", illustration: null },
-    { icon: Truck, title: "Towing", detail: "Move your car when it cannot be driven.", illustration: "/images/roadside-tow.webp" },
+    { title: "Mechanical trouble", detail: "When the car needs a mechanic at the roadside.", illustration: "/images/roadside-engine.webp" },
+    { title: "Battery problems", detail: "For a flat battery or a car that will not start.", illustration: "/images/roadside-cables.webp" },
+    { title: "Flat tyre", detail: "Find help to change or inflate a tyre.", illustration: "/images/roadside-car.webp" },
+    { title: "Electrical issues", detail: "For wiring and other electrical faults.", illustration: "/images/roadside-electrical.webp" },
+    { title: "Out of fuel", detail: "Find assistance when the tank runs dry.", illustration: "/images/roadside-fuel.webp" },
+    { title: "Towing", detail: "Move your car when it cannot be driven.", illustration: "/images/roadside-tow.webp" },
 ];
 
 const steps = [
@@ -85,7 +85,7 @@ export default function RoadsideMechanicsPage() {
             <section className="px-5 py-20 sm:px-8 md:py-28 lg:px-16">
                 <div className="mx-auto max-w-[1136px]">
                     <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end"><div><p className="mb-5 text-[12px] uppercase tracking-[0.11em] text-[#1111F6]">Types of help</p><h2 className="max-w-[610px] text-[32px] leading-[1.12] tracking-[-0.04em] md:text-[42px]">One place to start, <span className="text-[#898989]">whatever went wrong.</span></h2></div><Link href="/help" className="inline-flex h-12 items-center gap-2 self-start rounded-full border border-[#E7E7E7] px-5 text-[16px] transition-colors hover:bg-[#FAFAFA] md:self-auto">Browse help options <ArrowRight className="h-4 w-4 text-[#1111F6]" /></Link></div>
-                    <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{helpTypes.map(({ icon: Icon, title, detail, illustration }) => <article key={title} className="rounded-[12px] border border-[#EAEAEA] p-5 sm:p-6"><div className="flex h-[128px] items-center justify-center overflow-hidden rounded-[10px] bg-[#F1F3FF]">{illustration ? <Image src={illustration} alt="" width={440} height={260} sizes="(max-width: 640px) 90vw, 340px" className="h-full w-full object-contain p-2" /> : <Icon className="h-10 w-10 text-[#1111F6]" strokeWidth={1.5} />}</div><h3 className="mt-5 text-[19px] tracking-[-0.03em]">{title}</h3><p className="mt-2 text-[15px] leading-[1.45] text-[#777]">{detail}</p></article>)}</div>
+                    <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{helpTypes.map(({ title, detail, illustration }) => <article key={title} className="rounded-[12px] border border-[#EAEAEA] p-5 sm:p-6"><div className="flex h-[128px] items-center justify-center overflow-hidden rounded-[10px] bg-[#F1F3FF]"><Image src={illustration} alt="" width={440} height={260} sizes="(max-width: 640px) 90vw, 340px" className="h-full w-full object-contain p-2" /></div><h3 className="mt-5 text-[19px] tracking-[-0.03em]">{title}</h3><p className="mt-2 text-[15px] leading-[1.45] text-[#777]">{detail}</p></article>)}</div>
                 </div>
             </section>
 

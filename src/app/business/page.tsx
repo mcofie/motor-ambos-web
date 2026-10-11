@@ -1,13 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
     ArrowRight,
     Bell,
     Check,
     ChevronRight,
-    CircleAlert,
     ClipboardCheck,
     FileSpreadsheet,
-    MapPin,
     Smartphone,
     Truck,
     Users,
@@ -71,13 +70,8 @@ function RenewalsVisual() {
 
 function RoadsideVisual() {
     return (
-        <div className="relative flex h-full items-center justify-center overflow-hidden bg-[#FCFCFC] p-5 sm:p-8">
-            <div className="absolute inset-0 opacity-50" style={{ backgroundImage: "linear-gradient(#EAEAEA 1px, transparent 1px), linear-gradient(90deg, #EAEAEA 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
-            <div className="relative flex w-full max-w-[390px] items-center gap-4 rounded-[18px] border border-[#EAEAEA] bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#EEEEFF] text-[#1111F6]"><CircleAlert className="h-5 w-5" /></span>
-                <div><span className="block text-[15px] font-medium">Roadside request</span><span className="mt-1 block text-[12px] text-[#777]">A driver has asked for help</span></div>
-                <MapPin className="ml-auto h-5 w-5 shrink-0 text-[#1111F6]" />
-            </div>
+        <div className="relative flex h-full items-center justify-center overflow-hidden bg-[#F1F3FF] p-3">
+            <Image src="/images/roadside-tow.webp" alt="A tow truck helping a stranded fleet vehicle" width={1400} height={700} sizes="(max-width: 768px) 90vw, 520px" className="h-full w-full max-w-[520px] object-contain" />
         </div>
     );
 }
@@ -110,18 +104,24 @@ export default function BusinessPage() {
             <MarketingMotion />
             <LandingNav />
 
-            <section className="relative flex flex-col items-center overflow-hidden px-5 pb-16 pt-32 text-center sm:min-h-[690px] sm:px-8 sm:pb-36 sm:pt-[168px] md:pt-[178px] lg:px-16">
+            <section className="relative overflow-hidden px-5 pb-16 pt-32 text-center sm:px-8 sm:pb-20 lg:px-16 lg:pt-36 lg:text-left">
                 <PixelCluster className="left-[8%] top-[38%] opacity-40" heights={[10, 18, 29, 15, 42, 25, 12]} />
                 <PixelCluster className="right-[9%] top-[44%] opacity-45" heights={[18, 38, 65, 88, 70, 43, 20]} />
-                <div className="relative z-10 mx-auto max-w-[960px]">
+                <div className="relative z-10 mx-auto grid max-w-[1200px] items-center gap-8 lg:grid-cols-[0.93fr_1.07fr] lg:gap-4">
+                    <div>
                     <p className="mb-5 text-[14px] text-[#777]">Motor Ambos for fleets of 5–50 vehicles</p>
-                    <h1 className="text-[38px] font-normal leading-[1.06] tracking-[-0.04em] sm:text-[56px] md:text-[72px]">Every vehicle ready.<br />Every driver supported.</h1>
+                    <h1 className="text-[38px] font-normal leading-[1.06] tracking-[-0.04em] sm:text-[56px] lg:text-[62px] xl:text-[70px]">Every vehicle ready.<br />Every driver supported.</h1>
                     <p className="mx-auto mt-5 max-w-[760px] text-[16px] leading-[1.4] tracking-[-0.025em] text-[#858585] sm:mt-6 sm:text-[18px] md:text-[20px]">Run your fleet from your phone, stay ahead of papers, and know when a driver needs roadside help.</p>
-                    <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                    <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                         <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[16px] text-white transition-colors hover:bg-[#0606D8]"><span className="h-4 w-4 rounded-[2px] bg-white" />Set up your fleet <ChevronRight className="h-4 w-4" /></Link>
                         <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] px-5 text-[16px] transition-colors hover:bg-[#F8F8F8]">Explore roadside help</Link>
                     </div>
-                    <p className="mt-8 text-[13px] text-[#888]">Monthly pricing per vehicle, with roadside help included.</p>
+                    <p className="mt-6 text-[13px] text-[#888]">Monthly pricing per vehicle, with roadside help included.</p>
+                    </div>
+                    <div className="relative mx-auto w-full max-w-[680px]">
+                        <div aria-hidden="true" className="absolute inset-x-[15%] bottom-[12%] h-[45%] rounded-full bg-[#E9EBFF] opacity-50 blur-[65px]" />
+                        <Image src="/images/fleet-vehicles.webp" alt="A small fleet of Motor Ambos vehicles" width={1400} height={933} priority sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 650px" className="relative h-auto w-full object-contain" />
+                    </div>
                 </div>
             </section>
 

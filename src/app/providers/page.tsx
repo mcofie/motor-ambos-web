@@ -1,83 +1,62 @@
-import React from 'react';
-import { StripeNavbar, StripeFooter, StripeServiceEcosystem } from "@/components/stripe-landing/Sections";
-import { ArrowRight, CheckCircle2, Zap, Droplets, Cpu, Sparkles, Wrench, ShieldCheck, Truck, Store } from 'lucide-react';
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, MapPin, MessageCircle, Phone } from "lucide-react";
+import { LandingFooter, LandingNav, PixelCluster } from "@/components/landing-home/HomeLanding";
+import MarketingMotion from "@/components/landing-home/MarketingMotion";
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = publicPageMetadata("For Service Providers", "Learn how roadside mechanics and automotive service providers can connect with Motor Ambos drivers and fleets.", "/providers");
 
+const listingDetails = [
+    { icon: MapPin, title: "Where you can help", description: "Tell us the areas you serve and the types of roadside work you take on." },
+    { icon: Phone, title: "How drivers reach you", description: "A listing can include your phone number, hours, and call-out fee when supplied." },
+    { icon: MessageCircle, title: "The next step is yours", description: "Drivers contact you directly to confirm availability, the work, and the full price." },
+];
+
 export default function ProvidersPage() {
     return (
-        <main className="bg-white min-h-screen w-full overflow-x-hidden selection:bg-[#00C767]/20 selection:text-[#171717]">
-            <StripeNavbar />
+        <main className="base-landing marketing-motion min-h-screen overflow-x-hidden bg-white text-[#171717]">
+            <MarketingMotion />
+            <LandingNav />
 
-            {/* Providers Hero */}
-            <section className="pt-32 pb-16 md:pt-48 md:pb-32 px-6 md:px-12 flex flex-col items-center text-center max-w-7xl mx-auto min-h-screen overflow-hidden">
-                {/* Main Hero Illustration */}
-                <div className="flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-1000 delay-200 group mb-16 md:mb-24 scale-95 lg:scale-100 relative z-0">
-                    <div className="relative w-full max-w-[500px] md:max-w-[800px] lg:max-w-5xl">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00C767]/5 rounded-full blur-[120px] opacity-70" />
-                        <img
-                            src="/images/partners_hero.png"
-                            alt="Motor Ambos Providers Ecosystem"
-                            className="relative z-10 w-full h-auto object-contain transition-all duration-1000 group-hover:scale-[1.02] drop-shadow-2xl"
-                        />
+            <section className="relative overflow-hidden px-5 pb-16 pt-32 text-center sm:px-8 sm:pb-20 lg:px-16 lg:pt-36 lg:text-left">
+                <PixelCluster className="left-[4%] top-[24%] opacity-45" heights={[12, 25, 44, 69, 81, 58, 30]} />
+                <div className="relative z-10 mx-auto grid max-w-[1200px] items-center gap-8 lg:grid-cols-[0.96fr_1.04fr] lg:gap-6">
+                    <div>
+                        <p className="mb-5 text-[12px] uppercase tracking-[0.11em] text-[#1111F6]">For roadside providers</p>
+                        <h1 className="text-[40px] font-normal leading-[1.07] tracking-[-0.045em] sm:text-[56px] lg:text-[68px]">Be easier to find when a driver needs you.</h1>
+                        <p className="mx-auto mt-6 max-w-[560px] text-[17px] leading-[1.5] text-[#777] sm:text-[19px] lg:mx-0">Motor Ambos is mapping independent mechanics and roadside specialists by the areas they serve. Give drivers a clearer way to see your services and get in touch.</p>
+                        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+                            <a href="mailto:support@motorambos.com?subject=Roadside%20provider%20listing" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-6 text-[16px] text-white transition-colors hover:bg-[#0606D8]">Contact the team <ArrowRight className="h-4 w-4" /></a>
+                            <Link href="/roadside-mechanics" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] px-6 text-[16px] transition-colors hover:bg-[#F8F8F8]">See the network</Link>
+                        </div>
                     </div>
-                </div>
-
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-4xl mx-auto z-10 relative">
-                    <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-6">Service Ecosystem</div>
-                    <h1 className="text-[48px] sm:text-[64px] md:text-[84px] font-extrabold text-[#171717] leading-[1.0] md:leading-[0.95] tracking-[-0.04em] mb-8 md:mb-10 text-balance">
-                        Join the protocol <br className="hidden md:block" /> for automotive trust.
-                    </h1>
-                    <p className="text-[18px] sm:text-[20px] md:text-[22px] text-[#525252] leading-[1.6] mb-10 md:mb-14 font-medium text-balance opacity-80 max-w-3xl mx-auto">
-                        Motor Ambos connects trusted mechanics, service stations, and tow operators with thousands of verified clients. Scale your customer base securely with guaranteed payouts.
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-5 mb-16 md:mb-24">
-                        <button className="bg-[#171717] text-white px-8 md:px-10 py-4 md:py-5 rounded-xl font-bold text-[16px] md:text-[17px] hover:bg-black transition-all active:scale-[0.98] shadow-xl shadow-black/10 flex items-center justify-center gap-3 group/btn">
-                            Apply as a Provider <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                        </button>
+                    <div className="relative mx-auto w-full max-w-[600px]">
+                        <div aria-hidden="true" className="absolute inset-x-[16%] bottom-[14%] h-[46%] rounded-full bg-[#E9EBFF] opacity-50 blur-[65px]" />
+                        <Image src="/images/roadside-cables.webp" alt="Blue and silver roadside jumper cables" width={900} height={717} priority sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 600px" className="relative h-auto w-full object-contain" />
                     </div>
                 </div>
             </section>
 
-            {/* Reusing the Service Ecosystem from landing page for identical look and feel */}
-            <div className="pb-24 border-b border-slate-100">
-                <StripeServiceEcosystem />
-            </div>
-
-            {/* How to Join Section */}
-            <section className="py-24 md:py-40 px-6 md:px-12 bg-slate-50 bg-[#F8FAFF]">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16 md:mb-24">
-                        <div className="text-[13px] font-bold text-[#00C767] uppercase tracking-[0.2em] mb-6">Onboarding</div>
-                        <h2 className="text-[36px] md:text-[52px] font-extrabold text-[#171717] leading-[1.1] tracking-[-0.04em] mb-6">
-                            How you can join the network.
-                        </h2>
-                        <p className="text-[18px] md:text-[20px] text-[#525252] font-medium max-w-2xl mx-auto opacity-80">
-                            Our vetting process ensures only the highest quality providers enter the network, so driver trust remains absolute.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 relative before:absolute before:top-12 before:left-[10%] before:right-[10%] before:h-1 before:bg-blue-100 before:hidden md:before:block">
-                        {[
-                            { step: "01", title: "Submit Application", p: "Provide your business registration, facility photos, and mechanic certifications for review by the Motor Ambos verification team." },
-                            { step: "02", title: "Site Inspection", p: "Our team conducts an on-site evaluation to ensure your operations meet the standard for safety, transparency, and skill." },
-                            { step: "03", title: "Activate Node", p: "Your service center goes live on the Motor Ambos app, instantly connecting you with fleet managers and individual clients." }
-                        ].map((s, i) => (
-                            <div key={i} className="relative bg-white p-8 md:p-10 rounded-[32px] border border-blue-50 shadow-sm shadow-blue-900/5 transition-transform hover:-translate-y-1 z-10 flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-[#171717] text-white rounded-full flex items-center justify-center font-extrabold text-[20px] mb-8 border-4 border-[#F8FAFF] shadow-lg">
-                                    {s.step}
-                                </div>
-                                <h3 className="text-[24px] font-extrabold text-[#171717] mb-4">{s.title}</h3>
-                                <p className="text-[#525252] font-medium leading-relaxed">{s.p}</p>
-                            </div>
-                        ))}
+            <section className="border-y border-[#EAEAEA] bg-[#F7F7F7] px-5 py-16 sm:px-8 md:py-24 lg:px-16">
+                <div className="mx-auto max-w-[1136px]">
+                    <p className="mb-5 text-[12px] uppercase tracking-[0.11em] text-[#1111F6]">What a useful listing includes</p>
+                    <h2 className="max-w-[700px] text-[32px] font-normal leading-[1.12] tracking-[-0.04em] md:text-[42px]">The details a driver needs before making the call.</h2>
+                    <div className="mt-12 grid gap-4 md:grid-cols-3">
+                        {listingDetails.map(({ icon: Icon, title, description }) => <article key={title} className="rounded-[12px] border border-[#EAEAEA] bg-white p-6 sm:p-8"><Icon className="h-8 w-8 text-[#1111F6]" strokeWidth={1.6} /><h3 className="mt-8 text-[20px] tracking-[-0.03em]">{title}</h3><p className="mt-3 text-[16px] leading-[1.5] text-[#777]">{description}</p></article>)}
                     </div>
                 </div>
             </section>
 
-            <StripeFooter />
+            <section className="px-5 py-16 sm:px-8 md:py-24 lg:px-16">
+                <div className="mx-auto grid max-w-[1136px] items-center gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
+                    <div><p className="mb-5 text-[12px] uppercase tracking-[0.11em] text-[#1111F6]">How to join the map</p><h2 className="text-[32px] font-normal leading-[1.12] tracking-[-0.04em] md:text-[42px]">Tell us about your roadside work.</h2><p className="mt-5 max-w-[520px] text-[16px] leading-[1.5] text-[#777]">Share your service area, hours, phone number, services, and call-out fee. The team can explain how the listing works and what information will be shown to drivers.</p><a href="mailto:support@motorambos.com?subject=Roadside%20provider%20listing" className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#E7E7E7] px-6 text-[16px] transition-colors hover:bg-[#FAFAFA]">Ask about a listing <ArrowRight className="h-4 w-4 text-[#1111F6]" /></a></div>
+                    <div className="overflow-hidden rounded-[16px] border border-[#E7E9F7] bg-[#F1F3FF] p-5"><Image src="/images/roadside-tow.webp" alt="A roadside tow truck helping a car" width={1400} height={700} sizes="(max-width: 1024px) 90vw, 550px" className="h-auto w-full object-contain" /></div>
+                </div>
+            </section>
+
+            <LandingFooter />
         </main>
     );
 }

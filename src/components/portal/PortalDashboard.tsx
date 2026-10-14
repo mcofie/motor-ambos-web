@@ -670,10 +670,11 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
                     <h1 className="text-[30px] leading-[1.1] tracking-[-0.045em] sm:text-[40px]">{view === "fleet" ? currentOrg?.name || "My fleet" : `Hello, ${firstName}`}</h1>
                     <p className="mt-2 text-[15px] text-[#6F6F6F]">{view === "fleet" ? `${fleetCars.length} ${fleetCars.length === 1 ? "vehicle" : "vehicles"} · ${fleetDrivers.length} ${fleetDrivers.length === 1 ? "driver" : "drivers"}` : "Your cars, their papers, and help when you need it."}</p>
                 </div>
-                {(showFleetTab || view === "fleet") && <nav aria-label="Account sections" className="mb-7 flex gap-1 border-b border-[#E1E1E1]">
+                <nav aria-label="Account sections" className="mb-7 flex gap-1 overflow-x-auto border-b border-[#E1E1E1]">
                     <Link href="/app" aria-current={view === "personal" ? "page" : undefined} className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 pb-3 text-[15px] ${view === "personal" ? "border-[#1111F6] text-[#1111F6]" : "border-transparent text-[#777] hover:text-[#171717]"}`}><Car className="h-4 w-4" />My cars</Link>
                     {showFleetTab && <Link href="/app/fleet" aria-current={view === "fleet" ? "page" : undefined} className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 pb-3 text-[15px] ${view === "fleet" ? "border-[#1111F6] text-[#1111F6]" : "border-transparent text-[#777] hover:text-[#171717]"}`}><Truck className="h-4 w-4" />My fleet</Link>}
-                </nav>}
+                    <Link href="/app/cards" className="-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-3 pb-3 text-[15px] text-[#777] hover:text-[#171717]"><Nfc className="h-4 w-4" />Smart Cards</Link>
+                </nav>
 
                 {pendingCard && <LinkCardBanner code={pendingCard} vehicles={linkableCars} onDone={dismissPendingCard} />}
 

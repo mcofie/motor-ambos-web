@@ -5,7 +5,7 @@ import { Bell, Search } from "lucide-react";
 
 interface AdminLayoutProps {
     children: React.ReactNode;
-    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations" | "advisor" | "cars";
+    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations" | "advisor" | "cars" | "orders";
     user: User | null;
     onLogout: () => void;
 }
@@ -19,7 +19,7 @@ export function AdminLayout({ children, activeTab, user, onLogout }: AdminLayout
                 <header className="h-20 md:h-24 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 shrink-0 z-10 transition-all duration-300">
                     <div>
                         <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white capitalize font-display">
-                            {activeTab === "admin" ? "Overview" : activeTab === "cars" ? "Car Images" : activeTab} Dashboard
+                            {activeTab === "admin" ? "Overview" : activeTab === "cars" ? "Car Images" : activeTab === "orders" ? "Card Orders" : activeTab} Dashboard
                         </h1>
                         <p className="hidden sm:block text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                             Overview of your network activity

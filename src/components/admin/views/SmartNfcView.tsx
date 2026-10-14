@@ -490,6 +490,10 @@ export function SmartNfcView() {
                     <div className="flex items-center gap-2">
                         {activeTab === 'inventory' ? (
                             <>
+                                <Link href="/admin/card-orders" className="flex items-center gap-2 border border-border bg-card text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors shadow-sm">
+                                    <CreditCard className="h-4 w-4" />
+                                    <span>Orders &amp; pricing</span>
+                                </Link>
                                 <button onClick={exportForPrinting} className="flex items-center gap-2 border border-border bg-card text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors shadow-sm">
                                     <Package className="h-4 w-4" />
                                     <span>Export for printing</span>

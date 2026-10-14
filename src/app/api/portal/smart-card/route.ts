@@ -5,7 +5,8 @@ import { z } from "zod";
 import { getPortalVehicleAccess } from "@/lib/portalAccess";
 import { reportMajorActivity } from "@/lib/discordActivity";
 import { normalizePhone } from "@/lib/phone";
-import { newPublicId, normaliseClaimCode } from "@/lib/cardClaim";
+import { normaliseClaimCode } from "@/lib/cardClaim";
+import { linkCardToVehicle } from "@/lib/cardLink";
 import { defaultShare, shareKeys, type ShareSettings } from "@/lib/smartCard";
 
 export const dynamic = "force-dynamic";
@@ -164,17 +165,11 @@ async function verifyClaim(body: unknown) {
     const { data: holder } = card.public_id ? await access.service.from("vehicles").select("id").eq("nfc_card_id", card.public_id).maybeSingle() : { data: null };
     if (holder && holder.id !== access.vehicle.id) return withPending(NextResponse.json({ error: "This card was linked to another car in the meantime." }, { status: 409 }), null);
 
-    const publicId = card.public_id || newPublicId();
-    if (!card.public_id) {
-        const { error } = await access.service.from("nfc_cards").update({ public_id: publicId }).eq("id", card.id);
-        if (error) return NextResponse.json({ error: "Could not prepare this card" }, { status: 500 });
-    }
-    const { data: current } = await access.service.from("vehicles").select("nfc_serial_number").eq("id", access.vehicle.id).maybeSingle();
-    const { error } = await access.service.from("vehicles").update({ nfc_card_id: publicId, nfc_serial_number: card.serial_number }).eq("id", access.vehicle.id);
-    if (error) return NextResponse.json({ error: "Could not link the card" }, { status: 500 });
-    await access.service.from("nfc_cards").update({ status: "ASSIGNED" }).eq("id", card.id);
-    if (current?.nfc_serial_number && current.nfc_serial_number !== card.serial_number) {
-        await access.service.from("nfc_cards").update({ status: "MANUFACTURED" }).eq("serial_number", current.nfc_serial_number);
+    let publicId: string;
+    try {
+        publicId = await linkCardToVehicle(access.service, card, access.vehicle.id);
+    } catch (reason) {
+        return NextResponse.json({ error: reason instanceof Error ? reason.message : "Could not link the card" }, { status: 500 });
     }
     await reportMajorActivity("Smart Card linked", [
         { name: "Plate", value: access.vehicle.plate },

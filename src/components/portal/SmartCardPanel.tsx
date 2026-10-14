@@ -65,12 +65,13 @@ export default function SmartCardPanel({ vehicleId, editable }: { vehicleId: str
                 <p className="truncate text-[12px] text-[#888]">{card.linked ? `Linked${card.serial ? ` · ${card.serial}` : ""} · Sharing ${sharedCount} of ${shareOptions.length}` : "Not linked"}</p>
             </div>
             {card.linked ? <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-[#E3E3E3] px-3 text-[13px]">Manage<ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} /></button>
-                : editable && !open && <button type="button" onClick={() => setOpen(true)} className="h-9 shrink-0 rounded-full bg-[#1111F6] px-3.5 text-[13px] text-white">Link card</button>}
+                : editable && !open && <div className="flex shrink-0 gap-1.5"><a href={`/app/cards?vehicle=${vehicleId}`} className="inline-flex h-9 items-center rounded-full border border-[#E3E3E3] px-3 text-[13px] hover:border-[#1111F6] hover:text-[#1111F6]">Get one</a><button type="button" onClick={() => setOpen(true)} className="h-9 rounded-full bg-[#1111F6] px-3.5 text-[13px] text-white">Link card</button></div>}
         </div>
 
         {open && !card.linked && editable && <div className="mt-4 rounded-[14px] border border-[#DADAF8] bg-[#FAFAFF] p-4">
             <CardClaimForm vehicleId={vehicleId} onLinked={async () => { await load(); setOpen(true); }} onCancel={() => setOpen(false)} />
             <p className="mt-3 text-[12px] text-[#888]">Have the card with you? Tap it with your phone and choose “Link to my car”.</p>
+            <p className="mt-2 text-[12px] text-[#888]">No card yet? <a href={`/app/cards?vehicle=${vehicleId}`} className="text-[#1111F6]">Get a Smart Card</a> and it arrives linked to this car.</p>
         </div>}
 
         {open && card.linked && <div className="mt-4 space-y-4">

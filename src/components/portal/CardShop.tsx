@@ -5,7 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Bike, Check, CheckCircle2, Loader2, Lock, MapPin, Store } from "lucide-react";
 import { SmartCard, skinForDesign } from "@/components/landing-home/SmartCardStack";
+import { useRouter } from "next/navigation";
 import { usePortalData } from "@/components/portal/PortalDataProvider";
+import { MobileAppBar, MobileTabBar } from "@/components/portal/AppChrome";
 import { cedis, orderStatusLabel, orderStatusTone, orderSteps, type CardOrderStatus } from "@/lib/cardOrders";
 import { formatPhone } from "@/lib/phone";
 
@@ -41,6 +43,8 @@ function OrderCard({ order, onPay, paying }: { order: Order; onPay: (id: string)
 
 export default function CardShop() {
     const { data } = usePortalData();
+    const router = useRouter();
+    const managesFleet = Boolean(data?.organizations.some((org) => org.role !== "DRIVER"));
     const [shop, setShop] = useState<Shop | null>(null);
     const [loadError, setLoadError] = useState(false);
     const [productId, setProductId] = useState("");
@@ -119,16 +123,17 @@ export default function CardShop() {
 
     const choice = (active: boolean) => `relative rounded-[16px] p-4 text-left transition-colors ${active ? "bg-white ring-2 ring-[#1111F6]" : "bg-white ring-1 ring-black/5 hover:ring-[#B8B8FF]"}`;
 
-    return <div className="base-landing min-h-[100svh] bg-[#F7F7F7] text-[#171717]">
-        <header className="sticky top-0 z-40 border-b border-[#E9E9E9] bg-white/95 backdrop-blur-md">
+    return <div className="app-surface base-landing min-h-[100svh] bg-[#F7F7F7] text-[#171717]">
+        <MobileAppBar title="Smart Cards" />
+        <header className="sticky top-0 z-40 hidden border-b border-[#E9E9E9] bg-white/95 backdrop-blur-md sm:block">
             <div className="mx-auto flex h-16 max-w-[960px] items-center justify-between gap-3 px-4 sm:h-[72px] sm:px-8">
                 <Link href="/" className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.035em]"><Image src="/icon.svg" alt="" width={42} height={36} className="h-9 w-[42px]" /><span className="hidden sm:inline">Motor Ambos</span></Link>
                 <Link href="/app" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[#E3E3E3] px-3.5 text-[14px] hover:border-[#B8B8FF] hover:text-[#1111F6]"><ArrowLeft className="h-4 w-4" />My cars</Link>
             </div>
         </header>
 
-        <main className="mx-auto max-w-[960px] px-4 pb-36 pt-6 sm:px-8 sm:pt-10">
-            <h1 className="text-[28px] leading-[1.1] tracking-[-0.045em] sm:text-[40px]">Get a Smart Card</h1>
+        <main className="mx-auto max-w-[960px] px-4 pb-[calc(180px+env(safe-area-inset-bottom))] pt-3 sm:px-8 sm:pb-36 sm:pt-10">
+            <h1 id="page-title" className="text-[32px] leading-[1.1] tracking-[-0.045em] sm:text-[40px]">Get a Smart Card</h1>
             <p className="mt-1.5 max-w-[560px] text-[14px] leading-relaxed text-[#6F6F6F] sm:mt-2 sm:text-[15px]">Pay with mobile money or a card. We deliver in Accra or you pick it up, already linked to your car.</p>
 
             {returned && <div role="status" className={`mt-6 flex items-start gap-3 rounded-[16px] p-4 ${returned.state === "paid" ? "bg-[#EAF7F0] text-[#197252]" : returned.state === "checking" ? "bg-white ring-1 ring-black/5" : "bg-[#FFF4DF] text-[#915C12]"}`}>
@@ -207,13 +212,15 @@ export default function CardShop() {
                         <p className="mt-4 flex items-center gap-1.5 text-[12px] text-[#888]"><Lock className="h-3.5 w-3.5" />Secure payment by Paystack. Mobile money and bank cards accepted.</p>
                     </section>
 
-                    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E7E7E7] bg-white/95 px-4 pt-3 backdrop-blur-md" style={{ paddingBottom: "max(14px, env(safe-area-inset-bottom))" }}>
-                        <div className="mx-auto flex max-w-[960px] items-center justify-between gap-3 sm:px-4">
+                    {/* On phones the pay bar floats as a panel above the tab bar; from tablet width it is a full-width bar. */}
+                    <div className="fixed inset-x-0 bottom-[calc(70px+max(14px,env(safe-area-inset-bottom)))] z-30 px-4 sm:bottom-0 sm:border-t sm:border-[#E7E7E7] sm:bg-white/95 sm:px-4 sm:pb-[max(14px,env(safe-area-inset-bottom))] sm:pt-3 sm:backdrop-blur-md">
+                        <div className="mx-auto flex max-w-[960px] items-center justify-between gap-3 rounded-[22px] bg-white/95 py-2 pl-4 pr-2 shadow-[0_12px_32px_-12px_rgba(10,14,30,0.35)] ring-1 ring-black/5 backdrop-blur-xl sm:rounded-none sm:bg-transparent sm:p-0 sm:px-4 sm:shadow-none sm:ring-0 sm:backdrop-blur-none">
                             <div className="min-w-0"><p className="truncate text-[12px] text-[#777] sm:text-[13px]">{product?.name || "Card"} · {method === "delivery" ? "Delivery" : "Pickup"}</p><p className="text-[18px] leading-tight">{cedis(total)}</p></div>
                             <button type="submit" disabled={busy || !product || !method || !shop.paymentsReady} className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-7 text-[15px] text-white hover:bg-[#0606D8] disabled:opacity-40 sm:px-8">{busy && <Loader2 className="h-4 w-4 animate-spin" />}<Lock className="h-4 w-4 sm:hidden" />Pay now</button>
                         </div>
                     </div>
                 </form>)}
         </main>
+        <MobileTabBar active="cards" showFleet={managesFleet} onLog={() => router.push("/app?log=1")} />
     </div>;
 }

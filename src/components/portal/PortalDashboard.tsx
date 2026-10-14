@@ -15,6 +15,7 @@ import LicenceCard from "@/components/portal/LicenceCard";
 import SmartCardPanel from "@/components/portal/SmartCardPanel";
 import CardClaimForm from "@/components/portal/CardClaimForm";
 import { QuickLogSheet, type LogKind } from "@/components/portal/QuickLog";
+import { MobileAppBar, MobileTabBar } from "@/components/portal/AppChrome";
 
 const inputClass = "h-12 w-full rounded-[10px] border border-[#DEDEDE] bg-white px-4 text-[16px] text-[#171717] outline-none focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/10";
 const modelsByMake: Record<string, string[]> = {
@@ -223,10 +224,11 @@ function VehicleDetails({ vehicle, documents, editable, editing, onEditingChange
             <VehicleActivity vehicle={vehicle} editable={editable} />
             <SmartCardPanel vehicleId={vehicle.id} editable={editable} />
 
-            <div className="flex flex-wrap gap-2 border-t border-[#EEEEEE] bg-[#FCFCFC] px-5 py-4 sm:px-6">
-                <button type="button" onClick={onLog} className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[#DADAF8] bg-white px-4 text-[13px] text-[#1111F6]"><NotebookPen className="h-3.5 w-3.5" />Log fuel, service or problem</button>
-                {editable && !editing && <button type="button" onClick={() => onEditingChange(true)} className={`inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[13px] ${missingDates ? "bg-[#1111F6] text-white" : "border border-[#E3E3E3] bg-white"}`}><Pencil className="h-3.5 w-3.5" />{missingDates ? "Add expiry dates" : "Update papers"}</button>}
-                <Link href={helpLink(vehicle)} className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[#E3E3E3] bg-white px-4 text-[13px] hover:border-[#B8B8FF] hover:text-[#1111F6]"><LifeBuoy className="h-3.5 w-3.5 text-[#1111F6]" />Roadside help for this car</Link>
+            {/* Three across like an app's action row on phones; labelled pills from tablet width up. */}
+            <div className="grid auto-cols-fr grid-flow-col gap-2 border-t border-[#EEEEEE] bg-[#FCFCFC] px-4 py-3 sm:flex sm:flex-wrap sm:px-6 sm:py-4">
+                <button type="button" onClick={onLog} className="flex h-14 flex-col items-center justify-center gap-1 rounded-[14px] border border-[#DADAF8] bg-white text-[12px] text-[#1111F6] active:scale-[0.97] sm:inline-flex sm:h-10 sm:flex-row sm:gap-1.5 sm:rounded-full sm:px-4 sm:text-[13px]"><NotebookPen className="h-[18px] w-[18px] sm:h-3.5 sm:w-3.5" /><span className="sm:hidden">Log</span><span className="hidden sm:inline">Log fuel, service or problem</span></button>
+                {editable && !editing && <button type="button" onClick={() => onEditingChange(true)} className={`flex h-14 flex-col items-center justify-center gap-1 rounded-[14px] text-[12px] active:scale-[0.97] sm:inline-flex sm:h-10 sm:flex-row sm:gap-1.5 sm:rounded-full sm:px-4 sm:text-[13px] ${missingDates ? "bg-[#1111F6] text-white" : "border border-[#E3E3E3] bg-white"}`}><Pencil className="h-[18px] w-[18px] sm:h-3.5 sm:w-3.5" /><span className="sm:hidden">{missingDates ? "Add dates" : "Papers"}</span><span className="hidden sm:inline">{missingDates ? "Add expiry dates" : "Update papers"}</span></button>}
+                <Link href={helpLink(vehicle)} className="flex h-14 flex-col items-center justify-center gap-1 rounded-[14px] border border-[#E3E3E3] bg-white text-[12px] active:scale-[0.97] hover:border-[#B8B8FF] hover:text-[#1111F6] sm:inline-flex sm:h-10 sm:flex-row sm:gap-1.5 sm:rounded-full sm:px-4 sm:text-[13px]"><LifeBuoy className="h-[18px] w-[18px] text-[#1111F6] sm:h-3.5 sm:w-3.5" /><span className="sm:hidden">Help</span><span className="hidden sm:inline">Roadside help for this car</span></Link>
             </div>
         </div>
     );
@@ -590,6 +592,14 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
         if (new URLSearchParams(window.location.search).has("link")) router.replace(window.location.pathname);
     }
 
+    // Other tabs open the log sheet here with ?log=1.
+    useEffect(() => {
+        if (!data || !new URLSearchParams(window.location.search).has("log")) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- the address bar only exists in the browser
+        setLogSheet({});
+        router.replace(window.location.pathname);
+    }, [data, router]);
+
     useEffect(() => {
         if (view === "personal" && data && !data.needsProfile && data.personalVehicles.length === 0 && data.assignedVehicles.length === 0 && data.organizations.some((org) => org.role !== "DRIVER")) {
             router.replace("/app/fleet");
@@ -652,8 +662,12 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
         { label: "Open issues", value: fleetIssues.length, icon: AlertCircle, href: "#issues", tone: fleetIssues.length ? "text-[#915C12]" : "" },
     ];
 
-    return <div className="base-landing min-h-[100svh] bg-[#F7F7F7] text-[#171717]">
-        <header className="sticky top-0 z-40 border-b border-[#E9E9E9] bg-white/95 backdrop-blur-md">
+    const appTitle = view === "fleet" ? currentOrg?.name || "My fleet" : "My cars";
+    const openLog = () => { if (visibleCars.length) setLogSheet({}); else setAddingVehicle(true); };
+
+    return <div className="app-surface base-landing min-h-[100svh] bg-[#F7F7F7] text-[#171717]">
+        <MobileAppBar title={appTitle} />
+        <header className="sticky top-0 z-40 hidden border-b border-[#E9E9E9] bg-white/95 backdrop-blur-md sm:block">
             <div className="mx-auto flex h-16 max-w-[1136px] items-center justify-between gap-3 px-4 sm:h-[72px] sm:px-8">
                 <Link href="/" className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.035em]"><Image src="/icon.svg" alt="" width={42} height={36} className="h-9 w-[42px]" /><span className="hidden sm:inline">Motor Ambos</span></Link>
                 <div className="flex items-center gap-2">
@@ -664,13 +678,13 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
                 </div>
             </div>
         </header>
-        <main className={`mx-auto max-w-[1136px] px-4 pt-7 sm:px-8 sm:pt-10 ${view === "fleet" ? "pb-12" : "pb-28 sm:pb-12"}`}>
+        <main className="mx-auto max-w-[1136px] px-4 pb-[calc(104px+env(safe-area-inset-bottom))] pt-3 sm:px-8 sm:pb-12 sm:pt-10">
             {loading ? <DashboardSkeleton view={view} /> : error ? <div role="alert" className="rounded-[16px] border border-[#F3D8D8] bg-white p-6"><p className="text-[15px] text-red-600">{error}</p><button type="button" onClick={() => { void reload().catch(() => undefined); }} className="mt-4 h-11 rounded-full bg-[#1111F6] px-5 text-[14px] text-white">Try again</button></div> : data?.needsProfile ? <ProfileSetup email={data.email} initialName={data.suggestedProfile?.fullName || ""} initialPhone={data.suggestedProfile?.phone || ""} onDone={reload} /> : data && <>
                 <div className="mb-6">
-                    <h1 className="text-[30px] leading-[1.1] tracking-[-0.045em] sm:text-[40px]">{view === "fleet" ? currentOrg?.name || "My fleet" : `Hello, ${firstName}`}</h1>
+                    <h1 id="page-title" className="text-[32px] leading-[1.1] tracking-[-0.045em] sm:text-[40px]">{view === "fleet" ? currentOrg?.name || "My fleet" : `Hello, ${firstName}`}</h1>
                     <p className="mt-2 text-[15px] text-[#6F6F6F]">{view === "fleet" ? `${fleetCars.length} ${fleetCars.length === 1 ? "vehicle" : "vehicles"} · ${fleetDrivers.length} ${fleetDrivers.length === 1 ? "driver" : "drivers"}` : "Your cars, their papers, and help when you need it."}</p>
                 </div>
-                <nav aria-label="Account sections" className="mb-7 flex gap-1 overflow-x-auto border-b border-[#E1E1E1]">
+                <nav aria-label="Account sections" className="mb-7 hidden gap-1 overflow-x-auto border-b border-[#E1E1E1] sm:flex">
                     <Link href="/app" aria-current={view === "personal" ? "page" : undefined} className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 pb-3 text-[15px] ${view === "personal" ? "border-[#1111F6] text-[#1111F6]" : "border-transparent text-[#777] hover:text-[#171717]"}`}><Car className="h-4 w-4" />My cars</Link>
                     {showFleetTab && <Link href="/app/fleet" aria-current={view === "fleet" ? "page" : undefined} className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 pb-3 text-[15px] ${view === "fleet" ? "border-[#1111F6] text-[#1111F6]" : "border-transparent text-[#777] hover:text-[#171717]"}`}><Truck className="h-4 w-4" />My fleet</Link>}
                     <Link href="/app/cards" className="-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-3 pb-3 text-[15px] text-[#777] hover:text-[#171717]"><Nfc className="h-4 w-4" />Smart Cards</Link>
@@ -722,8 +736,7 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
                     </section>
                 </> : <>
                     <AttentionList items={attention} onOpen={(item) => openVehicle(item.vehicle.id, item.editable)} />
-                    <LicenceCard name={data.profile?.fullName || ""} />
-                    <section aria-labelledby="cars-heading">
+                    <section aria-labelledby="cars-heading" className="mb-8">
                         <div className="mb-4 flex items-center justify-between gap-3">
                             <h2 id="cars-heading" className="text-[22px] tracking-[-0.035em]">{data.assignedVehicles.length && !data.personalVehicles.length ? "Your assigned car" : "My cars"} <span className="text-[14px] text-[#888]">{personalCars.length}</span></h2>
                             {!addingVehicle && personalCars.length > 0 && <button type="button" onClick={() => setAddingVehicle(true)} className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[#DFDFDF] bg-white px-4 text-[14px] hover:border-[#1111F6] hover:text-[#1111F6]"><Plus className="h-4 w-4" />Add car</button>}
@@ -731,17 +744,12 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
                         {addingVehicle && <AddVehicle onAdded={reload} onClose={() => setAddingVehicle(false)} />}
                         {personalCars.length ? <div className="grid items-start gap-4 md:grid-cols-2">{personalCars.map((vehicle) => <div key={vehicle.id} id={`vehicle-${vehicle.id}`} className="min-w-0 scroll-mt-24">{details(vehicle, false)}</div>)}</div> : !addingVehicle && <div className="rounded-[18px] border border-dashed border-[#DADADA] bg-white p-8 text-center"><Car className="mx-auto h-9 w-9 text-[#1111F6]" /><h3 className="mt-3 text-[19px]">Add your first car</h3><p className="mx-auto mt-1 max-w-[360px] text-[14px] text-[#777]">Keep its papers, service and fuel in one place, and get roadside help with its details filled in.</p><button type="button" onClick={() => setAddingVehicle(true)} className="mt-5 inline-flex h-12 items-center gap-1.5 rounded-full bg-[#1111F6] px-6 text-[15px] text-white"><Plus className="h-4 w-4" />Add a car</button></div>}
                     </section>
+                    <LicenceCard name={data.profile?.fullName || ""} />
                 </>}
                 <p className="mt-12 text-[12px] leading-relaxed text-[#888]">Dates shown here are the ones you enter. Check the actual policy or certificate before relying on its status.</p>
             </>}
         </main>
-        {view === "personal" && data && !data.needsProfile && !loading && !error && <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E7E7E7] bg-white/95 px-4 pt-3 backdrop-blur-md sm:hidden" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
-            <div className="flex gap-2">
-                {personalCars.length > 0 && <button type="button" onClick={() => setLogSheet({})} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-[#DADAF8] bg-white text-[15px] text-[#1111F6]"><NotebookPen className="h-4 w-4" />Log</button>}
-                <Link href="/help" className="flex h-12 flex-[1.4] items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[15px] text-white"><LifeBuoy className="h-4 w-4" />Roadside help</Link>
-            </div>
-        </div>}
-        {view === "fleet" && data && !data.needsProfile && fleetCars.length > 0 && <button type="button" onClick={() => setLogSheet({})} aria-label="Log a fill-up, service or problem" className="fixed bottom-[max(16px,env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#1111F6] text-white shadow-[0_12px_30px_rgba(17,17,246,0.35)] sm:hidden"><NotebookPen className="h-5 w-5" /></button>}
-        {logSheet && <QuickLogSheet open onOpenChange={(open) => { if (!open) setLogSheet(null); }} vehicles={visibleCars} initialVehicleId={logSheet.vehicleId} initialKind={logSheet.kind} />}
+        {data && !data.needsProfile && <MobileTabBar active={view === "fleet" ? "fleet" : "cars"} showFleet={showFleetTab} onLog={openLog} />}
+        {logSheet && visibleCars.length > 0 && <QuickLogSheet open onOpenChange={(open) => { if (!open) setLogSheet(null); }} vehicles={visibleCars} initialVehicleId={logSheet.vehicleId} initialKind={logSheet.kind} />}
     </div>;
 }

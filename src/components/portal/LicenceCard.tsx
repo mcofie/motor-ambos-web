@@ -121,7 +121,7 @@ export default function LicenceCard({ name }: { name: string }) {
     const state = expiryState(licence?.expiresOn || null);
     const hasDetails = Boolean(licence?.licenceNumber || licence?.expiresOn);
 
-    return <section aria-labelledby="licence-heading" className="mb-8 overflow-hidden rounded-[18px] border border-[#E7E7E7] bg-white">
+    return <section id="driver-profile" aria-labelledby="licence-heading" className="mb-8 scroll-mt-20 overflow-hidden rounded-[18px] border border-[#E7E7E7] bg-white">
         <div className="flex items-center justify-between gap-3 border-b border-[#F0F0F0] px-5 py-4 sm:px-6">
             <h2 id="licence-heading" className="flex items-center gap-2 text-[17px] tracking-[-0.02em]"><IdCard className="h-5 w-5 text-[#1111F6]" />Driver profile</h2>
             {state && <span className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] ${state.tone}`}>{state.label}</span>}

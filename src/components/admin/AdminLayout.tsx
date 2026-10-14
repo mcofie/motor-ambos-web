@@ -1,7 +1,7 @@
 import React from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import { User } from "./types";
-import { Bell, Search, ShieldCheck } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 
 interface AdminLayoutProps {
     children: React.ReactNode;

@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Check, ChevronDown, Copy, ExternalLink, Loader2, Nfc } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Check, ChevronDown, Copy, ExternalLink, Nfc } from "lucide-react";
 import { shareOptions, type ShareKey, type ShareSettings } from "@/lib/smartCard";
+import CardClaimForm from "@/components/portal/CardClaimForm";
 
 type CardState = { linked: boolean; publicId: string | null; serial: string | null; share: ShareSettings; canEdit: boolean };
 
 export default function SmartCardPanel({ vehicleId, editable }: { vehicleId: string; editable: boolean }) {
     const [card, setCard] = useState<CardState | null>(null);
     const [open, setOpen] = useState(false);
-    const [code, setCode] = useState("");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
@@ -20,28 +20,11 @@ export default function SmartCardPanel({ vehicleId, editable }: { vehicleId: str
     }, [vehicleId]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- loads server data once the component mounts
         void load();
         window.addEventListener("portal-smartcard-changed", load);
         return () => window.removeEventListener("portal-smartcard-changed", load);
     }, [load]);
-
-    async function link(event: FormEvent) {
-        event.preventDefault();
-        setBusy(true);
-        setError(null);
-        try {
-            const response = await fetch("/api/portal/smart-card", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vehicleId, code }) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || "Could not link the card");
-            setCode("");
-            await load();
-            setOpen(true);
-        } catch (reason) {
-            setError(reason instanceof Error ? reason.message : "Could not link the card");
-        } finally {
-            setBusy(false);
-        }
-    }
 
     async function toggle(key: ShareKey) {
         if (!card) return;
@@ -85,14 +68,10 @@ export default function SmartCardPanel({ vehicleId, editable }: { vehicleId: str
                 : editable && !open && <button type="button" onClick={() => setOpen(true)} className="h-9 shrink-0 rounded-full bg-[#1111F6] px-3.5 text-[13px] text-white">Link card</button>}
         </div>
 
-        {open && !card.linked && editable && <form onSubmit={link} className="mt-4 rounded-[14px] border border-[#DADAF8] bg-[#FAFAFF] p-4">
-            <label className="block text-[13px] text-[#555]">Card number
-                <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="e.g. MA-26-00001" autoCapitalize="characters" autoComplete="off" autoFocus className="mt-1.5 h-12 w-full rounded-[10px] border border-[#DEDEDE] bg-white px-3.5 font-mono text-[16px] uppercase tracking-[0.04em] outline-none placeholder:font-sans placeholder:normal-case placeholder:tracking-normal focus:border-[#1111F6]" required minLength={4} />
-            </label>
-            <p className="mt-1.5 text-[12px] text-[#888]">Printed on the back of the card. You can also tap the card with your phone and choose “Link to my car”.</p>
-            {error && <p role="alert" className="mt-2 text-[13px] text-red-600">{error}</p>}
-            <div className="mt-3 flex gap-2"><button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1111F6] px-4 text-[13px] text-white disabled:opacity-50">{busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}Link card</button><button type="button" onClick={() => { setOpen(false); setError(null); }} className="h-10 px-3 text-[13px] text-[#666]">Cancel</button></div>
-        </form>}
+        {open && !card.linked && editable && <div className="mt-4 rounded-[14px] border border-[#DADAF8] bg-[#FAFAFF] p-4">
+            <CardClaimForm vehicleId={vehicleId} onLinked={async () => { await load(); setOpen(true); }} onCancel={() => setOpen(false)} />
+            <p className="mt-3 text-[12px] text-[#888]">Have the card with you? Tap it with your phone and choose “Link to my car”.</p>
+        </div>}
 
         {open && card.linked && <div className="mt-4 space-y-4">
             <div className="flex flex-wrap gap-2">

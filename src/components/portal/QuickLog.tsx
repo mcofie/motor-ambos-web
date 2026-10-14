@@ -76,7 +76,7 @@ export function QuickLogForm({ vehicle, kind, onSaved, onCancel, compact = false
         const paid = Number(amount);
         return history.pricePerLitre && paid > 0 ? Math.round((paid / history.pricePerLitre) * 10) / 10 : null;
     }, [amount, history.pricePerLitre]);
-    useEffect(() => { if (!litresEdited && estimatedLitres) setLitres(String(estimatedLitres)); }, [estimatedLitres, litresEdited]);
+    const litresValue = litresEdited ? litres : estimatedLitres ? String(estimatedLitres) : litres;
 
     const odometerHint = history.lastOdometer ? `Last: ${history.lastOdometer.toLocaleString()} km` : "Optional";
     const odometerValue = odometer ? Number(odometer) : null;
@@ -88,7 +88,7 @@ export function QuickLogForm({ vehicle, kind, onSaved, onCancel, compact = false
         const description = serviceType === "Other" ? otherService.trim() : serviceType;
         if (kind === "service" && description.length < 2) return setError("Say what was done.");
         const body = kind === "fuel"
-            ? { type: "fuel", vehicleId: vehicle.id, date, litres: Number(litres), totalCost: Number(amount), odometer: odometerValue }
+            ? { type: "fuel", vehicleId: vehicle.id, date, litres: Number(litresValue), totalCost: Number(amount), odometer: odometerValue }
             : kind === "service"
                 ? { type: "service", vehicleId: vehicle.id, date, description, provider: provider.trim() || undefined, mileage: odometerValue, cost: cost ? Number(cost) : null }
                 : { type: "issue", vehicleId: vehicle.id, category, note: note.trim() || undefined };
@@ -114,7 +114,7 @@ export function QuickLogForm({ vehicle, kind, onSaved, onCancel, compact = false
                 <div className="relative mt-1.5"><span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[16px] text-[#888]">GH₵</span><input className={fieldClass + " pl-14 text-[20px]"} type="number" inputMode="decimal" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" autoFocus={!compact} required /></div>
             </label>
             <div className="grid grid-cols-2 gap-3">
-                <label className="text-[13px] text-[#666]">Litres<input className={fieldClass + " mt-1.5"} type="number" inputMode="decimal" min="0.01" step="0.01" value={litres} onChange={(event) => { setLitres(event.target.value); setLitresEdited(true); }} placeholder={estimatedLitres ? String(estimatedLitres) : "e.g. 30"} required />{estimatedLitres && !litresEdited && <span className="mt-1 block text-[11px] text-[#888]">Worked out from your last price</span>}</label>
+                <label className="text-[13px] text-[#666]">Litres<input className={fieldClass + " mt-1.5"} type="number" inputMode="decimal" min="0.01" step="0.01" value={litresValue} onChange={(event) => { setLitres(event.target.value); setLitresEdited(true); }} placeholder={estimatedLitres ? String(estimatedLitres) : "e.g. 30"} required />{estimatedLitres && !litresEdited && <span className="mt-1 block text-[11px] text-[#888]">Worked out from your last price</span>}</label>
                 <label className="text-[13px] text-[#666]">Odometer (km)<input className={fieldClass + " mt-1.5"} type="number" inputMode="numeric" min="0" step="1" value={odometer} onChange={(event) => setOdometer(event.target.value)} placeholder={odometerHint} />{odometerTooLow && <span className="mt-1 block text-[11px] text-[#B06A12]">Lower than the last reading</span>}</label>
             </div>
             <DatePicker value={date} onChange={setDate} />

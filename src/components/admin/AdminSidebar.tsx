@@ -104,7 +104,7 @@ export function AdminSidebar({ activeTab, onLogout }: AdminSidebarProps) {
     );
 }
 
-function NavButton({ active, href, icon: Icon, label, badge }: { active: boolean, href: string, icon: any, label: string, badge?: string }) {
+function NavButton({ active, href, icon: Icon, label, badge }: { active: boolean, href: string, icon: React.ComponentType<{ className?: string }>, label: string, badge?: string }) {
     return (
         <Link
             href={href}

@@ -341,7 +341,6 @@ export type ServiceHistoryRow = {
     created_at?: string;
 };
 
-
 export type UpsertMemberMembershipParams = {
     member_id?: string | null;
     full_name: string;
@@ -871,7 +870,6 @@ export async function listRequestsByProvider(
     return ((await readJSONSafe<RequestsListRow[]>(res)) ?? []).map((row) => ({ ...row, driver_phone: formatPhone(row.driver_phone) }));
 }
 
-
 /* ─────────────────────────────────────────
    Provider Services
 ────────────────────────────────────────── */
@@ -1186,99 +1184,9 @@ export async function updateVehicle(id: string, payload: Partial<VehicleRow>): P
     await throwIfNotOk(res);
 }
 
-/**
- * Link a physical NFC Smart Card to a vehicle.
- * Generates a Base62 public token and stores both the physical serial and the public ID.
- * Returns the generated public passport ID (e.g. "k7R2pM9q").
- */
-export async function linkSmartCardToVehicle(
-    vehicleId: string,
-    serialNumber: string
-): Promise<string> {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let publicId = "";
-    for (let i = 0; i < 8; i++) {
-        publicId += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    const res = await fetch(`${URL}/rest/v1/vehicles?id=eq.${vehicleId}`, {
-        method: "PATCH",
-        headers: {
-            ...authHeaders(),
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            nfc_card_id: publicId,
-            nfc_serial_number: serialNumber,
-        }),
-    });
-    await throwIfNotOk(res);
-    return publicId;
-}
-
-
 /* ─────────────────────────────────────────
-   Public Vehicle Lookup (for NFC Tag profiles)
+   Service history (admin)
 ────────────────────────────────────────── */
-
-export async function getPublicVehicle(nfcId: string): Promise<VehicleRow | null> {
-    const res = await fetch(
-        `${URL}/rest/v1/vehicles?nfc_card_id=eq.${nfcId}&select=*`,
-        {
-            headers: {
-                apikey: ANON,
-                Authorization: `Bearer ${ANON}`,
-                "Accept-Profile": "motorambos",
-            }
-        }
-    );
-    if (!res.ok) return null;
-    const data = (await readJSONSafe<VehicleRow[]>(res)) ?? [];
-    return data.length > 0 ? data[0] : null;
-}
-
-export async function getPublicServiceHistory(vehicleId: string): Promise<ServiceHistoryRow[]> {
-    const res = await fetch(
-        `${URL}/rest/v1/service_history?vehicle_id=eq.${vehicleId}&select=*&order=service_date.desc`,
-        {
-            headers: {
-                apikey: ANON,
-                Authorization: `Bearer ${ANON}`,
-                "Accept-Profile": "motorambos",
-            }
-        }
-    );
-    if (!res.ok) return [];
-    return (await readJSONSafe<ServiceHistoryRow[]>(res)) ?? [];
-}
-
-export async function getPublicMemberByUserId(userId: string): Promise<MemberWithMembershipRow | null> {
-    const res = await fetch(
-        `${URL}/rest/v1/members?auth_user_id=eq.${userId}&select=*`,
-        {
-            headers: {
-                apikey: ANON,
-                Authorization: `Bearer ${ANON}`,
-                "Accept-Profile": "motorambos",
-            }
-        }
-    );
-    if (!res.ok) return null;
-    const data = (await readJSONSafe<any[]>(res)) ?? [];
-    if (data.length === 0) return null;
-    const r = data[0];
-    return {
-        member_id: r.id,
-        auth_user_id: r.auth_user_id,
-        full_name: r.full_name,
-        phone: formatPhone(r.phone),
-        email: r.email,
-        membership_tier: null,
-        membership_number: null,
-        membership_expiry_date: null,
-        membership_is_active: null,
-    };
-}
 
 export async function listServiceHistory(vehicleId: string): Promise<ServiceHistoryRow[]> {
     const res = await fetch(
@@ -1300,7 +1208,6 @@ export async function upsertServiceHistory(row: Partial<ServiceHistoryRow>): Pro
     });
     await throwIfNotOk(res);
 }
-
 
 /* ─────────────────────────────────────────
    HELP FLOW — Anon Only
@@ -1575,6 +1482,7 @@ export type NfcCardRow = {
     id: string;
     serial_number: string;
     public_id?: string | null;
+    claim_code?: string | null;
     status: string;
     batch_id?: string | null;
     created_at?: string;

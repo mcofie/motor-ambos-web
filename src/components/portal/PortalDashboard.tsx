@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,7 @@ import VehicleActivity from "@/components/portal/VehicleActivity";
 import FleetIssueInbox, { type FleetIssue } from "@/components/portal/FleetIssueInbox";
 import LicenceCard from "@/components/portal/LicenceCard";
 import SmartCardPanel from "@/components/portal/SmartCardPanel";
+import CardClaimForm from "@/components/portal/CardClaimForm";
 import { QuickLogSheet, type LogKind } from "@/components/portal/QuickLog";
 
 const inputClass = "h-12 w-full rounded-[10px] border border-[#DEDEDE] bg-white px-4 text-[16px] text-[#171717] outline-none focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/10";
@@ -127,10 +128,14 @@ function VehicleDetails({ vehicle, documents, editable, editing, onEditingChange
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    // When the saved dates change (after a save or reload), start the form from them again.
+    const savedDates = `${insurance?.expires_on || ""}|${roadworthy?.expires_on || ""}`;
+    const [formDates, setFormDates] = useState(savedDates);
+    if (formDates !== savedDates) {
+        setFormDates(savedDates);
         setInsuranceDate(insurance?.expires_on?.slice(0, 10) || "");
         setRoadworthyDate(roadworthy?.expires_on?.slice(0, 10) || "");
-    }, [insurance?.expires_on, roadworthy?.expires_on]);
+    }
 
     async function saveDates() {
         const changes = [
@@ -517,37 +522,18 @@ const pendingLinkKey = "motorambos-pending-card";
 
 function LinkCardBanner({ code, vehicles, onDone }: { code: string; vehicles: PortalVehicle[]; onDone: () => void }) {
     const [vehicleId, setVehicleId] = useState(vehicles[0]?.id || "");
-    const [busy, setBusy] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [linked, setLinked] = useState<string | null>(null);
-
-    async function link() {
-        setBusy(true);
-        setError(null);
-        try {
-            const response = await fetch("/api/portal/smart-card", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vehicleId, code }) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || "Could not link the card");
-            setLinked(vehicles.find((vehicle) => vehicle.id === vehicleId)?.plate || "your car");
-            window.dispatchEvent(new Event("portal-smartcard-changed"));
-        } catch (reason) {
-            setError(reason instanceof Error ? reason.message : "Could not link the card");
-        } finally {
-            setBusy(false);
-        }
-    }
 
     return <section aria-label="Link Smart Card" className="mb-8 overflow-hidden rounded-[18px] bg-[#1111F6] p-5 text-white sm:p-6">
         <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15"><Nfc className="h-5 w-5" /></span>
             <div className="min-w-0 flex-1">
                 <h2 className="text-[18px] tracking-[-0.02em]">{linked ? `Smart Card linked to ${linked}` : "Link your Smart Card"}</h2>
-                <p className="mt-1 text-[14px] text-white/75">{linked ? "Tap the card with a phone to see its page. Choose what it shows under the car's Smart Card settings." : vehicles.length ? "Choose the car this card belongs to." : "Add a car first, then link the card to it."}</p>
-                {!linked && vehicles.length > 0 && <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <select value={vehicleId} onChange={(event) => setVehicleId(event.target.value)} className="h-11 rounded-full border-0 bg-white px-4 text-[15px] text-[#171717] outline-none sm:min-w-[240px]">{vehicles.map((vehicle) => <option key={vehicle.id} value={vehicle.id}>{[vehicle.plate, vehicleTitle(vehicle)].filter(Boolean).join(" · ")}</option>)}</select>
-                    <button type="button" onClick={link} disabled={busy || !vehicleId} className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-white/20 px-5 text-[15px] hover:bg-white/30 disabled:opacity-50">{busy && <Loader2 className="h-4 w-4 animate-spin" />}Link card</button>
+                <p className="mt-1 text-[14px] text-white/75">{linked ? "Tap the card with a phone to see its page. Choose what it shows under the car's Smart Card settings." : vehicles.length ? "Choose the car, then enter the claim code printed on the back of the card." : "Add a car first, then link the card to it."}</p>
+                {!linked && vehicles.length > 0 && <div className="mt-4 space-y-3">
+                    {vehicles.length > 1 && <label className="block text-[13px] text-white/80">Car<select value={vehicleId} onChange={(event) => setVehicleId(event.target.value)} className="mt-1.5 h-12 w-full rounded-[10px] border-0 bg-white px-3.5 text-[15px] text-[#171717] outline-none sm:max-w-[360px]">{vehicles.map((vehicle) => <option key={vehicle.id} value={vehicle.id}>{[vehicle.plate, vehicleTitle(vehicle)].filter(Boolean).join(" · ")}</option>)}</select></label>}
+                    <div className="sm:max-w-[360px]"><CardClaimForm key={vehicleId} tone="brand" vehicleId={vehicleId} cardCode={code} onLinked={() => { setLinked(vehicles.find((vehicle) => vehicle.id === vehicleId)?.plate || "your car"); window.dispatchEvent(new Event("portal-smartcard-changed")); }} /></div>
                 </div>}
-                {error && <p role="alert" className="mt-3 rounded-[10px] bg-white/15 px-3 py-2 text-[13px]">{error}</p>}
             </div>
             <button type="button" onClick={onDone} aria-label="Dismiss" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-white/15"><X className="h-4 w-4" /></button>
         </div>
@@ -585,18 +571,18 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
     const [query, setQuery] = useState("");
     const [filter, setFilter] = useState<VehicleFilter>("all");
     const [logSheet, setLogSheet] = useState<{ vehicleId?: string; kind?: LogKind } | null>(null);
-    const [pendingCard, setPendingCard] = useState<string | null>(null);
-
-    useEffect(() => {
-        // A tapped, unlinked card sends people here with ?link=<card>. Keep it through sign-up.
+    // A tapped, unlinked card sends people here with ?link=<card>. The banner only shows once account
+    // data has loaded in the browser, so reading the address here never differs from the server render.
+    const [pendingCard, setPendingCard] = useState<string | null>(() => {
+        if (typeof window === "undefined") return null;
         const fromUrl = new URLSearchParams(window.location.search).get("link");
-        try {
-            if (fromUrl) window.sessionStorage.setItem(pendingLinkKey, fromUrl);
-            setPendingCard(fromUrl || window.sessionStorage.getItem(pendingLinkKey));
-        } catch {
-            setPendingCard(fromUrl);
-        }
-    }, []);
+        try { return fromUrl || window.sessionStorage.getItem(pendingLinkKey); } catch { return fromUrl; }
+    });
+
+    // Keep the card through sign-up, which leaves and returns to this page.
+    useEffect(() => {
+        try { if (pendingCard) window.sessionStorage.setItem(pendingLinkKey, pendingCard); } catch { /* storage unavailable */ }
+    }, [pendingCard]);
 
     function dismissPendingCard() {
         setPendingCard(null);
@@ -619,7 +605,7 @@ export default function PortalDashboard({ view }: { view: "personal" | "fleet" }
     const managedOrgs = data?.organizations.filter((org) => org.role !== "DRIVER") || [];
     const showFleetTab = managedOrgs.length > 0;
     const currentOrg = managedOrgs.find((org) => org.id === selectedOrgId) || managedOrgs[0];
-    const fleetCars = useMemo(() => data && currentOrg ? data.fleetVehicles.filter((vehicle) => (vehicle.orgId || vehicle.user_id) === currentOrg.id) : [], [data, currentOrg]);
+    const fleetCars = data && currentOrg ? data.fleetVehicles.filter((vehicle) => (vehicle.orgId || vehicle.user_id) === currentOrg.id) : [];
     const fleetDrivers = data && currentOrg ? data.fleetDrivers.filter((driver) => driver.orgId === currentOrg.id) : [];
     const personalCars = data ? [...data.personalVehicles, ...data.assignedVehicles.filter((vehicle) => !data.personalVehicles.some((own) => own.id === vehicle.id))] : [];
     const ownIds = new Set((data?.personalVehicles || []).map((vehicle) => vehicle.id));

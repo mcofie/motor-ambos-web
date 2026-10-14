@@ -1,83 +1,37 @@
-import React from 'react';
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/metadata";
-import {
-    StripeNavbar,
-    StripeFooter
-} from "@/components/stripe-landing/Sections";
+import LegalPage from "@/components/landing-home/LegalPage";
 
-export const metadata: Metadata = publicPageMetadata("Terms of Service", "Read the terms for using Motor Ambos services.", "/terms-of-service");
+export const metadata: Metadata = publicPageMetadata("Terms of Service", "The terms for using the Motor Ambos website, app and Smart Cards.", "/terms-of-service");
 
 export default function TermsOfServicePage() {
-    return (
-        <main className="bg-white min-h-screen selection:bg-[#00C767]/20 selection:text-[#171717] w-full overflow-x-hidden font-jakarta">
-            <StripeNavbar />
-
-            <div className="pt-44 pb-32 px-6 md:px-12">
-                <div className="max-w-4xl mx-auto">
-                    <div className="space-y-6 mb-24 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#F8FAFF] rounded-full text-[12px] font-bold uppercase tracking-[0.15em] text-[#00C767] border border-slate-100 shadow-sm">
-                            Governance Protocol
-                        </div>
-                        <h1 className="text-[48px] md:text-[64px] font-extrabold text-[#171717] leading-[1.0] tracking-[-0.05em]">Terms of Service.</h1>
-                        <p className="text-[12px] font-bold uppercase tracking-widest text-[#525252] opacity-40">
-                            Last protocol update: {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
-                        </p>
-                    </div>
-
-                    <div className="space-y-20">
-                        <section className="space-y-6">
-                            <h2 className="text-[20px] font-extrabold text-[#171717] uppercase tracking-tight">1. Technical Agreement</h2>
-                            <p className="text-[18px] font-medium text-[#525252] leading-relaxed opacity-80">
-                                These Terms constitute a binding technical agreement between the user and Motor Ambos Infrastructure. Accessing our systems implies full compliance with these protocols as defined in the master architecture.
-                            </p>
-                        </section>
-
-                        <section className="space-y-6">
-                            <h2 className="text-[20px] font-extrabold text-[#171717] uppercase tracking-tight">2. Intellectual Infrastructure</h2>
-                            <p className="text-[18px] font-medium text-[#525252] leading-relaxed opacity-80">
-                                All code, telemetry, interface designs, hardware anchoring methods, and technical data within the Ambos ecosystem are proprietary infrastructure, protected under international technical and copyright laws. Unauthorized replication of protocol nodes is strictly prohibited.
-                            </p>
-                        </section>
-
-                        <section className="space-y-6">
-                            <h2 className="text-[20px] font-extrabold text-[#171717] uppercase tracking-tight">3. User Integrity</h2>
-                            <div className="space-y-8">
-                                <p className="text-[18px] font-medium text-[#525252] leading-relaxed opacity-80">
-                                    Users maintaining data on the platform represent that:
-                                </p>
-                                <ul className="space-y-6 border-l-2 border-[#00C767] pl-8">
-                                    <li className="text-[16px] font-bold text-[#525252]">
-                                        <span className="text-[#171717]">Data Accuracy:</span> All telemetry and registration data is accurate and verifiable at the point of origin.
-                                    </li>
-                                    <li className="text-[16px] font-bold text-[#525252]">
-                                        <span className="text-[#171717]">Capacity:</span> They possess full legal capacity to utilize the infrastructure in their respective region.
-                                    </li>
-                                    <li className="text-[16px] font-bold text-[#525252]">
-                                        <span className="text-[#171717]">Compliance:</span> System access will be conducted within defined legal parameters of the Motor Ambos Jurisdiction.
-                                    </li>
-                                </ul>
-                            </div>
-                        </section>
-
-                        <section className="space-y-6">
-                            <h2 className="text-[20px] font-extrabold text-[#171717] uppercase tracking-tight">4. Liability Limitations</h2>
-                            <p className="text-[18px] font-medium text-[#525252] leading-relaxed opacity-80">
-                                Motor Ambos Infrastructure is not liable for indirect system failures, data corruption, or external hardware issues arising from user-side telemetry errors or incompatible hardware anchoring.
-                            </p>
-                        </section>
-
-                        <section className="space-y-8 pt-12 border-t border-slate-100">
-                            <h2 className="text-[20px] font-extrabold text-[#171717] uppercase tracking-tight">5. Technical Complaints</h2>
-                            <p className="text-[18px] font-medium text-[#525252] leading-relaxed opacity-80">
-                                Resolve system complaints via the primary support terminal: <span className="text-[#00C767] font-bold underline cursor-pointer hover:text-emerald-600 transition-colors">support@motorambos.com</span>
-                            </p>
-                        </section>
-                    </div>
-                </div>
-            </div>
-
-            <StripeFooter />
-        </main>
-    );
+    return <LegalPage
+        eyebrow="Terms"
+        title="Terms of Service"
+        updated="14 October 2026"
+        intro="These terms apply when you use the Motor Ambos website, app and Smart Cards. By creating an account or using the service, you agree to them."
+        sections={[
+            { title: "The service", body: <p>Motor Ambos helps you keep your car&apos;s papers and records in one place, reminds you before papers expire, helps you find roadside providers nearby, and lets you share a car&apos;s details through a Smart Card. Fleets can manage several vehicles and drivers.</p> },
+            { title: "Your account", body: <ul>
+                <li>Give accurate details and keep them up to date.</li>
+                <li>Keep your sign-in details private. You are responsible for activity on your account.</li>
+                <li>Only add cars you own, drive, or manage with the owner&apos;s permission.</li>
+            </ul> },
+            { title: "Papers and reminders", body: <p>Expiry dates and documents in Motor Ambos are records you or your fleet add. Reminders are a convenience. They do not confirm that a car is legally insured or roadworthy, and you remain responsible for renewing papers on time. If you ask us to handle a renewal, a fee may apply and will be shown before you agree.</p> },
+            { title: "Roadside help", body: <>
+                <p>Roadside providers listed on Motor Ambos are independent businesses, not our employees or agents. We show listed details such as distance, services and call-out fee where supplied, but we do not guarantee a provider&apos;s availability, price or work.</p>
+                <p>Agree the work and the full price with the provider before any repair starts. Any agreement for roadside work is between you and the provider.</p>
+            </> },
+            { title: "Smart Cards", body: <ul>
+                <li>A Smart Card can be linked only by someone who holds the card and its claim code and confirms a code sent to their phone.</li>
+                <li>You choose what a linked card shows and can change it or unlink the card at any time.</li>
+                <li>Keep the card&apos;s claim code private. If a card is lost, unlink it in the app and contact us for a replacement.</li>
+            </ul> },
+            { title: "Records added by others", body: <p>Mechanics can add service records to your car once you approve them with a code sent to your phone. Records marked as recorded by a mechanic come from that mechanic. We do not inspect cars or check the work described.</p> },
+            { title: "Acceptable use", body: <p>Do not use Motor Ambos to break the law, upload content you do not have the right to share, impersonate someone else, access other people&apos;s information without permission, or interfere with the service.</p> },
+            { title: "Our liability", body: <p>We work to keep Motor Ambos accurate and available, but the service is provided as it is. To the extent the law allows, we are not responsible for losses caused by missed reminders, information you or others entered, or the actions of independent providers. Nothing in these terms limits rights you have under consumer law.</p> },
+            { title: "Ending your use", body: <p>You can stop using Motor Ambos and ask us to close your account at any time. We may suspend accounts that break these terms or put other users at risk.</p> },
+            { title: "Changes and contact", body: <p>We may update these terms and will show the date of the latest version at the top of this page. For questions or complaints, email <a href="mailto:support@motorambos.com">support@motorambos.com</a>.</p> },
+        ]}
+    />;
 }

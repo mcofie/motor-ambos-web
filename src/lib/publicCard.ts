@@ -32,8 +32,14 @@ async function loadDriver(service: Service, vehicleId: string, owner: Member | n
 
     if (!driver) return owner?.is_business && owner.business_name ? { name: readable(owner.business_name)!, role: "Fleet vehicle", photoUrl: null, licence: null } : null;
 
-    let { data: licence, error } = await service.from("driver_licences").select("licence_class,expires_on,photo_path").eq("member_id", driver.id).maybeSingle();
-    if (error?.code === "42703") ({ data: licence } = await service.from("driver_licences").select("licence_class,expires_on").eq("member_id", driver.id).maybeSingle());
+    const first = await service.from("driver_licences").select("licence_class,expires_on,photo_path,show_on_fleet_cards").eq("member_id", driver.id).maybeSingle();
+    const licence = first.error?.code === "42703"
+        ? (await service.from("driver_licences").select("licence_class,expires_on").eq("member_id", driver.id).maybeSingle()).data
+        : first.data;
+    // A fleet driver can choose not to appear on the cards of cars they are assigned to.
+    if (assignment && (licence as { show_on_fleet_cards?: boolean } | null)?.show_on_fleet_cards === false) {
+        return owner?.is_business && owner.business_name ? { name: readable(owner.business_name)!, role: "Fleet vehicle", photoUrl: null, licence: null } : null;
+    }
     const photoPath = (licence as { photo_path?: string | null } | null)?.photo_path;
     const photoUrl = photoPath ? (await service.storage.from("vehicle-documents").createSignedUrl(photoPath, 60 * 60)).data?.signedUrl || null : null;
     const fleetName = assignment && owner?.is_business ? readable(owner.business_name) : null;

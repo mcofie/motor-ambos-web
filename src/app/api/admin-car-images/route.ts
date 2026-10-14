@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceClient, staffApiError } from "@/lib/serverAuth";
-import { colourKey, textKey } from "@/lib/carImageLibrary";
+import { colourKey, modelMatches, textKey } from "@/lib/carImageLibrary";
 
 const BUCKET = "car-images";
 const imageTypes: Record<string, string> = { "image/png": "png", "image/webp": "webp", "image/jpeg": "jpg" };
@@ -23,7 +23,7 @@ export async function GET() {
     for (const vehicle of vehicles || []) {
         const make = textKey(vehicle.make), model = textKey(vehicle.model), colour = colourKey(vehicle.color);
         if (!make || !model || !colour) continue;
-        const covered = library.some((image) => image.make_key === make && image.colour_key === colour && (model === image.model_key || model.startsWith(image.model_key)));
+        const covered = library.some((image) => image.make_key === make && image.colour_key === colour && modelMatches(vehicle.model, image.model));
         if (covered) continue;
         const key = `${make}|${model}|${colour}`;
         const entry = missing.get(key) || { make: vehicle.make, model: vehicle.model, colour: vehicle.color || colour, count: 0, years: [] as number[] };

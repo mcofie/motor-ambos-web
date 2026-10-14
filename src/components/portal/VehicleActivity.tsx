@@ -46,6 +46,7 @@ export default function VehicleActivity({ vehicle, editable }: { vehicle: Portal
         }
     }, [vehicle.id]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads server data the first time the panel opens
     useEffect(() => { if (open && !activity) void load(); }, [open, activity, load]);
     useEffect(() => {
         if (!open) return;
@@ -100,7 +101,7 @@ export default function VehicleActivity({ vehicle, editable }: { vehicle: Portal
                     <div className="flex justify-between gap-3"><span className="text-[14px]">{entry.description}</span><span className="shrink-0 text-[#666]">{entry.cost == null ? "" : money(Number(entry.cost))}</span></div>
                     <p className="mt-1 text-[#777]">{displayDate(entry.service_date)}{entry.provider_name ? ` · ${entry.provider_name}` : ""}</p>
                     {entry.is_verified ? <span className="mt-1.5 inline-flex rounded-full bg-[#EAF7F0] px-2 py-0.5 text-[11px] text-[#197252]">Recorded by mechanic</span> : <span className="mt-1.5 inline-flex rounded-full bg-[#F2F2F2] px-2 py-0.5 text-[11px] text-[#666]">Added by you</span>}
-                </li>)}</ul> : <p className="py-2 text-[13px] leading-relaxed text-[#777]">No service records yet. Add one yourself, or ask your mechanic to log it from the car's Smart Card.</p>
+                </li>)}</ul> : <p className="py-2 text-[13px] leading-relaxed text-[#777]">No service records yet. Add one yourself, or ask your mechanic to log it from the car&apos;s Smart Card.</p>
                     {serviceFormOpen ? <div className="mt-3"><QuickLogForm compact vehicle={vehicle} kind="service" onSaved={() => setServiceFormOpen(false)} onCancel={() => setServiceFormOpen(false)} /></div> : <button type="button" onClick={() => setServiceFormOpen(true)} className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-[#DADAF8] px-4 text-[13px] text-[#1111F6]"><Plus className="h-4 w-4" />Add a service</button>}
                 </>}
 

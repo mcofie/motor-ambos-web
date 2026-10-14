@@ -45,6 +45,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { formatClaimCode } from "@/lib/cardFormat";
+import { siteUrl } from "@/lib/metadata";
 import { cls, StatCard } from "../ui/AdminUI";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -393,11 +395,27 @@ export function SmartNfcView() {
             id: cardRecord?.id || `legacy-${serial}`,
             serial_number: originalSerial,
             public_id: cardRecord?.public_id,
+            claim_code: cardRecord?.claim_code,
             batch_id: cardRecord?.batch_id,
             status: cardRecord?.status || (linkedVehicle ? 'ASSIGNED' : 'UNKNOWN'),
             linkedVehicle
         };
     });
+
+    // One row per card for the printer: the chip link to encode and the claim code for the back.
+    const exportForPrinting = () => {
+        const rows = filteredInventory.filter((card) => card.public_id && card.claim_code);
+        if (!rows.length) return toast.error("No cards with a chip link and claim code to export");
+        const csv = [["Serial number", "Chip link", "Claim code"], ...rows.map((card) => [card.serial_number, `${siteUrl}/v/${card.public_id}`, formatClaimCode(card.claim_code || "")])]
+            .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `smart-cards-${new Date().toISOString().slice(0, 10)}.csv`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        toast.success(`Exported ${rows.length} cards`);
+    };
 
     const filteredInventory = inventoryList.filter(item => {
         const q = searchQuery.toLowerCase();
@@ -472,6 +490,10 @@ export function SmartNfcView() {
                     <div className="flex items-center gap-2">
                         {activeTab === 'inventory' ? (
                             <>
+                                <button onClick={exportForPrinting} className="flex items-center gap-2 border border-border bg-card text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors shadow-sm">
+                                    <Package className="h-4 w-4" />
+                                    <span>Export for printing</span>
+                                </button>
                                 <button onClick={() => setIsBatchOpen(true)} className="flex items-center gap-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-colors shadow-sm">
                                     <Plus className="h-4 w-4" />
                                     <span>Add Batch</span>
@@ -509,6 +531,7 @@ export function SmartNfcView() {
                                                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                                                 <span className="font-mono font-bold text-sm tracking-wide">{card.serial_number}</span>
                                             </div>
+                                            {card.claim_code && <span className="mt-1 block pl-7 font-mono text-[11px] text-muted-foreground" title="Printed on the back of the card. Needed to link it.">Claim {formatClaimCode(card.claim_code)}</span>}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">

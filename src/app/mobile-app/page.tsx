@@ -58,7 +58,7 @@ function PapersVisual() {
                     <div className="flex items-center justify-between rounded-lg bg-[#F7F7F7] px-4 py-3 text-[13px]"><span>Insurance</span><span className="flex items-center gap-1.5 text-[#277E62]"><Check className="h-3.5 w-3.5" />Ready</span></div>
                     <div className="flex items-center justify-between rounded-lg bg-[#F7F7F7] px-4 py-3 text-[13px]"><span>Roadworthy</span><span className="text-[#A66E21]">Renew in 12 days</span></div>
                 </div>
-                <p className="mt-4 rounded-lg border border-[#EEEEEE] px-4 py-3 text-[12px] text-[#666]">Reminder sent by WhatsApp and SMS</p>
+                <p className="mt-4 rounded-lg border border-[#EEEEEE] px-4 py-3 text-[12px] text-[#666]">Reminder sent by text message</p>
             </div>
         </div>
     );
@@ -122,7 +122,7 @@ function RoadsideVisual() {
 
 const features = [
     { icon: IdCard, title: "Driver details and licence", description: "Keep each driver's name, phone number, and licence details with the car they drive. Fleets can see who is behind every wheel.", visual: <DriverVisual /> },
-    { icon: ShieldCheck, title: "Insurance and roadworthy", description: "Store the car's current papers and get WhatsApp and SMS reminders before anything expires.", visual: <PapersVisual /> },
+    { icon: ShieldCheck, title: "Insurance and roadworthy", description: "Store the car's current papers and get a text message reminder before anything expires.", visual: <PapersVisual /> },
     { icon: Wrench, title: "A service log you can trust", description: "Record every service and repair with the date, mileage, workshop, and notes. A mechanic can add the work too, once you approve it with a code sent to your phone.", visual: <ServiceVisual /> },
     { icon: Fuel, title: "Fuel log", description: "Note each fill-up with litres, cost, mileage, and station, and see what the car really costs to run.", visual: <FuelVisual /> },
     { icon: Nfc, title: "Connect a Smart Card", description: "Link an NFC Smart Card to the car from the app. One tap with a phone opens the car's record.", visual: <CardVisual /> },

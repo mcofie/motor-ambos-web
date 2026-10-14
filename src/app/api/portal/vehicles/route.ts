@@ -25,7 +25,6 @@ export async function POST(request: Request) {
     let ownerId = member.is_business ? user.id : member.id;
     if (parsed.data.orgId) {
         const orgId = parsed.data.orgId;
-        const ownFleet = member.is_business && member.id === orgId;
         if (!await canManageFleet(service, member.id, orgId)) return NextResponse.json({ error: "Fleet manager access required" }, { status: 403 });
         ownerId = orgId;
     }

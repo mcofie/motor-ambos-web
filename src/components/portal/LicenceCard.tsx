@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Camera, Check, IdCard, Loader2, Pencil } from "lucide-react";
 
-type Licence = { licenceNumber: string | null; licenceClass: string | null; expiresOn: string | null; hasFront: boolean; hasBack: boolean; hasPhoto?: boolean };
+type Licence = { licenceNumber: string | null; licenceClass: string | null; expiresOn: string | null; hasFront: boolean; hasBack: boolean; hasPhoto?: boolean; showOnFleetCards?: boolean };
 
 const fieldClass = "h-12 w-full rounded-[10px] border border-[#DEDEDE] bg-white px-3.5 text-[16px] outline-none focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/10";
 
@@ -54,10 +54,12 @@ export default function LicenceCard({ name }: { name: string }) {
     const [saving, setSaving] = useState(false);
     const [version, setVersion] = useState(0);
     const [error, setError] = useState<string | null>(null);
+    const [loadError, setLoadError] = useState(false);
 
     const load = useCallback(async () => {
         const response = await fetch("/api/portal/licence", { cache: "no-store" }).catch(() => null);
-        if (!response?.ok) return;
+        if (!response?.ok) { setLoadError(true); return; }
+        setLoadError(false);
         const result = await response.json();
         setAvailable(result.available !== false);
         setLicence(result.licence);
@@ -66,6 +68,7 @@ export default function LicenceCard({ name }: { name: string }) {
         setExpiresOn(result.licence?.expiresOn || "");
     }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads server data once the component mounts
     useEffect(() => { void load(); }, [load]);
 
     async function upload(side: "front" | "back" | "profile", file: File) {
@@ -104,6 +107,16 @@ export default function LicenceCard({ name }: { name: string }) {
         }
     }
 
+    async function setFleetSharing(showOnFleetCards: boolean) {
+        setLicence((current) => current ? { ...current, showOnFleetCards } : { licenceNumber: null, licenceClass: null, expiresOn: null, hasFront: false, hasBack: false, showOnFleetCards });
+        const response = await fetch("/api/portal/licence", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ showOnFleetCards }) }).catch(() => null);
+        if (!response?.ok) { setError("Could not save that choice. Try again."); await load(); }
+    }
+
+    if (loadError) return <section aria-label="Driver profile" role="alert" className="mb-8 flex items-center justify-between gap-3 rounded-[18px] border border-[#F3D8D8] bg-white p-5">
+        <p className="text-[14px] text-[#AA3333]">We could not load your driver profile.</p>
+        <button type="button" onClick={() => void load()} className="h-10 shrink-0 rounded-full border border-[#E3E3E3] px-4 text-[13px]">Try again</button>
+    </section>;
     if (!available) return null;
     const state = expiryState(licence?.expiresOn || null);
     const hasDetails = Boolean(licence?.licenceNumber || licence?.expiresOn);
@@ -147,6 +160,11 @@ export default function LicenceCard({ name }: { name: string }) {
                 <button type="button" onClick={() => setEditing(true)} className="inline-flex h-10 w-fit items-center gap-1.5 rounded-full border border-[#E3E3E3] px-4 text-[13px]"><Pencil className="h-3.5 w-3.5" />Edit details</button>
             </div>}
             {error && <p role="alert" className="text-[13px] text-red-600 sm:col-span-2">{error}</p>}
+            <label className="flex cursor-pointer items-center gap-3 rounded-[12px] bg-[#F7F7F7] px-4 py-3 sm:col-span-2">
+                <span className="min-w-0 flex-1"><span className="block text-[14px]">Show my profile on fleet cars I drive</span><span className="block text-[12px] text-[#888]">Your photo, first name and licence status on the Smart Card of a fleet car you are assigned to.</span></span>
+                <input type="checkbox" role="switch" checked={licence?.showOnFleetCards !== false} onChange={(event) => void setFleetSharing(event.target.checked)} className="peer sr-only" />
+                <span aria-hidden className="relative h-6 w-10 shrink-0 rounded-full bg-[#DADADA] transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-[#1111F6] peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-[#1111F6] peer-focus-visible:ring-offset-2" />
+            </label>
             <p className="text-[12px] text-[#888] sm:col-span-2">Only you can see your licence photos and number. A Smart Card page can show whether your licence is valid, never the licence itself.</p>
         </div>
     </section>;

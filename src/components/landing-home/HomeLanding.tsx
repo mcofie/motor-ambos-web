@@ -54,7 +54,11 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
         };
     }, [menuOpen]);
 
-    useEffect(() => { setMenuOpen(false); }, [pathname]);
+    const [menuPath, setMenuPath] = useState(pathname);
+    if (menuPath !== pathname) {
+        setMenuPath(pathname);
+        setMenuOpen(false);
+    }
 
     return (
         <header className="fixed inset-x-0 top-0 z-50 border-b border-[#EEEEEE] bg-white">
@@ -312,7 +316,7 @@ function StickerVisual() {
 
 function FeatureGrid() {
     const features = [
-        { id: "papers", title: "Stay ahead of expiry", description: "Keep insurance, roadworthy, and licence details close. Get WhatsApp and SMS reminders before they expire.", visual: <PapersVisual /> },
+        { id: "papers", title: "Stay ahead of expiry", description: "Keep insurance, roadworthy, and licence details close. Get a text message reminder before they expire.", visual: <PapersVisual /> },
         { id: "roadside", title: "Know the call-out fee before you call", description: "Share your location, find a nearby mechanic, and see their listed call-out fee when you need roadside help.", visual: <HelpVisual /> },
         { id: "fleet-app", title: "Run your fleet from your phone", description: "Check status, renew papers, invite drivers, and see issues drivers report. Use the web dashboard for bulk admin.", visual: <FleetVisual /> },
         { id: "qr-sticker", title: "Help anyone can reach", description: "A QR sticker opens roadside help with the car already filled in. A printed phone number is there as backup.", visual: <StickerVisual /> },

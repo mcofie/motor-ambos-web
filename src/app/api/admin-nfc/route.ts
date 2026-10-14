@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { staffApiError } from "@/lib/serverAuth";
+import { newClaimCode, newPublicId } from "@/lib/cardClaim";
 
 // Using Service Role Key to bypass RLS for Admin operations
 const supabaseAdmin = createClient(
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
             }
 
             // Post-process to ensure member and vehicle are objects not arrays
-            const formatted = (data || []).map((r: any) => ({
+            const formatted = (data || []).map((r: Record<string, unknown>) => ({
                 ...r,
                 member: Array.isArray(r.member) ? r.member[0] : r.member,
                 vehicle: Array.isArray(r.vehicle) ? r.vehicle[0] : r.vehicle
@@ -85,9 +86,9 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ error: "Invalid type parameter" }, { status: 400 });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error("Admin NFC GET Error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal Server Error" }, { status: 500 });
     }
 }
 
@@ -105,12 +106,11 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: "Invalid serials array" }, { status: 400 });
             }
 
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            const generateId = () => Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-
+            // Each card gets the id encoded on its chip and a secret claim code printed on its back.
             const rows = serials.map((s: string) => ({
                 serial_number: s,
-                public_id: generateId(),
+                public_id: newPublicId(),
+                claim_code: newClaimCode(),
                 batch_id: batch_id || null,
                 status: 'MANUFACTURED'
             }));
@@ -164,7 +164,7 @@ export async function POST(request: Request) {
                     .select("public_id")
                     .eq("serial_number", map.serial_number);
 
-                const publicId = cards && cards[0]?.public_id ? cards[0].public_id : Array.from({ length: 8 }, () => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 62)]).join("");
+                const publicId = cards && cards[0]?.public_id ? cards[0].public_id : newPublicId();
 
                 // 2. Update Vehicle
                 const { error: vError } = await supabaseAdmin
@@ -267,8 +267,8 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error("Admin NFC POST Error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Internal Server Error" }, { status: 500 });
     }
 }

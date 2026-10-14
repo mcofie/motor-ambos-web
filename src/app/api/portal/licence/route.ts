@@ -10,6 +10,7 @@ const DetailsSchema = z.object({
     licenceClass: z.string().trim().max(20).nullable(),
     expiresOn: z.iso.date().nullable(),
 });
+const PrivacySchema = z.object({ showOnFleetCards: z.boolean() });
 
 async function currentMember() {
     const user = await getAuthenticatedUser();
@@ -23,10 +24,10 @@ export async function GET(request: Request) {
     const session = await currentMember();
     if (!session) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     const columns = "licence_number,licence_class,expires_on,front_path,back_path";
-    let { data, error } = await session.service.from("driver_licences").select(`${columns},photo_path`).eq("member_id", session.memberId).maybeSingle();
+    let { data, error } = await session.service.from("driver_licences").select(`${columns},photo_path,show_on_fleet_cards`).eq("member_id", session.memberId).maybeSingle();
     // Until the profile photo migration runs, load everything else.
     if (error?.code === "42703") ({ data, error } = await session.service.from("driver_licences").select(columns).eq("member_id", session.memberId).maybeSingle());
-    if (error) return NextResponse.json({ error: "Could not load your licence", available: false }, { status: 200 });
+    if (error) return NextResponse.json({ error: "Could not load your driver profile" }, { status: 500 });
     const photoPath = (data as { photo_path?: string | null } | null)?.photo_path || null;
 
     const side = new URL(request.url).searchParams.get("photo");
@@ -45,6 +46,7 @@ export async function GET(request: Request) {
             expiresOn: data.expires_on,
             hasFront: Boolean(data.front_path),
             hasPhoto: Boolean(photoPath),
+            showOnFleetCards: (data as { show_on_fleet_cards?: boolean }).show_on_fleet_cards !== false,
             hasBack: Boolean(data.back_path),
         } : null,
     }, { headers: { "Cache-Control": "no-store" } });
@@ -53,7 +55,13 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
     const session = await currentMember();
     if (!session) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
-    const parsed = DetailsSchema.safeParse(await request.json().catch(() => null));
+    const body = await request.json().catch(() => null);
+    const privacy = PrivacySchema.safeParse(body);
+    if (privacy.success) {
+        const { error } = await session.service.from("driver_licences").upsert({ member_id: session.memberId, show_on_fleet_cards: privacy.data.showOnFleetCards, updated_at: new Date().toISOString() }, { onConflict: "member_id" });
+        return error ? NextResponse.json({ error: "Could not save your choice" }, { status: 500 }) : NextResponse.json({ ok: true });
+    }
+    const parsed = DetailsSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Check the licence details and try again" }, { status: 400 });
     const { error } = await session.service.from("driver_licences").upsert({
         member_id: session.memberId,

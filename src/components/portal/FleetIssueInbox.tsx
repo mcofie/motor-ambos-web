@@ -35,6 +35,7 @@ export default function FleetIssueInbox({ orgId, onOpenVehicle, onIssuesChange }
     useEffect(() => { onIssuesChange?.(issues); }, [issues, onIssuesChange]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- loads server data once the component mounts
         void load();
         window.addEventListener("portal-issues-changed", load);
         return () => window.removeEventListener("portal-issues-changed", load);

@@ -47,6 +47,7 @@ export function CarImagesView() {
         }
     }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads server data once the page mounts
     useEffect(() => { void load(); }, [load]);
     useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 

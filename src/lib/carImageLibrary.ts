@@ -14,7 +14,22 @@ export function colourKey(value: string | null | undefined) {
     return family ? family.toLowerCase() : textKey(name);
 }
 
-type LibraryImage = { image_url: string; model_key: string; colour_key: string; year_from: number | null; year_to: number | null; created_at: string };
+const words = (value: string | null | undefined) => (value || "").toLowerCase().split(/[^a-z0-9.]+/).filter(Boolean);
+
+/**
+ * A library photo fits a car when the model is the same, or the car's model only adds a short
+ * trim ("Rio 5", "Corolla LE", "Corolla 1.8"). A new word ("Corolla Cross", "Land Cruiser Prado")
+ * is usually a different body, so it needs its own photo.
+ */
+export function modelMatches(vehicleModel: string | null | undefined, libraryModel: string | null | undefined) {
+    const car = words(vehicleModel), library = words(libraryModel);
+    if (!library.length || library.length > car.length || library.some((word, index) => car[index] !== word)) {
+        return textKey(vehicleModel) === textKey(libraryModel) && Boolean(textKey(libraryModel));
+    }
+    return car.slice(library.length).every((word) => word.length <= 3 || /\d/.test(word));
+}
+
+type LibraryImage = { image_url: string; model: string; model_key: string; colour_key: string; year_from: number | null; year_to: number | null; created_at: string };
 
 /** Picks the closest photo for this car: same colour, the most specific model name, then the best year fit. */
 export async function findCarImage(service: ReturnType<typeof getServiceClient>, car: { make: string | null; model: string | null; year: string | number | null; color: string | null }) {
@@ -23,7 +38,7 @@ export async function findCarImage(service: ReturnType<typeof getServiceClient>,
     const colour = colourKey(car.color);
     if (!make || !model || !colour) return null;
 
-    const { data, error } = await service.from("car_images").select("image_url,model_key,colour_key,year_from,year_to,created_at").eq("make_key", make).eq("colour_key", colour);
+    const { data, error } = await service.from("car_images").select("image_url,model,model_key,colour_key,year_from,year_to,created_at").eq("make_key", make).eq("colour_key", colour);
     if (error || !data?.length) return null;
 
     const year = Number(car.year) || null;
@@ -33,7 +48,7 @@ export async function findCarImage(service: ReturnType<typeof getServiceClient>,
         return Math.min(...[image.year_from, image.year_to].filter((value): value is number => value != null).map((value) => Math.abs(value - year)));
     };
 
-    const candidates = (data as LibraryImage[]).filter((image) => model === image.model_key || model.startsWith(image.model_key));
+    const candidates = (data as LibraryImage[]).filter((image) => modelMatches(car.model, image.model));
     candidates.sort((a, b) => b.model_key.length - a.model_key.length || yearGap(a) - yearGap(b) || b.created_at.localeCompare(a.created_at));
     return candidates[0]?.image_url || null;
 }

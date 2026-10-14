@@ -6,7 +6,7 @@ import MarketingMotion from "@/components/landing-home/MarketingMotion";
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = publicPageMetadata("For Service Providers", "Learn how roadside mechanics and automotive service providers can connect with Motor Ambos drivers and fleets.", "/providers");
+export const metadata: Metadata = publicPageMetadata("Join as a Mechanic", "Learn how independent roadside mechanics and providers can list their services for Motor Ambos drivers and fleets.", "/providers");
 
 const listingDetails = [
     { icon: MapPin, title: "Where you can help", description: "Tell us the areas you serve and the types of roadside work you take on." },

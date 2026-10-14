@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Wrench, LifeBuoy, Users, LogOut, LayoutDashboard, QrCode, Building2, ShieldCheck } from "lucide-react";
+import { Wrench, LifeBuoy, Users, LogOut, LayoutDashboard, QrCode, Building2, ShieldCheck, Images } from "lucide-react";
 import { cls } from "./ui/AdminUI";
 
 interface AdminSidebarProps {
-    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations" | "advisor";
+    activeTab: "overview" | "providers" | "requests" | "memberships" | "admin" | "nfc" | "organizations" | "advisor" | "cars";
     onLogout: () => void;
 }
 
@@ -68,6 +68,12 @@ export function AdminSidebar({ activeTab, onLogout }: AdminSidebarProps) {
                     href="/admin/nfc"
                     icon={QrCode}
                     label="Smart Cards"
+                />
+                <NavButton
+                    active={currentTab === "cars"}
+                    href="/admin/car-images"
+                    icon={Images}
+                    label="Car Images"
                 />
                 <NavButton
                     active={currentTab === "organizations"}

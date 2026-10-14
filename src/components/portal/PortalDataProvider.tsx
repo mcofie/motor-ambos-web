@@ -28,7 +28,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
                 const response = await fetch("/api/portal/me", { cache: "no-store" });
                 if (response.status === 401) {
                     setData(null);
-                    router.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+                    router.replace(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
                     return;
                 }
                 const result = await response.json();

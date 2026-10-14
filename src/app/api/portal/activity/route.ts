@@ -18,6 +18,15 @@ const FuelSchema = z.object({
     totalCost: z.number().positive().max(100000),
     odometer: z.number().nonnegative().max(10000000).nullable(),
 });
+const ServiceSchema = z.object({
+    type: z.literal("service"),
+    vehicleId: uuid,
+    date: z.iso.date(),
+    description: z.string().trim().min(2).max(200),
+    provider: z.string().trim().max(120).optional(),
+    mileage: z.number().nonnegative().max(10000000).nullable(),
+    cost: z.number().nonnegative().max(1000000).nullable(),
+});
 const ResolveSchema = z.object({
     vehicleId: uuid,
     issueId: uuid,
@@ -45,7 +54,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     const body = await request.json().catch(() => null);
-    const parsed = z.discriminatedUnion("type", [IssueSchema, FuelSchema]).safeParse(body);
+    const parsed = z.discriminatedUnion("type", [IssueSchema, FuelSchema, ServiceSchema]).safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Check the information and try again" }, { status: 400 });
     const access = await getPortalVehicleAccess(parsed.data.vehicleId);
     if (access.status !== 200) return accessError(access.status);
@@ -64,6 +73,21 @@ export async function POST(request: Request) {
             { name: "Vehicle ID", value: parsed.data.vehicleId },
             { name: "Reported by", value: access.member.id },
         ]);
+        return NextResponse.json({ ok: true }, { status: 201 });
+    }
+
+    if (parsed.data.type === "service") {
+        // Entries from the owner or driver are kept apart from mechanic-confirmed records.
+        const { error } = await access.service.from("service_history").insert({
+            vehicle_id: parsed.data.vehicleId,
+            service_date: parsed.data.date,
+            description: parsed.data.description,
+            provider_name: parsed.data.provider || null,
+            mileage: parsed.data.mileage,
+            cost: parsed.data.cost,
+            is_verified: false,
+        });
+        if (error) return NextResponse.json({ error: "Could not save this service" }, { status: 500 });
         return NextResponse.json({ ok: true }, { status: 201 });
     }
 

@@ -1,31 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { AlertCircle, ChevronDown, Fuel, Wrench } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { AlertCircle, ChevronDown, Fuel, Plus, Wrench } from "lucide-react";
 import type { PortalVehicle } from "@/lib/portalTypes";
+import { QuickLogForm } from "@/components/portal/QuickLog";
 
 type ServiceEntry = { id: string; service_date: string; description: string; provider_name: string | null; cost: number | null; is_verified: boolean };
 type FuelEntry = { id: string; date: string; liters: number; total_cost: number; odometer_reading: number | null };
 type Issue = { id: string; category: string; note: string | null; status: "open" | "resolved"; resolution_note: string | null; created_at: string };
 type Activity = { services: ServiceEntry[]; fuel: FuelEntry[]; issues: Issue[]; issuesAvailable: boolean };
+type Tab = "service" | "fuel" | "issues";
 
-const fieldClass = "h-11 w-full rounded-[9px] border border-[#DEDEDE] bg-white px-3 text-[14px] outline-none focus:border-[#1111F6]";
-const issueCategories = ["Tyres", "Battery", "Engine", "Brakes", "Electrical", "Other"];
+const fieldClass = "h-11 w-full rounded-[9px] border border-[#DEDEDE] bg-white px-3 text-[16px] outline-none focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/10 sm:text-[14px]";
 const money = (value: number) => new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", maximumFractionDigits: 2 }).format(value);
-const displayDate = (value: string) => new Intl.DateTimeFormat("en-GH", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
+const displayDate = (value: string) => {
+    const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
+    return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("en-GH", { day: "numeric", month: "short", year: "numeric" }).format(date);
+};
 
 export default function VehicleActivity({ vehicle, editable }: { vehicle: PortalVehicle; editable: boolean }) {
     const [open, setOpen] = useState(false);
+    const [tab, setTab] = useState<Tab>("service");
     const [activity, setActivity] = useState<Activity | null>(null);
     const [loading, setLoading] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [category, setCategory] = useState("Tyres");
-    const [note, setNote] = useState("");
-    const [fuelDate, setFuelDate] = useState(() => new Date().toISOString().slice(0, 10));
-    const [litres, setLitres] = useState("");
-    const [totalCost, setTotalCost] = useState("");
-    const [odometer, setOdometer] = useState("");
+    const [fuelFormOpen, setFuelFormOpen] = useState(false);
+    const [issueFormOpen, setIssueFormOpen] = useState(false);
+    const [serviceFormOpen, setServiceFormOpen] = useState(false);
     const [resolvingId, setResolvingId] = useState<string | null>(null);
     const [resolutionNote, setResolutionNote] = useState("");
 
@@ -51,36 +53,6 @@ export default function VehicleActivity({ vehicle, editable }: { vehicle: Portal
         return () => window.removeEventListener("portal-activity-changed", load);
     }, [open, load]);
 
-    async function post(body: Record<string, unknown>) {
-        setBusy(true);
-        setError(null);
-        try {
-            const response = await fetch("/api/portal/activity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || "Could not save activity");
-            await load();
-            window.dispatchEvent(new Event("portal-issues-changed"));
-            return true;
-        } catch (reason) {
-            setError(reason instanceof Error ? reason.message : "Could not save activity");
-            return false;
-        } finally {
-            setBusy(false);
-        }
-    }
-
-    async function reportIssue(event: FormEvent) {
-        event.preventDefault();
-        if (await post({ type: "issue", vehicleId: vehicle.id, category, note })) setNote("");
-    }
-
-    async function addFuel(event: FormEvent) {
-        event.preventDefault();
-        if (await post({ type: "fuel", vehicleId: vehicle.id, date: fuelDate, litres: Number(litres), totalCost: Number(totalCost), odometer: odometer ? Number(odometer) : null })) {
-            setLitres(""); setTotalCost(""); setOdometer("");
-        }
-    }
-
     async function resolveIssue(issueId: string) {
         setBusy(true);
         setError(null);
@@ -101,43 +73,56 @@ export default function VehicleActivity({ vehicle, editable }: { vehicle: Portal
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - 7);
     const weeklySpend = activity?.fuel.filter((entry) => new Date(entry.date) >= weekStart).reduce((total, entry) => total + Number(entry.total_cost || 0), 0) || 0;
+    const openIssues = activity?.issues.filter((issue) => issue.status === "open").length || 0;
+    const tabs: { key: Tab; label: string; icon: typeof Wrench; count?: number }[] = [
+        { key: "service", label: "Service", icon: Wrench, count: activity?.services.length },
+        { key: "fuel", label: "Fuel", icon: Fuel, count: activity?.fuel.length },
+        ...(activity?.issuesAvailable === false ? [] : [{ key: "issues" as Tab, label: "Issues", icon: AlertCircle, count: openIssues || undefined }]),
+    ];
 
-    return <div className="border-t border-[#EEEEEE] bg-white px-5 py-4 sm:px-6">
-        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-[14px] text-[#1111F6]">
-            <span>Service, fuel & issues</span><ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+    return <div className="border-t border-[#EEEEEE] bg-white">
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex min-h-[52px] w-full items-center justify-between gap-3 px-5 text-left text-[14px] text-[#171717] hover:text-[#1111F6] sm:px-6">
+            <span>Service, fuel and issues</span><ChevronDown className={`h-4 w-4 text-[#777] transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
-        {open && <div className="space-y-7 pb-3 pt-5">
-            {loading && !activity ? <p role="status" className="text-[13px] text-[#777]">Loading vehicle activity…</p> : null}
-            {error && <p role="alert" className="text-[13px] text-red-600">{error} <button type="button" onClick={() => void load()} className="underline">Try again</button></p>}
-            {activity && <>
-                <section>
-                    <h4 className="flex items-center gap-2 text-[16px]"><Wrench className="h-4 w-4 text-[#1111F6]" />Service history</h4>
-                    {activity.services.length ? <div className="mt-3 divide-y divide-[#EEE]">{activity.services.map((entry) => <div key={entry.id} className="py-3 text-[13px]"><div className="flex justify-between gap-3"><span className="font-medium">{entry.description}</span><span className="shrink-0 text-[#666]">{entry.cost == null ? "" : money(Number(entry.cost))}</span></div><p className="mt-1 text-[#777]">{entry.service_date}{entry.provider_name ? ` · ${entry.provider_name}` : ""}{entry.is_verified ? " · Provider recorded" : ""}</p></div>)}</div> : <p className="mt-2 text-[13px] text-[#777]">No service records yet. Records added by a service provider will appear here.</p>}
-                </section>
+        {open && <div className="px-5 pb-5 sm:px-6">
+            <div role="tablist" aria-label="Vehicle activity" className="flex gap-1 rounded-full bg-[#F3F3F3] p-1">
+                {tabs.map(({ key, label, icon: Icon, count }) => <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)} className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full text-[13px] transition-colors ${tab === key ? "bg-white text-[#171717] shadow-[0_1px_3px_rgba(0,0,0,0.08)]" : "text-[#666] hover:text-[#171717]"}`}>
+                    <Icon className={`h-3.5 w-3.5 ${tab === key ? "text-[#1111F6]" : ""}`} />{label}{count ? <span className={`rounded-full px-1.5 text-[11px] ${key === "issues" ? "bg-[#FFF1D5] text-[#915C12]" : "bg-[#EEEEEE] text-[#666]"}`}>{count}</span> : null}
+                </button>)}
+            </div>
 
-                <section className="border-t border-[#EEE] pt-6">
-                    <h4 className="flex items-center gap-2 text-[16px]"><Fuel className="h-4 w-4 text-[#1111F6]" />Fuel spending</h4>
-                    <p className="mt-2 text-[13px] text-[#777]">Last 7 days: <span className="text-[#171717]">{money(weeklySpend)}</span> from recorded fill-ups.</p>
-                    {activity.fuel.length > 0 && <div className="mt-3 divide-y divide-[#EEE]">{activity.fuel.slice(0, 5).map((entry) => <div key={entry.id} className="flex justify-between gap-3 py-2.5 text-[13px]"><span>{displayDate(entry.date)} · {Number(entry.liters)} L{entry.odometer_reading == null ? "" : ` · ${Number(entry.odometer_reading).toLocaleString()} km`}</span><span>{money(Number(entry.total_cost))}</span></div>)}</div>}
-                    <form onSubmit={addFuel} className="mt-4 grid gap-2 sm:grid-cols-2">
-                        <label className="text-[12px] text-[#666]">Date<input className={fieldClass + " mt-1"} type="date" value={fuelDate} onChange={(event) => setFuelDate(event.target.value)} required /></label>
-                        <label className="text-[12px] text-[#666]">Litres<input className={fieldClass + " mt-1"} type="number" min="0.01" step="0.01" value={litres} onChange={(event) => setLitres(event.target.value)} required /></label>
-                        <label className="text-[12px] text-[#666]">Total paid (GH₵)<input className={fieldClass + " mt-1"} type="number" min="0.01" step="0.01" value={totalCost} onChange={(event) => setTotalCost(event.target.value)} required /></label>
-                        <label className="text-[12px] text-[#666]">Odometer (optional)<input className={fieldClass + " mt-1"} type="number" min="0" step="1" value={odometer} onChange={(event) => setOdometer(event.target.value)} /></label>
-                        <button type="submit" disabled={busy} className="mt-1 h-11 rounded-full border border-[#DADAF8] px-4 text-[13px] text-[#1111F6] disabled:opacity-50 sm:col-span-2">Save fill-up</button>
-                    </form>
-                </section>
+            <div role="tabpanel" className="pt-4">
+                {loading && !activity ? <p role="status" className="py-4 text-[13px] text-[#777]">Loading vehicle activity…</p> : null}
+                {error && <p role="alert" className="mb-3 text-[13px] text-red-600">{error} <button type="button" onClick={() => void load()} className="underline">Try again</button></p>}
 
-                {activity.issuesAvailable && <section className="border-t border-[#EEE] pt-6">
-                    <h4 className="flex items-center gap-2 text-[16px]"><AlertCircle className="h-4 w-4 text-[#1111F6]" />Vehicle issues</h4>
-                    {activity.issues.length ? <div className="mt-3 divide-y divide-[#EEE]">{activity.issues.map((issue) => <div key={issue.id} className="py-3 text-[13px]"><div className="flex justify-between gap-3"><span className="font-medium">{issue.category}</span><span className={issue.status === "open" ? "text-[#B06A12]" : "text-[#277E62]"}>{issue.status === "open" ? "Needs attention" : "Resolved"}</span></div>{issue.note && <p className="mt-1 text-[#666]">{issue.note}</p>}{issue.resolution_note && <p className="mt-1 text-[#277E62]">Outcome: {issue.resolution_note}</p>}{editable && issue.status === "open" && (resolvingId === issue.id ? <div className="mt-3 flex flex-col gap-2"><input className={fieldClass} value={resolutionNote} onChange={(event) => setResolutionNote(event.target.value)} placeholder="What was done?" maxLength={500} /><div className="flex gap-2"><button type="button" disabled={busy || resolutionNote.trim().length < 2} onClick={() => void resolveIssue(issue.id)} className="h-10 rounded-full bg-[#1111F6] px-4 text-white disabled:opacity-50">Mark resolved</button><button type="button" onClick={() => setResolvingId(null)}>Cancel</button></div></div> : <button type="button" onClick={() => setResolvingId(issue.id)} className="mt-2 text-[#1111F6]">Add outcome</button>)}</div>)}</div> : <p className="mt-2 text-[13px] text-[#777]">No issues reported.</p>}
-                    <form onSubmit={reportIssue} className="mt-4 grid gap-2 sm:grid-cols-[1fr_1.5fr_auto] sm:items-end">
-                        <label className="text-[12px] text-[#666]">Problem<select className={fieldClass + " mt-1"} value={category} onChange={(event) => setCategory(event.target.value)}>{issueCategories.map((item) => <option key={item}>{item}</option>)}</select></label>
-                        <label className="text-[12px] text-[#666]">Short note (optional)<input className={fieldClass + " mt-1"} value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} placeholder="What happened?" /></label>
-                        <button type="submit" disabled={busy} className="h-11 rounded-full bg-[#1111F6] px-4 text-[13px] text-white disabled:opacity-50">Report issue</button>
-                    </form>
-                </section>}
-            </>}
+                {activity && tab === "service" && <>
+                    activity.services.length ? <ul className="divide-y divide-[#EEE]">{activity.services.map((entry) => <li key={entry.id} className="py-3 text-[13px]">
+                    <div className="flex justify-between gap-3"><span className="text-[14px]">{entry.description}</span><span className="shrink-0 text-[#666]">{entry.cost == null ? "" : money(Number(entry.cost))}</span></div>
+                    <p className="mt-1 text-[#777]">{displayDate(entry.service_date)}{entry.provider_name ? ` · ${entry.provider_name}` : ""}</p>
+                    {entry.is_verified ? <span className="mt-1.5 inline-flex rounded-full bg-[#EAF7F0] px-2 py-0.5 text-[11px] text-[#197252]">Recorded by mechanic</span> : <span className="mt-1.5 inline-flex rounded-full bg-[#F2F2F2] px-2 py-0.5 text-[11px] text-[#666]">Added by you</span>}
+                </li>)}</ul> : <p className="py-2 text-[13px] leading-relaxed text-[#777]">No service records yet. Add one yourself, or ask your mechanic to log it from the car's Smart Card.</p>
+                    {serviceFormOpen ? <div className="mt-3"><QuickLogForm compact vehicle={vehicle} kind="service" onSaved={() => setServiceFormOpen(false)} onCancel={() => setServiceFormOpen(false)} /></div> : <button type="button" onClick={() => setServiceFormOpen(true)} className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-[#DADAF8] px-4 text-[13px] text-[#1111F6]"><Plus className="h-4 w-4" />Add a service</button>}
+                </>}
+
+                {activity && tab === "fuel" && <>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-[12px] bg-[#F7F7F7] p-3"><span className="block text-[12px] text-[#777]">Last 7 days</span><span className="mt-0.5 block text-[17px] tracking-[-0.02em]">{money(weeklySpend)}</span></div>
+                        <div className="rounded-[12px] bg-[#F7F7F7] p-3"><span className="block text-[12px] text-[#777]">Last fill-up</span><span className="mt-0.5 block text-[17px] tracking-[-0.02em]">{activity.fuel[0] ? displayDate(activity.fuel[0].date) : "None yet"}</span></div>
+                    </div>
+                    {activity.fuel.length > 0 && <ul className="mt-2 divide-y divide-[#EEE]">{activity.fuel.slice(0, 5).map((entry) => <li key={entry.id} className="flex justify-between gap-3 py-2.5 text-[13px]"><span>{displayDate(entry.date)} · {Number(entry.liters)} L{entry.odometer_reading == null ? "" : <span className="text-[#777]"> · {Number(entry.odometer_reading).toLocaleString()} km</span>}</span><span>{money(Number(entry.total_cost))}</span></li>)}</ul>}
+                    {fuelFormOpen ? <div className="mt-3"><QuickLogForm compact vehicle={vehicle} kind="fuel" onSaved={() => setFuelFormOpen(false)} onCancel={() => setFuelFormOpen(false)} /></div> : <button type="button" onClick={() => setFuelFormOpen(true)} className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-[#DADAF8] px-4 text-[13px] text-[#1111F6]"><Plus className="h-4 w-4" />Add fill-up</button>}
+                </>}
+
+                {activity && tab === "issues" && <>
+                    {activity.issues.length ? <ul className="divide-y divide-[#EEE]">{activity.issues.map((issue) => <li key={issue.id} className="py-3 text-[13px]">
+                        <div className="flex justify-between gap-3"><span className="text-[14px]">{issue.category}</span><span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${issue.status === "open" ? "bg-[#FFF4DF] text-[#915C12]" : "bg-[#EAF7F0] text-[#197252]"}`}>{issue.status === "open" ? "Open" : "Resolved"}</span></div>
+                        {issue.note && <p className="mt-1 text-[#666]">{issue.note}</p>}
+                        {issue.resolution_note && <p className="mt-1 text-[#277E62]">Outcome: {issue.resolution_note}</p>}
+                        {editable && issue.status === "open" && (resolvingId === issue.id ? <div className="mt-3 flex flex-col gap-2"><input className={fieldClass} value={resolutionNote} onChange={(event) => setResolutionNote(event.target.value)} placeholder="What was done?" maxLength={500} autoFocus /><div className="flex gap-2"><button type="button" disabled={busy || resolutionNote.trim().length < 2} onClick={() => void resolveIssue(issue.id)} className="h-10 rounded-full bg-[#1111F6] px-4 text-white disabled:opacity-50">Mark resolved</button><button type="button" onClick={() => setResolvingId(null)} className="h-10 px-3 text-[#666]">Cancel</button></div></div> : <button type="button" onClick={() => setResolvingId(issue.id)} className="mt-1.5 min-h-9 text-[#1111F6]">Mark as resolved</button>)}
+                    </li>)}</ul> : <p className="py-2 text-[13px] text-[#777]">No problems reported for this car.</p>}
+                    {issueFormOpen ? <div className="mt-3"><QuickLogForm compact vehicle={vehicle} kind="issue" onSaved={() => setIssueFormOpen(false)} onCancel={() => setIssueFormOpen(false)} /></div> : <button type="button" onClick={() => setIssueFormOpen(true)} className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-[#DADAF8] px-4 text-[13px] text-[#1111F6]"><Plus className="h-4 w-4" />Report a problem</button>}
+                </>}
+            </div>
         </div>}
     </div>;
 }

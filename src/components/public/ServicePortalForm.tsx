@@ -50,6 +50,12 @@ export function ServicePortalForm() {
 
     // Form State
     const [plateNumber, setPlateNumber] = useState("");
+
+    // A mechanic arriving from a car's Smart Card page already has the plate.
+    useEffect(() => {
+        const plate = new URLSearchParams(window.location.search).get("plate")?.trim();
+        if (plate) setPlateNumber(plate.slice(0, 30));
+    }, []);
     const [otpCode, setOtpCode] = useState("");
     const [phoneLabel, setPhoneLabel] = useState("");
     const [selectedServices, setSelectedServices] = useState<string[]>([]);

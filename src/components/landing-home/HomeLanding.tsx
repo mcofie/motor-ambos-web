@@ -13,16 +13,17 @@ import {
     ChevronRight,
     CircleAlert,
     ClipboardCheck,
+    LifeBuoy,
     QrCode,
     Smartphone,
     Truck,
 } from "lucide-react";
 
 const navigation = [
-    { href: "/#how-it-works", label: "Drivers" },
+    { href: "/mobile-app", label: "App & Smart Card" },
     { href: "/business", label: "Fleets" },
     { href: "/roadside-mechanics", label: "Mechanic network" },
-    { href: "/help", label: "Roadside help" },
+    { href: "/providers", label: "Join as a mechanic" },
 ];
 
 export function BrandMark({ inverted = false }: { inverted?: boolean }) {
@@ -32,7 +33,7 @@ export function BrandMark({ inverted = false }: { inverted?: boolean }) {
 export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const pathname = usePathname();
-    const isActive = (href: string) => href.startsWith("/#") ? pathname === "/" : pathname === href;
+    const isActive = (href: string) => pathname === href;
 
     useEffect(() => {
         if (!menuOpen) return;
@@ -63,22 +64,27 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
                     <span className="truncate lg:hidden">Motor Ambos</span>
                 </Link>
 
-                <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 lg:flex">
+                <div className="ml-8 mr-auto hidden items-center gap-6 lg:flex xl:ml-14 xl:gap-9">
                     {navigation.map((link) => (
                         <Link
                             key={link.label}
                             href={link.href}
                             aria-current={isActive(link.href) ? "page" : undefined}
-                            className={`relative flex h-[76px] items-center text-[16px] font-normal transition-colors hover:text-[#1111F6] ${isActive(link.href) ? "text-[#1111F6] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#1111F6]" : "text-[#171717]"}`}
+                            className={`relative flex h-[76px] items-center whitespace-nowrap text-[15px] font-normal transition-colors xl:text-[16px] hover:text-[#1111F6] ${isActive(link.href) ? "text-[#1111F6] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#1111F6]" : "text-[#171717]"}`}
                         >
                             {link.label}
                         </Link>
                     ))}
                 </div>
 
-                {hideCta ? <span className="hidden text-[14px] text-[#777] lg:block">Sign in</span> : <Link href="/login" className="group hidden h-[34px] items-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] font-normal text-white transition-colors hover:bg-[#0606D8] lg:inline-flex">
-                    <BrandMark inverted />Get started
-                </Link>}
+                <div className="hidden shrink-0 items-center gap-2.5 lg:flex">
+                    <Link href="/help" aria-current={isActive("/help") ? "page" : undefined} className={`inline-flex h-[34px] items-center gap-1.5 rounded-full border px-3.5 text-[14px] transition-colors ${isActive("/help") ? "border-[#1111F6] bg-[#F3F3FF] text-[#1111F6]" : "border-[#E3E3E3] text-[#171717] hover:border-[#B8B8FF] hover:text-[#1111F6]"}`}>
+                        <LifeBuoy className="h-4 w-4" strokeWidth={1.8} />Roadside help
+                    </Link>
+                    {!hideCta && <Link href="/login" className="group inline-flex h-[34px] items-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] font-normal text-white transition-colors hover:bg-[#0606D8]">
+                        <BrandMark inverted />Get started
+                    </Link>}
+                </div>
 
                 <button
                     type="button"
@@ -105,9 +111,14 @@ export function LandingNav({ hideCta = false }: { hideCta?: boolean }) {
                             </Link>
                         ))}
                     </nav>
-                    {!hideCta && <Link href="/login" onClick={() => setMenuOpen(false)} className="mt-auto flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[16px] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1111F6] focus-visible:ring-offset-2">
-                        <BrandMark inverted />Get started
-                    </Link>}
+                    <div className="mt-auto flex shrink-0 flex-col gap-3 pt-8">
+                        <Link href="/help" onClick={() => setMenuOpen(false)} className="flex h-14 w-full items-center justify-center gap-2 rounded-full border border-[#E3E3E3] text-[16px] text-[#171717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1111F6] focus-visible:ring-offset-2">
+                            <LifeBuoy className="h-5 w-5 text-[#1111F6]" strokeWidth={1.8} />Get roadside help
+                        </Link>
+                        {!hideCta && <Link href="/login" onClick={() => setMenuOpen(false)} className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[16px] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1111F6] focus-visible:ring-offset-2">
+                            <BrandMark inverted />Get started
+                        </Link>}
+                    </div>
                 </div>
             )}
         </header>
@@ -139,7 +150,7 @@ function Hero() {
                         Stay legal.<br />Get help fast.
                     </h1>
                     <p className="mx-auto mb-[30px] max-w-[650px] text-[18px] font-normal leading-[1.4] tracking-[-0.025em] text-[#858585] md:text-[20px] md:leading-[28px] lg:mx-0">
-                        Car papers, renewal reminders, and trusted roadside help at an upfront price.
+                        Car papers, renewal reminders, and nearby roadside help in one app.
                     </p>
                     <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
                         <Link href="/login" className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-full bg-[#1111F6] px-5 text-[15px] font-normal tracking-[-0.01em] text-white transition-colors hover:bg-[#0606D8] md:text-[16px]">
@@ -177,7 +188,7 @@ function Hero() {
 
 function Touchpoints() {
     const cards = [
-        { href: "#features", icon: Smartphone, title: "Driver app", description: "Keep papers, reminders, renewals, and roadside help together on your phone." },
+        { href: "/mobile-app", icon: Smartphone, title: "Driver app", description: "Keep papers, service and fuel logs, reminders, and roadside help together on your phone." },
         { href: "/business", icon: Truck, title: "Fleet access", description: "See vehicle status, invite drivers, and handle the daily work from the app." },
         { href: "#qr-sticker", icon: QrCode, title: "QR car sticker", description: "A quick path to roadside help, with a printed phone number as backup." },
     ];
@@ -302,8 +313,8 @@ function StickerVisual() {
 function FeatureGrid() {
     const features = [
         { id: "papers", title: "Stay ahead of expiry", description: "Keep insurance, roadworthy, and licence details close. Get WhatsApp and SMS reminders before they expire.", visual: <PapersVisual /> },
-        { id: "roadside", title: "Know the price before help arrives", description: "Find a nearby mechanic, see the call-out price, and share your location when you need roadside help.", visual: <HelpVisual /> },
-        { id: "fleet-app", title: "Run your fleet from your phone", description: "Check status, renew papers, invite drivers, and follow roadside requests. Use the web dashboard for bulk admin.", visual: <FleetVisual /> },
+        { id: "roadside", title: "Know the call-out fee before you call", description: "Share your location, find a nearby mechanic, and see their listed call-out fee when you need roadside help.", visual: <HelpVisual /> },
+        { id: "fleet-app", title: "Run your fleet from your phone", description: "Check status, renew papers, invite drivers, and see issues drivers report. Use the web dashboard for bulk admin.", visual: <FleetVisual /> },
         { id: "qr-sticker", title: "Help anyone can reach", description: "A QR sticker opens roadside help with the car already filled in. A printed phone number is there as backup.", visual: <StickerVisual /> },
     ];
 
@@ -335,8 +346,8 @@ function FeatureGrid() {
 function Questions() {
     const questions = [
         { icon: Smartphone, question: "Is the driver app free?", answer: "Yes. Individual drivers can use the app at no cost. If you ask Motor Ambos to handle a renewal, a renewal fee may apply." },
-        { icon: ClipboardCheck, question: "Can I manage a fleet from my phone?", answer: "Yes. Check vehicles, handle renewals, invite drivers, and follow roadside requests in the app. The web dashboard supports bulk and admin tasks." },
-        { icon: CircleAlert, question: "What if my car breaks down?", answer: "Choose the help you need, share your location, and contact a nearby provider. A call-out fee is shown when available." },
+        { icon: ClipboardCheck, question: "Can I manage a fleet from my phone?", answer: "Yes. Check vehicles, handle renewals, invite drivers, and see issues drivers report in the app. The web dashboard supports bulk and admin tasks." },
+        { icon: CircleAlert, question: "What if my car breaks down?", answer: "Choose the help you need, share your location, and contact a nearby provider directly. A call-out fee is shown when the provider has listed one." },
     ];
 
     return (
@@ -367,12 +378,18 @@ function FinalCta() {
                 <p className="mt-4 max-w-[430px] text-[16px] leading-[1.45] text-white/70">Keep your papers close and know where to turn when the road surprises you.</p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717] transition-colors hover:bg-[#F1F1F1]"><BrandMark />Get started</Link>
-                    <Link href="/business" className="inline-flex h-12 items-center justify-center rounded-full bg-white/20 px-5 text-[16px] text-white transition-colors hover:bg-white/30">For fleets</Link>
+                    <Link href="/business" className="inline-flex h-12 items-center justify-center rounded-full bg-white/20 px-5 text-[16px] text-white transition-colors hover:bg-white/30">Explore fleets</Link>
                 </div>
             </div>
         </section>
     );
 }
+
+const footerColumns = [
+    { title: "Drivers", links: [{ href: "/mobile-app", label: "App & Smart Card" }, { href: "/help", label: "Roadside help" }, { href: "/roadside-mechanics", label: "Mechanic network" }, { href: "/login", label: "Get started" }] },
+    { title: "Fleets", links: [{ href: "/business", label: "Fleet management" }, { href: "/login", label: "Set up your fleet" }] },
+    { title: "Company", links: [{ href: "/providers", label: "Join as a mechanic" }, { href: "/#questions", label: "Common questions" }, { href: "mailto:support@motorambos.com", label: "Contact us" }, { href: "/privacy-policy", label: "Privacy" }, { href: "/terms-of-service", label: "Terms" }] },
+];
 
 export function LandingFooter() {
     return (
@@ -382,9 +399,14 @@ export function LandingFooter() {
                     <Link href="/" aria-label="Motor Ambos home" className="mb-6 block h-9 w-[42px]"><Image src="/icon.svg" alt="" width={42} height={36} className="h-9 w-[42px]" /></Link>
                     <p className="text-[14px] text-[#777]">Keep your car ready for the road.</p>
                 </div>
-                <div><h3 className="mb-4 text-[14px] text-[#171717]">Drivers</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/login" className="hover:text-[#1111F6]">Get started</Link><Link href="/help" className="hover:text-[#1111F6]">Roadside help</Link><Link href="/roadside-mechanics" className="hover:text-[#1111F6]">Mechanic network</Link><Link href="/#how-it-works" className="hover:text-[#1111F6]">How it works</Link></div></div>
-                <div><h3 className="mb-4 text-[14px] text-[#171717]">Fleets</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/business" className="hover:text-[#1111F6]">Fleet access</Link><Link href="/business" className="hover:text-[#1111F6]">Web dashboard</Link></div></div>
-                <div><h3 className="mb-4 text-[14px] text-[#171717]">Resources</h3><div className="flex flex-col gap-3 text-[14px] text-[#777]"><Link href="/smart-card" className="hover:text-[#1111F6]">Smart Card</Link><Link href="/providers" className="hover:text-[#1111F6]">For providers</Link><Link href="/#questions" className="hover:text-[#1111F6]">Common questions</Link><Link href="/privacy-policy" className="hover:text-[#1111F6]">Privacy</Link><Link href="/terms-of-service" className="hover:text-[#1111F6]">Terms</Link></div></div>
+                {footerColumns.map((column) => (
+                    <nav key={column.title} aria-label={column.title}>
+                        <h3 className="mb-4 text-[14px] text-[#171717]">{column.title}</h3>
+                        <ul className="flex flex-col gap-3 text-[14px] text-[#777]">
+                            {column.links.map((link) => <li key={link.label}><Link href={link.href} className="transition-colors hover:text-[#1111F6]">{link.label}</Link></li>)}
+                        </ul>
+                    </nav>
+                ))}
             </div>
             <div className="mx-auto mt-12 flex max-w-[1136px] flex-col justify-between gap-4 border-t border-[#ECECEC] pt-6 text-[12px] text-[#888] sm:mt-20 sm:flex-row">
                 <span>© 2026 Motor Ambos</span><span>Stay legal. Get help fast.</span>

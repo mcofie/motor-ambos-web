@@ -16,19 +16,19 @@ import MarketingMotion from "@/components/landing-home/MarketingMotion";
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = publicPageMetadata("Fleet Management", "Manage fleet vehicles, drivers, car papers, renewal reminders, and roadside requests with Motor Ambos.", "/business");
+export const metadata: Metadata = publicPageMetadata("Fleet Management", "Manage fleet vehicles, drivers, car papers, renewal reminders, and driver-reported issues with Motor Ambos.", "/business");
 
 const quickCards = [
     { icon: ClipboardCheck, title: "See what needs attention", description: "Know which vehicles are ready, renewing soon, or overdue." },
     { icon: Smartphone, title: "Handle it from your phone", description: "Renew papers, invite drivers, and check your fleet in the app." },
-    { icon: Truck, title: "Stay close to roadside jobs", description: "See when a driver needs help and follow the request." },
+    { icon: Truck, title: "Stay on top of driver issues", description: "See problems drivers report and record how each was resolved." },
 ];
 
 const workflow = [
     { number: "01", label: "Vehicle status" },
     { number: "02", label: "Expiry alerts" },
     { number: "03", label: "Driver access" },
-    { number: "04", label: "Roadside updates" },
+    { number: "04", label: "Driver issues" },
 ];
 
 function FleetOverviewVisual() {
@@ -92,9 +92,9 @@ function AdminVisual() {
 }
 
 const features = [
-    { title: "A clear view on your phone", description: "Check every vehicle at a glance, then open its papers, reminders, and roadside history.", visual: <FleetOverviewVisual /> },
+    { title: "A clear view on your phone", description: "Check every vehicle at a glance, then open its papers, reminders, and issue history.", visual: <FleetOverviewVisual /> },
     { title: "Renew what needs renewing", description: "See upcoming expiries, then request a renewal for one vehicle or several.", visual: <RenewalsVisual /> },
-    { title: "Know when a driver needs help", description: "Follow roadside requests and stay informed while help is being arranged.", visual: <RoadsideVisual /> },
+    { title: "Know when a driver needs help", description: "See issues as drivers report them, and point drivers to nearby roadside help when they are stuck.", visual: <RoadsideVisual /> },
     { title: "Web tools for the admin work", description: "Use the dashboard for bulk uploads, reports, billing, invoices, and team setup.", visual: <AdminVisual /> },
 ];
 
@@ -111,12 +111,12 @@ export default function BusinessPage() {
                     <div className="order-2 lg:order-1">
                     <p className="mb-5 text-[14px] text-[#777]">Motor Ambos for fleets of 5–50 vehicles</p>
                     <h1 className="text-[38px] font-normal leading-[1.06] tracking-[-0.04em] sm:text-[56px] lg:text-[62px] xl:text-[70px]">Every vehicle ready.<br />Every driver supported.</h1>
-                    <p className="mx-auto mt-5 max-w-[760px] text-[16px] leading-[1.4] tracking-[-0.025em] text-[#858585] sm:mt-6 sm:text-[18px] md:text-[20px]">Run your fleet from your phone, stay ahead of papers, and know when a driver needs roadside help.</p>
+                    <p className="mx-auto mt-5 max-w-[760px] text-[16px] leading-[1.4] tracking-[-0.025em] text-[#858585] sm:mt-6 sm:text-[18px] md:text-[20px]">Run your fleet from your phone, stay ahead of papers, and know when a driver needs help.</p>
                     <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                         <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-5 text-[16px] text-white transition-colors hover:bg-[#0606D8]"><BrandMark inverted />Set up your fleet <ChevronRight className="h-4 w-4" /></Link>
-                        <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] px-5 text-[16px] transition-colors hover:bg-[#F8F8F8]">Explore roadside help</Link>
+                        <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full border border-[#E8E8E8] px-5 text-[16px] transition-colors hover:bg-[#F8F8F8]">Find roadside help</Link>
                     </div>
-                    <p className="mt-6 text-[13px] text-[#888]">Monthly pricing per vehicle, with roadside help included.</p>
+                    <p className="mt-6 text-[13px] text-[#888]">Monthly pricing per vehicle. Every driver can find roadside help in the app.</p>
                     </div>
                     <div className="relative order-1 mx-auto w-full max-w-[680px] lg:order-2">
                         <div aria-hidden="true" className="absolute inset-x-[15%] bottom-[12%] h-[45%] rounded-full bg-[#E9EBFF] opacity-50 blur-[65px]" />
@@ -140,7 +140,7 @@ export default function BusinessPage() {
             <section className="bg-[#F7F7F7] px-5 py-16 text-center sm:px-8 md:py-28 lg:px-16">
                 <div className="mx-auto max-w-[1136px]">
                     <h2 className="text-[30px] font-normal leading-[1.1] tracking-[-0.035em] md:text-[36px]">Daily work in the app. Admin work on the web.</h2>
-                    <p className="mt-4 text-[16px] leading-relaxed text-[#777]">One fleet view connects the vehicles, drivers, papers, and roadside updates you manage.</p>
+                    <p className="mt-4 text-[16px] leading-relaxed text-[#777]">One fleet view connects the vehicles, drivers, papers, and driver issues you manage.</p>
                     <div className="mt-14 grid grid-cols-2 gap-y-8 md:grid-cols-4 md:gap-y-0">
                         {workflow.map((item, index) => (
                             <div key={item.number} className={index === 0 ? "px-4" : index === 2 ? "px-4 md:border-l md:border-[#E4E4E4]" : "border-l border-[#E4E4E4] px-4"}>
@@ -174,10 +174,10 @@ export default function BusinessPage() {
                 <PixelCluster className="right-[12%] bottom-[-10%] opacity-55" heights={[24, 55, 88, 123, 156, 120, 75, 35]} />
                 <div className="relative z-10 mx-auto max-w-[1136px]">
                     <h2 className="text-[32px] font-normal tracking-[-0.035em] md:text-[40px]">Bring your fleet together.</h2>
-                    <p className="mt-4 max-w-[470px] text-[16px] leading-[1.45] text-white/70">Start with your vehicles and drivers. Motor Ambos can help get their papers organized.</p>
+                    <p className="mt-4 max-w-[470px] text-[16px] leading-[1.45] text-white/70">Start with your vehicles and drivers. Motor Ambos can help get their papers organised.</p>
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                         <Link href="/login" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-[16px] text-[#171717] transition-colors hover:bg-[#F1F1F1]"><BrandMark />Set up your fleet</Link>
-                        <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full bg-white/20 px-5 text-[16px] text-white transition-colors hover:bg-white/30">Roadside help <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                        <Link href="/help" className="inline-flex h-12 items-center justify-center rounded-full bg-white/20 px-5 text-[16px] text-white transition-colors hover:bg-white/30">Find roadside help <ArrowRight className="ml-2 h-4 w-4" /></Link>
                     </div>
                 </div>
             </section>

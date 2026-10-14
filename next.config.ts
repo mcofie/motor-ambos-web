@@ -41,6 +41,12 @@ const nextConfig = {
             },
         ],
     },
+    async redirects() {
+        return [
+            // The Smart Card now lives on the app page.
+            { source: "/smart-card", destination: "/mobile-app#smart-card", permanent: true },
+        ];
+    },
     async rewrites() {
         return [
             {

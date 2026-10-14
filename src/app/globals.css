@@ -531,3 +531,129 @@
 @media (prefers-reduced-motion: reduce) {
     .network-map-packet { display: none; }
 }
+
+/* Smart Card stack: cards fan out when the section appears, then float while their patterns drift. */
+.smart-card {
+    box-shadow: 0 28px 56px -26px rgba(20, 24, 80, 0.42), 0 10px 22px -14px rgba(20, 24, 80, 0.28);
+}
+
+.smart-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.28) 49%, transparent 60%);
+    transform: translateX(-120%);
+}
+
+.smart-card-slot--front { z-index: 2; transform: rotate(-3deg); }
+.smart-card-slot--back { z-index: 1; transform: rotate(4deg); }
+
+@keyframes smart-card-float {
+    from { translate: 0 -6px; }
+    to { translate: 0 8px; }
+}
+
+@keyframes smart-card-pattern {
+    from { transform: translate3d(-2.5%, -1%, 0); }
+    to { transform: translate3d(2.5%, 1%, 0); }
+}
+
+@keyframes smart-card-sheen {
+    0%, 62% { transform: translateX(-120%); }
+    100% { transform: translateX(120%); }
+}
+
+@keyframes smart-card-nfc {
+    0% { box-shadow: 0 0 0 0 rgba(17, 17, 246, 0.35); }
+    100% { box-shadow: 0 0 0 3.2cqw rgba(17, 17, 246, 0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .smart-card-slot {
+        transition: transform 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms, translate 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .marketing-motion > section.motion-waiting .smart-card-slot--front { transform: translate(12%, -16%) rotate(0deg); }
+    .marketing-motion > section.motion-waiting .smart-card-slot--back { transform: translate(-12%, 16%) rotate(0deg); }
+
+    .smart-card-float { animation: smart-card-float 6s ease-in-out infinite alternate; }
+    .smart-card-float--back { animation-duration: 7.5s; animation-delay: -3s; }
+
+    .smart-card-pattern {
+        will-change: transform;
+        animation: smart-card-pattern 9s ease-in-out infinite alternate;
+    }
+    .smart-card-pattern--slow { animation-duration: 13s; animation-delay: -4s; }
+
+    .smart-card::after { animation: smart-card-sheen 7s ease-in-out infinite; }
+    .smart-card-slot--back .smart-card::after { animation-delay: -3.5s; }
+
+    .smart-card-nfc { animation: smart-card-nfc 2.4s ease-out infinite; }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .smart-card-stack:hover .smart-card-slot--front { translate: -2% -4%; }
+    .smart-card-stack:hover .smart-card-slot--back { translate: 3% -3%; }
+}
+
+/* Smart Card public page: the car drives onto a soft stage, then idles. */
+.car-stage-road {
+    background-image: linear-gradient(90deg, rgba(23, 23, 23, 0.16) 0 46px, transparent 46px 92px);
+    background-size: 92px 3px;
+    opacity: 0;
+}
+
+@keyframes car-drive-in {
+    0% { transform: translateX(42%); opacity: 0; filter: blur(5px); }
+    55% { opacity: 1; filter: blur(0); }
+    72% { transform: translateX(-2.5%); }
+    88% { transform: translateX(0.8%); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes car-idle {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -2px; }
+}
+
+@keyframes car-shadow-in {
+    from { opacity: 0; transform: translateX(30%) scaleX(0.7); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes car-shadow-idle {
+    0%, 100% { scale: 1 1; }
+    50% { scale: 0.96 0.9; }
+}
+
+@keyframes car-road-pass {
+    0% { opacity: 0; background-position-x: 0; }
+    15% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; background-position-x: -460px; }
+}
+
+@keyframes car-word-in {
+    from { opacity: 0; letter-spacing: 0.02em; }
+    to { opacity: 1; }
+}
+
+@keyframes car-glow-in {
+    from { opacity: 0; scale: 0.8; }
+    to { opacity: 1; scale: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    /* Hold the entrance until the photo has arrived, so the car never drives in invisible. */
+    .car-stage:has(img[data-loading]) * { animation-play-state: paused; }
+    .car-stage-glow { animation: car-glow-in 900ms ease-out both; }
+    .car-stage-word { animation: car-word-in 1200ms 150ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+    .car-stage-road { animation: car-road-pass 1300ms 100ms ease-out both; }
+    .car-stage-car {
+        animation: car-drive-in 1300ms 100ms cubic-bezier(0.22, 0.9, 0.25, 1) both, car-idle 4s 1.6s ease-in-out infinite;
+    }
+    .car-stage-shadow {
+        animation: car-shadow-in 1300ms 100ms cubic-bezier(0.22, 0.9, 0.25, 1) both, car-shadow-idle 4s 1.6s ease-in-out infinite;
+    }
+}

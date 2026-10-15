@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
 import { getUser, logout } from "@/lib/supaFetch";
 import { AdminLayout as BaseAdminLayout } from "@/components/admin/AdminLayout";
+import type { AdminTab } from "@/components/admin/AdminSidebar";
 import { User } from "@/components/admin/types";
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
@@ -43,9 +44,9 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
 
     if (checking) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-500 gap-4">
-                <div className="h-8 w-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
-                <p className="text-sm font-medium animate-pulse">Authenticating...</p>
+            <div className="base-landing flex min-h-screen flex-col items-center justify-center gap-4 bg-[#F7F7F7] text-[#777]">
+                <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-[#1111F6]/20 border-t-[#1111F6]" />
+                <p className="text-[14px]">Checking your access…</p>
             </div>
         );
     }
@@ -53,7 +54,7 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
     // Determine active tab from pathname
     const pathParts = pathname.split("/");
     // If it's something like /admin/memberships/123, the active tab is "memberships"
-    let activeTab: "overview" | "providers" | "requests" | "memberships" | "nfc" | "organizations" | "advisor" | "cars" | "orders" = "overview";
+    let activeTab: AdminTab = "overview";
 
     if (pathParts.includes("memberships") || pathParts.includes("vehicles")) activeTab = "memberships";
     else if (pathParts.includes("providers")) activeTab = "providers";

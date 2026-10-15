@@ -48,7 +48,7 @@ function OrderRow({ order, cards, onSaved }: { order: Order; cards: string[]; on
         <div className="flex gap-4">
             <div className="w-24 shrink-0 [container-type:inline-size]"><SmartCard skin={skinForDesign(order.product_design)} /></div>
             <div className="min-w-0 text-sm">
-                <p className="font-semibold text-foreground">{order.order_number} · {order.product_name}</p>
+                <p className="font-medium text-foreground">{order.order_number} · {order.product_name}</p>
                 <p className="text-muted-foreground">{new Date(order.created_at).toLocaleString("en-GH", { dateStyle: "medium", timeStyle: "short" })} · {cedis(order.total_pesewas)}{order.paid_at ? " paid" : " unpaid"}</p>
                 <p className="mt-2 text-foreground">{order.recipient_name} · <a href={`tel:${order.recipient_phone}`} className="inline-flex items-center gap-1 text-primary"><Phone className="h-3 w-3" />{order.recipient_phone}</a></p>
                 <p className="text-muted-foreground">{order.delivery_method === "delivery" ? `Deliver to ${[order.area, order.address].filter(Boolean).join(", ")}` : "Pickup"}</p>
@@ -68,7 +68,7 @@ function OrderRow({ order, cards, onSaved }: { order: Order; cards: string[]; on
             </label>
             <label className="text-xs font-medium text-muted-foreground sm:col-span-2">Staff note<input className={cls(field, "mt-1")} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Rider, tracking, anything to remember" /></label>
             <p className="text-xs text-muted-foreground sm:col-span-2">{order.vehicle ? "Assigning a card links it to this car straight away." : "No car chosen. The driver links the card with its claim code."}</p>
-            <button type="button" onClick={() => void save()} disabled={!changed || saving} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 sm:col-span-2 sm:justify-self-start">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save</button>
+            <button type="button" onClick={() => void save()} disabled={!changed || saving} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40 sm:col-span-2 sm:justify-self-start">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save</button>
         </div>
     </li>;
 }
@@ -96,7 +96,7 @@ function ProductEditor({ product, onSaved }: { product: Product; onSaved: () => 
             <label className="text-xs font-medium text-muted-foreground">What makes this tier different<textarea className={cls(field, "mt-1 h-20 resize-none")} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={240} /></label>
             <label className="text-xs font-medium text-muted-foreground">Price (GH₵)<input className={cls(field, "mt-1")} inputMode="decimal" value={price} onChange={(event) => setPrice(event.target.value.replace(/[^0-9.]/g, ""))} placeholder="Not on sale" /></label>
             <label className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" checked={active && price !== ""} disabled={price === ""} onChange={(event) => setActive(event.target.checked)} />On sale{price === "" && <span className="text-xs text-muted-foreground">(set a price first)</span>}</label>
-            <button type="button" onClick={() => void save()} disabled={saving || name.trim().length < 2} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save card</button>
+            <button type="button" onClick={() => void save()} disabled={saving || name.trim().length < 2} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save card</button>
         </div>
     </div>;
 }
@@ -127,7 +127,7 @@ function SettingsEditor({ settings, onSaved }: { settings: Settings; onSaved: ()
             <label className="flex items-center gap-2 text-sm font-medium text-foreground"><input type="checkbox" checked={pickupEnabled} onChange={(event) => setPickupEnabled(event.target.checked)} />Free pickup</label>
             <label className="text-xs font-medium text-muted-foreground">Pickup address<input className={cls(field, "mt-1")} value={pickupAddress} onChange={(event) => setPickupAddress(event.target.value)} placeholder="Shown to drivers and in the ready-for-pickup text" /></label>
         </div>
-        <button type="button" onClick={() => void save()} disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 md:col-span-2 md:justify-self-start">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save delivery settings</button>
+        <button type="button" onClick={() => void save()} disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40 md:col-span-2 md:justify-self-start">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save delivery settings</button>
     </div>;
 }
 
@@ -167,14 +167,14 @@ export function CardOrdersView() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <StatCard title="Orders to fulfil" value={toFulfil} icon={Truck} color="bg-amber-500" />
             <StatCard title="Cards in inventory" value={cards.length} icon={PackageCheck} color="bg-indigo-500" />
-            <StatCard title="Paid card sales" value={cedis(revenue) || "GH₵0"} icon={CircleDollarSign} color="bg-emerald-500" />
+            <StatCard title="Paid card sales" value={cedis(revenue) || "GH₵0"} icon={CircleDollarSign} color="bg-[#1111F6]" />
         </div>
-        {error && <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-600 dark:text-rose-300">{error}</div>}
+        {error && <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-600 ">{error}</div>}
 
         <div className="rounded-xl border border-border bg-card shadow-sm">
             <div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex w-fit rounded-lg bg-muted/30 p-1">
-                    {(["orders", "setup"] as const).map((key) => <button key={key} type="button" onClick={() => setTab(key)} className={cls("rounded-md px-4 py-1.5 text-xs font-semibold transition-all", tab === key ? "bg-white text-primary shadow-sm dark:bg-slate-800" : "text-muted-foreground hover:text-foreground")}>{key === "orders" ? "Orders" : "Cards & delivery"}</button>)}
+                    {(["orders", "setup"] as const).map((key) => <button key={key} type="button" onClick={() => setTab(key)} className={cls("rounded-md px-4 py-1.5 text-xs font-medium transition-all", tab === key ? "bg-white text-primary shadow-sm " : "text-muted-foreground hover:text-foreground")}>{key === "orders" ? "Orders" : "Cards & delivery"}</button>)}
                 </div>
                 {tab === "orders" && <div className="flex flex-wrap gap-1.5">{filters.map((item) => <button key={item.key} type="button" onClick={() => setFilter(item.key)} className={cls("rounded-full px-3 py-1.5 text-xs font-medium", filter === item.key ? "bg-foreground text-background" : "border border-border text-muted-foreground hover:text-foreground")}>{item.label} {orders.filter((order) => item.match(order.status)).length}</button>)}</div>}
             </div>
@@ -183,9 +183,9 @@ export function CardOrdersView() {
                 : tab === "orders" ? (visible.length ? <ul className="divide-y divide-border">{visible.map((order) => <OrderRow key={`${order.id}-${order.status}-${order.card_serial}`} order={order} cards={cards} onSaved={load} />)}</ul>
                     : <div className="flex flex-col items-center gap-2 p-10 text-center text-sm text-muted-foreground"><ShoppingBag className="h-6 w-6" />No orders here.</div>)
                 : <div className="space-y-6 p-5">
-                    <div><h2 className="text-base font-semibold text-foreground">Card tiers</h2><p className="mt-1 text-sm text-muted-foreground">A card shows in the driver app once it has a price and is on sale.</p>
+                    <div><h2 className="text-base font-medium text-foreground">Card tiers</h2><p className="mt-1 text-sm text-muted-foreground">A card shows in the driver app once it has a price and is on sale.</p>
                         <div className="mt-4 grid gap-4 md:grid-cols-3">{products.map((product) => <ProductEditor key={`${product.id}-${product.price_pesewas}-${product.active}`} product={product} onSaved={load} />)}</div></div>
-                    {settings && <div><h2 className="text-base font-semibold text-foreground">Delivery and pickup</h2><div className="mt-4"><SettingsEditor settings={settings} onSaved={load} /></div></div>}
+                    {settings && <div><h2 className="text-base font-medium text-foreground">Delivery and pickup</h2><div className="mt-4"><SettingsEditor settings={settings} onSaved={load} /></div></div>}
                 </div>}
         </div>
     </div>;

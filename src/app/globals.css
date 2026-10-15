@@ -703,3 +703,27 @@
         inset 0 0 0 1px rgba(255, 255, 255, 0.14),
         0 16px 32px -12px rgba(17, 17, 246, 0.6);
 }
+
+/* Back office: the same palette as the site and driver app, always light. */
+.admin-theme {
+    --background: #F7F7F7;
+    --foreground: #171717;
+    --card: #FFFFFF;
+    --card-foreground: #171717;
+    --popover: #FFFFFF;
+    --popover-foreground: #171717;
+    --primary: #1111F6;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F3F3FF;
+    --secondary-foreground: #1111F6;
+    --muted: #F3F3F3;
+    --muted-foreground: #777777;
+    --accent: #F3F3FF;
+    --accent-foreground: #1111F6;
+    --destructive: #D64545;
+    --border: #EAEAEA;
+    --input: #E3E3E3;
+    --ring: #1111F6;
+    --radius: 0.875rem;
+    color-scheme: light;
+}

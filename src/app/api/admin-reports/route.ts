@@ -17,6 +17,15 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_KEY, {
     db: { schema: 'motorambos' }
 });
 
+/** Whether a paper is in date, from its expiry date, matching the driver app's 30-day warning. */
+function paperState(expires?: string | null) {
+    if (!expires) return "NOT SET";
+    const days = Math.ceil((new Date(`${expires.slice(0, 10)}T12:00:00`).getTime() - Date.now()) / 86_400_000);
+    if (Number.isNaN(days)) return "NOT SET";
+    if (days < 0) return "EXPIRED";
+    return days <= 30 ? `DUE ${expires.slice(0, 10)}` : "VALID";
+}
+
 export async function POST(req: Request) {
     const accessError = await staffApiError();
     if (accessError) return accessError;
@@ -53,7 +62,7 @@ export async function POST(req: Request) {
         const vehicleIds = vehicles.map(v => v.id);
 
         // 3. Get Service Histories
-        let services: any[] = [];
+        let services: { service_date?: string; description?: string; provider_name?: string; cost?: number; mileage?: number; vehicle_id?: string }[] = [];
         if (includeServices) {
             const { data: sData, error: sError } = await supabaseAdmin
                 .from("service_history")
@@ -66,7 +75,7 @@ export async function POST(req: Request) {
         }
 
         // --- PDF GENERATION ---
-        const doc = new jsPDF() as any;
+        const doc = new jsPDF() as jsPDF & { lastAutoTable: { finalY: number } };
         const pageWidth = doc.internal.pageSize.getWidth();
 
         // Header
@@ -108,13 +117,13 @@ export async function POST(req: Request) {
             currentY += 10;
 
             const totalVehicles = vehicles.length;
-            const fullyCompliant = vehicles.filter(v => v.insurance_url && v.roadworthy_url).length;
+            const fullyCompliant = vehicles.filter(v => paperState(v.insurance_end_date) !== "EXPIRED" && paperState(v.insurance_end_date) !== "NOT SET" && paperState(v.roadworthy_expiry) !== "EXPIRED" && paperState(v.roadworthy_expiry) !== "NOT SET").length;
 
             doc.setFontSize(10);
             doc.setFont("helvetica", "normal");
             doc.text([
                 `Total Vehicles: ${totalVehicles}`,
-                `Policy Compliance: ${totalVehicles > 0 ? Math.round((fullyCompliant / totalVehicles) * 100) : 0}%`,
+                `Papers in date: ${totalVehicles > 0 ? Math.round((fullyCompliant / totalVehicles) * 100) : 0}%`,
                 `Total Service Records in Period: ${services.length}`
             ], 14, currentY);
 
@@ -130,21 +139,21 @@ export async function POST(req: Request) {
             const complianceRows = vehicles.map(v => [
                 v.plate || 'N/A',
                 `${v.make || ''} ${v.model || ''}`,
-                v.insurance_url ? 'VALID' : 'MISSING',
-                v.roadworthy_url ? 'VALID' : 'MISSING',
-                v.nfc_serial_number ? 'LINKED' : 'PENDING'
+                paperState(v.insurance_end_date),
+                paperState(v.roadworthy_expiry),
+                v.nfc_serial_number ? 'LINKED' : 'NONE'
             ]);
 
             autoTable(doc, {
                 startY: currentY + 5,
                 head: [['Plate', 'Vehicle', 'Insurance', 'Roadworthy', 'Smart Card']],
                 body: complianceRows,
-                headStyles: { fillColor: [16, 185, 129] },
+                headStyles: { fillColor: [17, 17, 246] },
                 alternateRowStyles: { fillColor: [240, 240, 240] },
                 margin: { left: 14, right: 14 }
             });
 
-            currentY = (doc as any).lastAutoTable.finalY + 20;
+            currentY = doc.lastAutoTable.finalY + 20;
         }
 
         // Service Logs Table
@@ -158,7 +167,7 @@ export async function POST(req: Request) {
             const serviceRows = services.map(s => {
                 const vehicle = vehicles.find(v => v.id === s.vehicle_id);
                 return [
-                    new Date(s.service_date).toLocaleDateString(),
+                    s.service_date ? new Date(s.service_date).toLocaleDateString("en-GB") : 'N/A',
                     vehicle?.plate || 'N/A',
                     s.description || '',
                     s.provider_name || 'N/A',
@@ -170,15 +179,15 @@ export async function POST(req: Request) {
                 startY: currentY + 5,
                 head: [['Date', 'Vehicle', 'Description', 'Provider', 'Cost']],
                 body: serviceRows,
-                headStyles: { fillColor: [79, 70, 229] }, // Indigo 600
+                headStyles: { fillColor: [17, 17, 246] },
                 margin: { left: 14, right: 14 }
             });
 
-            currentY = (doc as any).lastAutoTable.finalY + 20;
+            currentY = doc.lastAutoTable.finalY + 20;
         }
 
         // Footer on all pages
-        const pageCount = doc.internal.getNumberOfPages();
+        const pageCount = doc.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
             doc.setFontSize(8);
@@ -196,8 +205,8 @@ export async function POST(req: Request) {
             }
         });
 
-    } catch (e: any) {
+    } catch (e) {
         console.error("Report API Error:", e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong" }, { status: 500 });
     }
 }

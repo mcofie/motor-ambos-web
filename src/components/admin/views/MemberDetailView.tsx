@@ -4,39 +4,30 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
     getMemberById,
-    listMemberVehicles,
+    listAllVehicles,
     MemberWithMembershipRow,
     VehicleRow,
-    listServiceHistory,
-    ServiceHistoryRow,
     listOrgDrivers,
-    addOrgDriver
+    addOrgDriver,
 } from "@/lib/supaFetch";
 import {
     ArrowLeft,
     User,
     Mail,
     Phone,
-    Shield,
     Car,
-    Calendar,
-    Wrench,
     Clock,
-    FileText,
     CheckCircle2,
     Loader2,
     ShieldCheck,
     Users,
     Plus,
     X,
-    Upload,
-    Zap,
     Smartphone,
-    Check
+    Check,
 } from "lucide-react";
-import { cls, StatCard } from "../ui/AdminUI";
+import { cls, paperStatus } from "../ui/AdminUI";
 import { toast } from "sonner";
-import { DigitalGlovebox } from "./DigitalGlovebox";
 import { formatPhone } from "@/lib/phone";
 
 export interface MemberDetailViewProps {
@@ -50,8 +41,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
     const [member, setMember] = useState<MemberWithMembershipRow | null>(initialMember || null);
     const [vehicles, setVehicles] = useState<VehicleRow[]>(initialVehicles || []);
     const [loading, setLoading] = useState(!initialMember);
-    const [isGloveboxOpen, setIsGloveboxOpen] = useState(false);
-    const [drivers, setDrivers] = useState<any[]>([]);
+    const [drivers, setDrivers] = useState<Awaited<ReturnType<typeof listOrgDrivers>>>([]);
     const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
     const [newDriver, setNewDriver] = useState({ name: "", phone: "", email: "", vehicle_id: "" });
     const [addingDriver, setAddingDriver] = useState(false);
@@ -62,6 +52,8 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
         setLoading(true);
         try {
             const m = await getMemberById(memberId, signal);
+            // A cancelled load (the page closing, or React re-running the effect) isn't "not found".
+            if (signal?.aborted) return;
             if (!m) {
                 toast.error("Member not found");
                 router.push("/admin/memberships");
@@ -73,8 +65,9 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
             const aId = m.auth_user_id;
 
             if (mId) {
-                const head = await listMemberVehicles(mId, aId, signal);
-                setVehicles(head);
+                // Read through the staff server route rather than the browser's own database access.
+                const all = await listAllVehicles(signal);
+                setVehicles(all.filter((v) => v.user_id === mId || (aId && v.user_id === aId)));
 
                 if (m.is_business) {
                     listOrgDrivers(m.id || mId, signal).then(setDrivers).catch(e => {
@@ -83,8 +76,8 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                     });
                 }
             }
-        } catch (err: any) {
-            if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
+        } catch (err) {
+            if (err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'))) return;
             console.error(err);
             toast.error("Failed to load member details");
         } finally {
@@ -116,6 +109,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
 
     useEffect(() => {
         const controller = new AbortController();
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- loads server data once the page mounts
         fetchData(controller.signal);
         return () => controller.abort();
     }, [fetchData]);
@@ -136,21 +130,21 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
             <div className="flex items-center gap-4">
                 <button
                     onClick={() => router.push("/admin/memberships")}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors group"
+                    className="p-2 hover:bg-[#F2F2F2] rounded-full transition-colors group"
                 >
-                    <ArrowLeft className="h-5 w-5 text-slate-500 group-hover:text-primary transition-colors" />
+                    <ArrowLeft className="h-5 w-5 text-[#777777] group-hover:text-primary transition-colors" />
                 </button>
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                    <h2 className="text-2xl font-medium text-[#171717] flex items-center gap-2">
                         {member.is_business ? member.business_name : (member.full_name || "Unnamed Member")}
                         {member.is_business && (
-                            <span className="bg-emerald-500/10 text-emerald-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            <span className="bg-[#1111F6]/10 text-[#0606D8] text-[12px] uppercase font-medium px-2 py-0.5 rounded-full border border-[#1111F6]/20">
                                 B2B Account
                             </span>
                         )}
                     </h2>
-                    <p className="text-sm text-slate-500">
-                        {member.is_business ? "Fleet Organization & Management" : "Detailed profile and vehicle history"}
+                    <p className="text-sm text-[#777777]">
+                        {member.is_business ? "Fleet account" : "Driver profile and vehicles"}
                     </p>
                 </div>
             </div>
@@ -159,42 +153,42 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                 {/* Profile Card */}
                 <div className="lg:col-span-1 space-y-6">
                     <section className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
-                        <div className="h-24 bg-gradient-to-br from-emerald-500 to-teal-600 px-6 py-4">
+                        <div className="h-24 bg-gradient-to-br from-[#1111F6] to-[#0606D8] px-6 py-4">
                             <div className="flex justify-end">
-                                <span className="bg-white/20 backdrop-blur-md text-[10px] font-bold text-white uppercase tracking-wider px-2 py-1 rounded-full border border-white/20">
-                                    {member.membership_tier || "Standard"}
+                                <span className="bg-white/20 backdrop-blur-md text-[12px] font-medium text-white px-2 py-1 rounded-full border border-white/20">
+                                    {member.plan_name || member.membership_tier || "No plan"}
                                 </span>
                             </div>
                         </div>
                         <div className="px-6 pb-6 -mt-8">
-                            <div className="h-16 w-16 rounded-2xl bg-white dark:bg-slate-900 border-4 border-white dark:border-slate-900 shadow-lg flex items-center justify-center text-primary font-bold text-2xl mb-4">
+                            <div className="h-16 w-16 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-primary font-medium text-2xl mb-4">
                                 {member.full_name?.charAt(0) || <User className="h-8 w-8" />}
                             </div>
 
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <label className="text-[12px] font-medium text-[#A3A3A3]">
                                         {member.is_business ? "Business Name" : "Full Name"}
                                     </label>
-                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                    <p className="font-medium text-[#171717]">
                                         {member.is_business ? member.business_name : (member.full_name || "—")}
                                     </p>
                                     {member.is_business && (
                                         <div className="pt-2">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Person</label>
-                                            <p className="text-sm text-slate-700 dark:text-slate-300">{member.contact_name || member.full_name || "—"}</p>
+                                            <label className="text-[12px] font-medium text-[#A3A3A3]">Contact Person</label>
+                                            <p className="text-sm text-[#3F3F3F]">{member.contact_name || member.full_name || "—"}</p>
                                         </div>
                                     )}
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Information</label>
+                                    <label className="text-[12px] font-medium text-[#A3A3A3]">Contact Information</label>
                                     <div className="space-y-2">
-                                        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                                        <div className="flex items-center gap-3 text-sm text-[#555555]">
                                             <Phone className="h-4 w-4 opacity-70" />
                                             {formatPhone(member.is_business ? member.contact_phone || member.phone : member.phone) || "—"}
                                         </div>
                                         {(member.is_business ? member.contact_email || member.email : member.email) && (
-                                            <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                                            <div className="flex items-center gap-3 text-sm text-[#555555]">
                                                 <Mail className="h-4 w-4 opacity-70" />
                                                 {member.is_business ? member.contact_email || member.email : member.email}
                                             </div>
@@ -202,17 +196,17 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Account Status</label>
+                                    <label className="text-[12px] font-medium text-[#A3A3A3]">Account Status</label>
                                     <div className="flex items-center gap-2">
                                         {member.auth_user_id ? (
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold border border-emerald-500/20">
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1111F6]/10 text-[#0606D8] text-[12px] font-medium border border-[#1111F6]/20">
                                                 <CheckCircle2 className="h-3 w-3" />
                                                 Digital Account Linked
                                             </div>
                                         ) : (
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold border border-slate-200">
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F2F2F2] text-[#777777] text-[12px] font-medium border border-[#E7E7E7]">
                                                 <Clock className="h-3 w-3" />
-                                                Pending App Setup
+                                                Not signed in to the app yet
                                             </div>
                                         )}
                                     </div>
@@ -225,54 +219,30 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                 {/* Vehicles & Fleet */}
                 <div className="lg:col-span-2 space-y-6">
                     <section className="flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Car className="h-4 w-4" />
-                            Registered Fleet ({vehicles.length})
+                        <h3 className="flex items-center gap-2 text-[18px] tracking-[-0.02em]">
+                            <Car className="h-5 w-5 text-[#1111F6]" />
+                            Vehicles <span className="text-[14px] text-[#888]">{vehicles.length}</span>
                         </h3>
-                        {member.is_business && (
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => toast.info("Bulk Import Coming Soon")}
-                                    className="text-xs font-bold text-slate-500 hover:text-foreground transition-colors uppercase tracking-wider flex items-center gap-1"
-                                >
-                                    <Upload className="h-3 w-3" /> Bulk Import
-                                </button>
-                                <button
-                                    onClick={() => setIsGloveboxOpen(true)}
-                                    className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
-                                >
-                                    Open Digital Glovebox
-                                </button>
-                            </div>
-                        )}
-                        {!member.is_business && (
-                            <button
-                                onClick={() => setIsGloveboxOpen(true)}
-                                className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
-                            >
-                                Open Digital Glovebox
-                            </button>
-                        )}
                     </section>
 
                     {/* Fleet Health Overview for Business */}
                     {member.is_business && (
                         <div className="grid grid-cols-3 gap-4 mb-4">
-                            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl font-bold text-slate-900 dark:text-white">{vehicles.length}</div>
-                                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Vehicles</div>
+                            <div className="bg-[#F7F7F7] rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl font-medium text-[#171717]">{vehicles.length}</div>
+                                <div className="text-[12px] text-[#777]">Vehicles</div>
                             </div>
-                            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl font-bold text-emerald-500">
-                                    {vehicles.filter(v => v.insurance_url).length}
+                            <div className="bg-[#F7F7F7] rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl font-medium text-[#1111F6]">
+                                    {vehicles.filter(v => paperStatus(v.insurance_end_date).label === "Valid").length}
                                 </div>
-                                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Insured</div>
+                                <div className="text-[12px] text-[#777]">Insurance valid</div>
                             </div>
-                            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
-                                <div className="text-2xl font-bold text-emerald-500">
-                                    {vehicles.filter(v => v.roadworthy_url).length}
+                            <div className="bg-[#F7F7F7] rounded-xl p-4 border border-border flex flex-col items-center justify-center text-center">
+                                <div className="text-2xl font-medium text-[#1111F6]">
+                                    {vehicles.filter(v => paperStatus(v.roadworthy_expiry).label === "Valid").length}
                                 </div>
-                                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Roadworthy</div>
+                                <div className="text-[12px] text-[#777]">Roadworthy valid</div>
                             </div>
                         </div>
                     )}
@@ -285,51 +255,39 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                     onClick={() => router.push(`/admin/vehicles/${v.id}`)}
                                     className="bg-card rounded-2xl border border-border p-5 hover:border-primary/30 cursor-pointer transition-all group relative overflow-hidden"
                                 >
-                                    {/* Background Icon Decor */}
-                                    <Car className="absolute -right-4 -bottom-4 h-24 w-24 text-slate-100 dark:text-white/5 rotate-12 pointer-events-none" />
 
                                     <div className="relative">
                                         <div className="flex items-start justify-between mb-4">
-                                            <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                                            <div className="h-10 w-10 rounded-xl bg-[#F2F2F2] flex items-center justify-center text-[#777777] group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                                                 <Car className="h-5 w-5" />
                                             </div>
                                             {v.is_primary && (
-                                                <span className="bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter shadow-sm">
+                                                <span className="bg-[#1111F6] text-white text-[11px] font-medium px-1.5 py-0.5 rounded shadow-sm">
                                                     Primary
                                                 </span>
                                             )}
                                         </div>
 
-                                        <h4 className="font-bold text-slate-900 dark:text-white text-lg">
+                                        <h4 className="font-medium text-[#171717] text-lg">
                                             {v.year} {v.make} {v.model}
                                         </h4>
-                                        <p className="text-xs font-mono text-slate-500 uppercase tracking-widest mt-1">
+                                        <p className="text-xs font-mono text-[#777777] uppercase mt-1">
                                             {v.plate || "No Plate Recorded"}
                                         </p>
 
-                                        <div className="grid grid-cols-2 gap-4 mt-6">
-                                            <div className="space-y-1">
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Insurance</label>
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className={cls("h-1.5 w-1.5 rounded-full", v.insurance_url ? "bg-emerald-500" : "bg-slate-300")} />
-                                                    <span className="text-[10px] font-medium">{v.insurance_url ? "Valid" : "Not Set"}</span>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Roadworthy</label>
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className={cls("h-1.5 w-1.5 rounded-full", v.roadworthy_url ? "bg-emerald-500" : "bg-slate-300")} />
-                                                    <span className="text-[10px] font-medium">{v.roadworthy_url ? "Valid" : "Not Set"}</span>
-                                                </div>
-                                            </div>
+                                        <div className="mt-5 flex flex-wrap gap-2">
+                                            {([["Insurance", v.insurance_end_date], ["Roadworthy", v.roadworthy_expiry]] as const).map(([label, date]) => {
+                                                const state = paperStatus(date);
+                                                return <span key={label} className={cls("rounded-full px-2.5 py-1 text-[12px]", state.tone)}>{label}: {state.label}</span>;
+                                            })}
                                         </div>
                                     </div>
                                 </div>
                             ))
                         ) : (
                             <div className="col-span-2 py-12 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center bg-muted/20">
-                                <Car className="h-10 w-10 text-slate-300 mb-3" />
-                                <p className="text-sm text-slate-500 font-medium">No vehicles registered yet</p>
+                                <Car className="h-10 w-10 text-[#D4D4D4] mb-3" />
+                                <p className="text-sm text-[#777777] font-medium">No vehicles registered yet</p>
                             </div>
                         )}
                     </div>
@@ -338,14 +296,14 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                     {member.is_business && (
                         <div className="pt-6 border-t border-border">
                             <section className="flex items-center justify-between mb-4">
-                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <h3 className="text-xs font-medium text-[#A3A3A3] flex items-center gap-2">
                                     <Users className="h-4 w-4" />
                                     Authorized Drivers ({drivers.length})
                                 </h3>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => setIsAddDriverOpen(true)}
-                                        className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider flex items-center gap-1"
+                                        className="text-xs font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
                                     >
                                         <Plus className="h-3 w-3" /> Add Driver
                                     </button>
@@ -358,17 +316,17 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                         {drivers.map((d) => (
                                             <div key={d.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+                                                    <div className="h-8 w-8 rounded-full bg-[#F2F2F2] flex items-center justify-center text-[#777777]">
                                                         <User className="h-4 w-4" />
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="font-bold text-sm text-foreground">{d.member?.full_name}</div>
+                                                        <div className="font-medium text-sm text-foreground">{d.member?.full_name}</div>
                                                         {d.member?.auth_user_id ? (
-                                                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[9px] font-bold border border-emerald-500/20 uppercase tracking-tighter">
+                                                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[#1111F6]/10 text-[#0606D8] text-[11px] font-medium border border-[#1111F6]/20">
                                                                 <Check className="h-2 w-2" /> Active
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[9px] font-bold border border-amber-500/20 uppercase tracking-tighter">
+                                                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[11px] font-medium border border-amber-500/20">
                                                                 <Smartphone className="h-2 w-2" /> Invited
                                                             </span>
                                                         )}
@@ -376,12 +334,12 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                                 </div>
                                                 <div className="text-right">
                                                     {d.vehicle ? (
-                                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-white/5 border border-border text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#F2F2F2] border border-border text-[12px] font-medium text-[#555555]">
                                                             <Car className="h-3 w-3" />
                                                             {d.vehicle.year} {d.vehicle.model}
                                                         </div>
                                                     ) : (
-                                                        <span className="text-[10px] text-muted-foreground italic">No Vehicle Assigned</span>
+                                                        <span className="text-[12px] text-muted-foreground italic">No Vehicle Assigned</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -401,7 +359,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                             <div className="bg-card w-full max-w-md rounded-xl shadow-2xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                 <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
-                                    <h3 className="font-bold text-lg">Add Authorized Driver</h3>
+                                    <h3 className="font-medium text-lg">Add Authorized Driver</h3>
                                     <button onClick={() => setIsAddDriverOpen(false)} className="p-1 hover:bg-white/10 rounded"><X className="h-5 w-5" /></button>
                                 </div>
                                 <div className="p-6 space-y-4">
@@ -409,7 +367,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                         Enter driver details. They will receive an SMS with the web sign-up link.
                                     </p>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Driver Name</label>
+                                        <label className="text-xs font-medium uppercase text-muted-foreground">Driver Name</label>
                                         <input
                                             className="w-full p-2 rounded-lg border border-input bg-background"
                                             placeholder="John Doe"
@@ -418,7 +376,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Phone Number</label>
+                                        <label className="text-xs font-medium uppercase text-muted-foreground">Phone Number</label>
                                         <input
                                             className="w-full p-2 rounded-lg border border-input bg-background"
                                             placeholder="+233558508306"
@@ -428,7 +386,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Email Address</label>
+                                        <label className="text-xs font-medium uppercase text-muted-foreground">Email Address</label>
                                         <input
                                             className="w-full p-2 rounded-lg border border-input bg-background"
                                             placeholder="driver@example.com"
@@ -438,7 +396,7 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Assign Vehicle (Optional)</label>
+                                        <label className="text-xs font-medium uppercase text-muted-foreground">Assign Vehicle (Optional)</label>
                                         <select
                                             className="w-full p-2 rounded-lg border border-input bg-background"
                                             value={newDriver.vehicle_id}
@@ -452,11 +410,11 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                     </div>
                                 </div>
                                 <div className="p-4 border-t border-border bg-muted/30 flex gap-3 justify-end">
-                                    <button onClick={() => setIsAddDriverOpen(false)} className="px-4 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:bg-white/5">Cancel</button>
+                                    <button onClick={() => setIsAddDriverOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-white/5">Cancel</button>
                                     <button
                                         onClick={handleAddDriver}
                                         disabled={addingDriver}
-                                        className="px-4 py-2 rounded-lg text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
                                     >
                                         {addingDriver ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add & Invite"}
                                     </button>
@@ -470,59 +428,28 @@ export function MemberDetailView({ memberId, initialMember, initialVehicles }: M
                                 <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
                                     <ShieldCheck className="h-5 w-5" />
                                 </div>
-                                <h4 className="font-bold text-sm">Security & Plans</h4>
+                                <h4 className="font-medium text-sm">Membership</h4>
                             </div>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-500">Active Membership</span>
-                                    <span className="font-semibold text-emerald-500">{member.membership_is_active ? "Yes" : "No"}</span>
+                                    <span className="text-[#777777]">Active Membership</span>
+                                    <span className={member.membership_is_active ? "text-[#197252]" : "text-[#777]"}>{member.membership_is_active ? "Yes" : "No"}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-500">Tier</span>
-                                    <span className="font-semibold uppercase">{member.membership_tier || "—"}</span>
+                                    <span className="text-[#777777]">Tier</span>
+                                    <span className="capitalize">{member.membership_tier || "—"}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-500">Expiry</span>
-                                    <span className="font-semibold" suppressHydrationWarning>{member.membership_expiry_date ? new Date(member.membership_expiry_date).toLocaleDateString() : "—"}</span>
+                                    <span className="text-[#777777]">Expiry</span>
+                                    <span className="font-medium" suppressHydrationWarning>{member.membership_expiry_date ? new Date(member.membership_expiry_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}</span>
                                 </div>
                             </div>
                         </section>
 
-                        <section className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-                                    <Calendar className="h-5 w-5" />
-                                </div>
-                                <h4 className="font-bold text-sm">Quick Actions</h4>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase transition-colors text-center border border-border">
-                                    Renewal
-                                </button>
-                                <button className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase transition-colors text-center border border-border">
-                                    Billing
-                                </button>
-                                <button className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase transition-colors text-center border border-border">
-                                    Logs
-                                </button>
-                                <button className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase transition-colors text-center border border-border">
-                                    Settings
-                                </button>
-                            </div>
-                        </section>
-                    </div>
+                        </div>
                 </div>
             </div>
 
-            {/* Reuse DigitalGlovebox if needed or direct to detail */}
-            {isGloveboxOpen && member.membership_id && (
-                <DigitalGlovebox
-                    membershipId={member.membership_id}
-                    memberName={member.full_name || "Member"}
-                    vehicles={vehicles}
-                    onClose={() => setIsGloveboxOpen(false)}
-                />
-            )}
         </div>
     );
 }

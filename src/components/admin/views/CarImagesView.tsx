@@ -1,16 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Car, ImagePlus, Images, Loader2, Search, Trash2, Upload } from "lucide-react";
+import { Check, Loader2, Search, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
-import { StatCard, cls } from "../ui/AdminUI";
+import { cls } from "../ui/AdminUI";
+import { useConfirm } from "../ui/useConfirm";
 import { libraryColours } from "@/lib/carImageLibrary";
 
 type LibraryImage = { id: string; make: string; model: string; colour: string; year_from: number | null; year_to: number | null; image_url: string; created_at: string };
 type Missing = { make: string; model: string; colour: string; count: number; yearFrom: number | null; yearTo: number | null };
 
-const field = "w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
-const nice = (value: string) => value === value.toUpperCase() ? value.toLowerCase().replace(/\b[a-z]/g, (letter) => letter.toUpperCase()) : value;
+const field = "h-11 w-full rounded-[12px] border border-[#E3E3E3] bg-white px-3.5 text-[14px] text-[#171717] outline-none placeholder:text-[#AAA] focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/15";
+const nice = (value: string) => value === value.toUpperCase() || value === value.toLowerCase() ? value.toLowerCase().replace(/\b[a-z]/g, (letter) => letter.toUpperCase()) : value;
 const years = (from: number | null, to: number | null) => from && to ? (from === to ? String(from) : `${from}–${to}`) : from ? `${from} on` : to ? `Up to ${to}` : "All years";
 const matchColour = (value: string) => libraryColours.find((colour) => value.toLowerCase().replace("gray", "grey").includes(colour.toLowerCase())) || "";
 
@@ -29,7 +30,9 @@ export function CarImagesView() {
     const [preview, setPreview] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [target, setTarget] = useState<Missing | null>(null);
     const formRef = useRef<HTMLFormElement>(null);
+    const { ask, dialog } = useConfirm();
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -56,7 +59,14 @@ export function CarImagesView() {
         setPreview(next ? URL.createObjectURL(next) : null);
     }
 
+    function clearForm() {
+        setTarget(null);
+        setMake(""); setModel(""); setColour(""); setYearFrom(""); setYearTo("");
+        chooseFile(null);
+    }
+
     function prefill(entry: Missing) {
+        setTarget(entry);
         setMake(nice(entry.make));
         setModel(nice(entry.model));
         setColour(matchColour(entry.colour) || nice(entry.colour));
@@ -68,6 +78,7 @@ export function CarImagesView() {
     async function upload(event: FormEvent) {
         event.preventDefault();
         if (!file) return toast.error("Choose an image first");
+        if (yearFrom && yearTo && Number(yearFrom) > Number(yearTo)) return toast.error("The first year must come before the last year");
         setUploading(true);
         try {
             const form = new FormData();
@@ -81,8 +92,7 @@ export function CarImagesView() {
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || "Could not upload");
             toast.success(`${make} ${model} in ${colour.toLowerCase()} added`);
-            chooseFile(null);
-            setYearFrom(""); setYearTo("");
+            clearForm();
             await load();
         } catch (reason) {
             toast.error(reason instanceof Error ? reason.message : "Could not upload");
@@ -92,7 +102,7 @@ export function CarImagesView() {
     }
 
     async function remove(image: LibraryImage) {
-        if (!window.confirm(`Delete the ${image.make} ${image.model} (${image.colour}) photo? Cars using it will show the drawing instead.`)) return;
+        if (!await ask({ title: `Delete the ${image.make} ${image.model} photo?`, body: `Cars in ${image.colour.toLowerCase()} will show the drawing instead.`, confirm: "Delete", danger: true })) return;
         setDeletingId(image.id);
         const response = await fetch(`/api/admin-car-images?id=${image.id}`, { method: "DELETE" }).catch(() => null);
         setDeletingId(null);
@@ -103,65 +113,68 @@ export function CarImagesView() {
     const filtered = images.filter((image) => `${image.make} ${image.model} ${image.colour}`.toLowerCase().includes(query.trim().toLowerCase()));
     const uncovered = missing.reduce((total, entry) => total + entry.count, 0);
 
-    return <div className="flex flex-col gap-6 animate-in fade-in duration-700">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <StatCard title="Photos in library" value={images.length} icon={Images} color="bg-indigo-500" />
-            <StatCard title="Car types still needed" value={missing.length} icon={ImagePlus} color="bg-amber-500" />
-            <StatCard title="Cars showing a drawing" value={uncovered} icon={Car} color="bg-rose-500" />
-        </div>
+    return <div className="flex flex-col gap-5 pb-8">
+        <p className="max-w-3xl text-[14px] leading-relaxed text-[#666]">Smart Card pages show a studio photo of the driver’s car when one here matches its make, model and colour. Otherwise they show a drawing. Work through <strong className="font-medium text-[#171717]">Still needed</strong>, most common cars first.</p>
 
-        {error && <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-600 dark:text-rose-300">{error}</div>}
+        {error && <div role="alert" className="rounded-[16px] bg-[#FFF0EF] px-5 py-4 text-[14px] text-[#AA3333]">{error}</div>}
 
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <form ref={formRef} onSubmit={upload} className="scroll-mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-                <h2 className="text-base font-semibold text-foreground">Add a car photo</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Use a front three-quarter studio shot on a white or transparent background, at least 1200px wide. One photo per model and colour.</p>
-                <div className="mt-5 grid gap-5 md:grid-cols-[1fr_1.1fr]">
-                    <label className={cls("relative flex aspect-[4/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed text-center transition-colors", preview ? "border-transparent bg-white" : "border-border bg-muted/30 hover:border-primary")}
-                        onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); chooseFile(event.dataTransfer.files?.[0] || null); }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element -- local preview of the chosen file */}
-                        {preview ? <img src={preview} alt="Preview" className="h-full w-full object-contain p-3" /> : <><Upload className="h-6 w-6 text-muted-foreground" /><span className="mt-2 text-sm text-foreground">Drop an image or click to choose</span><span className="mt-1 text-xs text-muted-foreground">PNG, WebP or JPEG, up to 5 MB</span></>}
-                        <input type="file" accept="image/png,image/webp,image/jpeg" className="sr-only" onChange={(event) => chooseFile(event.target.files?.[0] || null)} />
-                    </label>
-                    <div className="grid content-start gap-3">
-                        <label className="text-xs font-medium text-muted-foreground">Make<input className={cls(field, "mt-1")} list="car-image-makes" value={make} onChange={(event) => setMake(event.target.value)} placeholder="e.g. Toyota" required /></label>
-                        <datalist id="car-image-makes">{makes.map((item) => <option key={item} value={item} />)}</datalist>
-                        <label className="text-xs font-medium text-muted-foreground">Model<input className={cls(field, "mt-1")} value={model} onChange={(event) => setModel(event.target.value)} placeholder="e.g. Corolla" required /></label>
-                        <label className="text-xs font-medium text-muted-foreground">Colour<select className={cls(field, "mt-1")} value={colour} onChange={(event) => setColour(event.target.value)} required><option value="">Choose colour</option>{libraryColours.map((item) => <option key={item} value={item}>{item}</option>)}{colour && !libraryColours.includes(colour as (typeof libraryColours)[number]) && <option value={colour}>{colour}</option>}</select></label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <label className="text-xs font-medium text-muted-foreground">From year<input className={cls(field, "mt-1")} inputMode="numeric" value={yearFrom} onChange={(event) => setYearFrom(event.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="Any" /></label>
-                            <label className="text-xs font-medium text-muted-foreground">To year<input className={cls(field, "mt-1")} inputMode="numeric" value={yearTo} onChange={(event) => setYearTo(event.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="Any" /></label>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Years are for generations, e.g. a 2014–2019 Corolla looks different from a 2020 one. Leave blank to match every year.</p>
-                        <button type="submit" disabled={uploading || !file} className="mt-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}Upload photo</button>
-                    </div>
+        <div className="grid items-start gap-5 xl:grid-cols-[1fr_440px]">
+            <section className="overflow-hidden rounded-[20px] border border-[#EAEAEA] bg-white">
+                <div className="flex items-end justify-between gap-3 border-b border-[#F0F0F0] px-5 py-4">
+                    <div><h2 className="text-[18px] tracking-[-0.02em]">Still needed <span className="text-[14px] text-[#888]">{missing.length}</span></h2><p className="text-[13px] text-[#777]">{uncovered ? `${uncovered} ${uncovered === 1 ? "car shows" : "cars show"} a drawing right now.` : "Cars on Motor Ambos with no matching photo."}</p></div>
                 </div>
-            </form>
-
-            <section className="rounded-xl border border-border bg-card shadow-sm">
-                <div className="border-b border-border p-5"><h2 className="text-base font-semibold text-foreground">Still needed</h2><p className="mt-1 text-sm text-muted-foreground">Cars on Motor Ambos with no matching photo, most common first.</p></div>
-                {loading ? <div className="flex items-center gap-2 p-5 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading…</div>
-                    : missing.length ? <ul className="max-h-[420px] divide-y divide-border overflow-y-auto">{missing.map((entry) => <li key={`${entry.make}-${entry.model}-${entry.colour}`} className="flex items-center gap-3 px-5 py-3">
-                        <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-foreground">{nice(entry.make)} {nice(entry.model)} <span className="font-normal text-muted-foreground">· {nice(entry.colour)}</span></p><p className="text-xs text-muted-foreground">{entry.count} {entry.count === 1 ? "car" : "cars"} · {years(entry.yearFrom, entry.yearTo)}</p></div>
-                        <button type="button" onClick={() => prefill(entry)} className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary hover:text-primary">Upload</button>
-                    </li>)}</ul>
-                    : <p className="p-5 text-sm text-muted-foreground">Every car on the platform has a photo.</p>}
+                {loading ? <div className="flex items-center gap-2 px-5 py-6 text-[14px] text-[#888]"><Loader2 className="h-4 w-4 animate-spin" />Loading…</div>
+                    : missing.length ? <ul className="max-h-[520px] divide-y divide-[#F0F0F0] overflow-y-auto">{missing.map((entry) => {
+                        const active = target === entry;
+                        return <li key={`${entry.make}-${entry.model}-${entry.colour}`}>
+                            <button type="button" onClick={() => prefill(entry)} className={cls("flex w-full items-center gap-3 px-5 py-3 text-left transition-colors", active ? "bg-[#F3F3FF]" : "hover:bg-[#FAFAFA]")}>
+                                <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-[10px] bg-[#F2F2F2] text-[13px] text-[#555]">{entry.count}</span>
+                                <span className="min-w-0 flex-1"><span className="block truncate text-[14px]">{nice(entry.make)} {nice(entry.model)}</span><span className="block truncate text-[13px] text-[#888]">{nice(entry.colour)} · {years(entry.yearFrom, entry.yearTo)}</span></span>
+                                <span className={cls("shrink-0 text-[13px]", active ? "text-[#1111F6]" : "text-[#888]")}>{active ? "Adding" : "Add photo"}</span>
+                            </button>
+                        </li>;
+                    })}</ul>
+                    : <p className="flex items-center gap-2 px-5 py-6 text-[14px] text-[#197252]"><Check className="h-4 w-4" />Every car on Motor Ambos has a photo.</p>}
             </section>
+
+            <form ref={formRef} onSubmit={upload} className="scroll-mt-6 rounded-[20px] border border-[#EAEAEA] bg-white p-5 xl:sticky xl:top-0">
+                <div className="flex items-start justify-between gap-3">
+                    <div><h2 className="text-[18px] tracking-[-0.02em]">Add a photo</h2><p className="mt-0.5 text-[13px] text-[#777]">{target ? `For ${target.count} ${target.count === 1 ? "car" : "cars"} that need it.` : "Pick a car from Still needed, or fill in the details."}</p></div>
+                    {(target || make || file) && <button type="button" onClick={clearForm} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2.5 text-[13px] text-[#777] hover:bg-[#F2F2F2]"><X className="h-3.5 w-3.5" />Clear</button>}
+                </div>
+                <label className={cls("relative mt-4 flex aspect-[16/10] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[16px] border-2 border-dashed text-center transition-colors", preview ? "border-transparent bg-[#F7F7F7]" : "border-[#E3E3E3] bg-[#FAFAFA] hover:border-[#B8B8FF]")}
+                    onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); chooseFile(event.dataTransfer.files?.[0] || null); }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- local preview of the chosen file */}
+                    {preview ? <img src={preview} alt="Preview" className="h-full w-full object-contain p-3" /> : <><Upload className="h-6 w-6 text-[#888]" /><span className="mt-2 text-[14px]">Drop a photo or click to choose</span><span className="mt-1 px-6 text-[12px] text-[#888]">Front three-quarter studio shot, white or transparent background, 1200px wide or more. PNG, WebP or JPEG up to 5 MB.</span></>}
+                    <input type="file" accept="image/png,image/webp,image/jpeg" className="sr-only" onChange={(event) => chooseFile(event.target.files?.[0] || null)} />
+                </label>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                    <label className="text-[13px] text-[#555]">Make<input className={cls(field, "mt-1.5")} list="car-image-makes" value={make} onChange={(event) => setMake(event.target.value)} placeholder="Toyota" required /></label>
+                    <datalist id="car-image-makes">{makes.map((item) => <option key={item} value={item} />)}</datalist>
+                    <label className="text-[13px] text-[#555]">Model<input className={cls(field, "mt-1.5")} value={model} onChange={(event) => setModel(event.target.value)} placeholder="Corolla" required /></label>
+                    <label className="col-span-2 text-[13px] text-[#555]">Colour<select className={cls(field, "mt-1.5")} value={colour} onChange={(event) => setColour(event.target.value)} required><option value="">Choose a colour</option>{libraryColours.map((item) => <option key={item} value={item}>{item}</option>)}{colour && !libraryColours.includes(colour as (typeof libraryColours)[number]) && <option value={colour}>{colour}</option>}</select></label>
+                    <label className="text-[13px] text-[#555]">From year<input className={cls(field, "mt-1.5")} inputMode="numeric" value={yearFrom} onChange={(event) => setYearFrom(event.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="Any" /></label>
+                    <label className="text-[13px] text-[#555]">To year<input className={cls(field, "mt-1.5")} inputMode="numeric" value={yearTo} onChange={(event) => setYearTo(event.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="Any" /></label>
+                </div>
+                <p className="mt-2 text-[12px] leading-relaxed text-[#888]">Set years only when the model’s shape changed, such as a 2014–2019 Corolla. Leave them blank to match every year.</p>
+                <button type="submit" disabled={uploading || !file} className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#1111F6] text-[14px] text-white transition-colors hover:bg-[#0606D8] disabled:opacity-50">{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}{file ? "Add to library" : "Choose a photo first"}</button>
+            </form>
         </div>
 
-        <section className="rounded-xl border border-border bg-card shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-border p-5 md:flex-row md:items-center md:justify-between">
-                <h2 className="text-base font-semibold text-foreground">Library <span className="font-normal text-muted-foreground">{images.length}</span></h2>
-                <label className="relative w-full md:max-w-xs"><span className="sr-only">Search photos</span><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input className={cls(field, "pl-9")} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search make, model or colour" /></label>
+        <section className="overflow-hidden rounded-[20px] border border-[#EAEAEA] bg-white">
+            <div className="flex flex-col gap-3 border-b border-[#F0F0F0] px-5 py-4 md:flex-row md:items-center md:justify-between">
+                <h2 className="text-[18px] tracking-[-0.02em]">Library <span className="text-[14px] text-[#888]">{images.length}</span></h2>
+                <label className="relative w-full md:max-w-xs"><span className="sr-only">Search photos</span><Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#999]" /><input className={cls(field, "pl-10")} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search make, model or colour" /></label>
             </div>
-            {filtered.length ? <ul className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">{filtered.map((image) => <li key={image.id} className="overflow-hidden rounded-xl border border-border bg-background">
+            {filtered.length ? <ul className="grid grid-cols-2 gap-3 p-4 sm:gap-4 sm:p-5 lg:grid-cols-3 2xl:grid-cols-4">{filtered.map((image) => <li key={image.id} className="overflow-hidden rounded-[16px] border border-[#EAEAEA]">
                 {/* eslint-disable-next-line @next/next/no-img-element -- public library photo */}
-                <div className="flex aspect-[4/3] items-center justify-center bg-white p-3"><img src={image.image_url} alt={`${image.make} ${image.model} in ${image.colour}`} className="h-full w-full object-contain" loading="lazy" /></div>
+                <div className="flex aspect-[4/3] items-center justify-center bg-[#F7F7F7] p-3"><img src={image.image_url} alt={`${image.make} ${image.model} in ${image.colour}`} className="h-full w-full object-contain" loading="lazy" /></div>
                 <div className="flex items-start justify-between gap-2 p-3">
-                    <div className="min-w-0"><p className="truncate text-sm font-medium text-foreground">{image.make} {image.model}</p><p className="text-xs text-muted-foreground">{image.colour} · {years(image.year_from, image.year_to)}</p></div>
-                    <button type="button" onClick={() => void remove(image)} disabled={deletingId === image.id} aria-label={`Delete ${image.make} ${image.model} ${image.colour}`} className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 disabled:opacity-50">{deletingId === image.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button>
+                    <div className="min-w-0"><p className="truncate text-[14px]">{image.make} {image.model}</p><p className="truncate text-[12px] text-[#888]">{image.colour} · {years(image.year_from, image.year_to)}</p></div>
+                    <button type="button" onClick={() => void remove(image)} disabled={deletingId === image.id} aria-label={`Delete ${image.make} ${image.model} ${image.colour}`} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#888] hover:bg-[#FFF0EF] hover:text-[#AA3333] disabled:opacity-50">{deletingId === image.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button>
                 </div>
-            </li>)}</ul> : <p className="p-5 text-sm text-muted-foreground">{loading ? "Loading…" : images.length ? "No photos match your search." : "No photos yet. Start with the cars in “Still needed”."}</p>}
+            </li>)}</ul> : <p className="px-5 py-10 text-center text-[14px] text-[#888]">{loading ? "Loading…" : images.length ? "No photos match your search." : "No photos yet. Start with the first car in Still needed."}</p>}
         </section>
+        {dialog}
     </div>;
 }

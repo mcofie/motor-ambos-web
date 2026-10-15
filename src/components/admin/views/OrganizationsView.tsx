@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
 import {
     listMembersWithMemberships,
     MemberWithMembershipRow,
@@ -16,279 +17,201 @@ import {
     recordInvoicePayment,
     listOrgNotes,
     addOrgNote,
-    fetchOrgServiceAnalytics
+    fetchOrgServiceAnalytics,
+    sendFleetReport,
 } from "@/lib/supaFetch";
-import {
-    Building2,
-    Users,
-    Car,
-    FileText,
-    TrendingUp,
-    Plus,
-    Search,
-    Loader2,
-    ArrowUpRight,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    ChevronRight,
-    Wallet,
-    Download,
-    Eye,
-    RefreshCw,
-    User as UserIcon,
-    X,
-    Filter,
-    Settings2,
-    Calendar,
-    ShieldCheck,
-    BarChart3,
-    HeartPulse,
-    History,
-    StickyNote,
-    CreditCard
-} from "lucide-react";
+import { ArrowLeft, Building2, ChevronRight, Download, Loader2, Pencil, Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
-import { cls, StatCard } from "../ui/AdminUI";
+import { cls } from "../ui/AdminUI";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { sendFleetReport } from "@/lib/supaFetch";
 import { formatPhone, phoneVariants } from "@/lib/phone";
 
+type Driver = { id: string; full_name?: string | null; phone?: string | null; vehicle?: { id: string; make?: string | null; model?: string | null; plate?: string | null } | null };
+type Note = { id: string; category?: string | null; content: string; created_at?: string | null };
+type Tab = "vehicles" | "drivers" | "invoices" | "notes";
+
+const field = "h-11 w-full rounded-[12px] border border-[#E3E3E3] bg-white px-3.5 text-[14px] text-[#171717] outline-none placeholder:text-[#AAA] focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/15 disabled:bg-[#F7F7F7] disabled:text-[#888]";
+const label = "block text-[13px] text-[#555]";
+const primaryBtn = "inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] text-white transition-colors hover:bg-[#0606D8] disabled:opacity-50";
+const quietBtn = "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#E3E3E3] bg-white px-4 text-[14px] text-[#333] transition-colors hover:border-[#B8B8FF] hover:text-[#1111F6] disabled:opacity-50";
+
+const ghs = (amount: number) => `GHS ${amount.toLocaleString("en-GH", { maximumFractionDigits: 2 })}`;
+const day = (value?: string | null) => value ? new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
+const isoDay = (offsetDays = 0) => new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+const owed = (invoice: InvoiceRow) => invoice.status === "PENDING" || invoice.status === "OVERDUE" ? invoice.total_amount - invoice.paid_amount : 0;
+const isAbort = (err: unknown) => err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
+
+const INVOICE_TONE: Record<string, { label: string; tone: string }> = {
+    PAID: { label: "Paid", tone: "bg-[#EAF7F0] text-[#197252]" },
+    PENDING: { label: "Unpaid", tone: "bg-[#FFF4DF] text-[#915C12]" },
+    OVERDUE: { label: "Overdue", tone: "bg-[#FFF0EF] text-[#AA3333]" },
+    CANCELLED: { label: "Cancelled", tone: "bg-[#F2F2F2] text-[#666]" },
+};
+
+/** Fleet customers: who they are, their vehicles and drivers, and what they owe. */
 export function OrganizationsView() {
-    const [mounted, setMounted] = useState(false);
     const [members, setMembers] = useState<MemberWithMembershipRow[]>([]);
     const [allVehicles, setAllVehicles] = useState<VehicleRow[]>([]);
     const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedOrg, setSelectedOrg] = useState<MemberWithMembershipRow | null>(null);
-    const [orgDrivers, setOrgDrivers] = useState<any[]>([]);
-    const [loadingDrivers, setLoadingDrivers] = useState(false);
     const [plans, setPlans] = useState<MembershipPlanRow[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [query, setQuery] = useState("");
 
-    // Org Form Dialog
-    const [isOrgFormOpen, setIsOrgFormOpen] = useState(false);
-    const [savingOrg, setSavingOrg] = useState(false);
-    const [orgForm, setOrgForm] = useState({
-        id: "",
-        business_name: "",
-        contact_member_id: "",
-        email: "",
-        phone: "",
-        membership_tier: "",
-        membership_expiry_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-        membership_is_active: true
-    });
-
-    // Invoice Dialog
-    const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
-    const [invoiceForm, setInvoiceForm] = useState({
-        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        notes: "",
-        items: [{ description: "Monthly Membership Subscription", quantity: 1, unit_price: 1500 }]
-    });
-
-    // Report Dialog
-    const [isReportOpen, setIsReportOpen] = useState(false);
-    const [reportForm, setReportForm] = useState({
-        startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0],
-        endDate: new Date().toISOString().split('T')[0],
-        includeServices: true,
-        includeCompliance: true,
-        includeFleetStats: true
-    });
-
-    // New States for requested features
-    const [activeTab, setActiveTab] = useState<'fleet' | 'billing' | 'notes' | 'analytics'>('fleet');
-    const [orgNotes, setOrgNotes] = useState<any[]>([]);
+    const [selected, setSelected] = useState<MemberWithMembershipRow | null>(null);
+    const [tab, setTab] = useState<Tab>("vehicles");
+    const [drivers, setDrivers] = useState<Driver[]>([]);
+    const [notes, setNotes] = useState<Note[]>([]);
+    const [spend, setSpend] = useState({ total_requests: 0, total_cost: 0 });
+    const [loadingDetail, setLoadingDetail] = useState(false);
     const [newNote, setNewNote] = useState("");
     const [noteCategory, setNoteCategory] = useState("GENERAL");
-    const [roiStats, setRoiStats] = useState({ total_requests: 0, total_cost: 0 });
-    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRow | null>(null);
+
+    const [orgFormOpen, setOrgFormOpen] = useState(false);
+    const [savingOrg, setSavingOrg] = useState(false);
+    const [orgForm, setOrgForm] = useState({ id: "", business_name: "", contact_member_id: "", email: "", phone: "", membership_tier: "", membership_expiry_date: isoDay(365), membership_is_active: true });
+
+    const [invoiceOpen, setInvoiceOpen] = useState(false);
+    const [invoiceForm, setInvoiceForm] = useState({ due_date: isoDay(7), notes: "", items: [{ description: "Monthly membership", quantity: 1, unit_price: 0 }] });
+
+    const [reportOpen, setReportOpen] = useState(false);
+    const [reportForm, setReportForm] = useState({ startDate: isoDay(-30), endDate: isoDay(), includeServices: true, includeCompliance: true, includeFleetStats: true });
+
+    const [payInvoice, setPayInvoice] = useState<InvoiceRow | null>(null);
     const [paymentAmount, setPaymentAmount] = useState(0);
 
-    const organizations = useMemo(() =>
-        members.filter(m => m.is_business && (m.business_name || m.full_name)),
-        [members]);
-    const peopleById = useMemo(() => new Map(members.filter(m => !m.is_business).map(m => [m.member_id, m])), [members]);
+    const organizations = useMemo(() => members.filter((m) => m.is_business && (m.business_name || m.full_name)), [members]);
+    const people = useMemo(() => members.filter((m) => !m.is_business), [members]);
+    const peopleById = useMemo(() => new Map(people.map((m) => [m.member_id, m])), [people]);
     const contactFor = (org: MemberWithMembershipRow) => org.contact_member_id ? peopleById.get(org.contact_member_id) : undefined;
+    const planName = (code?: string | null) => plans.find((p) => p.code === code)?.name || code || "No plan";
+    const vehiclesFor = useCallback((org: MemberWithMembershipRow) => allVehicles.filter((v) => v.user_id === org.member_id || (org.auth_user_id && v.user_id === org.auth_user_id)), [allVehicles]);
+    const invoicesFor = (org: MemberWithMembershipRow) => invoices.filter((i) => i.org_id === org.member_id);
+    const balanceFor = (org: MemberWithMembershipRow) => invoicesFor(org).reduce((sum, i) => sum + owed(i), 0);
 
     const fetchData = useCallback(async (signal?: AbortSignal) => {
-        setLoading(true);
         try {
-            const [mRes, vRes, iRes, pRes] = await Promise.all([
-                listMembersWithMemberships(signal),
-                listAllVehicles(signal),
-                listInvoices(undefined, signal),
-                listMembershipPlans(signal)
-            ]);
+            const [mRes, vRes, iRes, pRes] = await Promise.all([listMembersWithMemberships(signal), listAllVehicles(signal), listInvoices(undefined, signal), listMembershipPlans(signal)]);
             setMembers(mRes || []);
             setAllVehicles(vRes || []);
             setInvoices(iRes || []);
             setPlans(pRes || []);
-        } catch (err: any) {
-            if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
-            toast.error("Failed to load organizations");
+        } catch (err) {
+            if (isAbort(err)) return;
+            toast.error("Could not load organizations");
         } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        setMounted(true);
         const controller = new AbortController();
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- loads server data once the page mounts
         fetchData(controller.signal);
         return () => controller.abort();
     }, [fetchData]);
 
-    const handleOrgClick = async (org: MemberWithMembershipRow) => {
-        setSelectedOrg(org);
-        setLoadingDrivers(true);
-        setActiveTab('fleet');
+    async function openOrg(org: MemberWithMembershipRow) {
+        setSelected(org);
+        setTab("vehicles");
+        setDrivers([]);
+        setNotes([]);
+        setSpend({ total_requests: 0, total_cost: 0 });
+        setLoadingDetail(true);
         try {
-            const [drivers, notes, analytics] = await Promise.all([
-                listOrgDrivers(org.member_id),
-                listOrgNotes(org.member_id),
-                fetchOrgServiceAnalytics(org.member_id)
-            ]);
-            setOrgDrivers(drivers || []);
-            setOrgNotes(notes || []);
-            setRoiStats(analytics);
-        } catch (e) {
-            toast.error("Failed to load organization details");
+            const [d, n, a] = await Promise.all([listOrgDrivers(org.member_id), listOrgNotes(org.member_id), fetchOrgServiceAnalytics(org.member_id)]);
+            setDrivers(d || []);
+            setNotes(n || []);
+            setSpend(a);
+        } catch {
+            toast.error("Could not load all of this organization’s details");
         } finally {
-            setLoadingDrivers(false);
+            setLoadingDetail(false);
         }
-    };
+    }
 
-    const handleAddNote = async () => {
-        if (!selectedOrg || !newNote.trim()) return;
+    async function saveNote() {
+        if (!selected || !newNote.trim()) return;
         try {
-            await addOrgNote(selectedOrg.member_id, newNote, noteCategory);
+            await addOrgNote(selected.member_id, newNote.trim(), noteCategory);
             setNewNote("");
-            const notes = await listOrgNotes(selectedOrg.member_id);
-            setOrgNotes(notes);
-            toast.success("Note added");
-        } catch (e) {
-            toast.error("Failed to add note");
+            setNotes(await listOrgNotes(selected.member_id));
+            toast.success("Note saved");
+        } catch {
+            toast.error("Could not save the note");
         }
-    };
+    }
 
-    const handleRecordPayment = async () => {
-        if (!selectedInvoice) return;
+    async function savePayment() {
+        if (!payInvoice) return;
         try {
-            await recordInvoicePayment(selectedInvoice.id, paymentAmount);
+            await recordInvoicePayment(payInvoice.id, paymentAmount);
             toast.success("Payment recorded");
-            setIsPaymentOpen(false);
-            fetchData();
-            if (selectedOrg) {
-                const iRes = await listInvoices(selectedOrg.member_id);
-                setInvoices((prev) => prev.map(inv => {
-                    const match = iRes.find(r => r.id === inv.id);
-                    return match || inv;
-                }));
-            }
-        } catch (e) {
-            toast.error("Failed to record payment");
+            setPayInvoice(null);
+            await fetchData();
+        } catch {
+            toast.error("Could not record the payment");
         }
-    };
+    }
 
-    const handleCreateInvoice = async () => {
-        if (!selectedOrg) return;
-        const total = invoiceForm.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-
+    const invoiceTotal = invoiceForm.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+    async function saveInvoice() {
+        if (!selected) return;
+        const items = invoiceForm.items.filter((item) => item.description.trim() && item.unit_price > 0);
+        if (!items.length) return toast.error("Add at least one item with a price");
         try {
-            await createInvoice({
-                org_id: selectedOrg.member_id,
-                due_date: invoiceForm.due_date,
-                total_amount: total,
-                notes: invoiceForm.notes,
-                items: invoiceForm.items
-            });
-            toast.success("Invoice created successfully");
-            setIsInvoiceOpen(false);
-            fetchData();
-        } catch (e: any) {
-            toast.error(e.message || "Failed to create invoice");
+            await createInvoice({ org_id: selected.member_id, due_date: invoiceForm.due_date, total_amount: invoiceTotal, notes: invoiceForm.notes, items });
+            toast.success("Invoice created");
+            setInvoiceOpen(false);
+            setTab("invoices");
+            await fetchData();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Could not create the invoice");
         }
-    };
+    }
 
-    const handleSendReport = async () => {
-        if (!selectedOrg) return;
-        const tid = toast.loading("Generating fleet report PDF...");
+    async function downloadReport() {
+        if (!selected) return;
+        const tid = toast.loading("Preparing the fleet report…");
         try {
-            const blob = await sendFleetReport(selectedOrg.member_id, {
-                startDate: reportForm.startDate,
-                endDate: reportForm.endDate,
-                includeServices: reportForm.includeServices,
-                includeCompliance: reportForm.includeCompliance,
-                includeFleetStats: reportForm.includeFleetStats
-            });
-
-            // Download the PDF
+            const blob = await sendFleetReport(selected.member_id, reportForm);
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            const a = document.createElement("a");
             a.href = url;
-            a.download = `Fleet_Report_${selectedOrg.business_name || selectedOrg.full_name}_${new Date().toISOString().split('T')[0]}.pdf`;
+            a.download = `Fleet report, ${selected.business_name || selected.full_name}, ${isoDay()}.pdf`;
             document.body.appendChild(a);
             a.click();
+            a.remove();
             window.URL.revokeObjectURL(url);
-
-            toast.success("Fleet report generated successfully", { id: tid });
-            setIsReportOpen(false);
-        } catch (e: any) {
-            toast.error(e.message || "Failed to generate report", { id: tid });
+            toast.success("Report downloaded", { id: tid });
+            setReportOpen(false);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Could not create the report", { id: tid });
         }
-    };
+    }
 
-    const handleOrgSubmit = async () => {
+    async function saveOrg() {
         if (savingOrg) return;
-        if (!orgForm.business_name.trim() || !orgForm.contact_member_id) {
-            toast.error("Enter the business name and choose a contact person.");
-            return;
-        }
+        if (!orgForm.business_name.trim() || !orgForm.contact_member_id) return toast.error("Enter the business name and choose a contact person.");
         setSavingOrg(true);
-        const tid = toast.loading("Saving organization...");
         try {
-            await upsertOrganization({
-                id: orgForm.id || undefined,
-                business_name: orgForm.business_name,
-                contact_member_id: orgForm.contact_member_id,
-                email: orgForm.email,
-                phone: orgForm.phone,
-                membership_tier: orgForm.membership_tier,
-                membership_expiry_date: orgForm.membership_expiry_date,
-                membership_is_active: orgForm.membership_is_active
-            });
-            toast.success("Organization saved successfully", { id: tid });
-            setIsOrgFormOpen(false);
-            fetchData();
-        } catch (e: any) {
-            toast.error(e.message || "Failed to save organization", { id: tid });
+            await upsertOrganization({ ...orgForm, id: orgForm.id || undefined });
+            toast.success(orgForm.id ? "Organization saved" : "Organization added");
+            setOrgFormOpen(false);
+            await fetchData();
+            if (selected && orgForm.id === selected.member_id) setSelected({ ...selected, business_name: orgForm.business_name, contact_member_id: orgForm.contact_member_id, email: orgForm.email, phone: orgForm.phone, membership_tier: orgForm.membership_tier, membership_expiry_date: orgForm.membership_expiry_date, membership_is_active: orgForm.membership_is_active });
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Could not save the organization");
         } finally {
             setSavingOrg(false);
         }
-    };
+    }
 
-    const openAddOrg = () => {
-        setOrgForm({
-            id: "",
-            business_name: "",
-            contact_member_id: "",
-            email: "",
-            phone: "",
-            membership_tier: plans[0]?.code || "",
-            membership_expiry_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-            membership_is_active: true
-        });
-        setIsOrgFormOpen(true);
-    };
+    function openAddOrg() {
+        setOrgForm({ id: "", business_name: "", contact_member_id: "", email: "", phone: "", membership_tier: plans[0]?.code || "", membership_expiry_date: isoDay(365), membership_is_active: true });
+        setOrgFormOpen(true);
+    }
 
-    const openEditOrg = (org: MemberWithMembershipRow) => {
+    function openEditOrg(org: MemberWithMembershipRow) {
         setOrgForm({
             id: org.member_id || org.id || "",
             business_name: org.business_name || "",
@@ -296,845 +219,285 @@ export function OrganizationsView() {
             email: org.email || "",
             phone: formatPhone(org.phone),
             membership_tier: org.membership_tier || org.tier || "",
-            membership_expiry_date: (org.membership_expiry_date || "").split('T')[0],
-            membership_is_active: org.membership_is_active ?? true
+            membership_expiry_date: (org.membership_expiry_date || "").slice(0, 10),
+            membership_is_active: org.membership_is_active ?? true,
         });
-        setIsOrgFormOpen(true);
-    };
+        setOrgFormOpen(true);
+    }
 
-    const stats = useMemo(() => {
-        const outstanding = invoices
-            .filter(i => i.status === 'PENDING' || i.status === 'OVERDUE')
-            .reduce((sum, i) => sum + (i.total_amount - i.paid_amount), 0);
-
-        return {
-            totalOrgs: organizations.length,
-            totalFleet: allVehicles.filter(v => organizations.some(o => o.member_id === v.user_id)).length,
-            outstandingAmount: outstanding
-        };
-    }, [organizations, allVehicles, invoices]);
-
-    const filteredOrgs = organizations.filter(org => {
-        const q = searchQuery.toLowerCase();
+    const filtered = organizations.filter((org) => {
+        const q = query.trim().toLowerCase();
+        if (!q) return true;
         const contact = contactFor(org);
-        return (org.business_name || org.full_name || "").toLowerCase().includes(q) ||
-            (org.email || "").toLowerCase().includes(q) ||
-            (org.phone || "").toLowerCase().includes(q) ||
-            phoneVariants(org.phone || "").some((phone) => phone.toLowerCase().includes(q)) ||
-            (contact?.full_name || "").toLowerCase().includes(q) ||
-            (contact?.phone || "").toLowerCase().includes(q);
+        return [org.business_name, org.full_name, org.email, org.phone, contact?.full_name, contact?.phone].some((value) => value?.toLowerCase().includes(q))
+            || phoneVariants(org.phone || "").some((phone) => phone.toLowerCase().includes(q));
     });
 
-    if (loading && members.length === 0) {
+    const totalOwed = invoices.reduce((sum, i) => sum + owed(i), 0);
+    const fleetVehicleCount = organizations.reduce((sum, org) => sum + vehiclesFor(org).length, 0);
+
+    if (loading) {
+        return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-[#1111F6]" /></div>;
+    }
+
+    const dialogs = <>
+        {/* Add or edit an organization */}
+        <Dialog open={orgFormOpen} onOpenChange={setOrgFormOpen}>
+            <DialogContent className="admin-theme base-landing text-[#171717] [&_[data-slot=dialog-title]]:font-medium [&_[data-slot=dialog-title]]:tracking-[-0.02em] max-h-[90dvh] max-w-lg overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>{orgForm.id ? "Edit organization" : "Add an organization"}</DialogTitle>
+                    <DialogDescription>A business with several vehicles. Its contact person manages the fleet from the app.</DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-4">
+                    <label className={label}>Business name<input className={cls(field, "mt-1.5")} placeholder="e.g. Accra Logistics Ltd" value={orgForm.business_name} onChange={(e) => setOrgForm({ ...orgForm, business_name: e.target.value })} /></label>
+                    <label className={label}>Contact person
+                        <select className={cls(field, "mt-1.5")} value={orgForm.contact_member_id} onChange={(e) => setOrgForm({ ...orgForm, contact_member_id: e.target.value })}>
+                            <option value="">Choose a member</option>
+                            {people.filter((m) => m.phone).map((person) => <option key={person.member_id} value={person.member_id}>{person.full_name || person.email || "Unnamed"} · {formatPhone(person.phone)}</option>)}
+                        </select>
+                        <span className="mt-1.5 block text-[12px] text-[#888]">Not listed? Add them in <Link href="/admin/memberships" className="text-[#1111F6]">Memberships</Link> first.</span>
+                    </label>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <label className={label}>Business email <span className="text-[#AAA]">(optional)</span><input type="email" className={cls(field, "mt-1.5")} placeholder="accounts@company.com" value={orgForm.email} onChange={(e) => setOrgForm({ ...orgForm, email: e.target.value })} /></label>
+                        <label className={label}>Business phone <span className="text-[#AAA]">(optional)</span><input className={cls(field, "mt-1.5")} placeholder="Uses the contact’s number" value={orgForm.phone} onChange={(e) => setOrgForm({ ...orgForm, phone: e.target.value })} onBlur={() => setOrgForm((current) => ({ ...current, phone: formatPhone(current.phone) }))} /></label>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <label className={label}>Plan
+                            <select className={cls(field, "mt-1.5")} value={orgForm.membership_tier} onChange={(e) => setOrgForm({ ...orgForm, membership_tier: e.target.value })}>
+                                <option value="">No plan</option>
+                                {plans.map((p) => <option key={p.id} value={p.code}>{p.name}</option>)}
+                            </select>
+                        </label>
+                        <label className={label}>Plan ends<input type="date" className={cls(field, "mt-1.5")} value={orgForm.membership_expiry_date} onChange={(e) => setOrgForm({ ...orgForm, membership_expiry_date: e.target.value })} /></label>
+                    </div>
+                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[14px] bg-[#F7F7F7] px-4 py-3">
+                        <span className="text-[14px]">Plan is active<span className="block text-[12px] text-[#888]">Turn off to pause their services.</span></span>
+                        <input type="checkbox" checked={orgForm.membership_is_active} onChange={(e) => setOrgForm({ ...orgForm, membership_is_active: e.target.checked })} className="h-5 w-5 accent-[#1111F6]" />
+                    </label>
+                </div>
+                <DialogFooter>
+                    <button type="button" onClick={() => setOrgFormOpen(false)} className={quietBtn}>Cancel</button>
+                    <button type="button" onClick={saveOrg} disabled={savingOrg} className={primaryBtn}>{savingOrg && <Loader2 className="h-4 w-4 animate-spin" />}{orgForm.id ? "Save" : "Add organization"}</button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* New invoice */}
+        <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
+            <DialogContent className="admin-theme base-landing text-[#171717] [&_[data-slot=dialog-title]]:font-medium [&_[data-slot=dialog-title]]:tracking-[-0.02em] max-h-[90dvh] max-w-lg overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>New invoice</DialogTitle>
+                    <DialogDescription>For {selected?.business_name || selected?.full_name}. Dated today.</DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                        {invoiceForm.items.map((item, idx) => (
+                            <div key={idx} className="flex items-end gap-2">
+                                <label className={cls(label, "flex-1")}>{idx === 0 && "Item"}<input className={cls(field, idx === 0 && "mt-1.5")} placeholder="Description" value={item.description} onChange={(e) => setInvoiceForm({ ...invoiceForm, items: invoiceForm.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it) })} /></label>
+                                <label className={cls(label, "w-28")}>{idx === 0 && "Price (GHS)"}<input type="number" min={0} className={cls(field, idx === 0 && "mt-1.5")} value={item.unit_price || ""} placeholder="0" onChange={(e) => setInvoiceForm({ ...invoiceForm, items: invoiceForm.items.map((it, i) => i === idx ? { ...it, unit_price: parseFloat(e.target.value) || 0 } : it) })} /></label>
+                                {invoiceForm.items.length > 1 && <button type="button" aria-label="Remove item" onClick={() => setInvoiceForm({ ...invoiceForm, items: invoiceForm.items.filter((_, i) => i !== idx) })} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#888] hover:bg-[#FFF0EF] hover:text-[#AA3333]"><X className="h-4 w-4" /></button>}
+                            </div>
+                        ))}
+                        <button type="button" onClick={() => setInvoiceForm({ ...invoiceForm, items: [...invoiceForm.items, { description: "", quantity: 1, unit_price: 0 }] })} className="w-fit text-[13px] text-[#1111F6]">+ Add another item</button>
+                    </div>
+                    <label className={label}>Due<input type="date" className={cls(field, "mt-1.5")} value={invoiceForm.due_date} onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })} /></label>
+                    <label className={label}>Notes <span className="text-[#AAA]">(optional)</span><textarea className={cls(field, "mt-1.5 h-20 py-2.5")} placeholder="Payment instructions or details" value={invoiceForm.notes} onChange={(e) => setInvoiceForm({ ...invoiceForm, notes: e.target.value })} /></label>
+                    <div className="flex items-center justify-between rounded-[14px] bg-[#F7F7F7] px-4 py-3"><span className="text-[14px] text-[#555]">Total</span><span className="text-[20px] tracking-[-0.02em]">{ghs(invoiceTotal)}</span></div>
+                </div>
+                <DialogFooter>
+                    <button type="button" onClick={() => setInvoiceOpen(false)} className={quietBtn}>Cancel</button>
+                    <button type="button" onClick={saveInvoice} disabled={invoiceTotal <= 0} className={primaryBtn}>Create invoice</button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Fleet report */}
+        <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+            <DialogContent className="admin-theme base-landing text-[#171717] [&_[data-slot=dialog-title]]:font-medium [&_[data-slot=dialog-title]]:tracking-[-0.02em] max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Fleet report</DialogTitle>
+                    <DialogDescription>A PDF for {selected?.business_name || selected?.full_name} to keep or share.</DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <label className={label}>From<input type="date" className={cls(field, "mt-1.5")} value={reportForm.startDate} onChange={(e) => setReportForm({ ...reportForm, startDate: e.target.value })} /></label>
+                        <label className={label}>To<input type="date" className={cls(field, "mt-1.5")} value={reportForm.endDate} onChange={(e) => setReportForm({ ...reportForm, endDate: e.target.value })} /></label>
+                    </div>
+                    <div className="overflow-hidden rounded-[14px] border border-[#EAEAEA]">
+                        {([["includeServices", "Services", "Maintenance and repairs in this period"], ["includeCompliance", "Papers", "Insurance and roadworthy status"], ["includeFleetStats", "Fleet summary", "Vehicles, drivers and use"]] as const).map(([key, title, hint], index) => (
+                            <label key={key} className={cls("flex cursor-pointer items-center gap-3 px-4 py-3", index > 0 && "border-t border-[#F0F0F0]")}>
+                                <input type="checkbox" checked={reportForm[key]} onChange={(e) => setReportForm({ ...reportForm, [key]: e.target.checked })} className="h-4 w-4 accent-[#1111F6]" />
+                                <span className="text-[14px]">{title}<span className="block text-[12px] text-[#888]">{hint}</span></span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+                <DialogFooter>
+                    <button type="button" onClick={() => setReportOpen(false)} className={quietBtn}>Cancel</button>
+                    <button type="button" onClick={downloadReport} className={primaryBtn}><Download className="h-4 w-4" />Download PDF</button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Record a payment */}
+        <Dialog open={!!payInvoice} onOpenChange={(open) => !open && setPayInvoice(null)}>
+            <DialogContent className="admin-theme base-landing text-[#171717] [&_[data-slot=dialog-title]]:font-medium [&_[data-slot=dialog-title]]:tracking-[-0.02em] max-w-sm">
+                <DialogHeader>
+                    <DialogTitle>Record a payment</DialogTitle>
+                    <DialogDescription>Invoice {payInvoice?.invoice_number}. {payInvoice && ghs(payInvoice.total_amount - payInvoice.paid_amount)} still owed.</DialogDescription>
+                </DialogHeader>
+                <label className={label}>Amount received (GHS)<input type="number" min={0} className={cls(field, "mt-1.5 text-[18px]")} value={paymentAmount || ""} onChange={(e) => setPaymentAmount(Number(e.target.value))} /></label>
+                <DialogFooter>
+                    <button type="button" onClick={() => setPayInvoice(null)} className={quietBtn}>Cancel</button>
+                    <button type="button" onClick={savePayment} disabled={paymentAmount <= 0} className={primaryBtn}>Record payment</button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    </>;
+
+    // ── One organization ──
+    if (selected) {
+        const contact = contactFor(selected);
+        const orgVehicles = vehiclesFor(selected);
+        const orgInvoices = invoicesFor(selected);
+        const balance = balanceFor(selected);
+        const tabs: { key: Tab; label: string; count?: number }[] = [
+            { key: "vehicles", label: "Vehicles", count: orgVehicles.length },
+            { key: "drivers", label: "Drivers", count: drivers.length },
+            { key: "invoices", label: "Invoices", count: orgInvoices.length },
+            { key: "notes", label: "Notes", count: notes.length },
+        ];
         return (
-            <div className="flex h-[60vh] items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex flex-col gap-5 pb-8">
+                <button type="button" onClick={() => setSelected(null)} className="inline-flex w-fit items-center gap-1.5 text-[14px] text-[#555] hover:text-[#1111F6]"><ArrowLeft className="h-4 w-4" />All organizations</button>
+
+                <section className="rounded-[20px] border border-[#EAEAEA] bg-white p-5 sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-4">
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[#F3F3FF] text-[#1111F6]"><Building2 className="h-6 w-6" /></span>
+                            <div className="min-w-0">
+                                <h2 className="truncate text-[22px] tracking-[-0.03em]">{selected.business_name || selected.full_name}</h2>
+                                <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[13px] text-[#777]">
+                                    <span>{planName(selected.membership_tier)}</span>
+                                    <span className={cls("rounded-full px-2 py-0.5 text-[12px]", selected.membership_is_active ? "bg-[#EAF7F0] text-[#197252]" : "bg-[#F2F2F2] text-[#666]")}>{selected.membership_is_active ? "Active" : "Paused"}</span>
+                                    {selected.membership_expiry_date && <span>Ends {day(selected.membership_expiry_date)}</span>}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <button type="button" onClick={() => openEditOrg(selected)} className={quietBtn}><Pencil className="h-4 w-4" />Edit</button>
+                            <button type="button" onClick={() => setReportOpen(true)} className={quietBtn}><Download className="h-4 w-4" />Fleet report</button>
+                            <button type="button" onClick={() => { setInvoiceForm({ due_date: isoDay(7), notes: "", items: [{ description: "Monthly membership", quantity: 1, unit_price: 0 }] }); setInvoiceOpen(true); }} className={primaryBtn}><Plus className="h-4 w-4" />New invoice</button>
+                        </div>
+                    </div>
+                    <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-[#F0F0F0] pt-5 text-[14px] lg:grid-cols-4">
+                        <div><dt className="text-[13px] text-[#888]">Contact</dt><dd className="mt-0.5 truncate">{contact?.full_name || "Not set"}</dd><dd className="truncate text-[13px] text-[#777]">{formatPhone(contact?.phone || selected.phone) || "No phone"}</dd></div>
+                        <div><dt className="text-[13px] text-[#888]">Owed</dt><dd className={cls("mt-0.5 text-[18px] tracking-[-0.02em]", balance > 0 && "text-[#AA3333]")}>{ghs(balance)}</dd></div>
+                        <div><dt className="text-[13px] text-[#888]">Service spend</dt><dd className="mt-0.5 text-[18px] tracking-[-0.02em]">{loadingDetail ? "—" : ghs(spend.total_cost)}</dd></div>
+                        <div><dt className="text-[13px] text-[#888]">Services logged</dt><dd className="mt-0.5 text-[18px] tracking-[-0.02em]">{loadingDetail ? "—" : spend.total_requests}</dd></div>
+                    </dl>
+                </section>
+
+                <section className="overflow-hidden rounded-[20px] border border-[#EAEAEA] bg-white">
+                    <div className="flex gap-1 overflow-x-auto border-b border-[#F0F0F0] px-3 pt-3 sm:px-4">
+                        {tabs.map((t) => (
+                            <button key={t.key} type="button" onClick={() => setTab(t.key)} className={cls("-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 pb-3 pt-1 text-[14px] transition-colors", tab === t.key ? "border-[#1111F6] text-[#1111F6]" : "border-transparent text-[#777] hover:text-[#171717]")}>
+                                {t.label}{t.count !== undefined && <span className="text-[#AAA]">{t.count}</span>}
+                            </button>
+                        ))}
+                    </div>
+
+                    {loadingDetail && tab !== "vehicles" && tab !== "invoices" ? <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#1111F6]" /></div> : <>
+                        {tab === "vehicles" && (orgVehicles.length ? <ul className="divide-y divide-[#F0F0F0]">{orgVehicles.map((v) => {
+                            const driver = drivers.find((d) => d.vehicle?.id === v.id);
+                            return <li key={v.id}><Link href={`/admin/vehicles/${v.id}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#FAFAFA]">
+                                <div className="min-w-0 flex-1"><p className="truncate text-[14px]">{[v.year, v.make, v.model].filter(Boolean).join(" ") || "Vehicle"}<span className="text-[#888]">{v.plate && ` · ${v.plate}`}</span></p><p className="truncate text-[13px] text-[#888]">{driver?.full_name ? `Driven by ${driver.full_name}` : "No driver assigned"}</p></div>
+                                {v.nfc_serial_number && <span className="hidden rounded-full bg-[#EEEEFF] px-2.5 py-0.5 text-[12px] text-[#1111F6] sm:inline">Smart Card</span>}
+                                <ChevronRight className="h-4 w-4 shrink-0 text-[#BBB]" />
+                            </Link></li>;
+                        })}</ul> : <Empty title="No vehicles yet" body="The contact person adds vehicles from the fleet app." />)}
+
+                        {tab === "drivers" && (drivers.length ? <ul className="divide-y divide-[#F0F0F0]">{drivers.map((d) => (
+                            <li key={d.id} className="flex items-center gap-3 px-5 py-3.5">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3F3FF] text-[13px] text-[#1111F6]">{(d.full_name || "?").split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}</span>
+                                <div className="min-w-0 flex-1"><p className="truncate text-[14px]">{d.full_name || "Unnamed driver"}</p><p className="truncate text-[13px] text-[#888]">{formatPhone(d.phone) || "No phone"}</p></div>
+                                <span className="truncate text-[13px] text-[#777]">{d.vehicle ? (d.vehicle.plate || [d.vehicle.make, d.vehicle.model].filter(Boolean).join(" ")) : "No vehicle"}</span>
+                            </li>
+                        ))}</ul> : <Empty title="No drivers yet" body="The contact person invites drivers from the fleet app." />)}
+
+                        {tab === "invoices" && (orgInvoices.length ? <ul className="divide-y divide-[#F0F0F0]">{orgInvoices.map((inv) => {
+                            const status = INVOICE_TONE[inv.status] || INVOICE_TONE.PENDING;
+                            const due = inv.total_amount - inv.paid_amount;
+                            return <li key={inv.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
+                                <div className="min-w-0 flex-1"><p className="text-[14px]"><span className="font-mono">{inv.invoice_number}</span> · {ghs(inv.total_amount)}</p><p className="text-[13px] text-[#888]" suppressHydrationWarning>Issued {day(inv.created_at || inv.issue_date)} · Due {day(inv.due_date)}{inv.paid_amount > 0 && inv.status !== "PAID" && ` · ${ghs(inv.paid_amount)} paid`}</p></div>
+                                <span className={cls("rounded-full px-2.5 py-1 text-[12px]", status.tone)}>{status.label}</span>
+                                {(inv.status === "PENDING" || inv.status === "OVERDUE") && <button type="button" onClick={() => { setPayInvoice(inv); setPaymentAmount(due); }} className="inline-flex h-8 items-center rounded-full border border-[#E3E3E3] px-3 text-[13px] hover:border-[#B8B8FF] hover:text-[#1111F6]">Record payment</button>}
+                            </li>;
+                        })}</ul> : <Empty title="No invoices yet" body="Create one with New invoice above." />)}
+
+                        {tab === "notes" && <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[1fr_320px]">
+                            {notes.length ? <ul className="flex flex-col gap-3">{notes.map((note) => (
+                                <li key={note.id} className="rounded-[14px] bg-[#F7F7F7] px-4 py-3">
+                                    <p className="text-[12px] text-[#888]" suppressHydrationWarning>{note.category ? `${note.category.charAt(0)}${note.category.slice(1).toLowerCase()} · ` : ""}{day(note.created_at)}</p>
+                                    <p className="mt-1 whitespace-pre-line text-[14px] leading-relaxed">{note.content}</p>
+                                </li>
+                            ))}</ul> : <p className="py-8 text-center text-[14px] text-[#888] lg:text-left">No notes yet. Keep a record of calls, agreements and issues here.</p>}
+                            <div className="flex h-fit flex-col gap-3 rounded-[16px] border border-[#EAEAEA] p-4">
+                                <p className="text-[14px]">Add a note</p>
+                                <div className="flex gap-1.5">{["GENERAL", "BILLING", "FLEET"].map((cat) => <button key={cat} type="button" onClick={() => setNoteCategory(cat)} className={cls("h-8 flex-1 rounded-full text-[13px]", noteCategory === cat ? "bg-[#171717] text-white" : "bg-[#F2F2F2] text-[#555]")}>{cat.charAt(0) + cat.slice(1).toLowerCase()}</button>)}</div>
+                                <textarea className={cls(field, "h-28 py-2.5")} placeholder="What happened?" value={newNote} onChange={(e) => setNewNote(e.target.value)} />
+                                <button type="button" onClick={saveNote} disabled={!newNote.trim()} className={primaryBtn}>Save note</button>
+                            </div>
+                        </div>}
+                    </>}
+                </section>
+                {dialogs}
             </div>
         );
     }
 
+    // ── All organizations ──
     return (
-        <div className="flex flex-col h-full gap-6 animate-in fade-in duration-700">
-            {/* Summary Stats - Synchronized with Memberships Look */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard title="Total Organizations" value={stats.totalOrgs} icon={Building2} color="bg-indigo-500" />
-                <StatCard title="Active FleetUnits" value={stats.totalFleet} icon={Car} color="bg-emerald-500" />
-                <StatCard title="Outstanding Balances" value={`GHS ${stats.outstandingAmount.toLocaleString()}`} icon={Wallet} color="bg-slate-500" />
+        <div className="flex flex-col gap-5 pb-8">
+            <div className="grid grid-cols-3 gap-3 lg:gap-4">
+                {[["Organizations", organizations.length.toLocaleString()], ["Fleet vehicles", fleetVehicleCount.toLocaleString()], ["Owed", ghs(totalOwed)]].map(([title, value]) => (
+                    <div key={title} className="rounded-[16px] border border-[#EAEAEA] bg-white p-4 sm:p-5"><p className="truncate text-[22px] leading-none tracking-[-0.04em] sm:text-[28px]">{value}</p><p className="mt-2 text-[13px] text-[#777]">{title}</p></div>
+                ))}
             </div>
 
-            <div className="flex-1 flex flex-col bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-                {!selectedOrg ? (
-                    <>
-                        {/* Toolbar - Matching MembershipsView */}
-                        <div className="p-4 border-b border-border flex flex-col md:flex-row items-center justify-between gap-4 bg-card">
-                            <div className="flex bg-muted/30 p-1 rounded-lg">
-                                {([
-                                    { label: 'All', value: 'ALL' },
-                                    { label: 'Standard', value: 'Standard' },
-                                    { label: 'Enterprise', value: 'Enterprise' }
-                                ] as const).map(tab => (
-                                    <button
-                                        key={tab.value}
-                                        onClick={() => setSearchQuery(tab.value === 'ALL' ? '' : tab.value)}
-                                        className={cls(
-                                            "px-4 py-1.5 text-xs font-semibold rounded-md transition-all",
-                                            (tab.value === 'ALL' && !searchQuery) || searchQuery === tab.value
-                                                ? "bg-white dark:bg-slate-800 text-primary shadow-sm"
-                                                : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
+            <section className="overflow-hidden rounded-[20px] border border-[#EAEAEA] bg-white">
+                <div className="flex flex-col gap-3 border-b border-[#F0F0F0] p-4 sm:flex-row sm:items-center sm:p-5">
+                    <label className="relative block flex-1">
+                        <span className="sr-only">Search organizations</span>
+                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#999]" />
+                        <input className={cls(field, "pl-10")} placeholder="Search by business, contact or phone" value={query} onChange={(e) => setQuery(e.target.value)} />
+                    </label>
+                    <button type="button" onClick={openAddOrg} className={primaryBtn}><Plus className="h-4 w-4" />Add organization</button>
+                </div>
+
+                {filtered.length ? <ul className="divide-y divide-[#F0F0F0]">{filtered.map((org) => {
+                    const contact = contactFor(org);
+                    const balance = balanceFor(org);
+                    const count = vehiclesFor(org).length;
+                    return <li key={org.member_id || org.id}>
+                        <button type="button" onClick={() => openOrg(org)} className="flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-[#FAFAFA] sm:px-5">
+                            <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#F3F3FF] text-[#1111F6] sm:flex"><Building2 className="h-5 w-5" /></span>
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-[15px]">{org.business_name || org.full_name}</p>
+                                <p className="truncate text-[13px] text-[#888]">{contact?.full_name || "No contact"} · {count} {count === 1 ? "vehicle" : "vehicles"}</p>
                             </div>
-
-                            <div className="flex-1 w-full md:w-auto relative max-w-md">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <input
-                                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground placeholder:text-muted-foreground"
-                                    placeholder="Search organizations..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => fetchData()}>
-                                    <RefreshCw className={cls("h-3.5 w-3.5 mr-2", loading && "animate-spin")} />
-                                    Sync
-                                </Button>
-                                <Button size="sm" onClick={openAddOrg} className="shadow-sm">
-                                    <Plus className="h-4 w-4 mr-1" /> Add Business
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Table List - Matching MembershipsView table style */}
-                        <div className="flex-1 overflow-auto relative bg-muted/20">
-                            {loading && (
-                                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                </div>
-                            )}
-
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border sticky top-0 z-10 uppercase tracking-wider text-[10px]">
-                                    <tr>
-                                        <th className="px-6 py-4">Organization</th>
-                                        <th className="px-6 py-4">Units & Tier</th>
-                                        <th className="px-6 py-4">Financial Status</th>
-                                        <th className="px-6 py-4">Contact</th>
-                                        <th className="px-6 py-4 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border bg-card">
-                                    {filteredOrgs.map(org => {
-                                        const orgInvoices = invoices.filter(i => i.org_id === org.member_id);
-                                        const balance = orgInvoices
-                                            .filter(i => i.status === 'PENDING' || i.status === 'OVERDUE')
-                                            .reduce((sum, i) => sum + (i.total_amount - i.paid_amount), 0);
-
-                                        return (
-                                            <tr
-                                                key={org.member_id || org.id}
-                                                className="hover:bg-muted/50 transition-colors group cursor-pointer"
-                                                onClick={() => handleOrgClick(org)}
-                                            >
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                                                            <Building2 className="h-5 w-5" />
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 uppercase italic">
-                                                                {org.business_name || org.full_name}
-                                                                <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
-                                                            </div>
-                                                            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                                                                #{org.membership_number?.slice(0, 10) || "PENDING"}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="space-y-1">
-                                                        <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                                            <Car className="h-3 w-3 text-slate-400" />
-                                                            {orgDrivers.length} managed slots
-                                                        </div>
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase border border-indigo-100">
-                                                            {org.membership_tier || "Standard"}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="space-y-1">
-                                                        <div className={cls(
-                                                            "text-sm font-black text-rose-600",
-                                                            balance === 0 && "text-emerald-600"
-                                                        )}>
-                                                            GHS {balance.toLocaleString()}
-                                                        </div>
-                                                        <span className={cls(
-                                                            "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase",
-                                                            org.membership_is_active ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-muted text-muted-foreground border border-border"
-                                                        )}>
-                                                            {org.membership_is_active ? "Active Subscription" : "Inactive"}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-xs text-muted-foreground">
-                                                    <div className="font-medium text-foreground">{contactFor(org)?.full_name || org.full_name || "No contact selected"}</div>
-                                                    <div>{contactFor(org)?.phone || formatPhone(org.phone) || "No phone"}</div>
-                                                    <div className="opacity-70">{contactFor(org)?.email || org.email}</div>
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); openEditOrg(org); }}
-                                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                                                    >
-                                                        <Settings2 className="w-3 h-3" />
-                                                        Edit
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        {/* Detail View Container - Replaces list when org selected */}
-                        <div className="flex-1 flex flex-col h-full bg-card min-h-0">
-                            {/* Detail Header - Profile Style like Memberships */}
-                            <div className="p-6 md:p-8 border-b border-border bg-card">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                    <div className="flex items-center gap-5">
-                                        <button
-                                            onClick={() => setSelectedOrg(null)}
-                                            className="p-2.5 bg-muted/50 hover:bg-muted rounded-xl transition-colors group"
-                                            title="Back to Registry"
-                                        >
-                                            <ChevronRight className="h-5 w-5 rotate-180 text-muted-foreground group-hover:text-primary transition-colors" />
-                                        </button>
-                                        <div className="flex items-center gap-4">
-                                            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
-                                                <Building2 className="h-7 w-7" />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-3">
-                                                    <h2 className="text-2xl font-black text-foreground tracking-tight uppercase italic truncate max-w-[300px] sm:max-w-none">
-                                                        {selectedOrg.business_name || selectedOrg.full_name}
-                                                    </h2>
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                                                        <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-                                                        #{selectedOrg.membership_number}
-                                                    </span>
-                                                    <span className="h-1 w-1 rounded-full bg-border" />
-                                                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase">
-                                                        {selectedOrg.membership_tier || "Standard"} Member
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                        <Button variant="outline" size="icon" onClick={() => setIsReportOpen(true)} className="rounded-xl h-11 w-11">
-                                            <Download className="h-5 w-5 text-muted-foreground" />
-                                        </Button>
-                                        <Button onClick={() => setIsInvoiceOpen(true)} className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                                            <Plus className="h-5 w-5 mr-2" /> New Invoice
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* Dashboard Navigation Tabs - Matching Membership Detail */}
-                                <div className="mt-8 overflow-x-auto pb-1 scrollbar-hide">
-                                    <div className="p-1 gap-1 flex bg-muted/30 rounded-2xl border border-border/50 w-max min-w-full lg:min-w-0">
-                                        {[
-                                            { id: 'fleet', label: 'Fleet Health', icon: HeartPulse },
-                                            { id: 'billing', label: 'Billing Center', icon: Wallet },
-                                            { id: 'notes', label: 'Timeline', icon: StickyNote },
-                                            { id: 'analytics', label: 'ROI Analytics', icon: BarChart3 },
-                                        ].map(tab => (
-                                            <button
-                                                key={tab.id}
-                                                onClick={() => setActiveTab(tab.id as any)}
-                                                className={cls(
-                                                    "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                                                    activeTab === tab.id
-                                                        ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-border"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-white/50"
-                                                )}
-                                            >
-                                                <tab.icon className={cls("h-4 w-4", activeTab === tab.id ? "text-primary" : "text-muted-foreground")} />
-                                                {tab.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 overflow-auto bg-muted/5 p-6">
-                                <div className="max-w-7xl mx-auto">
-                                    {activeTab === 'fleet' && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {orgDrivers.map((driver: any) => (
-                                                <div key={driver.id} className="bg-card rounded-2xl p-5 border border-border shadow-sm hover:shadow-md transition-all group">
-                                                    <div className="flex items-center gap-4 mb-4">
-                                                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                                                            <UserIcon className="h-6 w-6" />
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-bold text-foreground uppercase italic">{driver.full_name}</div>
-                                                            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{formatPhone(driver.phone)}</div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                                                            <div className="text-[9px] font-black text-muted-foreground uppercase mb-1">Vehicle Info</div>
-                                                            <div className="text-xs font-bold text-foreground">{driver.vehicle_reg || "NO VEHICLE"}</div>
-                                                        </div>
-                                                        <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                                                            <div className="text-[9px] font-black text-muted-foreground uppercase mb-1">Status</div>
-                                                            <div className="text-xs font-black text-emerald-600">VERIFIED</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            {orgDrivers.length === 0 && (
-                                                <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-[32px] bg-muted/20">
-                                                    <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                                                        <Users className="h-8 w-8 text-muted-foreground" />
-                                                    </div>
-                                                    <h3 className="font-black text-foreground uppercase tracking-tight">No Active Drivers</h3>
-                                                    <p className="text-xs text-muted-foreground mt-1">This organization does not have any drivers registered yet.</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {activeTab === 'billing' && (
-                                        <div className="space-y-6">
-                                            <div className="bg-card rounded-[32px] border border-border overflow-hidden shadow-sm">
-                                                <div className="px-8 py-6 border-b border-border bg-muted/30 flex items-center justify-between">
-                                                    <h3 className="font-black text-foreground uppercase tracking-tight flex items-center gap-2">
-                                                        <Wallet className="h-5 w-5 text-indigo-500" />
-                                                        Invoice History
-                                                    </h3>
-                                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-border">
-                                                        {invoices.filter(i => i.org_id === selectedOrg.member_id).length} Records Foundations
-                                                    </span>
-                                                </div>
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-left">
-                                                        <thead>
-                                                            <tr className="bg-muted/10 text-[10px] font-black text-muted-foreground uppercase tracking-widest border-b border-border">
-                                                                <th className="px-8 py-4">Invoice #</th>
-                                                                <th className="px-8 py-4">Date</th>
-                                                                <th className="px-8 py-4">Amount</th>
-                                                                <th className="px-8 py-4">Status</th>
-                                                                <th className="px-8 py-4 text-right">Actions</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-border">
-                                                            {invoices.filter(i => i.org_id === selectedOrg.member_id).map(inv => (
-                                                                <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
-                                                                    <td className="px-8 py-5">
-                                                                        <div className="font-black text-foreground text-sm font-mono tracking-tighter">#{inv.invoice_number}</div>
-                                                                    </td>
-                                                                    <td className="px-8 py-5">
-                                                                        <div className="text-xs font-bold text-muted-foreground">{inv.created_at ? (mounted ? new Date(inv.created_at).toLocaleDateString() : '...') : '—'}</div>
-                                                                    </td>
-                                                                    <td className="px-8 py-5">
-                                                                        <div className="text-sm font-black text-foreground italic">GHS {inv.total_amount.toLocaleString()}</div>
-                                                                        <div className="text-[10px] text-muted-foreground">Due: {inv.due_date ? (mounted ? new Date(inv.due_date).toLocaleDateString() : '...') : '—'}</div>
-                                                                    </td>
-                                                                    <td className="px-8 py-5">
-                                                                        <span className={cls(
-                                                                            "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase border",
-                                                                            inv.status === 'PAID' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                                                                                inv.status === 'OVERDUE' ? "bg-rose-50 text-rose-600 border-rose-100 animate-pulse" :
-                                                                                    "bg-amber-50 text-amber-600 border-amber-100"
-                                                                        )}>
-                                                                            {inv.status}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-8 py-5 text-right">
-                                                                        {inv.status !== 'PAID' && (
-                                                                            <Button
-                                                                                onClick={() => { setSelectedInvoice(inv); setIsPaymentOpen(true); }}
-                                                                                variant="outline"
-                                                                                size="sm"
-                                                                                className="rounded-xl font-bold border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-                                                                            >
-                                                                                Record Payment
-                                                                            </Button>
-                                                                        )}
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {activeTab === 'notes' && (
-                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                            <div className="lg:col-span-2 space-y-4">
-                                                {orgNotes.map((note) => (
-                                                    <div key={note.id} className="bg-card rounded-2xl p-6 border border-border shadow-sm">
-                                                        <div className="flex justify-between items-start mb-3">
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black uppercase">
-                                                                {note.category}
-                                                            </span>
-                                                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                                                {note.created_at ? (mounted ? new Date(note.created_at).toLocaleDateString() : '...') : '—'}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-sm text-foreground leading-relaxed font-medium">{note.content}</p>
-                                                    </div>
-                                                ))}
-                                                {orgNotes.length === 0 && (
-                                                    <div className="py-20 text-center border-2 border-dashed border-border rounded-[32px] bg-muted/20">
-                                                        <StickyNote className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                                                        <h3 className="font-black text-muted-foreground uppercase tracking-tight">Timeline Empty</h3>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="lg:col-span-1">
-                                                <div className="bg-card rounded-3xl p-6 border border-border shadow-xl sticky top-6">
-                                                    <h3 className="font-black text-foreground uppercase tracking-tight mb-6 flex items-center gap-2">
-                                                        <Plus className="h-5 w-5 text-primary" />
-                                                        Add Entry
-                                                    </h3>
-                                                    <div className="space-y-5">
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black uppercase text-muted-foreground">Category</label>
-                                                            <div className="flex gap-2">
-                                                                {['GENERAL', 'BILLING', 'FLEET'].map(cat => (
-                                                                    <button
-                                                                        key={cat}
-                                                                        onClick={() => setNoteCategory(cat)}
-                                                                        className={cls(
-                                                                            "flex-1 py-2 text-[10px] font-black rounded-xl border transition-all",
-                                                                            noteCategory === cat ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" : "bg-muted/30 border-border text-muted-foreground"
-                                                                        )}
-                                                                    >
-                                                                        {cat}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black uppercase text-muted-foreground">Interaction Record</label>
-                                                            <Textarea
-                                                                value={newNote}
-                                                                onChange={e => setNewNote(e.target.value)}
-                                                                placeholder="Type any updates or audit notes..."
-                                                                className="min-h-[140px] rounded-2xl bg-muted/20 border-border text-sm resize-none focus:ring-2 focus:ring-primary/20"
-                                                            />
-                                                        </div>
-                                                        <Button onClick={handleAddNote} className="w-full rounded-2xl h-12 font-black shadow-lg shadow-primary/20">
-                                                            Save Record
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {activeTab === 'analytics' && (
-                                        <div className="space-y-8">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                <div className="bg-card rounded-[40px] p-8 border border-border shadow-sm flex flex-col justify-between overflow-hidden relative group">
-                                                    <div className="absolute right-0 top-0 h-32 w-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                                                    <div>
-                                                        <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-6 border border-indigo-100">
-                                                            <TrendingUp className="h-7 w-7" />
-                                                        </div>
-                                                        <div className="text-3xl font-black text-foreground italic">GHS {roiStats.total_cost.toLocaleString()}</div>
-                                                        <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-2">Total Service Expenditure</div>
-                                                    </div>
-                                                    <div className="mt-8 pt-8 border-t border-dashed border-border">
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <span className="text-[10px] font-black text-muted-foreground uppercase">Budget Optimization</span>
-                                                            <span className="text-xs font-black text-indigo-600">80% Efficiency</span>
-                                                        </div>
-                                                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                                                            <div className="h-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.3)]" style={{ width: '80%' }} />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="bg-card rounded-[40px] p-8 border border-border shadow-sm flex flex-col justify-between overflow-hidden relative group">
-                                                    <div className="absolute right-0 top-0 h-32 w-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                                                    <div>
-                                                        <div className="h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-6 border border-emerald-100">
-                                                            <Users className="h-7 w-7" />
-                                                        </div>
-                                                        <div className="text-3xl font-black text-foreground italic">{roiStats.total_requests} Request Units</div>
-                                                        <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-2">Fleet Service Volume</div>
-                                                    </div>
-                                                    <div className="mt-8 pt-8 border-t border-dashed border-border">
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <span className="text-[10px] font-black text-muted-foreground uppercase">Service Satisfaction</span>
-                                                            <span className="text-xs font-black text-emerald-600">94.2% Rating</span>
-                                                        </div>
-                                                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                                                            <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" style={{ width: '80%' }} />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="p-6 rounded-2xl border border-dashed border-border bg-muted/10 flex items-center gap-5 group">
-                                                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:scale-110 transition-transform">
-                                                        <History className="h-7 w-7" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-sm font-black text-foreground uppercase tracking-tight">Utilization Metric</div>
-                                                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">The organization is utilizing <span className="text-foreground font-black font-mono">{Math.round((roiStats.total_requests / (orgDrivers.length || 1)) * 10) / 10}</span> services per driver per period.</p>
-                                                    </div>
-                                                    <TrendingUp className="h-8 w-8 text-emerald-500 opacity-20" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {/* CREATE INVOICE DIALOG */}
-            <Dialog open={isInvoiceOpen} onOpenChange={setIsInvoiceOpen}>
-                <DialogContent className="max-w-xl">
-                    <DialogHeader>
-                        <DialogTitle>Create Invoice</DialogTitle>
-                        <DialogDescription>
-                            Generate a formal invoice for {selectedOrg?.business_name || selectedOrg?.full_name}.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-6 py-4 border-y border-border my-2">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Issue Date</label>
-                                <Input type="date" value={new Date().toISOString().split('T')[0]} disabled />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Due Date</label>
-                                <Input
-                                    type="date"
-                                    value={invoiceForm.due_date}
-                                    onChange={e => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block">Line Items</label>
-                            {invoiceForm.items.map((item, idx) => (
-                                <div key={idx} className="flex gap-3 items-end">
-                                    <div className="flex-1 space-y-1.5">
-                                        <span className="text-[10px] text-muted-foreground font-bold">Description</span>
-                                        <Input
-                                            value={item.description}
-                                            onChange={e => {
-                                                const newItems = [...invoiceForm.items];
-                                                newItems[idx].description = e.target.value;
-                                                setInvoiceForm({ ...invoiceForm, items: newItems });
-                                            }}
-                                            className="h-9 text-sm"
-                                        />
-                                    </div>
-                                    <div className="w-24 space-y-1.5">
-                                        <span className="text-[10px] text-muted-foreground font-bold">Price</span>
-                                        <Input
-                                            type="number"
-                                            value={item.unit_price}
-                                            onChange={e => {
-                                                const newItems = [...invoiceForm.items];
-                                                newItems[idx].unit_price = parseFloat(e.target.value) || 0;
-                                                setInvoiceForm({ ...invoiceForm, items: newItems });
-                                            }}
-                                            className="h-9 text-sm"
-                                        />
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive"
-                                        onClick={() => {
-                                            const newItems = invoiceForm.items.filter((_, i) => i !== idx);
-                                            setInvoiceForm({ ...invoiceForm, items: newItems });
-                                        }}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full border-dashed"
-                                onClick={() => setInvoiceForm({ ...invoiceForm, items: [...invoiceForm.items, { description: "", quantity: 1, unit_price: 0 }] })}
-                            >
-                                <Plus className="h-4 w-4 mr-1" /> Add Item
-                            </Button>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Internal Notes</label>
-                            <Textarea
-                                placeholder="Add any details or payment instructions..."
-                                value={invoiceForm.notes}
-                                onChange={e => setInvoiceForm({ ...invoiceForm, notes: e.target.value })}
-                                className="h-20 text-sm"
-                            />
-                        </div>
-
-                        <div className="bg-muted/50 p-4 rounded-xl flex items-center justify-between">
-                            <span className="text-sm font-bold text-muted-foreground">Total Amount</span>
-                            <span className="text-xl font-black text-foreground">
-                                GHS {invoiceForm.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toLocaleString()}
-                            </span>
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsInvoiceOpen(false)}>Cancel</Button>
-                        <Button onClick={handleCreateInvoice}>Create & Send Invoice</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* GENERATE REPORT DIALOG */}
-            <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Generate Fleet Report</DialogTitle>
-                        <DialogDescription>
-                            Create a detailed audit report for {selectedOrg?.business_name || selectedOrg?.full_name}.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-6 py-4 border-y border-border my-2">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Period Start</label>
-                                <Input
-                                    type="date"
-                                    value={reportForm.startDate}
-                                    onChange={e => setReportForm({ ...reportForm, startDate: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Period End</label>
-                                <Input
-                                    type="date"
-                                    value={reportForm.endDate}
-                                    onChange={e => setReportForm({ ...reportForm, endDate: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block">Inclusions</label>
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer text-sm font-medium">
-                                    <input
-                                        type="checkbox"
-                                        checked={reportForm.includeServices}
-                                        onChange={e => setReportForm({ ...reportForm, includeServices: e.target.checked })}
-                                        className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-                                    />
-                                    <div>
-                                        <span>Service Logs</span>
-                                        <p className="text-[10px] text-muted-foreground font-normal">Detailed maintenance and repair history</p>
-                                    </div>
-                                </label>
-                                <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer text-sm font-medium">
-                                    <input
-                                        type="checkbox"
-                                        checked={reportForm.includeCompliance}
-                                        onChange={e => setReportForm({ ...reportForm, includeCompliance: e.target.checked })}
-                                        className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-                                    />
-                                    <div>
-                                        <span>Compliance Status</span>
-                                        <p className="text-[10px] text-muted-foreground font-normal">Insurance and roadworthy verification</p>
-                                    </div>
-                                </label>
-                                <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer text-sm font-medium">
-                                    <input
-                                        type="checkbox"
-                                        checked={reportForm.includeFleetStats}
-                                        onChange={e => setReportForm({ ...reportForm, includeFleetStats: e.target.checked })}
-                                        className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-                                    />
-                                    <div>
-                                        <span>Fleet Analytics</span>
-                                        <p className="text-[10px] text-muted-foreground font-normal">Utilization summary and metrics</p>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsReportOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSendReport}>
-                            <Download className="h-4 w-4 mr-2" /> Generate PDF
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* ORGANIZATION FORM DIALOG */}
-            <Dialog open={isOrgFormOpen} onOpenChange={setIsOrgFormOpen}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>{orgForm.id ? "Edit Organization" : "Register New Business"}</DialogTitle>
-                        <DialogDescription>
-                            Manage business profile and membership subscriptions.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[70vh] overflow-y-auto">
-                        <div className="space-y-4">
-                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Business Details</h4>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Business Name</label>
-                                <Input
-                                    placeholder="Enter company name"
-                                    value={orgForm.business_name}
-                                    onChange={e => setOrgForm({ ...orgForm, business_name: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Contact Person</label>
-                                <select
-                                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                                    value={orgForm.contact_member_id}
-                                    onChange={e => setOrgForm({ ...orgForm, contact_member_id: e.target.value })}
-                                >
-                                    <option value="">Choose an existing driver or person</option>
-                                    {members.filter(m => !m.is_business && m.phone).map(person => (
-                                        <option key={person.member_id} value={person.member_id}>
-                                            {person.full_name || person.email || "Unnamed person"} · {person.phone}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-xs text-muted-foreground">Their phone stays on their own account. They can manage this fleet and keep any driver assignment. Add a new person in Memberships first if they are not listed.</p>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Separate Business Email (optional)</label>
-                                <Input
-                                    type="email"
-                                    placeholder="email@company.com"
-                                    value={orgForm.email}
-                                    onChange={e => setOrgForm({ ...orgForm, email: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Separate Business Line (optional)</label>
-                                <Input
-                                    placeholder="+233..."
-                                    value={orgForm.phone}
-                                    onChange={e => setOrgForm({ ...orgForm, phone: e.target.value })}
-                                    onBlur={() => setOrgForm((current) => ({ ...current, phone: formatPhone(current.phone) }))}
-                                />
-                                <p className="text-xs text-muted-foreground">Leave empty to use the selected contact person’s number.</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Subscription & Status</h4>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Membership Plan</label>
-                                <select
-                                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                                    value={orgForm.membership_tier}
-                                    onChange={e => setOrgForm({ ...orgForm, membership_tier: e.target.value })}
-                                >
-                                    <option value="">Select Plan</option>
-                                    {plans.map(p => (
-                                        <option key={p.id} value={p.code}>{p.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Expiry Date</label>
-                                <div className="relative">
-                                    <Input
-                                        type="date"
-                                        value={orgForm.membership_expiry_date}
-                                        onChange={e => setOrgForm({ ...orgForm, membership_expiry_date: e.target.value })}
-                                    />
-                                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                                </div>
-                            </div>
-
-                            <div className="pt-4">
-                                <label className="flex items-center gap-3 p-4 rounded-xl border border-border bg-muted/30 cursor-pointer group hover:border-primary/30 transition-all">
-                                    <input
-                                        type="checkbox"
-                                        checked={orgForm.membership_is_active}
-                                        onChange={e => setOrgForm({ ...orgForm, membership_is_active: e.target.checked })}
-                                        className="h-5 w-5 rounded border-input text-primary focus:ring-primary"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="text-sm font-bold flex items-center gap-2">
-                                            Active Membership
-                                            {orgForm.membership_is_active && <ShieldCheck className="h-4 w-4 text-emerald-500" />}
-                                        </div>
-                                        <p className="text-[10px] text-muted-foreground">Toggle to enable or disable member services.</p>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter className="mt-4 pt-4 border-t border-border">
-                        <Button variant="outline" onClick={() => setIsOrgFormOpen(false)}>Cancel</Button>
-                        <Button onClick={handleOrgSubmit} disabled={savingOrg} className="min-w-[140px]">
-                            {savingOrg ? <Loader2 className="h-4 w-4 animate-spin" /> : (orgForm.id ? "Save Changes" : "Create Organization")}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* RECORD PAYMENT DIALOG */}
-            <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
-                <DialogContent className="max-w-sm">
-                    <DialogHeader>
-                        <DialogTitle>Record Payment</DialogTitle>
-                        <DialogDescription>
-                            Enter the amount paid for invoice {selectedInvoice?.invoice_number}.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-4 py-4">
-                        <div className="p-4 rounded-xl bg-muted/30 border border-border">
-                            <div className="flex justify-between items-center text-xs font-medium text-muted-foreground mb-1">
-                                <span>Total Amount</span>
-                                <span>GHS {selectedInvoice?.total_amount?.toLocaleString() || '0'}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs font-black text-foreground">
-                                <span>Outstanding</span>
-                                <span>GHS {(selectedInvoice ? selectedInvoice.total_amount - selectedInvoice.paid_amount : 0).toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase text-muted-foreground">Amount Received (GHS)</label>
-                            <Input
-                                type="number"
-                                value={paymentAmount}
-                                onChange={e => setPaymentAmount(Number(e.target.value))}
-                                className="text-lg font-black h-12"
-                                placeholder="0.00"
-                            />
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsPaymentOpen(false)}>Cancel</Button>
-                        <Button onClick={handleRecordPayment} disabled={paymentAmount <= 0}>
-                            Record Payment
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                            <div className="hidden w-36 md:block"><p className="truncate text-[14px]">{planName(org.membership_tier)}</p><p className={cls("text-[13px]", org.membership_is_active ? "text-[#197252]" : "text-[#888]")}>{org.membership_is_active ? "Active" : "Paused"}</p></div>
+                            <div className="w-24 text-right"><p className={cls("text-[14px]", balance > 0 ? "text-[#AA3333]" : "text-[#888]")}>{balance > 0 ? ghs(balance) : "Paid up"}</p>{balance > 0 && <p className="text-[12px] text-[#888]">owed</p>}</div>
+                            <ChevronRight className="h-4 w-4 shrink-0 text-[#BBB]" />
+                        </button>
+                    </li>;
+                })}</ul> : <Empty title={organizations.length ? "No organizations match" : "No organizations yet"} body={organizations.length ? "Try another search." : "Add a business to manage its fleet, drivers and invoices."} />}
+            </section>
+            {dialogs}
         </div>
     );
+}
+
+function Empty({ title, body }: { title: string; body: string }) {
+    return <div className="px-6 py-12 text-center"><p className="text-[15px]">{title}</p><p className="mt-1 text-[14px] text-[#888]">{body}</p></div>;
 }

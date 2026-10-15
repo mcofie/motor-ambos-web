@@ -35,8 +35,8 @@ export async function GET(req: Request) {
         if (error) throw error;
 
         return NextResponse.json(data);
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+    } catch (e) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong" }, { status: 500 });
     }
 }
 
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         ]);
 
         return NextResponse.json({ success: true });
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+    } catch (e) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong" }, { status: 500 });
     }
 }

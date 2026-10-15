@@ -14,6 +14,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
             vehicleId={id}
             initialVehicle={data?.vehicle}
             initialHistory={data?.history}
+            initialFuel={data?.fuel}
         />
     );
 }

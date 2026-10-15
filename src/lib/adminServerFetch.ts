@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { VehicleRow, MemberWithMembershipRow, MembershipPlanRow, ServiceHistoryRow } from "./supaFetch";
+import { VehicleRow, MemberWithMembershipRow, MembershipPlanRow, ServiceHistoryRow, FuelLogRow } from "./supaFetch";
 import { requireStaffPage } from "./serverAuth";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -177,8 +177,19 @@ export async function getAdminVehicleDetails(vehicleId: string) {
         console.error("Admin Fetch Vehicle History Error:", hError);
     }
 
+    const { data: fuel, error: fError } = await supabase
+        .from("fuel_logs")
+        .select("*")
+        .eq("vehicle_id", vehicleId)
+        .order("created_at", { ascending: false });
+
+    if (fError) {
+        console.error("Admin Fetch Vehicle Fuel Error:", fError);
+    }
+
     return {
         vehicle: vehicle as VehicleRow,
-        history: (history || []) as ServiceHistoryRow[]
+        history: (history || []) as ServiceHistoryRow[],
+        fuel: (fuel || []) as FuelLogRow[],
     };
 }

@@ -48,7 +48,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Enter a name and a valid phone number, such as +233558508306." }, { status: 400 });
         }
 
-        const payload: any = {
+        const payload: Record<string, unknown> = {
             phone: normalizedPhone,
             full_name,
             email,
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
             if (phoneError) return NextResponse.json({ error: "Could not check the phone number" }, { status: 500 });
             if (samePhone?.some((row) => row.id !== member_id)) return NextResponse.json({ error: "That phone number is already on another profile." }, { status: 409 });
             // Check if they already have a number
-            const { data: current, error: getError } = await supabaseAdmin
+            const { data: current } = await supabaseAdmin
                 .from("members")
                 .select("membership_number")
                 .eq("id", member_id)
@@ -172,8 +172,8 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true });
 
-    } catch (e: any) {
+    } catch (e) {
         console.error("API Error:", e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong" }, { status: 500 });
     }
 }

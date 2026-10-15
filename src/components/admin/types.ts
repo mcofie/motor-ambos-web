@@ -80,9 +80,10 @@ export interface RequestRow {
     driver_name: string | null;
     driver_phone?: string | null;
     provider_id: UUID | null;
-    details?: string | null;
+    details?: unknown;
     address_line?: string | null;
     location?: unknown;
+    created_by?: string | null;
 }
 
 export type RequestStatus = "pending" | "accepted" | "in_progress" | "completed" | "cancelled";

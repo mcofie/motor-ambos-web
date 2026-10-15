@@ -46,6 +46,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const org_id = searchParams.get("org_id");
 
+    // Every driver-to-organization link, so the members list can show who drives for whom.
+    if (searchParams.get("links") === "1") {
+        const { data, error } = await supabaseAdmin.from("organization_members").select("org_member_id, member_id");
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json(data);
+    }
+
     if (!org_id) return NextResponse.json({ error: "Missing org_id" }, { status: 400 });
 
     try {
@@ -64,8 +71,8 @@ export async function GET(req: Request) {
 
         if (error) throw error;
         return NextResponse.json(data);
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+    } catch (e) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong" }, { status: 500 });
     }
 }
 
@@ -172,8 +179,8 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true });
 
-    } catch (e: any) {
+    } catch (e) {
         console.error("API Error:", e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong" }, { status: 500 });
     }
 }

@@ -1,66 +1,37 @@
 "use client";
 
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    LineChart,
-    Line,
-    Legend
-} from "recharts";
-import {
-    Users,
-    CreditCard,
-    TrendingUp,
-    Activity,
-    Calendar,
-    ArrowUpRight,
-    ArrowDownRight,
-    Car,
-    ShieldCheck,
-    Building2,
-    Sparkles
-} from "lucide-react";
-import { listProviders, listRequests, listAllVehicles, getVehicleMaintenanceStatus, listAiQueries } from "@/lib/supaFetch";
-import { getSupabaseBrowser } from "@/lib/supabaseBrowser";
-import { StatCard } from "../ui/AdminUI";
-import { ProviderRow, RequestRow, AiQueryRow } from "../types";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Activity, ArrowRight, Building2, Droplets, TrendingUp } from "lucide-react";
+import { listProviders, listRequests, listAllVehicles, getVehicleMaintenanceStatus, type VehicleRow } from "@/lib/supaFetch";
+import { StatCard, StatusBadge } from "../ui/AdminUI";
+import { ProviderRow, RequestRow } from "../types";
+import { requestInfo } from "../requestInfo";
 
-const STATUS_COLORS: Record<string, string> = {
-    "Completed": "#10b981", // emerald-500
-    "In Progress": "#3b82f6", // blue-500
-    "Pending": "#f59e0b", // amber-500
-    "Cancelled": "#ef4444", // red-500
-};
+const STATUSES = [
+    { key: "pending", label: "Waiting", color: "#E2A23B" },
+    { key: "accepted", label: "Accepted", color: "#7C7CFF" },
+    { key: "in_progress", label: "In progress", color: "#B8B8FF" },
+    { key: "completed", label: "Completed", color: "#1111F6" },
+    { key: "cancelled", label: "Cancelled", color: "#D64545" },
+];
 
 export function OverviewView() {
     const [providers, setProviders] = useState<ProviderRow[]>([]);
     const [requests, setRequests] = useState<RequestRow[]>([]);
-    const [vehicles, setVehicles] = useState<any[]>([]);
-    const [aiQueries, setAiQueries] = useState<AiQueryRow[]>([]);
+    const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
     const [loading, setLoading] = useState(true);
+    // Fixed when the page opens, so the week figures do not shift between renders.
+    const [now] = useState(() => Date.now());
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [pData, rData, vData, aiData] = await Promise.all([
-                    listProviders(),
-                    listRequests(),
-                    listAllVehicles(),
-                    listAiQueries(5)
-                ]);
+                const [pData, rData, vData] = await Promise.all([listProviders(), listRequests(), listAllVehicles()]);
                 setProviders(pData as ProviderRow[]);
                 setRequests(rData as RequestRow[]);
                 setVehicles(vData);
-                setAiQueries(aiData);
             } catch (error) {
                 console.error("Failed to load analytics data", error);
             } finally {
@@ -70,260 +41,132 @@ export function OverviewView() {
 
         loadData();
 
-        const supabase = getSupabaseBrowser();
-        const channel = supabase
-            .channel('overview-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => {
-                loadData();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        // Refresh every minute so the waiting banner stays current.
+        const timer = window.setInterval(loadData, 60_000);
+        return () => window.clearInterval(timer);
     }, []);
 
-    // --- Derived Metrics ---
+    const activeProviders = providers.filter((p) => p.is_active).length;
+    const completed = requests.filter((r) => r.status === "completed").length;
+    const closed = completed + requests.filter((r) => r.status === "cancelled").length;
+    const tracked = vehicles.filter((v) => getVehicleMaintenanceStatus(v).oilChangeStatus !== "UNKNOWN");
+    const oilOnTime = tracked.filter((v) => getVehicleMaintenanceStatus(v).oilChangeStatus === "HEALTHY").length;
 
-    // 1. Total Active Providers
-    const activeProviders = providers.filter(p => p.is_active).length;
+    // Requests per day over the last 7 days.
+    const dayKey = (value: Date | string) => new Date(value).toISOString().slice(0, 10);
+    const activityData = Array.from({ length: 7 }, (_, index) => {
+        const day = new Date(now);
+        day.setDate(day.getDate() - (6 - index));
+        const key = dayKey(day);
+        return {
+            date: day.toLocaleDateString("en-GH", { weekday: "short" }),
+            requests: requests.filter((request) => request.created_at && dayKey(request.created_at) === key).length,
+        };
+    });
 
-    // 2. Request Status Breakdown
-    const requestStatusData = [
-        { name: "Completed", value: requests.filter(r => r.status === "completed").length },
-        { name: "In Progress", value: requests.filter(r => r.status === "in_progress").length },
-        { name: "Pending", value: requests.filter(r => r.status === "pending").length },
-        { name: "Cancelled", value: requests.filter(r => r.status === "cancelled").length },
-    ].filter(d => d.value > 0);
+    // Week on week change, shown only when there is a previous week to compare with.
+    const weekAgo = now - 7 * 86_400_000, twoWeeksAgo = now - 14 * 86_400_000;
+    const thisWeek = requests.filter((request) => request.created_at && new Date(request.created_at).getTime() >= weekAgo).length;
+    const lastWeek = requests.filter((request) => { const time = request.created_at ? new Date(request.created_at).getTime() : 0; return time >= twoWeeksAgo && time < weekAgo; }).length;
+    const weekChange = lastWeek ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : null;
 
-    const serviceDistribution = requestStatusData.map(item => ({
-        ...item,
-        color: STATUS_COLORS[item.name] || "#cbd5e1"
-    }));
+    const statusCounts = STATUSES.map((status) => ({ ...status, value: requests.filter((r) => (r.status || "pending") === status.key).length }));
+    const waiting = statusCounts[0].value;
+    const recent = [...requests].sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")).slice(0, 6);
 
-    // 3. Revenue Estimate (Mock calculation based on completed requests * avg fee)
-    // In a real app, this would sum up actual transaction values.
-    const estimatedRevenue = requests
-        .filter(r => r.status === "completed")
-        .length * 50; // Assuming 50 GHS avg commission/fee
-
-    // 4. Activity Over Time (Group by Date)
-    // Taking last 7 days for demo
-    const getLast7Days = () => {
-        const dates = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            dates.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-        }
-        return dates;
-    };
-
-    const activityData = getLast7Days().map(date => ({
-        date,
-        requests: Math.floor(Math.random() * 20) + 5, // Mock data for demo visualization since we might not have enough history
-        revenue: Math.floor(Math.random() * 1000) + 200
-    }));
+    const card = "rounded-[20px] border border-[#EAEAEA] bg-white p-5 sm:p-6";
 
     return (
-        <div className="flex flex-col gap-8 pb-8">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                    title="Total Revenue (Est)"
-                    value={`GHS ${estimatedRevenue.toLocaleString()}`}
-                    icon={CreditCard}
-                    color="bg-emerald-500"
-                />
-                <StatCard
-                    title="Fleet Health"
-                    value={`${vehicles.length ? Math.round((vehicles.filter(v => getVehicleMaintenanceStatus(v).oilChangeStatus === 'HEALTHY').length / vehicles.length) * 100) : 100}%`}
-                    icon={ShieldCheck}
-                    color="bg-emerald-500"
-                />
-                <StatCard
-                    title="Total Requests"
-                    value={requests.length}
-                    icon={Activity}
-                    color="bg-indigo-500"
-                />
-                <StatCard
-                    title="Active Providers"
-                    value={activeProviders}
-                    icon={Building2}
-                    color="bg-blue-500"
-                />
-                <StatCard
-                    title="Completion Rate"
-                    value={`${requests.length ? Math.round((requests.filter(r => r.status === 'completed').length / requests.length) * 100) : 0}%`}
-                    icon={TrendingUp}
-                    color="bg-amber-500"
-                />
+        <div className="flex flex-col gap-6 pb-8">
+            {waiting > 0 && <Link href="/admin/requests" className="flex items-center justify-between gap-3 rounded-[16px] bg-[#FFF4DF] px-5 py-4 text-[#915C12] transition-colors hover:bg-[#FFEDCC]">
+                <span className="text-[14px]"><strong className="font-medium">{waiting} {waiting === 1 ? "request is" : "requests are"} waiting</strong> for a provider.</span>
+                <span className="inline-flex shrink-0 items-center gap-1 text-[14px]">Review<ArrowRight className="h-4 w-4" /></span>
+            </Link>}
+
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+                <StatCard title="Requests, last 7 days" value={loading ? "—" : thisWeek} icon={Activity} />
+                <StatCard title="Completion rate" value={loading || !closed ? "—" : `${Math.round((completed / closed) * 100)}%`} icon={TrendingUp} />
+                <StatCard title="Active providers" value={loading ? "—" : activeProviders} icon={Building2} />
+                <StatCard title="Oil changes on time" value={loading || !tracked.length ? "—" : `${Math.round((oilOnTime / tracked.length) * 100)}%`} icon={Droplets} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Chart: Activity */}
-                <div className="lg:col-span-2 bg-card p-6 rounded-xl border border-border shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <section className={`${card} lg:col-span-2`}>
+                    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                         <div>
-                            <h3 className="text-lg font-bold text-foreground">Revenue & Activity</h3>
-                            <p className="text-sm text-muted-foreground">Performance over the last 7 days</p>
+                            <h2 className="text-[18px] tracking-[-0.02em]">Requests this week</h2>
+                            <p className="text-[13px] text-[#777]">Roadside requests per day</p>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-emerald-500 font-medium bg-emerald-500/10 px-3 py-1 rounded-full">
-                            <ArrowUpRight className="h-4 w-4" />
-                            +12.5% vs last week
-                        </div>
+                        {weekChange !== null && <span className={`rounded-full px-3 py-1 text-[13px] ${weekChange >= 0 ? "bg-[#EEEEFF] text-[#1111F6]" : "bg-[#FFF4DF] text-[#915C12]"}`}>
+                            {weekChange >= 0 ? "+" : ""}{weekChange}% vs last week
+                        </span>}
                     </div>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[240px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={activityData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                                <XAxis
-                                    dataKey="date"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#64748b', fontSize: 12 }}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    yAxisId="left"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#64748b', fontSize: 10 }}
-                                    label={{ value: 'Requests', angle: -90, position: 'insideLeft', offset: 0, fill: '#64748b', fontSize: 10, fontWeight: 500 }}
-                                />
-                                <YAxis
-                                    yAxisId="right"
-                                    orientation="right"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#64748b', fontSize: 10 }}
-                                    label={{ value: 'Revenue (GHS)', angle: 90, position: 'insideRight', offset: 0, fill: '#64748b', fontSize: 10, fontWeight: 500 }}
-                                />
-                                <Tooltip
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                />
-                                <Line
-                                    yAxisId="left"
-                                    type="monotone"
-                                    dataKey="requests"
-                                    stroke="#3b82f6"
-                                    strokeWidth={3}
-                                    dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
-                                    activeDot={{ r: 6 }}
-                                />
-                                <Line
-                                    yAxisId="right"
-                                    type="monotone"
-                                    dataKey="revenue"
-                                    stroke="#10b981"
-                                    strokeWidth={3}
-                                    dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
-                                    activeDot={{ r: 6 }}
-                                />
-                            </LineChart>
+                            <BarChart data={activityData} margin={{ left: -24, right: 0, top: 4, bottom: 0 }}>
+                                <CartesianGrid stroke="#F0F0F0" vertical={false} />
+                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#888", fontSize: 12 }} dy={8} />
+                                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#888", fontSize: 12 }} />
+                                <Tooltip cursor={{ fill: "#F3F3FF" }} contentStyle={{ borderRadius: 12, border: "1px solid #EAEAEA", boxShadow: "none", fontSize: 13 }} />
+                                <Bar dataKey="requests" name="Requests" fill="#1111F6" radius={[8, 8, 8, 8]} maxBarSize={36} />
+                            </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
+                </section>
 
-                {/* Secondary Chart: Status Distribution */}
-                <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
-                    <h3 className="text-lg font-bold text-foreground mb-1">Request Status</h3>
-                    <p className="text-sm text-muted-foreground mb-6">Distribution of service requests</p>
-
-                    <div className="h-[300px] w-full relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={requestStatusData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {requestStatusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || "#cbd5e1"} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        {/* Centered Total */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-3xl font-bold text-foreground">{requests.length}</span>
-                            <span className="text-xs text-muted-foreground uppercase tracking-wider">Total</span>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                        {requestStatusData.map((entry) => (
-                            <div key={entry.name} className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[entry.name] || "#cbd5e1" }} />
-                                <span>{entry.name}: <span className="font-semibold text-foreground">{entry.value}</span></span>
-                            </div>
+                <section className={card}>
+                    <h2 className="text-[18px] tracking-[-0.02em]">By status</h2>
+                    <p className="text-[13px] text-[#777]">All {requests.length.toLocaleString()} requests</p>
+                    <ul className="mt-5 flex flex-col gap-4">
+                        {statusCounts.map((status) => (
+                            <li key={status.key}>
+                                <div className="flex items-center justify-between text-[14px]">
+                                    <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: status.color }} />{status.label}</span>
+                                    <span className="text-[#777]">{status.value}</span>
+                                </div>
+                                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#F2F2F2]">
+                                    <div className="h-full rounded-full" style={{ width: `${requests.length ? (status.value / requests.length) * 100 : 0}%`, backgroundColor: status.color }} />
+                                </div>
+                            </li>
                         ))}
-                    </div>
-                </div>
+                    </ul>
+                </section>
             </div>
 
-            {/* Quick Actions / Recent Activity Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-8 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                    <div className="relative z-10 flex flex-col h-full justify-between">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+                <section className={`${card} lg:col-span-2`}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                        <h2 className="text-[18px] tracking-[-0.02em]">Latest requests</h2>
+                        <Link href="/admin/requests" className="inline-flex items-center gap-1 text-[14px] text-[#1111F6]">See all<ArrowRight className="h-4 w-4" /></Link>
+                    </div>
+                    {recent.length ? <ul className="divide-y divide-[#F0F0F0]">
+                        {recent.map((request) => (
+                            <li key={request.id} className="flex items-center justify-between gap-3 py-3">
+                                <div className="min-w-0">
+                                    <p className="truncate text-[14px]">{request.driver_name || "Driver"}</p>
+                                    <p className="truncate text-[13px] text-[#888]" suppressHydrationWarning>
+                                        {[requestInfo(request).issue, request.address_line].filter(Boolean).join(", ") || "No details"} · {new Date(request.created_at).toLocaleString("en-GH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                    </p>
+                                </div>
+                                <StatusBadge status={request.status || "pending"} />
+                            </li>
+                        ))}
+                    </ul> : <p className="py-8 text-center text-[14px] text-[#888]">{loading ? "Loading…" : "No requests yet."}</p>}
+                </section>
+
+                <section className="relative overflow-hidden rounded-[20px] bg-[#1111F6] p-6 text-white">
+                    <div aria-hidden className="absolute -right-16 -top-24 h-56 w-56 rounded-full border-[32px] border-white/10" />
+                    <div className="relative flex flex-col gap-6">
                         <div>
-                            <h3 className="text-2xl font-bold mb-2">System Health</h3>
-                            <p className="text-slate-300 max-w-xl text-sm leading-relaxed">
-                                All systems operational. Real-time fleet tracking is active.
-                                {activeProviders} providers are currently online across Greater Accra.
-                                Drive scores are being synchronized every 15 minutes.
-                            </p>
+                            <p className="text-[13px] text-white/70">Network</p>
+                            <p className="mt-2 text-[22px] leading-tight tracking-[-0.03em]">{activeProviders} {activeProviders === 1 ? "provider" : "providers"} taking jobs, {vehicles.length.toLocaleString()} {vehicles.length === 1 ? "vehicle" : "vehicles"} registered.</p>
                         </div>
-                        <div className="mt-8 flex items-center gap-4">
-                            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                                <span className="text-sm font-medium">Database Connected</span>
-                            </div>
+                        <div className="flex flex-wrap gap-2">
+                            <Link href="/admin/providers" className="inline-flex h-10 items-center rounded-full bg-white px-4 text-[14px] text-[#171717]">Providers</Link>
+                            <Link href="/admin/memberships" className="inline-flex h-10 items-center rounded-full bg-white/15 px-4 text-[14px] text-white hover:bg-white/25">Members</Link>
                         </div>
                     </div>
-                </div>
-
-                <div className="bg-card rounded-xl border border-border p-6 shadow-sm flex flex-col">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">AI Mechanic Insights</h3>
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary/10 px-2 py-0.5 rounded-full">
-                            <Sparkles className="h-3 w-3" /> Live
-                        </div>
-                    </div>
-
-                    <div className="space-y-4 flex-1">
-                        {aiQueries.length > 0 ? aiQueries.map((q) => (
-                            <div key={q.id} className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-2 hover:bg-muted/50 transition-colors group">
-                                <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase">
-                                    <span>User Query</span>
-                                    <span suppressHydrationWarning>{q.created_at ? new Date(q.created_at).toLocaleDateString() : '—'}</span>
-                                </div>
-                                <p className="text-sm font-medium text-foreground line-clamp-2 italic">
-                                    "{q.event_data.query}"
-                                </p>
-                                <div className="pt-1 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
-                                    <span className="text-[9px] font-bold text-primary uppercase tracking-tight">Advised to visit checked partner</span>
-                                </div>
-                            </div>
-                        )) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border rounded-xl">
-                                <Sparkles className="h-8 w-8 text-muted-foreground/20 mb-3" />
-                                <p className="text-xs font-medium text-muted-foreground">No recent AI interactions logged.</p>
-                            </div>
-                        )}
-                    </div>
-                    <button className="mt-4 w-full py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border-t border-border pt-4">
-                        View All AI Conversations →
-                    </button>
-                </div>
+                </section>
             </div>
         </div>
     );

@@ -1,59 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import {
-    listMembershipPlans,
-    listMembersWithMemberships,
-    upsertMemberMembership,
-    listAllVehicles,
-    MembershipPlanRow,
-    MemberWithMembershipRow,
-} from "@/lib/supaFetch";
-import {
-    Users,
-    ShieldCheck,
-    LayoutGrid,
-    Search,
-    Plus,
-    Loader2,
-    Edit2,
-    X,
-    User as UserIcon,
-    Save,
-    Car,
-    ArrowRight,
-    FileText,
-    History,
-    CheckCircle2,
-    Smartphone,
-} from "lucide-react";
-import { listMemberVehicles, VehicleRow } from "@/lib/supaFetch";
-import { DigitalGlovebox } from "./DigitalGlovebox";
+import { listMembershipPlans, listMembersWithMemberships, upsertMemberMembership, listAllVehicles, listOrgLinks, MembershipPlanRow, MemberWithMembershipRow, VehicleRow } from "@/lib/supaFetch";
+import { ChevronRight, Loader2, Pencil, Plus, Search } from "lucide-react";
 import { formatPhone, phoneVariants } from "@/lib/phone";
+import { cls } from "../ui/AdminUI";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-import {
-    UUID,
-} from "../types";
-import {
-    cls,
-    StatCard,
-    TextField,
-} from "../ui/AdminUI";
+type Filter = "all" | "active" | "attention" | "none" | "fleet";
+type FormState = { member_id: string | null; full_name: string; email: string; phone: string; plan_id: string; tier: string; expiry_date: string; parent_org_id: string };
 
-type MembershipFormState = {
-    member_id: UUID | null;
-    full_name: string;
-    email: string;
-    phone: string;
-    plan_id: string;
-    tier: string;
-    expiry_date: string; // yyyy-mm-dd
-    is_business: boolean;
-    business_name: string;
-    parent_org_id: string;
-};
+const field = "h-11 w-full rounded-[12px] border border-[#E3E3E3] bg-white px-3.5 text-[14px] text-[#171717] outline-none placeholder:text-[#AAA] focus:border-[#1111F6] focus:ring-2 focus:ring-[#1111F6]/15";
+const label = "block text-[13px] text-[#555]";
+const isAbort = (err: unknown) => err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
+const isoDay = (offsetDays = 0) => new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+
+/** Plan state from the expiry date and the active flag. */
+function planState(m: MemberWithMembershipRow, now: number) {
+    if (!m.plan_name && !m.membership_tier) return { label: "No plan", tone: "bg-[#F2F2F2] text-[#666]", attention: false, none: true };
+    if (!m.membership_expiry_date) return { label: "No end date", tone: "bg-[#F2F2F2] text-[#666]", attention: true };
+    const days = Math.ceil((new Date(m.membership_expiry_date).getTime() - now) / 86_400_000);
+    if (days < 0) return { label: "Expired", tone: "bg-[#FFF0EF] text-[#AA3333]", attention: true };
+    if (m.membership_is_active === false) return { label: "Paused", tone: "bg-[#F2F2F2] text-[#666]", attention: true };
+    if (days <= 30) return { label: `Ends in ${days} ${days === 1 ? "day" : "days"}`, tone: "bg-[#FFF4DF] text-[#915C12]", attention: true };
+    return { label: "Active", tone: "bg-[#EAF7F0] text-[#197252]", attention: false };
+}
 
 export interface MembershipsViewProps {
     initialPlans?: MembershipPlanRow[];
@@ -61,534 +34,205 @@ export interface MembershipsViewProps {
     initialAllVehicles?: VehicleRow[];
 }
 
+/** Individual drivers: their plan, their cars and which fleet they drive for. Businesses live in Organizations. */
 export function MembershipsView({ initialPlans, initialMembers, initialAllVehicles }: MembershipsViewProps) {
     const [plans, setPlans] = useState<MembershipPlanRow[]>(initialPlans || []);
     const [members, setMembers] = useState<MemberWithMembershipRow[]>(initialMembers || []);
+    const [vehicles, setVehicles] = useState<VehicleRow[]>(initialAllVehicles || []);
+    const [links, setLinks] = useState<{ org_member_id: string; member_id: string }[]>([]);
     const [loading, setLoading] = useState(!initialMembers);
-    const [q, setQ] = useState("");
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [form, setForm] = useState<MembershipFormState>({
-        member_id: null,
-        full_name: "",
-        email: "",
-        phone: "",
-        plan_id: "",
-        tier: "",
-        expiry_date: "",
-        is_business: false,
-        business_name: "",
-        parent_org_id: "",
-    });
-    const [filterType, setFilterType] = useState<"ALL" | "INDIVIDUAL" | "BUSINESS">("ALL");
-    const [selectedMembership, setSelectedMembership] = useState<{ id: string, name: string, auth_user_id?: string | null } | null>(null);
-    const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
-    const [allVehicles, setAllVehicles] = useState<VehicleRow[]>(initialAllVehicles || []);
-    const [isGloveboxOpen, setIsGloveboxOpen] = useState(false);
-
-    const organizations = members.filter(m => m.is_business && m.business_name);
-
-
-    const filteredMembers = members.filter((m) => {
-        // First filter by type
-        if (filterType === "INDIVIDUAL" && m.is_business) return false;
-        if (filterType === "BUSINESS" && !m.is_business) return false;
-
-        if (!q.trim()) return true;
-        const hay = `${m.full_name ?? ""} ${m.phone ?? ""} ${phoneVariants(m.phone || "").join(" ")} ${m.plan_name ?? ""} ${m.business_name ?? ""}`.toLowerCase();
-        return hay.includes(q.toLowerCase());
-    });
+    const [query, setQuery] = useState("");
+    const [filter, setFilter] = useState<Filter>("all");
+    const [form, setForm] = useState<FormState | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [now] = useState(() => Date.now());
 
     const fetchData = useCallback(async (signal?: AbortSignal) => {
-        setLoading(true);
         try {
-            const [plansRes, membersRes, vehiclesRes] = await Promise.all([
-                listMembershipPlans(signal),
-                listMembersWithMemberships(signal),
-                listAllVehicles(signal),
-            ]);
-            setPlans(plansRes);
-            setMembers(membersRes);
-            setAllVehicles(vehiclesRes);
-        } catch (err: any) {
-            if (err.name === 'AbortError' || err.message?.includes('aborted')) return;
+            const [p, m, v, l] = await Promise.all([listMembershipPlans(signal), listMembersWithMemberships(signal), listAllVehicles(signal), listOrgLinks(signal)]);
+            setPlans(p);
+            setMembers(m);
+            setVehicles(v);
+            setLinks(l);
+        } catch (err) {
+            if (isAbort(err)) return;
             console.error(err);
-            toast.error("Failed to load memberships");
+            toast.error("Could not load members");
         } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        if (!initialMembers) {
-            const controller = new AbortController();
-            fetchData(controller.signal);
-            return () => controller.abort();
-        }
+        const controller = new AbortController();
+        if (initialMembers) listOrgLinks(controller.signal).then(setLinks).catch(() => {});
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- loads server data once the page mounts
+        else fetchData(controller.signal);
+        return () => controller.abort();
     }, [fetchData, initialMembers]);
 
-    const newMembership = () => {
-        const today = new Date();
-        const nextYear = new Date(today);
-        nextYear.setFullYear(today.getFullYear() + 1);
-        const defaultExpiry = nextYear.toISOString().slice(0, 10);
+    const organizations = members.filter((m) => m.is_business && m.business_name);
+    const orgName = useMemo(() => new Map(organizations.map((o) => [o.member_id, o.business_name || o.full_name || "Organization"])), [organizations]);
+    const orgFor = useCallback((memberId: string) => links.find((l) => l.member_id === memberId)?.org_member_id, [links]);
+    const vehiclesFor = useCallback((m: MemberWithMembershipRow) => vehicles.filter((v) => v.user_id === m.member_id || (m.auth_user_id && v.user_id === m.auth_user_id)), [vehicles]);
 
-        setForm({
-            member_id: null,
-            full_name: "",
-            email: "",
-            phone: "",
-            plan_id: plans[0]?.id ?? "",
-            tier: plans[0]?.code ?? "",
-            expiry_date: defaultExpiry,
-            is_business: false,
-            business_name: "",
-            parent_org_id: "",
-        });
-        setIsSidebarOpen(true);
+    const people = members.filter((m) => !m.is_business);
+    const counts = {
+        all: people.length,
+        active: people.filter((m) => planState(m, now).label === "Active").length,
+        attention: people.filter((m) => planState(m, now).attention).length,
+        none: people.filter((m) => planState(m, now).none).length,
+        fleet: people.filter((m) => orgFor(m.member_id)).length,
     };
+    const shown = people.filter((m) => {
+        if (filter === "active" && planState(m, now).label !== "Active") return false;
+        if (filter === "attention" && !planState(m, now).attention) return false;
+        if (filter === "none" && !planState(m, now).none) return false;
+        if (filter === "fleet" && !orgFor(m.member_id)) return false;
+        const q = query.trim().toLowerCase();
+        if (!q) return true;
+        const cars = vehiclesFor(m).map((v) => `${v.plate} ${v.make} ${v.model}`).join(" ");
+        return `${m.full_name ?? ""} ${m.email ?? ""} ${m.phone ?? ""} ${phoneVariants(m.phone || "").join(" ")} ${m.plan_name ?? ""} ${cars}`.toLowerCase().includes(q);
+    });
 
-    const editMembership = (m: MemberWithMembershipRow) => {
-        setForm({
-            member_id: m.member_id,
-            full_name: m.full_name ?? "",
-            email: m.email ?? "",
-            phone: m.phone ?? "",
-            plan_id:
-                plans.find((p) => p.code === m.plan_code)?.id ??
-                plans[0]?.id ??
-                "",
-            tier: m.membership_tier ?? m.plan_code ?? "",
-            expiry_date: m.membership_expiry_date ? m.membership_expiry_date.slice(0, 10) : "",
-            is_business: m.is_business || false,
-            business_name: m.business_name || "",
-            parent_org_id: "", // TODO: If we want to show existing link, we'd need to fetch it or have it in row
-        });
-        setIsSidebarOpen(true);
-    };
+    function openNew() {
+        setForm({ member_id: null, full_name: "", email: "", phone: "", plan_id: plans[0]?.id ?? "", tier: plans[0]?.code ?? "", expiry_date: isoDay(365), parent_org_id: "" });
+    }
 
-    const openGlovebox = async (m: MemberWithMembershipRow) => {
-        // No longer blocking offline members, we will try member_id fallback in fetch
-        setSelectedMembership({
-            id: m.membership_id || m.member_id,
-            name: m.full_name || "Member",
-            auth_user_id: m.auth_user_id
-        });
-        setIsGloveboxOpen(true);
-        setIsGloveboxOpen(true);
+    function openEdit(m: MemberWithMembershipRow) {
+        const plan = plans.find((p) => p.code === m.plan_code);
+        setForm({ member_id: m.member_id, full_name: m.full_name ?? "", email: m.email ?? "", phone: m.phone ?? "", plan_id: plan?.id ?? "", tier: m.membership_tier ?? m.plan_code ?? "", expiry_date: m.membership_expiry_date?.slice(0, 10) ?? "", parent_org_id: orgFor(m.member_id) ?? "" });
+    }
 
-        // Filter from already loaded vehicles instead of fetching (which fails RLS)
-        const vels = allVehicles.filter(v =>
-            v.user_id === m.member_id ||
-            (m.auth_user_id && v.user_id === m.auth_user_id)
-        );
-        setVehicles(vels);
-    };
-
-
-    const handleSave = async () => {
-        const payload = {
-            member_id: form.member_id,
-            full_name: form.full_name.trim(),
-            email: form.email.trim() || null,
-            phone: form.phone.trim(),
-            plan_id: form.plan_id,
-            tier: form.tier.trim() || "STANDARD",
-            expiry_date: form.expiry_date || null,
-            is_business: form.is_business,
-            business_name: form.is_business ? form.business_name.trim() : null,
-            parent_org_id: !form.is_business ? form.parent_org_id : null,
-        };
-
-        const promise = async () => {
-            await upsertMemberMembership(payload);
-            setIsSidebarOpen(false);
+    async function save() {
+        if (!form) return;
+        if (!form.full_name.trim() || !form.phone.trim()) return toast.error("Enter the member’s name and phone");
+        setSaving(true);
+        try {
+            await upsertMemberMembership({
+                member_id: form.member_id,
+                full_name: form.full_name.trim(),
+                email: form.email.trim() || null,
+                phone: form.phone.trim(),
+                plan_id: form.plan_id,
+                tier: form.tier.trim() || plans.find((p) => p.id === form.plan_id)?.code || "STANDARD",
+                expiry_date: form.expiry_date || null,
+                is_business: false,
+                business_name: null,
+                parent_org_id: form.parent_org_id || null,
+            });
+            toast.success(form.member_id ? "Member saved" : "Member added");
+            setForm(null);
             await fetchData();
-        };
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Could not save the member");
+        } finally {
+            setSaving(false);
+        }
+    }
 
-        toast.promise(promise, {
-            loading: "Saving membership...",
-            success: "Membership saved",
-            error: "Failed to save membership",
-        });
-    };
+    if (loading) {
+        return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-[#1111F6]" /></div>;
+    }
 
-    const totalMembers = members.length;
-    const activeMembers = members.filter((m) => m.membership_is_active).length;
-    const activePlans = plans.filter((p) => p.is_active).length;
+    const filters: { key: Filter; label: string }[] = [
+        { key: "all", label: "All" },
+        { key: "active", label: "Active plan" },
+        { key: "attention", label: "Needs renewal" },
+        { key: "none", label: "No plan" },
+        { key: "fleet", label: "Fleet drivers" },
+    ];
 
     return (
-        <div className="flex flex-col h-full gap-6">
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard title="Total Members" value={totalMembers} icon={Users} color="bg-indigo-500" />
-                <StatCard title="Active Memberships" value={activeMembers} icon={ShieldCheck} color="bg-emerald-500" />
-                <StatCard title="Active Plans" value={activePlans} icon={LayoutGrid} color="bg-slate-500" />
-            </div>
-
-            <div className="flex-1 flex flex-col bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-                {/* Toolbar */}
-                <div className="p-4 border-b border-border flex flex-col md:flex-row items-center justify-between gap-4 bg-card">
-                    <div className="flex bg-muted/30 p-1 rounded-lg">
-                        {(["ALL", "INDIVIDUAL", "BUSINESS"] as const).map(type => (
-                            <button
-                                key={type}
-                                onClick={() => setFilterType(type)}
-                                className={cls(
-                                    "px-4 py-1.5 text-xs font-semibold rounded-md transition-all",
-                                    filterType === type
-                                        ? "bg-white dark:bg-slate-800 text-primary shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                {type === "ALL" ? "All" : type === "INDIVIDUAL" ? "B2C" : "B2B"}
-                            </button>
-                        ))}
+        <div className="flex flex-col gap-5 pb-8">
+            <section className="overflow-hidden rounded-[20px] border border-[#EAEAEA] bg-white">
+                <div className="flex flex-col gap-3 border-b border-[#F0F0F0] p-4 sm:p-5">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex gap-1.5 overflow-x-auto">
+                            {filters.map((f) => (
+                                <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={cls("inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] transition-colors", filter === f.key ? "bg-[#171717] text-white" : "bg-[#F2F2F2] text-[#555] hover:bg-[#EAEAEA]")}>
+                                    {f.label}<span className={filter === f.key ? "text-white/60" : "text-[#999]"}>{counts[f.key]}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <button type="button" onClick={openNew} className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] text-white hover:bg-[#0606D8]"><Plus className="h-4 w-4" />Add member</button>
                     </div>
-
-                    <div className="flex-1 w-full md:w-auto relative max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <input
-                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground placeholder:text-muted-foreground"
-                            placeholder="Search members..."
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                        />
-                    </div>
-                    <button
-                        onClick={newMembership}
-                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap"
-                    >
-                        <Plus className="h-4 w-4" />
-                        <span className="hidden sm:inline">Add Member</span>
-                    </button>
+                    <label className="relative block">
+                        <span className="sr-only">Search members</span>
+                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#999]" />
+                        <input className="h-10 w-full rounded-full border border-[#E3E3E3] bg-white pl-10 pr-4 text-[14px] outline-none placeholder:text-[#AAA] focus:border-[#1111F6]" placeholder="Search name, phone, email or plate" value={query} onChange={(e) => setQuery(e.target.value)} />
+                    </label>
                 </div>
 
-                <div className="flex-1 overflow-auto relative bg-muted/20">
-                    {loading && (
-                        <div
-                            className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    )}
-
-                    <table className="w-full text-left text-sm">
-                        <thead
-                            className="bg-muted/50 text-muted-foreground font-medium border-b border-border sticky top-0 z-10">
-                            <tr>
-                                <th className="px-6 py-3">Member</th>
-                                <th className="px-6 py-3">Contact</th>
-                                <th className="px-6 py-3">Plan</th>
-                                <th className="px-6 py-3">Status</th>
-                                <th className="px-6 py-3">Fleet</th>
-                                <th className="px-6 py-3 text-right">Actions</th>
-
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border bg-card">
-                            {filteredMembers.map((m) => {
-                                const expired = m.membership_expiry_date ? new Date(m.membership_expiry_date) < new Date() : false;
-                                return (
-                                    <tr key={m.member_id} className="hover:bg-muted/50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <Link
-                                                href={`/admin/memberships/${m.member_id}`}
-                                                className="group/name block"
-                                            >
-                                                <div className="font-medium text-foreground group-hover/name:text-primary transition-colors flex items-center gap-1.5">
-                                                    {m.is_business ? (
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold">{m.business_name}</span>
-                                                            <span className="text-[10px] text-muted-foreground font-normal flex items-center gap-1">
-                                                                <ShieldCheck className="w-3 h-3 text-emerald-500" /> B2B • {m.full_name}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        m.full_name || "Unnamed Member"
-                                                    )}
-                                                    <ArrowRight className="h-3 w-3 opacity-0 group-hover/name:opacity-100 transition-all -translate-x-1 group-hover/name:translate-x-0" />
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    #{m.membership_number || "—"}
-                                                </div>
-                                            </Link>
-                                        </td>
-                                        <td className="px-6 py-4 text-xs text-muted-foreground">
-                                            <div>{m.phone}</div>
-                                            <div className="text-muted-foreground/70">{m.email}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-xs text-muted-foreground">
-                                            <div className="font-medium">
-                                                {m.plan_name || "No plan"}
-                                            </div>
-                                            <div className="text-muted-foreground/70 uppercase text-[10px]">
-                                                {m.membership_tier || m.plan_code || "—"}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-xs text-muted-foreground">
-                                            {m.membership_expiry_date ? (
-                                                <div className="flex flex-col gap-0.5">
-                                                    <span
-                                                        className={cls(
-                                                            "inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide",
-                                                            expired
-                                                                ? "bg-red-50 text-red-700 border-red-200"
-                                                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                        )}
-                                                    >
-                                                        {expired ? "Expired" : "Active"}
-                                                    </span>
-                                                    <span className="text-muted-foreground/70">
-                                                        Expires {m.membership_expiry_date ? <span suppressHydrationWarning>{new Date(m.membership_expiry_date).toLocaleDateString()}</span> : '—'}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground/50 italic">No expiry set</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {(() => {
-                                                const memberVehicles = (allVehicles || []).filter(v => {
-                                                    const vUid = v.user_id?.toString().toLowerCase();
-                                                    const mAuthId = m.auth_user_id?.toString().toLowerCase();
-                                                    const mMemId = (m.member_id || m.id)?.toString().toLowerCase();
-                                                    return (mAuthId && vUid === mAuthId) || (vUid === mMemId);
-                                                });
-                                                const hasVehicles = memberVehicles.length > 0;
-                                                return (
-                                                    <div className="flex flex-col gap-2">
-                                                        {memberVehicles.length > 0 ? (
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {memberVehicles.map(v => (
-                                                                    <div key={v.id} className="flex flex-col bg-slate-100 dark:bg-white/5 rounded px-2 py-1 border border-slate-200 dark:border-white/5">
-                                                                        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                                                                            {v.year} {v.make} {v.model}
-                                                                        </span>
-                                                                        <div className="flex items-center justify-between gap-2">
-                                                                            <span className="text-[9px] font-mono text-slate-500 uppercase">{v.plate}</span>
-                                                                            {v.nfc_serial_number && (
-                                                                                <div className="flex items-center gap-0.5" title={`Linked to ${v.nfc_serial_number}`}>
-                                                                                    <Smartphone className="h-2 w-2 text-indigo-500" />
-                                                                                    <span className="text-[7px] font-bold text-indigo-500/70">NFC</span>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        ) : m.car_brand ? (
-                                                            <div className="flex flex-col bg-slate-100 dark:bg-white/5 rounded px-2 py-1 border border-slate-200 dark:border-white/5">
-                                                                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                                                                    {m.car_brand}
-                                                                </span>
-                                                                <span className="text-[9px] text-muted-foreground/50 italic">Legacy Record</span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-xs text-muted-foreground/50 italic font-medium">No vehicles</span>
-                                                        )}
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openGlovebox(m);
-                                                            }}
-                                                            className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors uppercase tracking-wider"
-                                                        >
-                                                            <Car className="h-3 w-3" />
-                                                            Manage Glovebox
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-
-                                            {m.is_business ? (
-                                                <Link href="/admin/organizations" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hover:border-secondary transition-colors">
-                                                    <Edit2 className="w-3 h-3" /> Edit in Organizations
-                                                </Link>
-                                            ) : (
-                                                <button
-                                                    onClick={() => editMembership(m)}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hover:border-secondary transition-colors"
-                                                >
-                                                    <Edit2 className="w-3 h-3" /> Edit
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-
-                    {filteredMembers.length === 0 && !loading && (
-                        <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                            <Users className="h-10 w-10 mb-2 opacity-20" />
-                            <p>No members found</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Slide-over form */}
-            {isSidebarOpen && (
-                <>
-                    <div
-                        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity"
-                        onClick={() => setIsSidebarOpen(false)}
-                    />
-                    <div
-                        className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] bg-card shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col border-l border-border">
-                        <div className="p-5 border-b border-border flex items-center justify-between bg-card">
-                            <div>
-                                <h3 className="font-bold text-lg text-foreground">
-                                    {form.member_id ? "Edit Membership" : "New Membership"}
-                                </h3>
-                                <p className="text-xs text-muted-foreground">
-                                    Link a member to a plan and set expiry.
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setIsSidebarOpen(false)}
-                                className="p-2 hover:bg-accent rounded-full text-muted-foreground transition-colors"
-                            >
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-background/50">
-                            <section className="space-y-4">
-                                <h4 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider border-b border-primary/20 pb-2">
-                                    <UserIcon className="w-3 h-3" /> Member Info
-                                </h4>
-
-                                <p className="text-xs text-muted-foreground">Create a business in <Link href="/admin/organizations" className="font-semibold text-primary underline">Organizations</Link>, then choose this person as its contact.</p>
-
-                                {!form.is_business && (
-                                    <div>
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                            Assign to Organization (Optional)
-                                        </label>
-                                        <select
-                                            className="mt-1 w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground"
-                                            value={form.parent_org_id}
-                                            onChange={(e) => setForm({ ...form, parent_org_id: e.target.value })}
-                                        >
-                                            <option value="">-- Individual Account --</option>
-                                            {organizations.map((org) => (
-                                                <option key={org.member_id} value={org.member_id}>
-                                                    {org.business_name} ({org.membership_tier})
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <p className="text-[10px] text-muted-foreground mt-1">
-                                            Select an organization to add this user to their fleet.
-                                        </p>
+                {shown.length ? <ul className="divide-y divide-[#F0F0F0]">
+                    {shown.map((m) => {
+                        const state = planState(m, now);
+                        const cars = vehiclesFor(m);
+                        const org = orgFor(m.member_id);
+                        return (
+                            <li key={m.member_id} className="flex items-center gap-2 pr-3 sm:pr-4">
+                                <Link href={`/admin/memberships/${m.member_id}`} className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-4 transition-colors hover:bg-[#FAFAFA] sm:px-5 md:flex-row md:items-center md:gap-4">
+                                    <div className="min-w-0 md:w-[260px] md:shrink-0">
+                                        <p className="truncate text-[15px]">{m.full_name || "Unnamed member"}</p>
+                                        <p className="truncate text-[13px] text-[#888]">{m.phone || "No phone"}{m.email && ` · ${m.email}`}</p>
                                     </div>
-                                )}
-
-                                <TextField
-                                    label="Full Name"
-                                    value={form.full_name}
-                                    onChange={(v) => setForm({ ...form, full_name: v })}
-                                    required
-                                />
-                                <TextField
-                                    label="Phone"
-                                    value={form.phone}
-                                    onChange={(v) => setForm({ ...form, phone: v })}
-                                    onBlur={() => setForm((current) => ({ ...current, phone: formatPhone(current.phone) }))}
-                                    placeholder="+233558508306"
-                                    required
-                                />
-                                <TextField
-                                    label="Email"
-                                    value={form.email}
-                                    onChange={(v) => setForm({ ...form, email: v })}
-                                    type="email"
-                                    placeholder="optional"
-                                />
-                            </section>
-
-                            <section className="space-y-4">
-                                <h4 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider border-b border-primary/20 pb-2">
-                                    <ShieldCheck className="w-3 h-3" /> Plan
-                                </h4>
-                                <div className="space-y-3">
-                                    <div>
-                                        <label
-                                            className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                            Plan
-                                        </label>
-                                        <select
-                                            className="mt-1 w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground"
-                                            value={form.plan_id}
-                                            onChange={(e) =>
-                                                setForm((prev) => ({
-                                                    ...prev,
-                                                    plan_id: e.target.value,
-                                                    // if tier empty, default to plan code
-                                                    tier:
-                                                        prev.tier ||
-                                                        plans.find((p) => p.id === e.target.value)?.code ||
-                                                        prev.tier,
-                                                }))
-                                            }
-                                        >
-                                            <option value="">Select a plan</option>
-                                            {plans.map((p) => (
-                                                <option key={p.id} value={p.id}>
-                                                    {p.name} ({p.code})
-                                                </option>
-                                            ))}
-                                        </select>
+                                    <div className="min-w-0 flex-1 text-[13px] text-[#555]">
+                                        <p className="truncate">{cars.length ? cars.map((v) => v.plate || [v.make, v.model].filter(Boolean).join(" ")).join(", ") : m.car_brand ? `${m.car_brand} (not added in the app)` : <span className="text-[#AAA]">No vehicles</span>}</p>
+                                        {org && <p className="truncate text-[#888]">Drives for {orgName.get(org) || "an organization"}</p>}
                                     </div>
-                                    <TextField
-                                        label="Tier Label"
-                                        value={form.tier}
-                                        onChange={(v) => setForm({ ...form, tier: v })}
-                                        placeholder="e.g. PLUS, GOLD"
-                                    />
-                                    <TextField
-                                        label="Expiry Date"
-                                        value={form.expiry_date}
-                                        onChange={(v) => setForm({ ...form, expiry_date: v })}
-                                        type="date"
-                                        required
-                                    />
-                                </div>
-                            </section>
-                        </div>
+                                    <div className="flex items-center gap-2 md:w-[220px] md:justify-end">
+                                        <span className="truncate text-[13px] text-[#777]">{m.plan_name || ""}</span>
+                                        <span className={cls("shrink-0 rounded-full px-2.5 py-0.5 text-[12px]", state.tone)}>{state.label}</span>
+                                    </div>
+                                </Link>
+                                <button type="button" onClick={() => openEdit(m)} aria-label={`Edit ${m.full_name || "member"}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#777] hover:bg-[#F3F3FF] hover:text-[#1111F6]"><Pencil className="h-4 w-4" /></button>
+                                <ChevronRight className="hidden h-4 w-4 shrink-0 text-[#BBB] sm:block" />
+                            </li>
+                        );
+                    })}
+                </ul> : <div className="px-6 py-14 text-center">
+                    <p className="text-[15px]">{people.length ? "No members match." : "No members yet."}</p>
+                    <p className="mt-1 text-[14px] text-[#888]">{people.length ? "Try another filter or search." : "Drivers appear here when they sign up or you add them."}</p>
+                </div>}
+            </section>
 
-                        <div className="p-5 border-t border-border bg-muted/20 flex gap-3">
-                            <button
-                                onClick={() => setIsSidebarOpen(false)}
-                                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-foreground bg-background border border-input hover:bg-accent transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={!form.full_name.trim() || !form.phone.trim() || !form.expiry_date}
-                                className="flex-1 flex justify-center items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Save className="h-4 w-4" /> Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </>
-            )}
+            <p className="text-[13px] text-[#888]">Businesses and their fleets are in <Link href="/admin/organizations" className="text-[#1111F6]">Organizations</Link>.</p>
 
-            {/* Digital Glovebox Overlay */}
-            {isGloveboxOpen && selectedMembership && (
-                <DigitalGlovebox
-                    membershipId={selectedMembership.id}
-                    memberName={selectedMembership.name}
-                    vehicles={vehicles}
-                    onClose={() => setIsGloveboxOpen(false)}
-                    onRefresh={fetchData}
-                />
-            )}
+            <Dialog open={!!form} onOpenChange={(open) => !open && setForm(null)}>
+                <DialogContent className="admin-theme base-landing text-[#171717] [&_[data-slot=dialog-title]]:font-medium [&_[data-slot=dialog-title]]:tracking-[-0.02em] max-h-[90dvh] max-w-lg overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{form?.member_id ? "Edit member" : "Add a member"}</DialogTitle>
+                        <DialogDescription>{form?.member_id ? "Change their details, plan or fleet." : "They can sign in to the app with this phone number."}</DialogDescription>
+                    </DialogHeader>
+                    {form && <div className="flex flex-col gap-4">
+                        <label className={label}>Full name<input className={cls(field, "mt-1.5")} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></label>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <label className={label}>Phone<input className={cls(field, "mt-1.5")} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} onBlur={() => setForm((f) => f && { ...f, phone: formatPhone(f.phone) })} placeholder="+233 55 850 8306" /></label>
+                            <label className={label}>Email <span className="text-[#AAA]">(optional)</span><input type="email" className={cls(field, "mt-1.5")} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <label className={label}>Plan
+                                <select className={cls(field, "mt-1.5")} value={form.plan_id} onChange={(e) => setForm({ ...form, plan_id: e.target.value, tier: plans.find((p) => p.id === e.target.value)?.code || form.tier })}>
+                                    <option value="">No plan</option>
+                                    {plans.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </label>
+                            <label className={label}>Plan ends<input type="date" className={cls(field, "mt-1.5")} value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} /></label>
+                        </div>
+                        <label className={label}>Drives for <span className="text-[#AAA]">(optional)</span>
+                            <select className={cls(field, "mt-1.5")} value={form.parent_org_id} onChange={(e) => setForm({ ...form, parent_org_id: e.target.value })}>
+                                <option value="">No organization</option>
+                                {organizations.map((org) => <option key={org.member_id} value={org.member_id}>{org.business_name}</option>)}
+                            </select>
+                            {!form.member_id && form.parent_org_id && <span className="mt-1.5 block text-[12px] text-[#888]">They’ll get a text saying they’ve been added to the fleet.</span>}
+                        </label>
+                    </div>}
+                    <DialogFooter>
+                        <button type="button" onClick={() => setForm(null)} className="inline-flex h-10 items-center rounded-full border border-[#E3E3E3] px-4 text-[14px]">Cancel</button>
+                        <button type="button" onClick={save} disabled={saving} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1111F6] px-4 text-[14px] text-white hover:bg-[#0606D8] disabled:opacity-50">{saving && <Loader2 className="h-4 w-4 animate-spin" />}{form?.member_id ? "Save" : "Add member"}</button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
-
     );
 }

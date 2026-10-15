@@ -38,8 +38,8 @@ export async function GET(req: Request) {
         const { data, error } = await query;
         if (error) throw error;
         return NextResponse.json(data);
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+    } catch (e) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong" }, { status: 500 });
     }
 }
 
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 
         // 3. Create Items
         if (items && items.length > 0) {
-            const itemRows = items.map((it: any) => ({
+            const itemRows = items.map((it: { description: string; quantity: number; unit_price: number }) => ({
                 invoice_id: invoice.id,
                 description: it.description,
                 quantity: it.quantity,
@@ -91,8 +91,8 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json(invoice);
-    } catch (e: any) {
+    } catch (e) {
         console.error("Invoice API Error:", e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong" }, { status: 500 });
     }
 }

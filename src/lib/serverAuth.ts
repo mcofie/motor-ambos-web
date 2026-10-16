@@ -1,10 +1,24 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createClient, type User } from "@supabase/supabase-js";
 
+/**
+ * The signed-in user, from the browser's session cookies or, for the mobile apps, from an
+ * `Authorization: Bearer <access token>` header. Either way Supabase verifies the token.
+ */
 export async function getAuthenticatedUser(): Promise<User | null> {
+    const bearer = (await headers()).get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+    if (bearer) {
+        const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+            auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const { data: { user }, error } = await client.auth.getUser(bearer);
+        // A bad token is a failed sign-in, not a reason to fall back to cookies.
+        return error ? null : user;
+    }
+
     const cookieStore = await cookies();
     const client = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

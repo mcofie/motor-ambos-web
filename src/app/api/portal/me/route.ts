@@ -4,6 +4,7 @@ import { getAuthenticatedUser, getServiceClient } from "@/lib/serverAuth";
 import type { PortalData, PortalOrganization, PortalVehicle } from "@/lib/portalTypes";
 import { formatPhone, normalizePhone, phoneVariants } from "@/lib/phone";
 import { reportMajorActivity } from "@/lib/discordActivity";
+import { findCarImage } from "@/lib/carImageLibrary";
 
 export const dynamic = "force-dynamic";
 
@@ -106,13 +107,18 @@ export async function GET() {
         { id: `${vehicle.id}:roadworthy`, vehicle_id: vehicle.id, kind: "roadworthy" as const, expires_on: vehicle.roadworthy_expiry, file_url: uploadedDocumentKeys.has(`${vehicle.id}:roadworthy`) ? `/api/portal/documents?vehicleId=${vehicle.id}&kind=roadworthy` : vehicle.roadworthy_doc_url },
     ]);
 
+    // A studio photo from the car image library, when one matches the make, model and colour.
+    const imageUrls = new Map(await Promise.all(allVisibleVehicles.map(async (vehicle) =>
+        [vehicle.id, await findCarImage(service, vehicle).catch(() => null)] as const)));
+    const withImage = (vehicle: PortalVehicle): PortalVehicle => ({ ...vehicle, image_url: imageUrls.get(vehicle.id) ?? null });
+
     const response: PortalData = {
         email: user.email || "",
         needsProfile: false,
         profile: { id: member.id, fullName: member.full_name || "", phone: formatPhone(member.phone), isBusiness: Boolean(member.is_business) },
-        personalVehicles,
-        fleetVehicles,
-        assignedVehicles: assigned,
+        personalVehicles: personalVehicles.map(withImage),
+        fleetVehicles: fleetVehicles.map(withImage),
+        assignedVehicles: assigned.map(withImage),
         organizations,
         fleetDrivers: (driversResult.data || []).map((row) => ({
             id: row.member_id,

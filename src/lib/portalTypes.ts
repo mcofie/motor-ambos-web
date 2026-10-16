@@ -11,6 +11,10 @@ export type PortalVehicle = {
     insurance_end_date: string | null;
     roadworthy_expiry: string | null;
     roadworthy_doc_url: string | null;
+    current_mileage?: number | null;
+    last_oil_change_mileage?: number | null;
+    /** A matching studio photo from the car image library, if there is one. */
+    image_url?: string | null;
 };
 
 export type PortalDocument = {

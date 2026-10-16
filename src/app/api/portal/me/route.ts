@@ -13,6 +13,11 @@ const ProfileSchema = z.object({
     phone: z.string().trim().refine((value) => Boolean(normalizePhone(value))),
 });
 
+/** The phone a login proved by SMS code, as +233…, or null for email logins. */
+function verifiedPhone(user: { phone?: string; phone_confirmed_at?: string }) {
+    return user.phone && user.phone_confirmed_at ? normalizePhone(`+${user.phone.replace(/^\+/, "")}`) : null;
+}
+
 export async function GET() {
     const user = await getAuthenticatedUser();
     if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
@@ -27,7 +32,7 @@ export async function GET() {
     const empty: PortalData = {
         email: user.email || "",
         needsProfile: true,
-        suggestedProfile: { fullName: String(user.user_metadata?.full_name || ""), phone: formatPhone(String(user.user_metadata?.phone || "")) },
+        suggestedProfile: { fullName: String(user.user_metadata?.full_name || ""), phone: formatPhone(verifiedPhone(user) || String(user.user_metadata?.phone || "")) },
         profile: null,
         personalVehicles: [],
         fleetVehicles: [],
@@ -138,7 +143,9 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     const parsed = ProfileSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return NextResponse.json({ error: "Enter your name and a valid phone number" }, { status: 400 });
-    const phone = normalizePhone(parsed.data.phone);
+    const loginPhone = verifiedPhone(user);
+    // A phone login's number is already proven by SMS, so it is the profile's number.
+    const phone = loginPhone || normalizePhone(parsed.data.phone);
     if (!phone) return NextResponse.json({ error: "Enter a valid phone number, such as +233558508306." }, { status: 400 });
 
     const service = getServiceClient();
@@ -174,6 +181,13 @@ export async function POST(request: Request) {
     if ((phoneMatches?.length || 0) > 1) return NextResponse.json({ error: "Multiple profiles use this phone. Ask support@motorambos.com to connect your account." }, { status: 409 });
     if (phoneMatches?.length) {
         const record = phoneMatches[0];
+        // Signed in by SMS code to this number: the profile is theirs, so connect it now.
+        if (loginPhone && !record.auth_user_id) {
+            const { error } = await service.from("members").update({ auth_user_id: user.id }).eq("id", record.id).is("auth_user_id", null);
+            if (error) return NextResponse.json({ error: "Could not connect your existing profile. Please contact support@motorambos.com." }, { status: 500 });
+            await reportMajorActivity("Existing profile connected to phone login", [{ name: "Member ID", value: record.id }]);
+            return NextResponse.json({ ok: true });
+        }
         if (!record.auth_user_id && user.email_confirmed_at && process.env.HUBTEL_SMS_BASIC_AUTH) {
             return NextResponse.json({ code: "PHONE_CLAIM_AVAILABLE", error: "This phone already has a profile. Verify it by SMS to connect it to your account." }, { status: 409 });
         }

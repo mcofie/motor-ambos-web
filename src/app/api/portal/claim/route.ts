@@ -1,3 +1,4 @@
+import { realEmail } from "@/lib/phoneLogin";
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -71,7 +72,9 @@ function setClaimCookie(response: NextResponse, claim: Claim | null) {
 export async function POST(request: Request) {
     const user = await getAuthenticatedUser();
     if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
-    if (!user.email || !user.email_confirmed_at) {
+    // Phone logins link their profile at sign-in; this flow is for email logins only.
+    const email = realEmail(user.email);
+    if (!email || !user.email_confirmed_at) {
         return NextResponse.json({ error: "Confirm your account email before verifying this phone" }, { status: 403 });
     }
     const body = await request.json().catch(() => null);
@@ -148,7 +151,7 @@ export async function POST(request: Request) {
         return setClaimCookie(NextResponse.json({ error: "This profile changed while you were verifying it. Please contact support@motorambos.com." }, { status: 409 }), null);
     }
     let update = service.from("members")
-        .update({ auth_user_id: user.id, email: user.email.trim().toLowerCase() })
+        .update({ auth_user_id: user.id, email: email.trim().toLowerCase() })
         .eq("id", claim.memberId)
         .is("auth_user_id", null);
     update = current.email ? update.eq("email", current.email) : update.is("email", null);

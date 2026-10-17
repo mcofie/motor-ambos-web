@@ -1,3 +1,4 @@
+import { realEmail } from "@/lib/phoneLogin";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthenticatedUser, getServiceClient } from "@/lib/serverAuth";
@@ -53,7 +54,9 @@ export async function POST(request: Request) {
     const current = await session();
     if (!current) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     if (!paystackReady()) return NextResponse.json({ error: "Card payments are not set up yet. Please try again soon." }, { status: 503 });
-    if (!current.user.email) return NextResponse.json({ error: "Add an email address to your account to pay online." }, { status: 409 });
+    // Phone-only logins have a placeholder email that can't receive Paystack receipts.
+    const email = realEmail(current.user.email);
+    if (!email) return NextResponse.json({ error: "Add an email address to your account to pay online." }, { status: 409 });
     const body = await request.json().catch(() => null);
     const origin = new URL(request.url).origin;
 
@@ -64,7 +67,7 @@ export async function POST(request: Request) {
         if (!order || order.status !== "pending_payment") return NextResponse.json({ error: "This order cannot be paid now." }, { status: 409 });
         const reference = newPaymentReference(order.order_number);
         await current.service.from("card_orders").update({ paystack_reference: reference, updated_at: new Date().toISOString() }).eq("id", order.id);
-        return checkout(current.user.email, order.total_pesewas, reference, origin, order.recipient_phone, order.order_number);
+        return checkout(email, order.total_pesewas, reference, origin, order.recipient_phone, order.order_number);
     }
 
     const parsed = OrderSchema.safeParse(body);
@@ -108,7 +111,7 @@ export async function POST(request: Request) {
         paystack_reference: reference,
     });
     if (error) return NextResponse.json({ error: "Could not place your order. Try again." }, { status: 500 });
-    return checkout(current.user.email, product.price_pesewas + deliveryFee, reference, origin, phone, orderNumber);
+    return checkout(email, product.price_pesewas + deliveryFee, reference, origin, phone, orderNumber);
 }
 
 async function checkout(email: string, amountPesewas: number, reference: string, origin: string, phone: string, orderNumber: string) {

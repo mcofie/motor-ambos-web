@@ -4,6 +4,7 @@ import { getAuthenticatedUser, getServiceClient } from "@/lib/serverAuth";
 import type { PortalData, PortalOrganization, PortalVehicle } from "@/lib/portalTypes";
 import { formatPhone, normalizePhone, phoneVariants } from "@/lib/phone";
 import { reportMajorActivity } from "@/lib/discordActivity";
+import { realEmail } from "@/lib/phoneLogin";
 import { findCarImage } from "@/lib/carImageLibrary";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export async function GET() {
     if (memberError) return NextResponse.json({ error: "Could not load account" }, { status: 500 });
 
     const empty: PortalData = {
-        email: user.email || "",
+        email: realEmail(user.email) || "",
         needsProfile: true,
         suggestedProfile: { fullName: String(user.user_metadata?.full_name || ""), phone: formatPhone(verifiedPhone(user) || String(user.user_metadata?.phone || "")) },
         profile: null,
@@ -118,7 +119,7 @@ export async function GET() {
     const withImage = (vehicle: PortalVehicle): PortalVehicle => ({ ...vehicle, image_url: imageUrls.get(vehicle.id) ?? null });
 
     const response: PortalData = {
-        email: user.email || "",
+        email: realEmail(user.email) || "",
         needsProfile: false,
         profile: { id: member.id, fullName: member.full_name || "", phone: formatPhone(member.phone), isBusiness: Boolean(member.is_business) },
         personalVehicles: personalVehicles.map(withImage),
@@ -153,8 +154,9 @@ export async function POST(request: Request) {
     if (linked) return NextResponse.json({ ok: true });
 
     // Existing staff-created profiles are claimed through a verified email, never a typed phone alone.
-    if (user.email) {
-        const normalizedEmail = user.email.trim().toLowerCase();
+    const email = realEmail(user.email);
+    if (email) {
+        const normalizedEmail = email.trim().toLowerCase();
         const { data: emailMatches, error: emailLookupError } = await service.from("members")
             .select("id,email,auth_user_id")
             .ilike("email", normalizedEmail)
@@ -196,7 +198,7 @@ export async function POST(request: Request) {
 
     const { error } = await service.from("members").insert({
         auth_user_id: user.id,
-        email: user.email,
+        email,
         full_name: parsed.data.fullName,
         phone,
         is_business: false,

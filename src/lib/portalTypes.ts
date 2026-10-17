@@ -15,8 +15,10 @@ export type PortalVehicle = {
     powertrain?: "ice" | "hybrid" | "ev" | null;
     current_mileage?: number | null;
     last_oil_change_mileage?: number | null;
-    /** A matching studio photo from the car image library, if there is one. */
+    /** The car's own photo, or a matching studio photo from the car image library, if there is one. */
     image_url?: string | null;
+    /** True when image_url is the owner's own photo rather than a library picture. */
+    has_own_photo?: boolean;
 };
 
 export type PortalDocument = {

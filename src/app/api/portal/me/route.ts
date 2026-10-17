@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthenticatedUser, getServiceClient } from "@/lib/serverAuth";
+import { deleteVehicle } from "@/lib/deleteVehicle";
 import type { PortalData, PortalOrganization, PortalVehicle } from "@/lib/portalTypes";
 import { formatPhone, normalizePhone, phoneVariants } from "@/lib/phone";
 import { reportMajorActivity } from "@/lib/discordActivity";
@@ -113,10 +114,20 @@ export async function GET() {
         { id: `${vehicle.id}:roadworthy`, vehicle_id: vehicle.id, kind: "roadworthy" as const, expires_on: vehicle.roadworthy_expiry, file_url: uploadedDocumentKeys.has(`${vehicle.id}:roadworthy`) ? `/api/portal/documents?vehicleId=${vehicle.id}&kind=roadworthy` : vehicle.roadworthy_doc_url },
     ]);
 
-    // A studio photo from the car image library, when one matches the make, model and colour.
-    const imageUrls = new Map(await Promise.all(allVisibleVehicles.map(async (vehicle) =>
-        [vehicle.id, await findCarImage(service, vehicle).catch(() => null)] as const)));
-    const withImage = (vehicle: PortalVehicle): PortalVehicle => ({ ...vehicle, image_url: imageUrls.get(vehicle.id) ?? null });
+    // The car's own photo when it has one (a week-long link), else a studio photo from the car image
+    // library that matches the make, model and colour.
+    const imageUrls = new Map(await Promise.all(allVisibleVehicles.map(async (vehicle) => {
+        const own = (vehicle as { photo_path?: string | null }).photo_path;
+        if (own) {
+            const { data } = await service.storage.from("vehicle-documents").createSignedUrl(own, 60 * 60 * 24 * 7);
+            if (data?.signedUrl) return [vehicle.id, data.signedUrl] as const;
+        }
+        return [vehicle.id, await findCarImage(service, vehicle).catch(() => null)] as const;
+    })));
+    const withImage = (vehicle: PortalVehicle): PortalVehicle => {
+        const { photo_path, ...rest } = vehicle as PortalVehicle & { photo_path?: string | null };
+        return { ...rest, image_url: imageUrls.get(vehicle.id) ?? null, has_own_photo: Boolean(photo_path) };
+    };
 
     const response: PortalData = {
         email: realEmail(user.email) || "",
@@ -213,9 +224,89 @@ export async function POST(request: Request) {
 
 const VEHICLE_COLUMNS = "id,user_id,name,make,model,year,plate,color,insurance_end_date,roadworthy_expiry,roadworthy_doc_url";
 
-/** Vehicles with their powertrain, or without it until the powertrain migration has run. */
+/** Vehicles with their powertrain and own photo, falling back while those migrations haven't run. */
 async function selectVehicles(service: ReturnType<typeof getServiceClient>, column: "user_id" | "id", values: string[]) {
-    const result = await service.from("vehicles").select(`${VEHICLE_COLUMNS},powertrain`).in(column, values);
-    if (result.error?.code === "42703") return service.from("vehicles").select(VEHICLE_COLUMNS).in(column, values);
-    return result;
+    for (const extra of [",powertrain,photo_path", ",powertrain", ""]) {
+        const result = await service.from("vehicles").select(`${VEHICLE_COLUMNS}${extra}`).in(column, values);
+        if (result.error?.code !== "42703") return result;
+    }
+    return service.from("vehicles").select(VEHICLE_COLUMNS).in(column, values);
+}
+
+/**
+ * Deletes the signed-in person's account, as Apple requires apps to offer. Their own cars (with all
+ * their history and files), licence and photos, fleet roles and sign-in are removed. Card orders are
+ * kept for the accounts, against a member row stripped of name and phone.
+ *
+ * Refused while they are the only manager of a fleet, so a business never loses its vehicles because
+ * one person left: someone else must become manager first.
+ */
+export async function DELETE() {
+    const user = await getAuthenticatedUser();
+    if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+    const service = getServiceClient();
+    const { data: member, error: memberError } = await service.from("members").select("id,phone,is_business").eq("auth_user_id", user.id).maybeSingle();
+    if (memberError) return NextResponse.json({ error: "Could not load your account" }, { status: 500 });
+
+    if (member) {
+        if (member.is_business) {
+            return NextResponse.json({ error: "This is a business account. Contact support@motorambos.com to close it." }, { status: 409 });
+        }
+        const [{ data: adminRows }, { data: contactOrgs }] = await Promise.all([
+            service.from("organization_members").select("org_member_id").eq("member_id", member.id).eq("role", "ADMIN"),
+            service.from("members").select("id,business_name,full_name").eq("contact_member_id", member.id).eq("is_business", true),
+        ]);
+        const managed = Array.from(new Set([...(adminRows || []).map((row) => row.org_member_id), ...(contactOrgs || []).map((row) => row.id)]));
+        const soleFleets: string[] = [];
+        for (const orgId of managed) {
+            const [{ data: otherAdmins }, { data: org }] = await Promise.all([
+                service.from("organization_members").select("member_id").eq("org_member_id", orgId).eq("role", "ADMIN").neq("member_id", member.id),
+                service.from("members").select("business_name,full_name,contact_member_id").eq("id", orgId).maybeSingle(),
+            ]);
+            const otherContact = org?.contact_member_id && org.contact_member_id !== member.id;
+            if (!(otherAdmins || []).length && !otherContact) soleFleets.push(org?.business_name || org?.full_name || "your fleet");
+        }
+        if (soleFleets.length) {
+            return NextResponse.json({
+                error: `You're the only manager of ${soleFleets.join(", ")}. Make someone else a manager first, or contact support@motorambos.com.`,
+                code: "SOLE_FLEET_MANAGER",
+            }, { status: 409 });
+        }
+
+        // Their own cars, with everything logged against them.
+        const { data: cars } = await service.from("vehicles").select("id").in("user_id", [member.id, user.id]);
+        for (const car of cars || []) {
+            const result = await deleteVehicle(service, car.id);
+            if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+        }
+
+        // Licence details and photos.
+        const { data: licence } = await service.from("driver_licences").select("*").eq("member_id", member.id).maybeSingle();
+        const licencePaths = ["front_path", "back_path", "photo_path"]
+            .map((column) => (licence as Record<string, string | null> | null)?.[column])
+            .filter((path): path is string => Boolean(path));
+        if (licencePaths.length) await service.storage.from("vehicle-documents").remove(licencePaths);
+        await service.from("driver_licences").delete().eq("member_id", member.id);
+
+        // Fleet roles, devices for alerts and sign-in codes.
+        await service.from("organization_members").delete().eq("member_id", member.id);
+        await service.from("push_devices").delete().eq("member_id", member.id);
+        if (member.phone) await service.from("phone_login_codes").delete().eq("phone", member.phone);
+
+        // Keep the row for card orders and reports, without anything that identifies them.
+        let { error } = await service.from("members").update({ full_name: "Deleted account", phone: null, auth_user_id: null }).eq("id", member.id);
+        if (error) ({ error } = await service.from("members").update({ full_name: "Deleted account", auth_user_id: null }).eq("id", member.id));
+        if (error) {
+            console.error("Account delete: could not clear the member row", member.id, error);
+            return NextResponse.json({ error: "Could not delete your account. Contact support@motorambos.com." }, { status: 500 });
+        }
+    }
+
+    const { error: authError } = await service.auth.admin.deleteUser(user.id);
+    if (authError) {
+        console.error("Account delete: could not remove the sign-in", user.id, authError);
+        return NextResponse.json({ error: "Could not finish deleting your account. Contact support@motorambos.com." }, { status: 500 });
+    }
+    await reportMajorActivity("Account deleted", [{ name: "Member ID", value: member?.id || null }]);
+    return NextResponse.json({ ok: true });
 }

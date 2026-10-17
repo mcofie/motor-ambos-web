@@ -6,11 +6,14 @@ import { getPortalVehicleAccess } from "@/lib/portalAccess";
 import { normalizePhone } from "@/lib/phone";
 import { initializePayment, paystackReady } from "@/lib/paystack";
 import { newOrderNumber, newPaymentReference, orderColumns } from "@/lib/cardOrderServer";
+import { invoiceMessage } from "@/lib/cardInvoice";
+import { sendSms } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
 
+// "order" pays in the web portal through Paystack; "request" (the mobile apps) texts an invoice to pay outside the app.
 const OrderSchema = z.object({
-    action: z.literal("order"),
+    action: z.enum(["order", "request"]),
     productId: z.string().uuid(),
     vehicleId: z.string().uuid().nullable(),
     deliveryMethod: z.enum(["delivery", "pickup"]),
@@ -53,12 +56,13 @@ export async function GET() {
 export async function POST(request: Request) {
     const current = await session();
     if (!current) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
-    if (!paystackReady()) return NextResponse.json({ error: "Card payments are not set up yet. Please try again soon." }, { status: 503 });
-    // Phone-only logins have a placeholder email that can't receive Paystack receipts.
-    const email = realEmail(current.user.email);
-    if (!email) return NextResponse.json({ error: "Add an email address to your account to pay online." }, { status: 409 });
     const body = await request.json().catch(() => null);
     const origin = new URL(request.url).origin;
+    const isRequest = body?.action === "request";
+    if (!isRequest && !paystackReady()) return NextResponse.json({ error: "Card payments are not set up yet. Please try again soon." }, { status: 503 });
+    // Phone-only logins have a placeholder email that can't receive Paystack receipts.
+    const email = realEmail(current.user.email);
+    if (!isRequest && !email) return NextResponse.json({ error: "Add an email address to your account to pay online." }, { status: 409 });
 
     // Paying again for an order that was not completed.
     const retry = PaySchema.safeParse(body);
@@ -67,7 +71,7 @@ export async function POST(request: Request) {
         if (!order || order.status !== "pending_payment") return NextResponse.json({ error: "This order cannot be paid now." }, { status: 409 });
         const reference = newPaymentReference(order.order_number);
         await current.service.from("card_orders").update({ paystack_reference: reference, updated_at: new Date().toISOString() }).eq("id", order.id);
-        return checkout(email, order.total_pesewas, reference, origin, order.recipient_phone, order.order_number);
+        return checkout(email!, order.total_pesewas, reference, origin, order.recipient_phone, order.order_number);
     }
 
     const parsed = OrderSchema.safeParse(body);
@@ -92,7 +96,7 @@ export async function POST(request: Request) {
     const deliveryFee = input.deliveryMethod === "delivery" ? settings!.delivery_fee_pesewas! : 0;
     const orderNumber = newOrderNumber();
     const reference = newPaymentReference(orderNumber);
-    const { error } = await current.service.from("card_orders").insert({
+    const { data: created, error } = await current.service.from("card_orders").insert({
         order_number: orderNumber,
         member_id: current.member.id,
         vehicle_id: input.vehicleId,
@@ -109,9 +113,14 @@ export async function POST(request: Request) {
         address: input.deliveryMethod === "delivery" ? input.address : null,
         notes: input.notes || null,
         paystack_reference: reference,
-    });
-    if (error) return NextResponse.json({ error: "Could not place your order. Try again." }, { status: 500 });
-    return checkout(email, product.price_pesewas + deliveryFee, reference, origin, phone, orderNumber);
+    }).select("id,order_number,product_name,unit_price_pesewas,delivery_method,delivery_fee_pesewas,total_pesewas").single();
+    if (error || !created) return NextResponse.json({ error: "Could not place your order. Try again." }, { status: 500 });
+    if (isRequest) {
+        // Paid outside the app: the invoice and its payment link go by SMS to the recipient's phone.
+        const invoiceSent = await sendSms(phone, invoiceMessage(created));
+        return NextResponse.json({ ok: true, orderNumber, invoiceSent, invoicePhone: phone }, { status: 201 });
+    }
+    return checkout(email!, product.price_pesewas + deliveryFee, reference, origin, phone, orderNumber);
 }
 
 async function checkout(email: string, amountPesewas: number, reference: string, origin: string, phone: string, orderNumber: string) {

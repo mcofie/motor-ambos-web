@@ -68,9 +68,9 @@ export async function GET() {
         orgIds.length
             ? service.from("members").select("id,business_name,full_name").in("id", orgIds)
             : Promise.resolve({ data: [], error: null }),
-        service.from("vehicles").select("id,user_id,name,make,model,year,plate,color,insurance_end_date,roadworthy_expiry,roadworthy_doc_url").in("user_id", ownerIds),
+        selectVehicles(service, "user_id", ownerIds),
         assignedIds.length
-            ? service.from("vehicles").select("id,user_id,name,make,model,year,plate,color,insurance_end_date,roadworthy_expiry,roadworthy_doc_url").in("id", assignedIds)
+            ? selectVehicles(service, "id", assignedIds)
             : Promise.resolve({ data: [], error: null }),
         managedOrgIds.length
             ? service.from("organization_members").select("member_id,org_member_id,vehicle_id").in("org_member_id", managedOrgIds).eq("role", "DRIVER")
@@ -209,4 +209,13 @@ export async function POST(request: Request) {
     }
     await reportMajorActivity("Driver profile created", [{ name: "Auth user ID", value: user.id }]);
     return NextResponse.json({ ok: true });
+}
+
+const VEHICLE_COLUMNS = "id,user_id,name,make,model,year,plate,color,insurance_end_date,roadworthy_expiry,roadworthy_doc_url";
+
+/** Vehicles with their powertrain, or without it until the powertrain migration has run. */
+async function selectVehicles(service: ReturnType<typeof getServiceClient>, column: "user_id" | "id", values: string[]) {
+    const result = await service.from("vehicles").select(`${VEHICLE_COLUMNS},powertrain`).in(column, values);
+    if (result.error?.code === "42703") return service.from("vehicles").select(VEHICLE_COLUMNS).in(column, values);
+    return result;
 }

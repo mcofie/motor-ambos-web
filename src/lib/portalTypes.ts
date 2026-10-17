@@ -11,6 +11,8 @@ export type PortalVehicle = {
     insurance_end_date: string | null;
     roadworthy_expiry: string | null;
     roadworthy_doc_url: string | null;
+    /** ice (petrol or diesel), hybrid or ev. Missing for cars added before it existed. */
+    powertrain?: "ice" | "hybrid" | "ev" | null;
     current_mileage?: number | null;
     last_oil_change_mileage?: number | null;
     /** A matching studio photo from the car image library, if there is one. */

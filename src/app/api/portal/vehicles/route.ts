@@ -10,6 +10,7 @@ const VehicleSchema = z.object({
     year: z.string().trim().regex(/^\d{4}$/).optional().or(z.literal("")),
     color: z.string().trim().max(40).optional(),
     orgId: z.string().uuid().optional(),
+    powertrain: z.enum(["ice", "hybrid", "ev"]).optional(),
 });
 
 export async function POST(request: Request) {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
         ownerId = orgId;
     }
 
-    const { data, error } = await service.from("vehicles").insert({
+    const row = {
         user_id: ownerId,
         make: parsed.data.make,
         model: parsed.data.model,
@@ -37,8 +38,11 @@ export async function POST(request: Request) {
         year: parsed.data.year || null,
         color: parsed.data.color || null,
         is_primary: false,
-    }).select("id").single();
-    if (error) return NextResponse.json({ error: "Could not add this vehicle" }, { status: 500 });
+    };
+    let { data, error } = await service.from("vehicles").insert({ ...row, powertrain: parsed.data.powertrain ?? null }).select("id").single();
+    // Until the powertrain migration runs, add the car without it rather than failing.
+    if (error?.code === "42703" || error?.code === "PGRST204") ({ data, error } = await service.from("vehicles").insert(row).select("id").single());
+    if (error || !data) return NextResponse.json({ error: "Could not add this vehicle" }, { status: 500 });
     await reportMajorActivity("Vehicle added", [
         { name: "Vehicle", value: [parsed.data.year, parsed.data.make, parsed.data.model].filter(Boolean).join(" ") },
         { name: "Plate", value: parsed.data.plate.toUpperCase() },
